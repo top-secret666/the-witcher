@@ -1,40 +1,48 @@
 ![The-Witcher-3-The-Witcher-gif-Pixel-Gif-6434293](https://github.com/user-attachments/assets/e81d2ffd-a08c-44b2-ab65-f323ce33c989)
 
 
-# The Witcher: Core Logic Engine (Java)
-Educational Java project focused on implementing game logic through object-oriented design.
+# The Witcher — Core Logic Engine ⚔️ (Java)
 
-## Project Purpose
+```text
+┌──────────────────────────────────────────────────────────────────┐
+│  QUEST: THE WITCHER                                               │
+│  LOOT : OOP • GAME LOGIC • CLEAN STRUCTURE                        │
+└──────────────────────────────────────────────────────────────────┘
+```
 
-The project demonstrates practical use of OOP principles in a game domain:
-- entity modeling
-- interaction rules
+Educational Java project focused on **game logic** built with clean **object-oriented design**.
+
+##  Goal
+
+Demonstrate OOP in a real-ish domain:
+- modeling entities
+- interactions and rules
 - game state transitions
 
-## Tech
+##  Tech
 
-- Java
-- OOP (encapsulation, inheritance, polymorphism)
+```text
+Language: Java
+Focus   : OOP (encapsulation, inheritance, polymorphism)
+```
 
-## What is implemented
+## What’s implemented
 
 - Core entities and relationships
 - Modular logic for interactions
-- Basic rule-driven flow for game state
+- Rule-driven flow for game state
 
-## How to Run
+##  How to run
 
-1. Install JDK (recommended: Java 17)
-2. Open the project in IntelliJ IDEA (or another Java IDE)
-3. Run the main class from the `src/main` tree
+1) Install JDK (recommended: Java 17)
 
-## Why this project matters
+2) Open in IntelliJ IDEA
 
-This repository highlights clean object-oriented thinking and serves as a foundation for stronger backend code structure.
+3) Run the main class from `src/main` (add exact class name here once confirmed)
 
-## Notes
+##  Repo quality checklist (recommended)
 
-- Recommended cleanup for repo quality:
-  - remove `.idea/` and `*.iml` from git tracking
-  - add IDE artifacts to `.gitignore`
-  - add simple class diagram screenshot (optional)
+- Remove `.idea/` and `*.iml` from git tracking
+- Add IDE files to `.gitignore`
+- Add a short “Architecture” section (2–3 bullets) once you pick a structure
+
