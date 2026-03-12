@@ -14,6 +14,24 @@ public class GameWindow {
     public GameWindow() {
         frame = new JFrame("Witcher - Pixel Prototype");
         renderer = new Renderer(480, 360, 2); // virtual res 480x360 scaled x2 = окно 960x720
+
+        // Иконка окна/приложения
+        Sprite appIcon = Sprite.load("/assets/sprites/app_icon.png");
+        if (appIcon == null) {
+            appIcon = Sprite.load("/assets/sprites/app_icon.png");
+        }
+        if (appIcon != null) {
+            Image iconImg = appIcon.getImage();
+            frame.setIconImage(iconImg);
+            try {
+                if (Taskbar.isTaskbarSupported()) {
+                    Taskbar.getTaskbar().setIconImage(iconImg);
+                }
+            } catch (Exception ignored) {
+                // ignore (not supported on some platforms)
+            }
+        }
+
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setLayout(new BorderLayout());
         frame.add(renderer, BorderLayout.CENTER);
