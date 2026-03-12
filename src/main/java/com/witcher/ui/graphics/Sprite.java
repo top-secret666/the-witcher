@@ -70,4 +70,8 @@ public class Sprite {
     public int getHeight() {
         return image.getHeight();
     }
+
+    public BufferedImage getImage() {
+        return image;
+    }
 }

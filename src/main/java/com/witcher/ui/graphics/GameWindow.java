@@ -13,7 +13,7 @@ public class GameWindow {
 
     public GameWindow() {
         frame = new JFrame("Witcher - Pixel Prototype");
-        renderer = new Renderer(160, 144, 4); // virtual res 160x144 scaled x4
+        renderer = new Renderer(480, 360, 2); // virtual res 480x360 scaled x2 = окно 960x720
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setLayout(new BorderLayout());
         frame.add(renderer, BorderLayout.CENTER);
@@ -23,9 +23,9 @@ public class GameWindow {
     }
 
     private void initSprite() {
-        sprite = Sprite.load("/witcher_logo.png");
+        // После заставки пока показываем тот же логотип (позже заменим на меню/игру)
+        sprite = Sprite.load("/assets/sprites/witcher_logo.png");
         if (sprite == null) {
-            System.out.println("Файл не найден!");
             BufferedImage img = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
             for (int y = 0; y < 16; y++) {
                 for (int x = 0; x < 16; x++) {
