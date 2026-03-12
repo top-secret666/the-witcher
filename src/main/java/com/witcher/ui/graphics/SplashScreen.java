@@ -8,29 +8,25 @@ import java.util.List;
 import java.util.Random;
 
 public class SplashScreen {
-    private final Sprite logo;
-    private final Sprite background;      // PNG-фон таверны
-    private final AnimatedGif witcherGif;  // GIF-ведьмак (анимация)
-    private final Sprite witcherSprite;    // PNG-ведьмак (fallback)
-    private final AnimatedGif witcherBackGif; // GIF-спина ведьмака (на фоне за стойкой)
-    private final Sprite witcherBackSprite;   // PNG-спина ведьмака (fallback)
+    private final SpriteSheet logoAnim;     // анимированный логотип (6 кадров, мерцание искр)
+    private final Sprite background;
+
+    // Анимированные спрайт-листы
+    private final SpriteSheet witcherBar;   // ведьмак за баром, 5 кадров (5×1)
+    private final SpriteSheet griffinAnim;  // грифон выглядывает справа (6 кадров, 3×2, чёрный фон удалён)
+    private final Sprite drownerSprite;     // утопец выглядывает слева (статичный, с прозрачным фоном)
+
     private BufferedImage logoScaled;
     private BufferedImage bgScaled;
-    private BufferedImage witcherScaled;
-    private BufferedImage witcherBackScaled;
-    private int witcherBackScaledW;
-    private int witcherBackScaledH;
+    private int bgScaledForW, bgScaledForH;
 
-    private float alpha = 0f;
+    private float alpha = 0.05f;
     private int progress = 0;
     private boolean finished = false;
     private int timer = 0;
     private int tick = 0;
 
-    // Позиция бегущего ведьмака
-    private float witcherX = -120;
-
-    // Атмосфера: дым, мерцание, зерно
+    // Атмосфера
     private final List<SmokePuff> smokePuffs = new ArrayList<>();
     private BufferedImage grain;
     private float flicker = 1f;
@@ -49,15 +45,22 @@ public class SplashScreen {
     private static final Color SMOKE = new Color(190, 180, 165);
 
     public SplashScreen() {
-        logo = Sprite.load("/assets/sprites/witcher_logo.png");
         background = Sprite.load("/assets/sprites/splash_bg.png");
-        witcherGif = AnimatedGif.load("/assets/sprites/witcher_run.gif");
-        witcherSprite = Sprite.load("/assets/sprites/witcher_run.png");
 
-        // Спина ведьмака за барной стойкой (положи ресурс сюда):
-        // /assets/sprites/witcher_back.gif  (или .png)
-        witcherBackGif = AnimatedGif.load("/assets/sprites/witcher_back.gif");
-        witcherBackSprite = Sprite.load("/assets/sprites/witcher_back.png");
+        // Анимированный логотип — 2×3 сетка (6 вариантов с мерцающими искрами)
+        SpriteSheet la = SpriteSheet.load("/assets/sprites/witcher_logo_new.png", 2, 3, 8);
+        logoAnim = (la != null) ? la.setPingPong(true) : null;
+
+        // Ведьмак за баром — 5 кадров в ряд, прозрачный фон
+        SpriteSheet wb = SpriteSheet.load("/assets/sprites/witcher_bar.png", 5, 1, 15);
+        witcherBar = (wb != null) ? wb.setPingPong(true) : null;
+
+        // Грифон — 3×2 сетка (6 кадров), чёрный фон удаляется
+        SpriteSheet gp = SpriteSheet.load("/assets/sprites/griffin_peek.png", 3, 2, 7, true);
+        griffinAnim = (gp != null) ? gp.setPingPong(true) : null;
+
+        // Утопец — статичный с прозрачным фоном
+        drownerSprite = Sprite.load("/assets/sprites/drowner_single.png");
     }
 
     public void update() {
@@ -68,9 +71,9 @@ public class SplashScreen {
         float jitter = (rng.nextFloat() - 0.5f) * 0.10f;
         flicker = clamp(base + jitter, 0.72f, 1.0f);
 
-        // Fade-in
+        // Fade-in (быстрый)
         if (alpha < 1f) {
-            alpha += 0.012f;
+            alpha += 0.06f;
             if (alpha > 1f) alpha = 1f;
         } else if (progress < 100) {
             progress += 1;
@@ -79,14 +82,10 @@ public class SplashScreen {
             if (timer > 80) finished = true;
         }
 
-        // Ведьмак бежит справа налево → слева направо
-        witcherX += 1.8f;
-        if (witcherX > 520) witcherX = -120;
-
-        // Частицы
+        // Частицы (золотые искры)
         if (tick % 4 == 0 && alpha > 0.3f) {
-            float px = 80 + rng.nextFloat() * 320;
-            float py = 20 + rng.nextFloat() * 160;
+            float px = 40 + rng.nextFloat() * 400;
+            float py = 10 + rng.nextFloat() * 180;
             float vx = (rng.nextFloat() - 0.5f) * 0.6f;
             float vy = -0.2f - rng.nextFloat() * 0.5f;
             int life = 30 + rng.nextInt(50);
@@ -96,10 +95,10 @@ public class SplashScreen {
         particles.removeIf(p -> !p.alive);
         for (Particle p : particles) p.update();
 
-        // Дым (медленные полупрозрачные "облака")
-        if (tick % 7 == 0 && alpha > 0.25f) {
+        // Дым
+        if (tick % 8 == 0 && alpha > 0.25f) {
             float px = 35 + rng.nextFloat() * 410;
-            float py = 150 + rng.nextFloat() * 120;
+            float py = 60 + rng.nextFloat() * 120;
             float vx = (rng.nextFloat() - 0.5f) * 0.18f;
             float vy = -0.12f - rng.nextFloat() * 0.22f;
             int life = 120 + rng.nextInt(120);
@@ -108,6 +107,11 @@ public class SplashScreen {
         }
         smokePuffs.removeIf(p -> !p.alive);
         for (SmokePuff p : smokePuffs) p.update();
+
+        // Анимация спрайт-листов
+        if (witcherBar != null) witcherBar.update();
+        if (griffinAnim != null) griffinAnim.update();
+        if (logoAnim != null) logoAnim.update();
     }
 
     public void render(BufferedImage screen) {
@@ -115,212 +119,170 @@ public class SplashScreen {
         int sh = screen.getHeight();
         Graphics2D g = screen.createGraphics();
         g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
-        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        // Пиксельная подача: резкие края, без «мыла»
+        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
 
         // === ФОН: чёрный ===
         g.setColor(Color.BLACK);
         g.fillRect(0, 0, sw, sh);
 
-        // === Фон-картинка таверны (если есть) ===
+        // === ФОН ТАВЕРНЫ — ВПИСАН С ПОЛЯМИ (не в упор на весь экран) ===
         if (background != null) {
-            if (bgScaled == null) {
+            if (bgScaled == null || bgScaledForW != sw || bgScaledForH != sh) {
+                bgScaledForW = sw;
+                bgScaledForH = sh;
                 bgScaled = new BufferedImage(sw, sh, BufferedImage.TYPE_INT_ARGB);
                 Graphics2D bg = bgScaled.createGraphics();
                 bg.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
-                bg.drawImage(background.getImage(), 0, 0, sw, sh, null);
+                bg.setColor(Color.BLACK);
+                bg.fillRect(0, 0, sw, sh);
+                int srcW = background.getWidth();
+                int srcH = background.getHeight();
+                float contain = Math.min((float) sw / srcW, (float) sh / srcH);
+                // Чуть уменьшаем размер, чтобы фон не был «в упор» к границам окна
+                float scale = contain * 0.94f;
+                int drawW = Math.round(srcW * scale);
+                int drawH = Math.round(srcH * scale);
+                bg.drawImage(background.getImage(), (sw - drawW) / 2, (sh - drawH) / 2, drawW, drawH, null);
                 bg.dispose();
             }
-
-            // Фон с прозрачностью (чуть затемнённый, чтобы лого было видно)
-            float bgAlpha = alpha * 0.35f;
-            bgAlpha = clamp(bgAlpha, 0f, 1f);
-
-            // Делаем "слои" фона: верхняя часть -> спина ведьмака -> нижняя часть (стойка перекрывает)
-            int barOccludeY = (int) Math.round(sh * 0.58);
-            barOccludeY = Math.max(1, Math.min(sh - 1, barOccludeY));
-
-            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, bgAlpha));
-
-            // Верхняя часть (стена/полки)
-            g.drawImage(bgScaled,
-                    0, 0, sw, barOccludeY,
-                    0, 0, sw, barOccludeY,
-                    null);
-
-            // === СПИНА ВЕДЬМАКА (за стойкой) ===
-            // Рисуем между слоями фона, чтобы стойка могла перекрыть низ.
-            float backA = clamp(alpha * 0.55f, 0f, 1f);
-            int backTargetH = (int) Math.round(sh * 0.42);
-            backTargetH = Math.max(60, Math.min(sh, backTargetH));
-            int backY = barOccludeY - backTargetH + 26; // подгонка под стойку
-
-            if (witcherBackGif != null) {
-                float scale = backTargetH / (float) Math.max(1, witcherBackGif.getHeight());
-                int backW = (int) Math.round(witcherBackGif.getWidth() * scale);
-                int backX = (sw - backW) / 2;
-                witcherBackGif.paint(g, backX, backY, scale, backA);
-            } else if (witcherBackSprite != null) {
-                float ratio = (float) witcherBackSprite.getWidth() / Math.max(1, witcherBackSprite.getHeight());
-                int backW = Math.max(1, Math.round(backTargetH * ratio));
-                int backX = (sw - backW) / 2;
-
-                if (witcherBackScaled == null || witcherBackScaledW != backW || witcherBackScaledH != backTargetH) {
-                    witcherBackScaledW = backW;
-                    witcherBackScaledH = backTargetH;
-                    witcherBackScaled = new BufferedImage(backW, backTargetH, BufferedImage.TYPE_INT_ARGB);
-                    Graphics2D wg = witcherBackScaled.createGraphics();
-                    wg.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
-                    wg.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-                    wg.drawImage(witcherBackSprite.getImage(), 0, 0, backW, backTargetH, null);
-                    wg.dispose();
-                }
-
-                Composite prev = g.getComposite();
-                g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, backA));
-                g.drawImage(witcherBackScaled, backX, backY, null);
-                g.setComposite(prev);
-            }
-
-            // Нижняя часть (стойка/передний план) перекрывает нижнюю часть ведьмака
-            g.drawImage(bgScaled,
-                    0, barOccludeY, sw, sh,
-                    0, barOccludeY, sw, sh,
-                    null);
-
+            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, clamp(alpha * 0.88f, 0f, 1f)));
+            g.drawImage(bgScaled, 0, 0, null);
             g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
         }
 
-        // === ТЁПЛОЕ МЕРЦАНИЕ СВЕТА (над фоном, под всем) ===
+        // === ТЁПЛОЕ МЕРЦАНИЕ СВЕТА ===
         if (alpha > 0.05f) {
-            float a = alpha * 0.08f * flicker;
+            float a = alpha * 0.05f * flicker;
             g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, a));
             g.setColor(WARM_LIGHT);
             g.fillRect(0, 0, sw, sh);
             g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
         }
 
-        // === ЧАСТИЦЫ (за логотипом) ===
+        // === ЛОГОТИП СВЕРХУ ПО ЦЕНТРУ (анимированный) ===
+        if (logoAnim != null && alpha > 0.05f) {
+            // Тайл ~1024×682. Масштаб: ширина до 75% экрана, но не больше 28% высоты
+            float s = Math.min((float)(sw * 0.75f) / logoAnim.getFrameWidth(), (float)(sh * 0.28f) / logoAnim.getFrameHeight());
+            int drawW = Math.max(1, Math.round(logoAnim.getFrameWidth() * s));
+            int drawH = Math.max(1, Math.round(logoAnim.getFrameHeight() * s));
+            int lx = (sw - drawW) / 2;
+            int ly = (int)(sh * 0.02f);
+            // Тень под логотипом для контраста
+            Composite prev = g.getComposite();
+            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha * 0.4f));
+            g.setColor(Color.BLACK);
+            g.fillRoundRect(lx - 4, ly - 2, drawW + 8, drawH + 4, 6, 6);
+            g.setComposite(prev);
+            // Анимированный логотип
+            logoAnim.draw(g, lx, ly, drawW, drawH, alpha);
+        }
+
+        // === УТОПЕЦ СЛЕВА (выглядывает из-за края, покачивается) ===
+        if (drownerSprite != null && alpha > 0.2f) {
+            // Масштаб: 60% высоты экрана
+            float dpScale = (sh * 0.60f) / drownerSprite.getHeight();
+            int dpW = Math.round(drownerSprite.getWidth() * dpScale);
+            int dpH = Math.round(drownerSprite.getHeight() * dpScale);
+            // Покачивание
+            float swayX = (float) Math.sin(tick * 0.035) * 4;
+            float swayY = (float) Math.sin(tick * 0.025 + 1.0) * 3;
+            // Спрятан на ~40% за левым краем, показывая правую часть (морду)
+            int dpX = (int) (-dpW * 0.35f + swayX);
+            int dpY = (int) (sh * 0.18f + swayY);
+            Composite prev = g.getComposite();
+            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha * 0.92f));
+            g.drawImage(drownerSprite.getImage(), dpX, dpY, dpW, dpH, null);
+            g.setComposite(prev);
+        }
+
+        // === ГРИФОН СПРАВА (анимированный, выглядывает из-за края) ===
+        if (griffinAnim != null && alpha > 0.2f) {
+            // Масштаб: 60% высоты экрана
+            float gpScale = (sh * 0.60f) / griffinAnim.getFrameHeight();
+            int gpW = Math.round(griffinAnim.getFrameWidth() * gpScale);
+            int gpH = Math.round(griffinAnim.getFrameHeight() * gpScale);
+            // Покачивание
+            float swayX = (float) Math.sin(tick * 0.03 + 2.0) * 4;
+            float swayY = (float) Math.sin(tick * 0.04) * 3;
+            // Спрятан на ~35% за правым краем
+            int gpX = (int) (sw - gpW * 0.65f + swayX);
+            int gpY = (int) (sh * 0.15f + swayY);
+            griffinAnim.draw(g, gpX, gpY, gpW, gpH, alpha * 0.92f);
+        }
+
+        // === ВЕДЬМАК ЗА БАРОМ (по центру, крупный) ===
+        if (witcherBar != null && alpha > 0.1f) {
+            // Каждый кадр ~205×1024. Масштабируем по ширине — ~22% ширины экрана
+            float wbScale = (sw * 0.22f) / witcherBar.getFrameWidth();
+            int wbW = Math.round(witcherBar.getFrameWidth() * wbScale);
+            int wbH = Math.round(witcherBar.getFrameHeight() * wbScale);
+            int wbX = (sw - wbW) / 2;
+            // Выровнять по низу области сцены (чтобы ноги не уходили за экран слишком сильно)
+            int wbY = sh - wbH + (int)(wbH * 0.31f);
+            witcherBar.draw(g, wbX, wbY, wbW, wbH, alpha * 0.95f);
+        }
+
+        // === ЧАСТИЦЫ ===
         for (Particle p : particles) p.draw(g);
 
-        // === ДЫМ (за логотипом) ===
+        // === ДЫМ ===
         for (SmokePuff p : smokePuffs) p.draw(g);
 
-        // === ЛОГОТИП (без свечения, чёрный фон) ===
-        if (logo != null) {
-            int maxW = sw - 60;
-            int maxH = sh - 130;
-            float s = Math.min((float) maxW / logo.getWidth(), (float) maxH / logo.getHeight());
-            int drawW = Math.max(1, Math.round(logo.getWidth() * s));
-            int drawH = Math.max(1, Math.round(logo.getHeight() * s));
+        // === ТЁМНАЯ ПОЛОСА ВНИЗУ (только для прогресс-бара) ===
+        int barZoneH = 28;
+        GradientPaint fadeBottom = new GradientPaint(
+                0, sh - barZoneH - 15, new Color(0, 0, 0, 0),
+                0, sh - barZoneH, new Color(0, 0, 0, 180));
+        g.setPaint(fadeBottom);
+        g.fillRect(0, sh - barZoneH - 15, sw, 15);
+        g.setColor(new Color(0, 0, 0, 180));
+        g.fillRect(0, sh - barZoneH, sw, barZoneH);
 
-            if (logoScaled == null) {
-                logoScaled = new BufferedImage(drawW, drawH, BufferedImage.TYPE_INT_ARGB);
-                Graphics2D lg = logoScaled.createGraphics();
-                lg.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
-                lg.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-                lg.drawImage(logo.getImage(), 0, 0, drawW, drawH, null);
-                lg.dispose();
-            }
-
-            int x = (sw - drawW) / 2;
-            int y = (maxH - drawH) / 2 - 18; // чуть выше
-            if (y < 8) y = 8;
-
-            // Логотип с fade-in (БЕЗ свечения)
-            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
-            g.drawImage(logoScaled, x, y, null);
-            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
-        } else {
-            g.setFont(new Font("Serif", Font.BOLD, 48));
-            g.setColor(GOLD);
-            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
-            String t = "WITCHER";
-            int tw = g.getFontMetrics().stringWidth(t);
-            g.drawString(t, (sw - tw) / 2, sh / 2);
-            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
-        }
-
-        // === БЕГУЩИЙ ВЕДЬМАК (GIF с движением; PNG fallback) ===
-        int targetH = 80;
-        int bob = (int) Math.round(Math.sin(tick * 0.22) * 2.0);
-        int wy = sh - 55 - targetH + bob; // чуть выше прогресс-бара
-
-        if (witcherGif != null) {
-            float scale = targetH / (float) Math.max(1, witcherGif.getHeight());
-            witcherGif.paint(g, (int) witcherX, wy, scale, 1f);
-        } else if (witcherSprite != null) {
-            float ratio = (float) witcherSprite.getWidth() / witcherSprite.getHeight();
-            int wW = Math.round(targetH * ratio);
-
-            if (witcherScaled == null) {
-                witcherScaled = new BufferedImage(wW, targetH, BufferedImage.TYPE_INT_ARGB);
-                Graphics2D wg = witcherScaled.createGraphics();
-                wg.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
-                wg.drawImage(witcherSprite.getImage(), 0, 0, wW, targetH, null);
-                wg.dispose();
-            }
-            g.drawImage(witcherScaled, (int) witcherX, wy, null);
-        }
-
-        // === ПРОГРЕСС-БАР ===
+        // === ПРОГРЕСС-БАР (внизу экрана) ===
         int barW = (int) (sw * 0.55);
-        int barH = 12;
+        int barH = 8;
         int barX = (sw - barW) / 2;
-        int barY = sh - 30;
+        int barY = sh - 20;
 
-        // Декоративные уголки
-        g.setColor(BAR_BORDER);
-        g.fillRect(barX - 6, barY - 1, 4, barH + 2);
-        g.fillRect(barX + barW + 2, barY - 1, 4, barH + 2);
-
-        // Фон бара
         g.setColor(BAR_BG);
         g.fillRect(barX, barY, barW, barH);
 
-        // Заполнение (золотой градиент)
         int fillW = (int) Math.round(barW * (progress / 100.0));
         if (fillW > 0) {
             GradientPaint barGrad = new GradientPaint(barX, barY, GOLD_DARK, barX + barW, barY, GOLD);
             g.setPaint(barGrad);
             g.fillRect(barX, barY, fillW, barH);
-
-            // Блик
-            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.25f));
+            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.3f));
             g.setColor(Color.WHITE);
             g.fillRect(barX, barY, fillW, barH / 3);
             g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
         }
-
-        // Рамка
         g.setColor(BAR_BORDER);
-        g.setStroke(new BasicStroke(1.5f));
+        g.setStroke(new BasicStroke(1f));
         g.drawRect(barX, barY, barW, barH);
 
-        // Текст
-        g.setFont(new Font("Serif", Font.BOLD, 14));
+        g.setFont(new Font("Monospaced", Font.BOLD, 11));
         g.setColor(GOLD);
-        String loadText = "Загрузка... " + progress + "%";
+        String loadText = "\u0417\u0430\u0433\u0440\u0443\u0437\u043a\u0430... " + progress + "%";
         int textW = g.getFontMetrics().stringWidth(loadText);
-        g.drawString(loadText, (sw - textW) / 2, barY - 8);
+        g.drawString(loadText, (sw - textW) / 2, barY - 5);
 
-        // === ЗЕРНО (очень лёгкий шум) ===
+        // === ЗЕРНО ===
         if (alpha > 0.1f) {
-            if (grain == null) {
-                grain = new BufferedImage(64, 64, BufferedImage.TYPE_INT_ARGB);
-            }
+            if (grain == null) grain = new BufferedImage(64, 64, BufferedImage.TYPE_INT_ARGB);
             if (tick % 5 == 0) {
                 for (int y = 0; y < grain.getHeight(); y++) {
                     for (int x = 0; x < grain.getWidth(); x++) {
                         int n = 120 + rng.nextInt(110);
                         int a = 12 + rng.nextInt(14);
-                        int argb = (a << 24) | (n << 16) | (n << 8) | n;
-                        grain.setRGB(x, y, argb);
+                        grain.setRGB(x, y, (a << 24) | (n << 16) | (n << 8) | n);
                     }
                 }
             }
-
-            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha * 0.06f));
+            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha * 0.04f));
             for (int y = 0; y < sh; y += grain.getHeight()) {
                 for (int x = 0; x < sw; x += grain.getWidth()) {
                     g.drawImage(grain, x, y, null);
@@ -329,16 +291,17 @@ public class SplashScreen {
             g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
         }
 
-        // === ВИНЬЕТКА (фокус на центре) ===
+        // === ВИНЬЕТКА ===
         RadialGradientPaint vignette = new RadialGradientPaint(
-                new Point2D.Float(sw / 2f, sh / 2f),
-                Math.max(sw, sh) * 0.70f,
+                new Point2D.Float(sw / 2f, sh * 0.35f),
+                Math.max(sw, sh) * 0.75f,
                 new float[]{0f, 1f},
-                new Color[]{new Color(0, 0, 0, 0), new Color(0, 0, 0, 200)}
+                new Color[]{new Color(0, 0, 0, 0), new Color(0, 0, 0, 160)}
         );
         Paint prevPaint = g.getPaint();
         g.setPaint(vignette);
-        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha * 0.65f));
+        // Уменьшим силу виньетки — пусть фон не слишком затемняется по краям
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha * 0.30f));
         g.fillRect(0, 0, sw, sh);
         g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
         g.setPaint(prevPaint);
