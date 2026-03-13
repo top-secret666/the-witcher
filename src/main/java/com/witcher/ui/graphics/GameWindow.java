@@ -6,14 +6,27 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
 import javax.swing.border.AbstractBorder;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 
 public class GameWindow {
     private final JFrame frame;
     private final Renderer renderer;
+    private JComponent titleBar;
     private Sprite sprite;
     private SplashScreen splashScreen;
+    private MainMenuScreen mainMenu;
     private boolean splashActive = true;
+    private boolean menuActive = false;
+
+    // Ввод для меню в координатах виртуального экрана
+    private int mouseVX = 0;
+    private int mouseVY = 0;
+    private boolean mouseClickPending = false;
+    private int menuNavDir = 0;
+    private boolean menuActivate = false;
+    private boolean menuExitRequested = false;
 
     // Цвета шапки окна (в том же духе, что и сплэш)
     private static final Color TITLE_BG = new Color(30, 22, 12);
@@ -49,7 +62,7 @@ public class GameWindow {
         frame.setLayout(new BorderLayout());
 
         // Пиксельная шапка окна (иконка + заголовок + кнопки)
-        JComponent titleBar = new PixelTitleBar(frame, iconImg);
+        titleBar = new PixelTitleBar(frame, iconImg);
         frame.add(titleBar, BorderLayout.NORTH);
 
         frame.add(renderer, BorderLayout.CENTER);
@@ -73,6 +86,85 @@ public class GameWindow {
 
         frame.setLocationRelativeTo(null);
         splashScreen = new SplashScreen();
+
+        setupInput();
+    }
+
+    private void setupInput() {
+        renderer.addMouseMotionListener(new MouseAdapter() {
+            @Override
+            public void mouseMoved(MouseEvent e) {
+                updateVirtualMouse(e);
+            }
+
+            @Override
+            public void mouseDragged(MouseEvent e) {
+                updateVirtualMouse(e);
+            }
+        });
+
+        renderer.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                updateVirtualMouse(e);
+                mouseClickPending = true;
+            }
+        });
+
+        renderer.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (!menuActive) return;
+
+                int code = e.getKeyCode();
+                if (code == KeyEvent.VK_UP || code == KeyEvent.VK_W) {
+                    menuNavDir = -1;
+                } else if (code == KeyEvent.VK_DOWN || code == KeyEvent.VK_S) {
+                    menuNavDir = 1;
+                } else if (code == KeyEvent.VK_ENTER || code == KeyEvent.VK_SPACE) {
+                    menuActivate = true;
+                } else if (code == KeyEvent.VK_ESCAPE) {
+                    menuExitRequested = true;
+                }
+            }
+        });
+    }
+
+    private void updateVirtualMouse(MouseEvent e) {
+        int rw = Math.max(1, renderer.getWidth());
+        int rh = Math.max(1, renderer.getHeight());
+        mouseVX = e.getX() * renderer.getVirtualW() / rw;
+        mouseVY = e.getY() * renderer.getVirtualH() / rh;
+    }
+
+    private void enterMainMenuMode() {
+        splashActive = false;
+        menuActive = true;
+        mainMenu = new MainMenuScreen();
+
+        // Меню должно быть как игровая сцена: без шапки и рамки окна.
+        if (titleBar != null) {
+            frame.remove(titleBar);
+            titleBar = null;
+        }
+        frame.getRootPane().setBorder(BorderFactory.createEmptyBorder());
+
+        // Меню должно быть уже не "окошком", а полноценной fullscreen-сценой.
+        frame.setMinimumSize(new Dimension(0, 0));
+        frame.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
+        frame.revalidate();
+
+        GraphicsDevice device = GraphicsEnvironment
+            .getLocalGraphicsEnvironment()
+            .getDefaultScreenDevice();
+        device.setFullScreenWindow(frame);
+        frame.validate();
+
+        // Скрываем системный курсор, рисуем кастомный курсор внутри сцены.
+        BufferedImage blank = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
+        Cursor invisible = Toolkit.getDefaultToolkit().createCustomCursor(blank, new Point(0, 0), "menu_blank_cursor");
+        renderer.setCursor(invisible);
+        renderer.requestFocusInWindow();
     }
 
     private static final class PixelTitleBar extends JComponent {
@@ -400,15 +492,33 @@ public class GameWindow {
 
     public void start() {
         frame.setVisible(true);
+        renderer.requestFocusInWindow();
         Timer timer = new Timer(16, e -> {
             if (splashActive) {
                 splashScreen.update();
                 splashScreen.render(renderer.screen);
                 renderer.repaint();
                 if (splashScreen.isFinished()) {
-                    splashActive = false;
-                    initSprite();
+                    enterMainMenuMode();
                 }
+            } else if (menuActive) {
+                mainMenu.update(mouseVX, mouseVY, mouseClickPending, menuNavDir, menuActivate);
+                mainMenu.render(renderer.screen, mouseVX, mouseVY);
+                renderer.repaint();
+
+                MainMenuScreen.Action action = mainMenu.consumeAction();
+                if (menuExitRequested || action == MainMenuScreen.Action.EXIT) {
+                    frame.dispatchEvent(new WindowEvent(frame, WindowEvent.WINDOW_CLOSING));
+                } else if (action == MainMenuScreen.Action.START) {
+                    System.out.println("[MENU] Start pressed (scene not implemented yet)");
+                } else if (action == MainMenuScreen.Action.SETTINGS) {
+                    System.out.println("[MENU] Settings pressed (scene not implemented yet)");
+                }
+
+                mouseClickPending = false;
+                menuNavDir = 0;
+                menuActivate = false;
+                menuExitRequested = false;
             } else {
                 renderer.update();
                 renderer.repaint();

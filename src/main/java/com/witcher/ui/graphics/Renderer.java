@@ -16,6 +16,15 @@ public class Renderer extends JPanel {
         this.virtualH = virtualH;
         this.screen = new BufferedImage(virtualW, virtualH, BufferedImage.TYPE_INT_ARGB);
         setPreferredSize(new Dimension(virtualW * scale, virtualH * scale));
+        setFocusable(true);
+    }
+
+    public int getVirtualW() {
+        return virtualW;
+    }
+
+    public int getVirtualH() {
+        return virtualH;
     }
 
     public void setSprite(Sprite sprite) {
