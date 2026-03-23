@@ -16,7 +16,7 @@ public class MainMenuScreen {
         EXIT
     }
 
-    // private final Sprite background;
+    private final Sprite background;
     private final SpriteSheet boardSheet;
     private final int boardSheetCols = 8; // по картинке 8 кадров
     private final int boardSheetRows = 1;
@@ -42,7 +42,7 @@ public class MainMenuScreen {
 
     public MainMenuScreen() {
             boardFrame = loadTrimmed("/assets/sprites/menu/menu_board_single.png"); // путь к вашей табличке
-        // background = Sprite.load("/assets/sprites/menu/menu_bg.png");
+        background = Sprite.load("/assets/sprites/menu/menu_bg_custom.png");
         boardSheet = SpriteSheet.load("/assets/sprites/menu/menu_board_sheet.png", boardSheetCols, boardSheetRows, 1, false);
         buttons = loadButtonGrid("/assets/sprites/menu/menu_buttons_sheet.png", 3, 3);
         titleLogo = loadFirstFrame("/assets/sprites/witcher_logo_new.png", 2, 3, true);
@@ -114,7 +114,7 @@ public class MainMenuScreen {
         g.setColor(Color.BLACK);
         g.fillRect(0, 0, sw, sh);
 
-        // drawBackground(g, sw, sh); // Фон не рисуем
+        drawBackground(g, sw, sh); // Рисуем фон
         drawAtmosphere(g, sw, sh);
 
         drawTitle(g, sw, sh);
@@ -136,8 +136,24 @@ public class MainMenuScreen {
     }
 
     private void drawBackground(Graphics2D g, int sw, int sh) {
+        // If a full-size background sprite is provided, draw it scaled to cover the screen.
+        if (background != null && background.getImage() != null) {
+            BufferedImage bg = background.getImage();
+            int srcW = bg.getWidth();
+            int srcH = bg.getHeight();
+            if (srcW > 0 && srcH > 0) {
+                float scale = Math.max((float) sw / srcW, (float) sh / srcH);
+                int w = Math.round(srcW * scale);
+                int h = Math.round(srcH * scale);
+                int x = (sw - w) / 2;
+                int y = (sh - h) / 2;
+                g.drawImage(bg, x, y, w, h, null);
+                return;
+            }
+        }
+
+        // Fallback: use boardSheet frames if available (keeps previous behaviour)
         if (boardSheet == null) return;
-        // Выбираем кадр по ширине окна (чтобы не растягивать сильно один кадр)
         int frameIdx = Math.min(boardSheetCols - 1, Math.max(0, (int) Math.round((double) (sw - 400) / 200)));
         BufferedImage frame = boardSheet.getFrame(frameIdx);
         if (frame == null) return;
@@ -282,17 +298,62 @@ public class MainMenuScreen {
     }
 
     private void drawAtmosphere(Graphics2D g, int sw, int sh) {
-        // drawAtmosphere — рисует анимации атмосферы: только пыль
-        // Concept: Dust FPS=12 (~5 ticks per frame at 60fps)
+        // drawAtmosphere — рисует анимации атмосферы: пыль внизу и дым по бокам логотипа
+        // Dust (bottom strip)
         int dustIdx = (tick / 5) % Math.max(1, dustFrames.length);
         if (dustFrames.length > 0) {
             BufferedImage dust = dustFrames[dustIdx];
             if (dust != null) {
+                int dh = dust.getHeight();
+                int dw = dust.getWidth();
+                int y = sh - dh;
+                // tile horizontally
                 Composite prev = g.getComposite();
-                g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.38f));
-                int dw = (int) (sw * 0.94f);
-                int dh = Math.max(1, dw * dust.getHeight() / dust.getWidth());
-                g.drawImage(dust, (sw - dw) / 2, (int) (sh * 0.58f), dw, dh, null);
+                g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));
+                for (int x = 0; x < sw; x += dw) {
+                    g.drawImage(dust, x, y, dw, dh, null);
+                }
+                g.setComposite(prev);
+            }
+        }
+
+        // Smoke near logo (left and right)
+        if (smokeFrames.length > 0) {
+            int smokeIdx = (tick / 6) % smokeFrames.length;
+            BufferedImage smoke = smokeFrames[smokeIdx];
+            if (smoke != null) {
+                // Compute logo bounds (same logic as drawTitle)
+                int logoY = (int) (sh * 0.035f);
+                int logoW, logoX;
+                if (logoSignData != null) {
+                    int signW = (int) (sw * 0.45f);
+                    logoW = (int) (signW * 0.7f);
+                    logoX = (sw - logoW) / 2;
+                } else if (titleLogo != null) {
+                    logoW = (int) (sw * 0.31f);
+                    logoX = (sw - logoW) / 2;
+                } else {
+                    // nothing to anchor to
+                    return;
+                }
+
+                int swSm = Math.max(1, logoW / 3); // smoke width relative to logo
+                int shSm = Math.max(1, swSm * smoke.getHeight() / smoke.getWidth());
+
+                int margin = 8;
+                int leftX = logoX - swSm - margin;
+                int rightX = logoX + logoW + margin;
+                int y = Math.max(0, logoY - shSm / 2);
+
+                Composite prev = g.getComposite();
+                g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.85f));
+
+                // Left smoke
+                g.drawImage(smoke, leftX, y, swSm, shSm, null);
+
+                // Right smoke — flipped horizontally
+                g.drawImage(smoke, rightX + swSm, y, -swSm, shSm, null);
+
                 g.setComposite(prev);
             }
         }
