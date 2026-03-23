@@ -307,13 +307,16 @@ public class MainMenuScreen {
             if (dust != null) {
                 int dh = dust.getHeight();
                 int dw = dust.getWidth();
-                // place dust at the very top of the screen
-                int y = 0;
-                // tile horizontally
+                // draw dust smaller and slightly above the top edge
+                float scale = 0.6f; // scale down to 60%
+                int drawW = Math.max(1, (int) (dw * scale));
+                int drawH = Math.max(1, (int) (dh * scale));
+                int y = - (drawH / 3); // move slightly above top
+                // tile horizontally using scaled width
                 Composite prev = g.getComposite();
                 g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));
-                for (int x = 0; x < sw; x += dw) {
-                    g.drawImage(dust, x, y, dw, dh, null);
+                for (int x = 0; x < sw; x += drawW) {
+                    g.drawImage(dust, x, y, drawW, drawH, null);
                 }
                 g.setComposite(prev);
             }
