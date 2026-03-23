@@ -307,8 +307,8 @@ public class MainMenuScreen {
             if (dust != null) {
                 int dh = dust.getHeight();
                 int dw = dust.getWidth();
-                // place dust lower on the screen (closer to bottom)
-                int y = Math.max(0, (int)(sh * 0.86f) - dh / 2);
+                // place dust at the very top of the screen
+                int y = 0;
                 // tile horizontally
                 Composite prev = g.getComposite();
                 g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));
