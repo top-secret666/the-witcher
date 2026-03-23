@@ -42,13 +42,14 @@ public class MainMenuScreen {
 
     public MainMenuScreen() {
             boardFrame = loadTrimmed("/assets/sprites/menu/menu_board_single.png"); // путь к вашей табличке
-        background = Sprite.load("/assets/sprites/menu/menu_bg_custom.png");
+        background = Sprite.load("/assets/sprites/menu/menu_bg_custom.jpg");
         boardSheet = SpriteSheet.load("/assets/sprites/menu/menu_board_sheet.png", boardSheetCols, boardSheetRows, 1, false);
         buttons = loadButtonGrid("/assets/sprites/menu/menu_buttons_sheet.png", 3, 3);
         titleLogo = loadFirstFrame("/assets/sprites/witcher_logo_new.png", 2, 3, true);
         logoSignData = loadTrimmed("/assets/sprites/menu/menu_logo_sign.png");
 
-        smokeFrames = loadFrames("/assets/sprites/menu/menu_smoke_sheet.png", 8, 1, true);
+        // smokeFrames removed per user request (no smoke)
+        smokeFrames = new BufferedImage[0];
         dustFrames = loadFrames("/assets/sprites/menu/menu_dust_sheet.png", 8, 1, true);
         transitionFrames = loadFramesRaw("/assets/sprites/menu/menu_transition_sheet.png", 4, 3);
 
@@ -317,46 +318,7 @@ public class MainMenuScreen {
             }
         }
 
-        // Smoke near logo (left and right)
-        if (smokeFrames.length > 0) {
-            int smokeIdx = (tick / 6) % smokeFrames.length;
-            BufferedImage smoke = smokeFrames[smokeIdx];
-            if (smoke != null) {
-                // Compute logo bounds (same logic as drawTitle)
-                int logoY = (int) (sh * 0.035f);
-                int logoW, logoX;
-                if (logoSignData != null) {
-                    int signW = (int) (sw * 0.45f);
-                    logoW = (int) (signW * 0.7f);
-                    logoX = (sw - logoW) / 2;
-                } else if (titleLogo != null) {
-                    logoW = (int) (sw * 0.31f);
-                    logoX = (sw - logoW) / 2;
-                } else {
-                    // nothing to anchor to
-                    return;
-                }
-
-                int swSm = Math.max(1, logoW / 3); // smoke width relative to logo
-                int shSm = Math.max(1, swSm * smoke.getHeight() / smoke.getWidth());
-
-                int margin = 8;
-                int leftX = logoX - swSm - margin;
-                int rightX = logoX + logoW + margin;
-                int y = Math.max(0, logoY - shSm / 2);
-
-                Composite prev = g.getComposite();
-                g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.85f));
-
-                // Left smoke
-                g.drawImage(smoke, leftX, y, swSm, shSm, null);
-
-                // Right smoke — flipped horizontally
-                g.drawImage(smoke, rightX + swSm, y, -swSm, shSm, null);
-
-                g.setComposite(prev);
-            }
-        }
+        // smoke removed — no smoke drawn
     }
 
     private void drawTransition(Graphics2D g, int sw, int sh) {
