@@ -17,8 +17,11 @@ public class GameWindow {
     private Sprite sprite;
     private SplashScreen splashScreen;
     private MainMenuScreen mainMenu;
+    private IntroScreen introScreen;
     private boolean splashActive = true;
     private boolean menuActive = false;
+    private boolean introActive = false;
+    private boolean introAdvancePending = false;
 
     // Ввод для меню в координатах виртуального экрана
     private int mouseVX = 0;
@@ -114,6 +117,14 @@ public class GameWindow {
         renderer.addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
+                if (introActive) {
+                    int code = e.getKeyCode();
+                    if (code == KeyEvent.VK_ENTER || code == KeyEvent.VK_SPACE) {
+                        introAdvancePending = true;
+                    }
+                    return;
+                }
+
                 if (!menuActive) return;
 
                 int code = e.getKeyCode();
@@ -510,7 +521,10 @@ public class GameWindow {
                 if (menuExitRequested || action == MainMenuScreen.Action.EXIT) {
                     frame.dispatchEvent(new WindowEvent(frame, WindowEvent.WINDOW_CLOSING));
                 } else if (action == MainMenuScreen.Action.START) {
-                    System.out.println("[MENU] Start pressed (scene not implemented yet)");
+                    // Запуск пиксельной заставки-интро
+                    menuActive = false;
+                    introActive = true;
+                    introScreen = new IntroScreen();
                 } else if (action == MainMenuScreen.Action.SETTINGS) {
                     System.out.println("[MENU] Settings pressed (scene not implemented yet)");
                 }
@@ -519,6 +533,23 @@ public class GameWindow {
                 menuNavDir = 0;
                 menuActivate = false;
                 menuExitRequested = false;
+            } else if (introActive) {
+                boolean advance = introAdvancePending || mouseClickPending;
+                introScreen.update(advance);
+                introScreen.render(renderer.screen, mouseVX, mouseVY);
+                renderer.repaint();
+
+                introAdvancePending = false;
+                mouseClickPending = false;
+
+                if (introScreen.isFinished()) {
+                    introActive = false;
+                    // Здесь будет переход к основной игре / консольной части
+                    System.out.println("[INTRO] Intro finished — starting game...");
+                    // Пока возвращаемся в меню
+                    menuActive = true;
+                    mainMenu = new MainMenuScreen();
+                }
             } else {
                 renderer.update();
                 renderer.repaint();
