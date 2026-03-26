@@ -92,7 +92,7 @@ public class IntroScreen {
 
     // ─── Цвета ───
     private static final Color NARRATOR_COLOR = new Color(180, 170, 150);
-    private static final Color GERALT_COLOR = new Color(0x54, 0x60, 0x68);
+    private static final Color GERALT_COLOR = new Color(160, 205, 235);
     private static final Color STRANGER_COLOR = new Color(100, 130, 200);
     private static final Color DUKE_COLOR = new Color(218, 165, 32);
     private static final Color BOX_BG = new Color(10, 8, 4, 220);
@@ -244,18 +244,18 @@ public class IntroScreen {
             }
         }
 
-        // Искры от факелов
+        // Искры от факелов — позиции соответствуют факелам на фоновой картинке
+        // Фон 400×225 масштабирован ×1.6 и смещён −80px по X в виртуальном пространстве 480×360
         if (tick % 4 == 0 && fadeAlpha > 0.3f) {
-            // Три точки-факела на фоне
-            float[] torchX = {0.18f, 0.42f, 0.72f};
-            float[] torchY = {0.25f, 0.20f, 0.22f};
+            float[] torchX = {0.033f, 0.40f};   // левый факел у арки, нижний у лестницы
+            float[] torchY = {0.690f, 0.813f};
             int idx = rng.nextInt(torchX.length);
             sparks.add(new float[]{
-                    torchX[idx] * 480 + (rng.nextFloat() - 0.5f) * 10,
+                    torchX[idx] * 480 + (rng.nextFloat() - 0.5f) * 8,
                     torchY[idx] * 360 + (rng.nextFloat() - 0.5f) * 6,
-                    (rng.nextFloat() - 0.5f) * 0.3f,
-                    -0.3f - rng.nextFloat() * 0.4f,
-                    0, 30 + rng.nextInt(35)
+                    (rng.nextFloat() - 0.5f) * 0.4f,
+                    -0.5f - rng.nextFloat() * 0.5f,
+                    0, 25 + rng.nextInt(30)
             });
         }
         sparks.removeIf(s -> s[4] >= s[5]);
@@ -437,11 +437,15 @@ public class IntroScreen {
 
         // ── Спрайт персонажа ──
         float alpha = fadeAlpha * Math.min(1f, slide * 1.5f);
-        if (!isActive) {
-            alpha *= 0.55f;
-        }
         g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, Math.min(1f, alpha)));
         g.drawImage(sprite, cx, cy, cw, ch, null);
+
+        // Неактивный персонаж затемняется (без прозрачности — просто темнее)
+        if (!isActive) {
+            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, Math.min(1f, alpha * 0.45f)));
+            g.setColor(Color.BLACK);
+            g.fillRect(cx, cy, cw, ch);
+        }
 
         g.setComposite(prev);
     }
