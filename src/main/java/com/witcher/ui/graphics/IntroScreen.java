@@ -90,6 +90,9 @@ public class IntroScreen {
     private final List<float[]> sparks = new ArrayList<>();
     private final Random rng = new Random();
 
+    // ─── Частицы пепла/пыли (фоновая анимация) ───
+    private final List<float[]> ashParticles = new ArrayList<>(); // [x,y,vx,vy,life,maxLife,size,alpha]
+
     // ─── Цвета ───
     private static final Color NARRATOR_COLOR = new Color(180, 170, 150);
     private static final Color GERALT_COLOR = new Color(160, 205, 235);
@@ -244,6 +247,23 @@ public class IntroScreen {
             }
         }
 
+        // ── Частицы пепла/пыли (фоновая анимация) ──
+        if (tick % 3 == 0 && fadeAlpha > 0.1f) {
+            float px = rng.nextFloat() * 480;
+            float py = 360 + rng.nextInt(20);
+            float vx = (rng.nextFloat() - 0.5f) * 0.5f;
+            float vy = -0.3f - rng.nextFloat() * 0.6f;
+            float sz = 1 + rng.nextFloat() * 2f;
+            float maxLife = 80 + rng.nextInt(80);
+            ashParticles.add(new float[]{px, py, vx, vy, 0, maxLife, sz, 1f});
+        }
+        ashParticles.removeIf(p -> p[4] >= p[5] || p[1] < -10);
+        for (float[] p : ashParticles) {
+            p[0] += p[2] + (float) Math.sin(tick * 0.05 + p[0] * 0.02) * 0.3f;
+            p[1] += p[3];
+            p[4]++;
+        }
+
         // Искры от факелов — позиции соответствуют факелам на фоновой картинке
         // Фон 400×225 масштабирован ×1.6 и смещён −80px по X в виртуальном пространстве 480×360
         if (tick % 4 == 0 && fadeAlpha > 0.3f) {
@@ -323,6 +343,34 @@ public class IntroScreen {
         g.setColor(new Color(255, 170, 85));
         g.fillRect(0, 0, sw, sh);
         g.setComposite(prevC);
+
+        // ── Виньетка (затемнение по краям, пульсирует) ──
+        {
+            float vignPulse = 0.55f + 0.05f * (float) Math.sin(tick * 0.025);
+            Composite prevV = g.getComposite();
+            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, fadeAlpha * vignPulse));
+            int vigSteps = 30;
+            for (int vi = 0; vi < vigSteps; vi++) {
+                float t = (float) vi / vigSteps;
+                float a = t * t * 0.75f;
+                int bx = (int)(sw * t * 0.5f);
+                int by = (int)(sh * t * 0.5f);
+                g.setColor(new Color(0, 0, 0, Math.min(255, (int)(a * 255))));
+                g.drawRect(bx, by, sw - bx * 2 - 1, sh - by * 2 - 1);
+            }
+            g.setComposite(prevV);
+        }
+
+        // ── Частицы пепла/пыли ──
+        for (float[] p : ashParticles) {
+            float life = p[4] / p[5];
+            // Плавное появление и затухание
+            float a = fadeAlpha * (life < 0.15f ? life / 0.15f : (life > 0.75f ? (1f - life) / 0.25f : 1f)) * 0.55f;
+            int col = 160 + (int)(rng.nextFloat() * 30);
+            g.setColor(new Color(col, col - 20, col - 40, Math.max(0, Math.min(255, (int)(a * 200)))));
+            int psz = Math.max(1, Math.round(p[6]));
+            g.fillRect(Math.round(p[0] * sw / 480f), Math.round(p[1] * sh / 360f), psz, psz);
+        }
 
 
 
@@ -439,13 +487,6 @@ public class IntroScreen {
         float alpha = fadeAlpha * Math.min(1f, slide * 1.5f);
         g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, Math.min(1f, alpha)));
         g.drawImage(sprite, cx, cy, cw, ch, null);
-
-        // Неактивный персонаж затемняется (без прозрачности — просто темнее)
-        if (!isActive) {
-            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, Math.min(1f, alpha * 0.45f)));
-            g.setColor(Color.BLACK);
-            g.fillRect(cx, cy, cw, ch);
-        }
 
         g.setComposite(prev);
     }
