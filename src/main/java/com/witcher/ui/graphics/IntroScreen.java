@@ -481,9 +481,14 @@ public class IntroScreen {
         int textY = boxY + pad;
         int textMaxW = boxW - pad * 2;
 
-        int fontSize = Math.max(10, (int) (sh * 0.036f));
-        Font nameFont = new Font("Monospaced", Font.BOLD, fontSize);
-        Font textFont = new Font("Monospaced", Font.PLAIN, Math.max(9, fontSize - 2));
+        int fontSize = Math.max(12, (int) (sh * 0.040f));
+        Font nameFont = new Font("Serif", Font.BOLD, fontSize);
+        Font textFont = new Font("Serif", Font.PLAIN, fontSize);
+
+        // Включаем сглаживание только для диалогов
+        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
 
         int lineY = textY;
 
@@ -545,12 +550,17 @@ public class IntroScreen {
 
         // ── Подсказка [ Enter ] ──
         if (waitingForAdvance && (tick / 15) % 2 == 0) {
-            g.setFont(new Font("Monospaced", Font.BOLD, Math.max(8, fontSize - 3)));
+            g.setFont(new Font("Serif", Font.BOLD, Math.max(10, fontSize - 2)));
             g.setColor(HINT_COLOR);
             String hint = "\u25B6 Enter";
             int hw = g.getFontMetrics().stringWidth(hint);
             g.drawString(hint, boxX + boxW - pad - hw, boxY + boxH - pad + 2);
         }
+
+        // Восстанавливаем пиксельные настройки
+        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+        g.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_DEFAULT);
     }
 
     // ─── Утилиты ───
