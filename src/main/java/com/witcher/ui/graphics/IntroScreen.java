@@ -92,7 +92,7 @@ public class IntroScreen {
 
     // ─── Цвета ───
     private static final Color NARRATOR_COLOR = new Color(180, 170, 150);
-    private static final Color GERALT_COLOR = new Color(220, 220, 220);
+    private static final Color GERALT_COLOR = new Color(0x54, 0x60, 0x68);
     private static final Color STRANGER_COLOR = new Color(100, 130, 200);
     private static final Color DUKE_COLOR = new Color(218, 165, 32);
     private static final Color BOX_BG = new Color(10, 8, 4, 220);
@@ -523,7 +523,7 @@ public class IntroScreen {
         int lineH = fm.getHeight();
 
         String visibleText = entry.text.substring(0, Math.min(charIndex, entry.text.length()));
-        Color textColor = entry.speaker == null ? entry.speakerColor : new Color(220, 210, 190);
+        Color textColor = entry.speaker == null ? entry.speakerColor : new Color(255, 220, 80);
 
         String[] rawLines = visibleText.split("\n", -1);
         for (String rawLine : rawLines) {
