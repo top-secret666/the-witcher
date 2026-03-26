@@ -2,6 +2,10 @@ package main.java.com.witcher.ui.graphics;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Random;
 
 // Для поддержки спрайт-листа фона
 import main.java.com.witcher.ui.graphics.SpriteSheet;
@@ -40,6 +44,10 @@ public class MainMenuScreen {
     private int transitionTick = 0;
     private Action pendingAction = Action.NONE;
 
+    // Эмберы — тёплые парящие частицы
+    private final List<float[]> embers = new ArrayList<>();
+    private final Random rng = new Random();
+
     public MainMenuScreen() {
             boardFrame = loadTrimmed("/assets/sprites/menu/menu_board_single.png"); // путь к вашей табличке
         background = Sprite.load("/assets/sprites/menu/menu_bg_custom.jpg");
@@ -63,6 +71,31 @@ public class MainMenuScreen {
             pressedTicks--;
         }
         transitionTick++;
+
+        // Спавн эмберов — тёплые парящие частицы поднимаются снизу
+        if (tick % 3 == 0 && embers.size() < 40) {
+            // x, y, vx, vy, age, maxAge, size, r, g, b
+            float x = rng.nextFloat() * 480;
+            float y = 360 + rng.nextFloat() * 20;
+            float vx = (rng.nextFloat() - 0.5f) * 0.3f;
+            float vy = -0.4f - rng.nextFloat() * 0.6f;
+            int maxAge = 120 + rng.nextInt(180);
+            float sz = 1 + rng.nextFloat() * 2;
+            int r = 200 + rng.nextInt(56);
+            int g = 80 + rng.nextInt(80);
+            int b = 10 + rng.nextInt(30);
+            embers.add(new float[]{x, y, vx, vy, 0, maxAge, sz, r, g, b});
+        }
+        // Обновление эмберов
+        Iterator<float[]> it = embers.iterator();
+        while (it.hasNext()) {
+            float[] e = it.next();
+            e[0] += e[2] + (float) Math.sin(e[4] * 0.03) * 0.15f; // drift
+            e[1] += e[3];
+            e[2] *= 0.995f;
+            e[4]++;
+            if (e[4] >= e[5] || e[1] < -10) it.remove();
+        }
 
         // Mouse hover chooses currently focused button.
         for (int i = 0; i < buttonRects.length; i++) {
@@ -299,31 +332,37 @@ public class MainMenuScreen {
     }
 
     private void drawAtmosphere(Graphics2D g, int sw, int sh) {
-        // drawAtmosphere — рисует анимации атмосферы: пыль внизу и дым по бокам логотипа
-        // Dust (bottom strip)
-        int dustIdx = (tick / 5) % Math.max(1, dustFrames.length);
-        if (dustFrames.length > 0) {
-            BufferedImage dust = dustFrames[dustIdx];
-            if (dust != null) {
-                int dh = dust.getHeight();
-                int dw = dust.getWidth();
-                // draw dust smaller and slightly above the top edge
-                float scale = 0.4f; // scale down to 40%
-                int drawW = Math.max(1, (int) (dw * scale));
-                int drawH = Math.max(1, (int) (dh * scale));
-                int y = - (drawH / 3); // move slightly above top
-                // tile horizontally using scaled width
+        // Парящие тёплые эмберы
+        for (float[] e : embers) {
+            float life = e[4] / e[5];
+            // Яркость = fade in -> stable -> fade out
+            float a;
+            if (life < 0.15f) a = life / 0.15f;
+            else if (life > 0.7f) a = (1f - life) / 0.3f;
+            else a = 1f;
+            a = Math.max(0f, Math.min(1f, a)) * 0.8f;
+
+            int r = Math.min(255, (int) e[7]);
+            int eg = Math.min(255, (int) e[8]);
+            int b = Math.min(255, (int) e[9]);
+            g.setColor(new Color(r, eg, b, (int) (a * 200)));
+
+            float sz = e[6] * (1f - life * 0.4f);
+            int px = Math.round(e[0] * sw / 480f);
+            int py = Math.round(e[1] * sh / 360f);
+            int psz = Math.max(1, Math.round(sz));
+            g.fillOval(px, py, psz, psz);
+
+            // Glow вокруг частицы
+            if (sz > 1.2f && a > 0.3f) {
                 Composite prev = g.getComposite();
-                g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));
-                // top dust strip only
-                for (int x = 0; x < sw; x += drawW) {
-                    g.drawImage(dust, x, y, drawW, drawH, null);
-                }
+                g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, a * 0.15f));
+                g.setColor(new Color(255, 160, 60));
+                int glow = psz * 3;
+                g.fillOval(px - glow / 2, py - glow / 2, glow, glow);
                 g.setComposite(prev);
             }
         }
-
-        // smoke removed — no smoke drawn
     }
 
     private void drawTransition(Graphics2D g, int sw, int sh) {
