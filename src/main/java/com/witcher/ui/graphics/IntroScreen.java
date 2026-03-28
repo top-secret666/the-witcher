@@ -579,12 +579,12 @@ public class IntroScreen {
 
         // ── Красивая многослойная рамка в стиле Ведьмака ──
         
-        // 1. Внешняя толстая золотая рамка (ярче)
-        g.setColor(new Color(230, 180, 90, Math.max(0, Math.min(255, (int)(fadeAlpha * 255)))));
-        g.fillRect(boxX - 2, boxY - 2, boxW + 4, 3);  // верх
-        g.fillRect(boxX - 2, boxY + boxH - 1, boxW + 4, 3);  // низ
-        g.fillRect(boxX - 2, boxY - 2, 3, boxH + 4);  // лево
-        g.fillRect(boxX + boxW - 1, boxY - 2, 3, boxH + 4);  // право
+        // 1. Внешняя толстая золота+белая рамка (немного темнее)
+        g.setColor(new Color(235, 200, 110, Math.max(0, Math.min(255, (int)(fadeAlpha * 255)))));
+        g.fillRect(boxX - 2, boxY - 2, boxW + 4, 4);  // верх
+        g.fillRect(boxX - 2, boxY + boxH - 2, boxW + 4, 4);  // низ
+        g.fillRect(boxX - 2, boxY - 2, 4, boxH + 4);  // лево
+        g.fillRect(boxX + boxW - 2, boxY - 2, 4, boxH + 4);  // право
         
         // 2. Основная яркая золотая рамка
         g.setColor(new Color(218, 165, 32, Math.max(0, Math.min(255, (int)(fadeAlpha * 255)))));
@@ -616,13 +616,15 @@ public class IntroScreen {
         g.fillRect(boxX + boxW - cornerSize + 2, boxY + boxH, cornerSize, 2);
         g.fillRect(boxX + boxW, boxY + boxH - cornerSize + 2, 2, cornerSize);
         
-        // 5. Яркое золотое свечение изнутри рамки
-        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, fadeAlpha * 0.45f));
-        g.setColor(new Color(255, 230, 140));
+        // 5. Очень яркое золотое свечение изнутри рамки
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, fadeAlpha * 0.65f));
+        g.setColor(new Color(255, 245, 160));
         g.drawRect(boxX + 1, boxY + 1, boxW - 2, boxH - 2);
-        // Двойное свечение для усиления
-        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, fadeAlpha * 0.25f));
+        // Двойное интенсивное свечение
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, fadeAlpha * 0.45f));
         g.drawRect(boxX + 2, boxY + 2, boxW - 4, boxH - 4);
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, fadeAlpha * 0.25f));
+        g.drawRect(boxX + 3, boxY + 3, boxW - 6, boxH - 6);
         g.setComposite(prev);
 
         // ── Пад-отступы ──
