@@ -30,6 +30,8 @@ public class IntroScreen {
     private final BufferedImage geraltSprite;
     private final BufferedImage dukeSprite;
     private final BufferedImage strangerSprite;
+    private final BufferedImage geraltEmotionSprite;
+    private final BufferedImage dukeLaughSprite;
 
     // Фон: кадры GIF (декодированы вручную) или статичный фон
     private final BufferedImage[] bgFrames;  // null если GIF не загрузился
@@ -96,6 +98,10 @@ public class IntroScreen {
     // ─── Частицы пепла/пыли (фоновая анимация) ───
     private final List<float[]> ashParticles = new ArrayList<>(); // [x,y,vx,vy,life,maxLife,size,alpha]
 
+    // Эмоции для персонажей
+    private BufferedImage leftEmotion = null;
+    private BufferedImage rightEmotion = null;
+
     // ─── Цвета ───
     private static final Color NARRATOR_COLOR = new Color(180, 170, 150);
     private static final Color GERALT_COLOR = new Color(160, 205, 235);
@@ -113,6 +119,10 @@ public class IntroScreen {
         geraltSprite = loadTrimmed("/assets/sprites/screen saver/geralt_portrait.png");
         dukeSprite = loadTrimmed("/assets/sprites/screen saver/duke_portrait.png");
         strangerSprite = loadTrimmed("/assets/sprites/screen saver/stranger_shadow.png");
+
+        // Эмоции для диалогов
+        geraltEmotionSprite = loadTrimmed("/assets/sprites/screen saver/geralt_emotion.png");
+        dukeLaughSprite = loadTrimmed("/assets/sprites/screen saver/duke_portrait_fun.png");
 
         // ─── Загрузка фона (статичная PNG картинка) ───
         bgFrames = null;
@@ -175,6 +185,23 @@ public class IntroScreen {
         // Обновляем видимость персонажей
         geraltVisible = "geralt".equals(entry.leftChar);
         String newRight = entry.rightChar;
+
+        // Выбираем эмоцию для текущей реплики (персонажу, а не диалоговой рамке)
+        leftEmotion = null;
+        rightEmotion = null;
+        if ("Геральт".equals(entry.speaker)) {
+            leftEmotion = geraltEmotionSprite != null ? geraltEmotionSprite : geraltSprite;
+        } else if ("Герцог".equals(entry.speaker)) {
+            rightEmotion = dukeLaughSprite != null ? dukeLaughSprite : dukeSprite;
+        }
+
+        // Фоллбэк, если нет эмо-спрайта
+        if (leftEmotion == null && "Геральт".equals(entry.speaker)) {
+            leftEmotion = geraltSprite;
+        }
+        if (rightEmotion == null && "Герцог".equals(entry.speaker)) {
+            rightEmotion = dukeSprite;
+        }
 
         // Детектим смену правого персонажа (stranger → duke)
         if (!newRight.equals(prevRightCharacter) && !"none".equals(newRight) && !"none".equals(prevRightCharacter)
@@ -332,8 +359,9 @@ public class IntroScreen {
         DialogEntry entry = currentEntry < entries.size() ? entries.get(currentEntry) : null;
         String activeSide = entry != null ? entry.activeSide : "none";
 
-        // Рисуем Геральта (слева)
-        drawCharacterEnhanced(g, sw, sh, geraltSprite, geraltSlide, true,
+        // Рисуем Геральта (слева) - используем эмоциональный спрайт, если он активен и говорит
+        BufferedImage leftSpriteToShow = (leftEmotion != null && "left".equals(activeSide)) ? leftEmotion : geraltSprite;
+        drawCharacterEnhanced(g, sw, sh, leftSpriteToShow, geraltSlide, true,
                 "left".equals(activeSide), leftActiveAnim);
 
         // Рисуем правых персонажей с кроссфейдом (stranger уходит, duke появляется)
@@ -342,7 +370,9 @@ public class IntroScreen {
                     "right".equals(activeSide) && "stranger".equals(rightCharacter), rightActiveAnim);
         }
         if (dukeSlide > 0.001f) {
-            drawCharacterEnhanced(g, sw, sh, dukeSprite, dukeSlide, false,
+            // Для герцога используем эмоциональный спрайт (смех), если он активен и говорит
+            BufferedImage rightSpriteToShow = (rightEmotion != null && "right".equals(activeSide)) ? rightEmotion : dukeSprite;
+            drawCharacterEnhanced(g, sw, sh, rightSpriteToShow, dukeSlide, false,
                     "right".equals(activeSide) && "duke".equals(rightCharacter), rightActiveAnim);
         }
 
@@ -358,45 +388,95 @@ public class IntroScreen {
             g.fillRect(Math.round(p[0] * sw / 480f), Math.round(p[1] * sh / 360f), sz, sz);
         }
 
-        // ── Вспышка при смене персонажа ──
+        // ── Красивая анимация появления герцога (золотые молнии + энергетические волны) ──
         if (switchFlash > 0.01f && rightCharacterBounds != null) {
             Composite prevF = g.getComposite();
-            float glow = 1f + switchFlash * 0.8f;
             int cx = rightCharacterBounds.x + rightCharacterBounds.width / 2;
             int cy = rightCharacterBounds.y + rightCharacterBounds.height / 2;
-            float maxR = Math.max(rightCharacterBounds.width, rightCharacterBounds.height) * 0.9f * glow;
-
-            // несколькo концентрических колец
-            for (int i = 0; i < 3; i++) {
-                float t = (i + 1) / 3f;
-                float radius = maxR * t;
-                float alpha = switchFlash * (0.35f - i * 0.1f);
-                g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, Math.max(0f, alpha)));
-                g.setColor(new Color(255, 210, 140, Math.max(0, Math.min(255, (int) (alpha * 255)))));
-                int rg = Math.round(radius);
-                g.drawOval(cx - rg, cy - rg, 2 * rg, 2 * rg);
+            
+            // ── 1. Золотые расходящиеся волны энергии (4 слоя) ──
+            for (int i = 0; i < 4; i++) {
+                float wavePhase = (switchFlash + i * 0.15f) % 1f;
+                float waveRadius = rightCharacterBounds.width * 0.6f * (1f + wavePhase * 2.5f);
+                float waveAlpha = (1f - wavePhase) * switchFlash * 0.5f;
+                
+                g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, Math.max(0f, waveAlpha)));
+                g.setColor(new Color(255, 215, 0, Math.max(0, Math.min(255, (int)(waveAlpha * 200)))));
+                g.setStroke(new BasicStroke(3f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+                int wr = Math.round(waveRadius);
+                g.drawOval(cx - wr, cy - wr, 2 * wr, 2 * wr);
             }
-
-            // легкое свечение под ногами
-            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, switchFlash * 0.15f));
-            g.setColor(new Color(240, 180, 110));
-            int groundW = rightCharacterBounds.width + 20;
-            int groundH = 16;
-            g.fillOval(cx - groundW/2, rightCharacterBounds.y + rightCharacterBounds.height - 8, groundW, groundH);
-
-            // частички энергии вокруг персонажа
+            
+            // ── 2. Яркая звезда-вспышка в центре ──
+            float starAlpha = switchFlash * 0.8f;
+            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, starAlpha));
+            g.setColor(new Color(255, 245, 200, Math.max(0, Math.min(255, (int)(starAlpha * 255)))));
+            int starSize = Math.round(rightCharacterBounds.width * 0.25f * (1f + switchFlash * 0.5f));
+            // Рисуем крест-звезду (4 луча)
+            g.setStroke(new BasicStroke(4f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+            g.drawLine(cx - starSize, cy, cx + starSize, cy); // горизонталь
+            g.drawLine(cx, cy - starSize, cx, cy + starSize); // вертикаль
+            // Диагональные лучи
+            int diag = Math.round(starSize * 0.7f);
+            g.drawLine(cx - diag, cy - diag, cx + diag, cy + diag);
+            g.drawLine(cx - diag, cy + diag, cx + diag, cy - diag);
+            
+            // ── 3. Золотое свечение вокруг фигуры (аура) ──
+            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, switchFlash * 0.25f));
+            RadialGradientPaint aura = new RadialGradientPaint(
+                cx, cy, 
+                rightCharacterBounds.width * 0.65f,
+                new float[]{0f, 0.5f, 1f},
+                new Color[]{
+                    new Color(255, 215, 0, 180),
+                    new Color(255, 195, 50, 100),
+                    new Color(255, 180, 0, 0)
+                }
+            );
+            g.setPaint(aura);
+            int auraSize = Math.round(rightCharacterBounds.width * 1.3f);
+            g.fillOval(cx - auraSize/2, cy - auraSize/2, auraSize, auraSize);
+            
+            // ── 4. Золотые молнии (8 ярких вспышек от центра) ──
+            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, switchFlash * 0.7f));
+            g.setStroke(new BasicStroke(2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+            for (int i = 0; i < 8; i++) {
+                float angle = (float)(i * Math.PI / 4 + tick * 0.05);
+                int boltLen = Math.round(rightCharacterBounds.width * 0.4f * (0.8f + switchFlash * 0.4f));
+                int ex = cx + (int)(Math.cos(angle) * boltLen);
+                int ey = cy + (int)(Math.sin(angle) * boltLen);
+                
+                // Градиент от центра к краю
+                float intensity = (i % 2 == 0) ? 1f : 0.7f;
+                g.setColor(new Color(255, 235, 100, Math.max(0, Math.min(255, (int)(switchFlash * 255 * intensity)))));
+                g.drawLine(cx, cy, ex, ey);
+            }
+            
+            // ── 5. Яркие частицы-искры (золотые точки) ──
             for (float[] rp : rightSwitchParticles) {
                 float life = rp[4] / rp[5];
-                float alpha = (1f - life) * switchFlash;
-                int s = Math.max(1, Math.round(2 + (0.5f - life) * 3));
+                float alpha = (1f - life) * switchFlash * 0.9f;
+                int s = Math.max(2, Math.round(3 + (0.5f - life) * 4));
                 g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, Math.max(0f, alpha)));
-                int rc = Math.max(0, Math.min(255, (int) (255 - life * 60)));
-                int gc = Math.max(0, Math.min(255, (int) (170 + life * 40)));
-                g.setColor(new Color(rc, gc, 80, Math.max(0, Math.min(255, (int)(alpha*255)))));
+                
+                // Золотой цвет с легким мерцанием
+                int rc = Math.max(0, Math.min(255, (int) (255 - life * 30)));
+                int gc = Math.max(0, Math.min(255, (int) (200 + life * 55)));
+                int bc = Math.max(0, Math.min(255, (int) (20 + life * 30)));
+                
+                g.setColor(new Color(rc, gc, bc, Math.max(0, Math.min(255, (int)(alpha*255)))));
                 g.fillOval(Math.round(rp[0] * sw / 480f) - s/2, Math.round(rp[1] * sh / 360f) - s/2, s, s);
+                
+                // Легкое свечение вокруг частицы
+                if (life < 0.5f) {
+                    g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha * 0.3f));
+                    g.setColor(new Color(255, 220, 80, Math.max(0, Math.min(255, (int)(alpha * 100)))));
+                    g.fillOval(Math.round(rp[0] * sw / 480f) - s, Math.round(rp[1] * sh / 360f) - s, s*2, s*2);
+                }
             }
-
+            
             g.setComposite(prevF);
+            g.setStroke(new BasicStroke(1f));
         }
 
         // ── Диалоговое окно ──
@@ -459,7 +539,8 @@ public class IntroScreen {
 
         Composite prev = g.getComposite();
 
-        // ── Спрайт персонажа ──
+        // ── Спрайт персонажа (ЧЕТКИЙ - NEAREST_NEIGHBOR для пиксель-арта) ──
+        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
         g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, fadeAlpha));
         g.drawImage(sprite, cx, cy, cw, ch, null);
 
@@ -480,25 +561,66 @@ public class IntroScreen {
         int boxX = boxMargin;
         int boxY = sh - boxH - (int)(sh * 0.02f);
 
-        // ── Фон диалогового окна ──
+        // ── Фон диалогового окна с градиентом ──
         Composite prev = g.getComposite();
-        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, fadeAlpha * 0.88f));
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, fadeAlpha * 0.90f));
         g.setColor(BOX_BG);
         g.fillRect(boxX, boxY, boxW, boxH);
+        
+        // Легкий градиент сверху вниз для объема
+        GradientPaint bgGradient = new GradientPaint(
+            boxX, boxY, new Color(20, 16, 8, 80),
+            boxX, boxY + boxH / 3, new Color(5, 4, 2, 0)
+        );
+        g.setPaint(bgGradient);
+        g.fillRect(boxX, boxY, boxW, boxH / 3);
+        
         g.setComposite(prev);
 
-        // ── Рамка (двойная пиксельная) ──
-        g.setColor(BOX_BORDER);
-        g.fillRect(boxX, boxY, boxW, 2);
-        g.fillRect(boxX, boxY + boxH - 2, boxW, 2);
-        g.fillRect(boxX, boxY, 2, boxH);
-        g.fillRect(boxX + boxW - 2, boxY, 2, boxH);
-        // Внутренняя рамка
-        g.setColor(BOX_BORDER_INNER);
-        g.fillRect(boxX + 3, boxY + 3, boxW - 6, 1);
-        g.fillRect(boxX + 3, boxY + boxH - 4, boxW - 6, 1);
-        g.fillRect(boxX + 3, boxY + 3, 1, boxH - 6);
-        g.fillRect(boxX + boxW - 4, boxY + 3, 1, boxH - 6);
+        // ── Красивая многослойная рамка в стиле Ведьмака ──
+        
+        // 1. Внешняя толстая золотая рамка
+        g.setColor(new Color(180, 140, 60, Math.max(0, Math.min(255, (int)(fadeAlpha * 255)))));
+        g.fillRect(boxX - 2, boxY - 2, boxW + 4, 3);  // верх
+        g.fillRect(boxX - 2, boxY + boxH - 1, boxW + 4, 3);  // низ
+        g.fillRect(boxX - 2, boxY - 2, 3, boxH + 4);  // лево
+        g.fillRect(boxX + boxW - 1, boxY - 2, 3, boxH + 4);  // право
+        
+        // 2. Основная яркая золотая рамка
+        g.setColor(new Color(218, 165, 32, Math.max(0, Math.min(255, (int)(fadeAlpha * 255)))));
+        g.fillRect(boxX, boxY, boxW, 2);  // верх
+        g.fillRect(boxX, boxY + boxH - 2, boxW, 2);  // низ
+        g.fillRect(boxX, boxY, 2, boxH);  // лево
+        g.fillRect(boxX + boxW - 2, boxY, 2, boxH);  // право
+        
+        // 3. Внутренняя тонкая темная рамка для контраста
+        g.setColor(new Color(60, 45, 15, Math.max(0, Math.min(255, (int)(fadeAlpha * 200)))));
+        g.fillRect(boxX + 4, boxY + 4, boxW - 8, 1);  // верх
+        g.fillRect(boxX + 4, boxY + boxH - 5, boxW - 8, 1);  // низ
+        g.fillRect(boxX + 4, boxY + 4, 1, boxH - 8);  // лево
+        g.fillRect(boxX + boxW - 5, boxY + 4, 1, boxH - 8);  // право
+        
+        // 4. Декоративные угловые акценты (золотые уголки)
+        int cornerSize = 12;
+        g.setColor(new Color(255, 215, 0, Math.max(0, Math.min(255, (int)(fadeAlpha * 220)))));
+        // Верхний левый
+        g.fillRect(boxX - 2, boxY - 2, cornerSize, 2);
+        g.fillRect(boxX - 2, boxY - 2, 2, cornerSize);
+        // Верхний правый
+        g.fillRect(boxX + boxW - cornerSize + 2, boxY - 2, cornerSize, 2);
+        g.fillRect(boxX + boxW, boxY - 2, 2, cornerSize);
+        // Нижний левый
+        g.fillRect(boxX - 2, boxY + boxH, cornerSize, 2);
+        g.fillRect(boxX - 2, boxY + boxH - cornerSize + 2, 2, cornerSize);
+        // Нижний правый
+        g.fillRect(boxX + boxW - cornerSize + 2, boxY + boxH, cornerSize, 2);
+        g.fillRect(boxX + boxW, boxY + boxH - cornerSize + 2, 2, cornerSize);
+        
+        // 5. Легкое свечение изнутри рамки
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, fadeAlpha * 0.15f));
+        g.setColor(new Color(255, 220, 120));
+        g.drawRect(boxX + 1, boxY + 1, boxW - 2, boxH - 2);
+        g.setComposite(prev);
 
         // ── Пад-отступы ──
         int pad = (int) (sw * 0.02f);
