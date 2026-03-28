@@ -51,11 +51,14 @@ public class IntroScreen {
     private boolean geraltVisible = false;
     private String rightCharacter = "none"; // "stranger" | "duke" | "none"
     private String prevRightCharacter = "none"; // для отслеживания смены
+    private Rectangle rightCharacterBounds = null; // для эффекта смены
 
     // Вспышка при смене персонажа (0..1, затухает)
     private float switchFlash = 0f;
     // Частицы-искры при смене персонажа
     private final List<float[]> switchParticles = new ArrayList<>(); // [x,y,vx,vy,life,maxLife,r,g,b]
+    // Подсилка для эффекта нового правого персонажа
+    private final List<float[]> rightSwitchParticles = new ArrayList<>(); // [x,y,vx,vy,life,maxLife,alpha]
 
     // ─── Записи диалога ───
     private static final class DialogEntry {
@@ -178,15 +181,28 @@ public class IntroScreen {
                 && !newRight.equals(prevRightCharacter)) {
             switchFlash = 1.0f;
             // Генерируем частицы-искры при переключении
-            for (int i = 0; i < 25; i++) {
-                float px = 0.75f * 480 + (rng.nextFloat() - 0.5f) * 80;
-                float py = 0.35f * 360 + (rng.nextFloat() - 0.5f) * 100;
-                float vx = (rng.nextFloat() - 0.5f) * 2.0f;
-                float vy = (rng.nextFloat() - 0.5f) * 2.0f;
-                float cr = 200 + rng.nextInt(56);
+            for (int i = 0; i < 30; i++) {
+                float px = 0.75f * 480 + (rng.nextFloat() - 0.5f) * 90;
+                float py = 0.35f * 360 + (rng.nextFloat() - 0.5f) * 90;
+                float vx = (rng.nextFloat() - 0.5f) * 2.2f;
+                float vy = (rng.nextFloat() - 0.5f) * 2.2f;
+                float cr = 210 + rng.nextInt(46);
                 float cg = 140 + rng.nextInt(80);
                 float cb = 30 + rng.nextInt(50);
-                switchParticles.add(new float[]{px, py, vx, vy, 0, 25 + rng.nextInt(25), cr, cg, cb});
+                switchParticles.add(new float[]{px, py, vx, vy, 0, 28 + rng.nextInt(26), cr, cg, cb});
+            }
+            // Сетка шипящих частиц вокруг герцога
+            rightSwitchParticles.clear();
+            if (rightCharacterBounds != null) {
+                for (int i = 0; i < 28; i++) {
+                    float angle = (float) (rng.nextFloat() * Math.PI * 2);
+                    float radius = rightCharacterBounds.width * 0.5f + rng.nextFloat() * 16;
+                    float px = rightCharacterBounds.x + rightCharacterBounds.width / 2 + (float) Math.cos(angle) * radius;
+                    float py = rightCharacterBounds.y + rightCharacterBounds.height / 2 + (float) Math.sin(angle) * radius;
+                    float vx = (float) Math.cos(angle) * (0.8f + rng.nextFloat() * 1.2f);
+                    float vy = (float) Math.sin(angle) * (0.8f + rng.nextFloat() * 1.2f);
+                    rightSwitchParticles.add(new float[]{px, py, vx, vy, 0, 25 + rng.nextInt(25), 1f});
+                }
             }
         }
         prevRightCharacter = newRight;
@@ -220,6 +236,15 @@ public class IntroScreen {
             p[3] *= 0.96f;
             p[4]++;
         }
+        // Обновление правых спец-частиц герцога
+        rightSwitchParticles.removeIf(p -> p[4] >= p[5]);
+        for (float[] p : rightSwitchParticles) {
+            p[0] += p[2];
+            p[1] += p[3];
+            p[2] *= 0.94f;
+            p[3] *= 0.94f;
+            p[4]++;
+        }
 
         int totalChars = entry.text.length();
 
@@ -247,43 +272,7 @@ public class IntroScreen {
             }
         }
 
-        // ── Частицы пепла/пыли (фоновая анимация) ──
-        if (tick % 3 == 0 && fadeAlpha > 0.1f) {
-            float px = rng.nextFloat() * 480;
-            float py = 360 + rng.nextInt(20);
-            float vx = (rng.nextFloat() - 0.5f) * 0.5f;
-            float vy = -0.3f - rng.nextFloat() * 0.6f;
-            float sz = 1 + rng.nextFloat() * 2f;
-            float maxLife = 80 + rng.nextInt(80);
-            ashParticles.add(new float[]{px, py, vx, vy, 0, maxLife, sz, 1f});
-        }
-        ashParticles.removeIf(p -> p[4] >= p[5] || p[1] < -10);
-        for (float[] p : ashParticles) {
-            p[0] += p[2] + (float) Math.sin(tick * 0.05 + p[0] * 0.02) * 0.3f;
-            p[1] += p[3];
-            p[4]++;
-        }
-
-        // Искры от факелов — позиции соответствуют факелам на фоновой картинке
-        // Фон 400×225 масштабирован ×1.6 и смещён −80px по X в виртуальном пространстве 480×360
-        if (tick % 4 == 0 && fadeAlpha > 0.3f) {
-            float[] torchX = {0.033f, 0.40f};   // левый факел у арки, нижний у лестницы
-            float[] torchY = {0.690f, 0.813f};
-            int idx = rng.nextInt(torchX.length);
-            sparks.add(new float[]{
-                    torchX[idx] * 480 + (rng.nextFloat() - 0.5f) * 8,
-                    torchY[idx] * 360 + (rng.nextFloat() - 0.5f) * 6,
-                    (rng.nextFloat() - 0.5f) * 0.4f,
-                    -0.5f - rng.nextFloat() * 0.5f,
-                    0, 25 + rng.nextInt(30)
-            });
-        }
-        sparks.removeIf(s -> s[4] >= s[5]);
-        for (float[] s : sparks) {
-            s[0] += s[2];
-            s[1] += s[3];
-            s[4]++;
-        }
+        // Без анимации пепла/искор на фоне: фиксированное статичное изображение.
     }
 
     // ─── Рендер ───
@@ -336,53 +325,8 @@ public class IntroScreen {
             }
         }
 
-        // ── Тёплый свет (мерцание факелов) ──
-        float flicker = 0.86f + 0.08f * (float) Math.sin(tick * 0.1) + rng.nextFloat() * 0.04f;
-        Composite prevC = g.getComposite();
-        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, fadeAlpha * 0.04f * flicker));
-        g.setColor(new Color(255, 170, 85));
-        g.fillRect(0, 0, sw, sh);
-        g.setComposite(prevC);
-
-        // ── Виньетка (затемнение по краям, пульсирует) ──
-        {
-            float vignPulse = 0.55f + 0.05f * (float) Math.sin(tick * 0.025);
-            Composite prevV = g.getComposite();
-            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, fadeAlpha * vignPulse));
-            int vigSteps = 30;
-            for (int vi = 0; vi < vigSteps; vi++) {
-                float t = (float) vi / vigSteps;
-                float a = t * t * 0.75f;
-                int bx = (int)(sw * t * 0.5f);
-                int by = (int)(sh * t * 0.5f);
-                g.setColor(new Color(0, 0, 0, Math.min(255, (int)(a * 255))));
-                g.drawRect(bx, by, sw - bx * 2 - 1, sh - by * 2 - 1);
-            }
-            g.setComposite(prevV);
-        }
-
-        // ── Частицы пепла/пыли ──
-        for (float[] p : ashParticles) {
-            float life = p[4] / p[5];
-            // Плавное появление и затухание
-            float a = fadeAlpha * (life < 0.15f ? life / 0.15f : (life > 0.75f ? (1f - life) / 0.25f : 1f)) * 0.55f;
-            int col = 160 + (int)(rng.nextFloat() * 30);
-            g.setColor(new Color(col, col - 20, col - 40, Math.max(0, Math.min(255, (int)(a * 200)))));
-            int psz = Math.max(1, Math.round(p[6]));
-            g.fillRect(Math.round(p[0] * sw / 480f), Math.round(p[1] * sh / 360f), psz, psz);
-        }
-
-
-
-        // ── Искры от факелов ──
-        for (float[] s : sparks) {
-            float life = s[4] / s[5];
-            float a = (1f - life) * fadeAlpha;
-            int bright = 200 + rng.nextInt(56);
-            g.setColor(new Color(bright, bright / 2 + 40, 15, Math.max(0, Math.min(255, (int) (a * 240)))));
-            int sz = life < 0.4f ? 2 : 1;
-            g.fillRect(Math.round(s[0] * sw / 480f), Math.round(s[1] * sh / 360f), sz, sz);
-        }
+        // ── Статический фон, без динамических эффектов ──
+        // (убрана подсветка, виньетка, частицы пепла и искры)
 
         // ── Персонажи ──
         DialogEntry entry = currentEntry < entries.size() ? entries.get(currentEntry) : null;
@@ -415,12 +359,43 @@ public class IntroScreen {
         }
 
         // ── Вспышка при смене персонажа ──
-        if (switchFlash > 0.01f) {
+        if (switchFlash > 0.01f && rightCharacterBounds != null) {
             Composite prevF = g.getComposite();
-            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, switchFlash * 0.3f));
-            g.setColor(new Color(255, 220, 150));
-            // Вспышка только в правой части экрана
-            g.fillRect(sw / 2, 0, sw / 2, sh);
+            float glow = 1f + switchFlash * 0.8f;
+            int cx = rightCharacterBounds.x + rightCharacterBounds.width / 2;
+            int cy = rightCharacterBounds.y + rightCharacterBounds.height / 2;
+            float maxR = Math.max(rightCharacterBounds.width, rightCharacterBounds.height) * 0.9f * glow;
+
+            // несколькo концентрических колец
+            for (int i = 0; i < 3; i++) {
+                float t = (i + 1) / 3f;
+                float radius = maxR * t;
+                float alpha = switchFlash * (0.35f - i * 0.1f);
+                g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, Math.max(0f, alpha)));
+                g.setColor(new Color(255, 210, 140, Math.max(0, Math.min(255, (int) (alpha * 255)))));
+                int rg = Math.round(radius);
+                g.drawOval(cx - rg, cy - rg, 2 * rg, 2 * rg);
+            }
+
+            // легкое свечение под ногами
+            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, switchFlash * 0.15f));
+            g.setColor(new Color(240, 180, 110));
+            int groundW = rightCharacterBounds.width + 20;
+            int groundH = 16;
+            g.fillOval(cx - groundW/2, rightCharacterBounds.y + rightCharacterBounds.height - 8, groundW, groundH);
+
+            // частички энергии вокруг персонажа
+            for (float[] rp : rightSwitchParticles) {
+                float life = rp[4] / rp[5];
+                float alpha = (1f - life) * switchFlash;
+                int s = Math.max(1, Math.round(2 + (0.5f - life) * 3));
+                g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, Math.max(0f, alpha)));
+                int rc = Math.max(0, Math.min(255, (int) (255 - life * 60)));
+                int gc = Math.max(0, Math.min(255, (int) (170 + life * 40)));
+                g.setColor(new Color(rc, gc, 80, Math.max(0, Math.min(255, (int)(alpha*255)))));
+                g.fillOval(Math.round(rp[0] * sw / 480f) - s/2, Math.round(rp[1] * sh / 360f) - s/2, s, s);
+            }
+
             g.setComposite(prevF);
         }
 
@@ -444,8 +419,8 @@ public class IntroScreen {
                                       boolean isLeft, boolean isActive, float activeAnim) {
         if (sprite == null || slide <= 0.001f) return;
 
-        // Размер персонажа — примерно 65% высоты экрана
-        float baseCharScale = (sh * 0.65f) / sprite.getHeight();
+        // Размер персонажа — примерно 85% высоты экрана
+        float baseCharScale = (sh * 0.85f) / sprite.getHeight();
 
         // Активный персонаж чуть увеличивается (pop-эффект)
         float scaleBoost = 1.0f + activeAnim * 0.06f;
@@ -454,9 +429,10 @@ public class IntroScreen {
         int cw = Math.round(sprite.getWidth() * charScale);
         int ch = Math.round(sprite.getHeight() * charScale);
 
-        // Диалоговое окно занимает ~32% снизу + margin
-        int dialogZone = (int) (sh * 0.36f);
-        int baseY = sh - dialogZone - ch + (int)(ch * 0.08f);
+        // Диалоговое окно занимает ~25% снизу и персонаж опущен ниже,
+        // чтобы текст перекрывал ~половину тела
+        int dialogZone = (int) (sh * 0.15f);
+        int baseY = sh - dialogZone - ch + (int)(ch * 0.15f);
 
         // X позиция с анимацией slide-in (bounce overshoot)
         int offscreenX = isLeft ? -cw : sw;
@@ -484,9 +460,13 @@ public class IntroScreen {
         Composite prev = g.getComposite();
 
         // ── Спрайт персонажа ──
-        float alpha = fadeAlpha * Math.min(1f, slide * 1.5f);
-        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, Math.min(1f, alpha)));
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, fadeAlpha));
         g.drawImage(sprite, cx, cy, cw, ch, null);
+
+        // Сохраняем рамку правого персонажа для эффекта смены
+        if (!isLeft) {
+            rightCharacterBounds = new Rectangle(cx, cy, cw, ch);
+        }
 
         g.setComposite(prev);
     }
