@@ -251,8 +251,8 @@ public class IntroScreen {
         leftActiveAnim = leftActive ? Math.min(1f, leftActiveAnim + activeSpeed) : Math.max(0f, leftActiveAnim - activeSpeed * 0.7f);
         rightActiveAnim = rightActive ? Math.min(1f, rightActiveAnim + activeSpeed) : Math.max(0f, rightActiveAnim - activeSpeed * 0.7f);
 
-        // Затухание вспышки при смене
-        if (switchFlash > 0) switchFlash = Math.max(0f, switchFlash - 0.04f);
+        // Затухание вспышки при смене (медленнее для более эффектной анимации)
+        if (switchFlash > 0) switchFlash = Math.max(0f, switchFlash - 0.015f);
 
         // Обновление частиц смены
         switchParticles.removeIf(p -> p[4] >= p[5]);
@@ -579,8 +579,8 @@ public class IntroScreen {
 
         // ── Красивая многослойная рамка в стиле Ведьмака ──
         
-        // 1. Внешняя толстая золотая рамка
-        g.setColor(new Color(180, 140, 60, Math.max(0, Math.min(255, (int)(fadeAlpha * 255)))));
+        // 1. Внешняя толстая золотая рамка (ярче)
+        g.setColor(new Color(230, 180, 90, Math.max(0, Math.min(255, (int)(fadeAlpha * 255)))));
         g.fillRect(boxX - 2, boxY - 2, boxW + 4, 3);  // верх
         g.fillRect(boxX - 2, boxY + boxH - 1, boxW + 4, 3);  // низ
         g.fillRect(boxX - 2, boxY - 2, 3, boxH + 4);  // лево
@@ -616,10 +616,13 @@ public class IntroScreen {
         g.fillRect(boxX + boxW - cornerSize + 2, boxY + boxH, cornerSize, 2);
         g.fillRect(boxX + boxW, boxY + boxH - cornerSize + 2, 2, cornerSize);
         
-        // 5. Легкое свечение изнутри рамки
-        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, fadeAlpha * 0.15f));
-        g.setColor(new Color(255, 220, 120));
+        // 5. Яркое золотое свечение изнутри рамки
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, fadeAlpha * 0.45f));
+        g.setColor(new Color(255, 230, 140));
         g.drawRect(boxX + 1, boxY + 1, boxW - 2, boxH - 2);
+        // Двойное свечение для усиления
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, fadeAlpha * 0.25f));
+        g.drawRect(boxX + 2, boxY + 2, boxW - 4, boxH - 4);
         g.setComposite(prev);
 
         // ── Пад-отступы ──
