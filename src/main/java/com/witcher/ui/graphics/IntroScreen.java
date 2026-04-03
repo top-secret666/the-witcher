@@ -539,10 +539,15 @@ public class IntroScreen {
 
         Composite prev = g.getComposite();
 
-        // ── Спрайт персонажа (ЧЕТКИЙ - NEAREST_NEIGHBOR для пиксель-арта) ──
-        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+        // ── Спрайт персонажа (УЛУЧШЕННОЕ КАЧЕСТВО - комбинированная интерполяция) ──
+        // Используем более высокое качество интерполяции для лучшего вида спрайтов
+        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+        g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
         g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, fadeAlpha));
         g.drawImage(sprite, cx, cy, cw, ch, null);
+        // Восстанавливаем пиксельные настройки для остального интерфейса
+        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+        g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
 
         // Сохраняем рамку правого персонажа для эффекта смены
         if (!isLeft) {
