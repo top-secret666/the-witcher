@@ -97,9 +97,15 @@ public class MainMenuScreen {
             if (e[4] >= e[5] || e[1] < -10) it.remove();
         }
 
-        // Mouse hover chooses currently focused button.
+        // Mouse hover chooses currently focused button (узкая область срабатывания)
         for (int i = 0; i < buttonRects.length; i++) {
-            if (buttonRects[i].contains(mouseX, mouseY)) {
+            Rectangle padded = new Rectangle(
+                buttonRects[i].x - 8,
+                buttonRects[i].y - 4,
+                buttonRects[i].width + 16,
+                buttonRects[i].height + 8
+            );
+            if (padded.contains(mouseX, mouseY)) {
                 selectedIndex = i;
                 break;
             }
