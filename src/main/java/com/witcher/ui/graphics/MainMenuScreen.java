@@ -37,7 +37,7 @@ public class MainMenuScreen {
     // buttonRects — прямоугольники для размещения кнопок меню (Играть, Настройки, Выход)
     private final Rectangle[] buttonRects = new Rectangle[]{new Rectangle(), new Rectangle(), new Rectangle()};
 
-    private int selectedIndex = 0;
+    private int selectedIndex = -1;
     private int pressedIndex = -1;
     private int pressedTicks = 0;
     private int tick = 0;
@@ -97,28 +97,36 @@ public class MainMenuScreen {
             if (e[4] >= e[5] || e[1] < -10) it.remove();
         }
 
-        // Mouse hover chooses currently focused button (узкая область срабатывания)
+        // Mouse hover chooses currently focused button (исключаем стороны, точная вертикаль)
+        // По умолчанию — ни одна кнопка не выбрана
+        int hoveredIndex = -1;
         for (int i = 0; i < buttonRects.length; i++) {
-            Rectangle padded = new Rectangle(
-                buttonRects[i].x - 8,
-                buttonRects[i].y - 4,
-                buttonRects[i].width + 16,
-                buttonRects[i].height + 8
-            );
-            if (padded.contains(mouseX, mouseY)) {
-                selectedIndex = i;
+            Rectangle r = buttonRects[i];
+            // Проверяем: курсор должен быть полностью внутри по Y
+            // и внутри с отступом 20px по X (исключаем боковые края)
+            if (mouseX >= r.x + 130 && mouseX <= r.x + r.width - 130 &&
+                mouseY >= r.y && mouseY <= r.y + r.height) {
+                hoveredIndex = i;
                 break;
             }
         }
+        // Только если курсор на кнопке, выделяем её; иначе ничего не выделено
+        if (hoveredIndex != -1) {
+            selectedIndex = hoveredIndex;
+        } else {
+            selectedIndex = -1;  // Сбрасываем выделение, если курсор не на кнопке
+        }
 
         if (navDir != 0) {
+            // При навигации клавиатурой активируем выделение кнопки
+            if (selectedIndex < 0) selectedIndex = 0; // Если ничего не выбрано, начиная с первой
             selectedIndex = (selectedIndex + navDir) % buttonRects.length;
             if (selectedIndex < 0) selectedIndex += buttonRects.length;
         }
 
-        if (mouseClicked && buttonRects[selectedIndex].contains(mouseX, mouseY)) {
+        if (mouseClicked && selectedIndex >= 0 && buttonRects[selectedIndex].contains(mouseX, mouseY)) {
             pressSelected();
-        } else if (activate) {
+        } else if (activate && selectedIndex >= 0) {
             pressSelected();
         }
     }
