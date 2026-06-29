@@ -159,8 +159,7 @@ public class ShopScreen {
             hudSrcCrop = computeContentBounds(hudBar);
             hudDrawW = 476;
             float cropAspect = (float) hudSrcCrop.height / hudSrcCrop.width;
-            hudDrawH = Math.round(hudDrawW * cropAspect);
-            hudDrawH = Math.max(52, Math.min(64, hudDrawH));
+            hudDrawH = Math.max(52, Math.min(64, Math.round(hudDrawW * cropAspect)));
             hudDrawX = (480 - hudDrawW) / 2;
         } else {
             hudSrcCrop = null;
