@@ -13,7 +13,7 @@ public class ShopScreen {
 
     private static final String UI = "/assets/sprites/lavka/ui/";
     private static final String ICONS = "/assets/sprites/lavka/icons/";
-    private static final float DIALOG_HEIGHT_RATIO = 0.17f;
+    private static final float DIALOG_HEIGHT_RATIO = 0.12f;
 
     private enum ShopState {
         WELCOME,
@@ -35,27 +35,29 @@ public class ShopScreen {
         final int btnY;
         final int btnW;
         final int btnH;
+        final int iconSize;
         final int dialogTop;
 
         ShopLayout(int sw, int sh, int itemCount) {
-            hudY = 4;
-            hudH = 30;
-            dialogTop = sh - Math.round(sh * DIALOG_HEIGHT_RATIO) - 8;
-            btnH = 30;
-            btnW = 100;
-            rowH = 28;
-            headerH = 26;
+            hudY = 3;
+            hudH = 42;
+            iconSize = 32;
+            dialogTop = sh - Math.round(sh * DIALOG_HEIGHT_RATIO) - 6;
+            btnH = 32;
+            btnW = 104;
+            rowH = 38;
+            headerH = 28;
 
-            panelW = 272;
+            panelW = 288;
             panelX = (sw - panelW) / 2;
-            panelY = hudY + hudH + 8;
+            panelY = hudY + hudH + 6;
             int listH = headerH + rowH * itemCount + 8;
-            int maxPanelBottom = dialogTop - btnH - 12;
-            panelH = Math.min(listH + 10, maxPanelBottom - panelY);
+            int maxPanelBottom = dialogTop - btnH - 10;
+            panelH = Math.min(listH + 12, maxPanelBottom - panelY);
             listY = panelY + headerH + 6;
 
             btnX = panelX + (panelW - btnW) / 2;
-            btnY = panelY + panelH + 8;
+            btnY = panelY + panelH + 6;
         }
     }
 
@@ -264,25 +266,31 @@ public class ShopScreen {
         }
 
         g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-        g.setFont(new Font("Serif", Font.BOLD, 12));
+        g.setFont(new Font("Serif", Font.BOLD, 15));
         g.setColor(DialogBoxRenderer.DUKE_COLOR);
-        g.drawString("Лавка Герцога", barX + 12, layout.hudY + 18);
+        FontMetrics titleFm = g.getFontMetrics();
+        int titleY = layout.hudY + (layout.hudH + titleFm.getAscent()) / 2 - 2;
+        g.drawString("Лавка Герцога", barX + 14, titleY);
 
         String wallet = "???";
         FontMetrics fm = g.getFontMetrics();
-        int crownSize = 14;
-        int textRight = barX + barW - 12;
+        int crownSize = 18;
+        int textRight = barX + barW - 14;
+        g.setFont(new Font("Serif", Font.BOLD, 14));
+        fm = g.getFontMetrics();
         textRight -= fm.stringWidth(" крон");
         textRight -= fm.stringWidth(wallet);
         if (crownIcon != null) {
-            textRight -= crownSize + 3;
-            drawScaledSprite(g, crownIcon, textRight, layout.hudY + 6, crownSize, crownSize, true);
-            textRight += crownSize + 3;
+            textRight -= crownSize + 4;
+            int crownY = layout.hudY + (layout.hudH - crownSize) / 2;
+            drawScaledSprite(g, crownIcon, textRight, crownY, crownSize, crownSize, true);
+            textRight += crownSize + 4;
         }
         g.setColor(new Color(220, 200, 140));
-        g.drawString(wallet, textRight, layout.hudY + 18);
+        int walletY = layout.hudY + (layout.hudH + fm.getAscent()) / 2 - 2;
+        g.drawString(wallet, textRight, walletY);
         g.setColor(new Color(170, 155, 110));
-        g.drawString(" крон", textRight + fm.stringWidth(wallet), layout.hudY + 18);
+        g.drawString(" крон", textRight + fm.stringWidth(wallet), walletY);
         g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
     }
 
@@ -298,13 +306,13 @@ public class ShopScreen {
         }
 
         g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-        g.setFont(new Font("Serif", Font.BOLD, 11));
+        g.setFont(new Font("Serif", Font.BOLD, 12));
         g.setColor(DialogBoxRenderer.DUKE_COLOR);
-        g.drawString("— Товары —", layout.panelX + layout.panelW / 2 - 34, layout.panelY + 17);
+        g.drawString("— Товары —", layout.panelX + layout.panelW / 2 - 36, layout.panelY + 18);
 
         int rowX = layout.panelX + 8;
         int rowW = layout.panelW - 16;
-        int iconSize = 22;
+        int iconSize = layout.iconSize;
         int y = layout.listY;
 
         for (int i = 0; i < items.size(); i++) {
@@ -326,7 +334,7 @@ public class ShopScreen {
 
             item.bounds.setBounds(rowX, rowY, rowW, layout.rowH - 2);
 
-            int iconX = rowX + 5;
+            int iconX = rowX + 6;
             int iconY = rowY + (layout.rowH - iconSize) / 2 - 1;
             if (item.icon != null) {
                 drawScaledSprite(g, item.icon, iconX, iconY, iconSize, iconSize, true);
@@ -334,20 +342,21 @@ public class ShopScreen {
 
             g.setFont(new Font("Serif", Font.PLAIN, 11));
             g.setColor(selected ? new Color(255, 230, 140) : new Color(210, 195, 150));
-            int textX = iconX + iconSize + 6;
-            g.drawString(item.name, textX, rowY + 18);
+            int textX = iconX + iconSize + 8;
+            int textBaseline = rowY + layout.rowH / 2 + 4;
+            g.drawString(item.name, textX, textBaseline);
 
-            g.setFont(new Font("Serif", Font.BOLD, 11));
+            g.setFont(new Font("Serif", Font.BOLD, 12));
             g.setColor(new Color(200, 175, 100));
             FontMetrics fm = g.getFontMetrics();
-            int crownW = crownIcon != null ? 13 : 0;
-            int priceBlockW = fm.stringWidth(item.priceLabel) + crownW + 2;
-            int priceBlockX = rowX + rowW - 8 - priceBlockW;
+            int crownW = crownIcon != null ? 14 : 0;
+            int priceBlockW = fm.stringWidth(item.priceLabel) + crownW + 3;
+            int priceBlockX = rowX + rowW - 10 - priceBlockW;
             if (crownIcon != null) {
-                drawScaledSprite(g, crownIcon, priceBlockX, rowY + 6, 11, 11, true);
-                g.drawString(item.priceLabel, priceBlockX + crownW + 2, rowY + 18);
+                drawScaledSprite(g, crownIcon, priceBlockX, rowY + (layout.rowH - 12) / 2, 12, 12, true);
+                g.drawString(item.priceLabel, priceBlockX + crownW + 3, textBaseline);
             } else {
-                g.drawString(item.priceLabel, priceBlockX, rowY + 18);
+                g.drawString(item.priceLabel, priceBlockX, textBaseline);
             }
 
             y += layout.rowH;
