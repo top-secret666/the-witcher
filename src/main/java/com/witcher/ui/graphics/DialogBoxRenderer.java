@@ -45,7 +45,11 @@ public final class DialogBoxRenderer {
             textX = boxX + pad;
             textY = boxY + pad;
             textMaxW = boxW - pad * 2;
-            fontSize = Math.max(11, (int) (sh * 0.038f));
+            if (heightRatio <= 0.14f) {
+                fontSize = Math.max(10, (int) (sh * 0.030f));
+            } else {
+                fontSize = Math.max(11, (int) (sh * 0.038f));
+            }
         }
     }
 
@@ -53,9 +57,9 @@ public final class DialogBoxRenderer {
         return new Layout(sw, sh);
     }
 
-    /** Компактное окно для лавки — ниже и уже стандартного. */
+    /** Компактное окно для лавки — низкая полоска внизу. */
     public static Layout computeCompactLayout(int sw, int sh) {
-        return new Layout(sw, sh, 0.17f, 0.88f);
+        return new Layout(sw, sh, 0.12f, 0.82f);
     }
 
     public static Layout computeLayout(int sw, int sh, float heightRatio, float widthRatio) {
