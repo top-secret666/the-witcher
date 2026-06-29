@@ -26,8 +26,6 @@ public class IntroScreen {
     // ─── Состояния ───
     private boolean finished = false;
     private int tick = 0;
-    private int finishTick = -1;
-    private static final int FADE_OUT_TICKS = 90;
 
     // ─── Персонажи (спрайты) ───
     private final BufferedImage geraltSprite;
@@ -226,14 +224,8 @@ public class IntroScreen {
 
         if (fadeAlpha < 1f) fadeAlpha = Math.min(1f, fadeAlpha + 0.025f);
 
-        // Fade out после завершения
-        if (finishTick > 0 && tick - finishTick > FADE_OUT_TICKS) {
-            finished = true;
-            return;
-        }
-
         if (currentEntry >= entries.size()) {
-            if (finishTick < 0) finishTick = tick;
+            finished = true;
             return;
         }
 
@@ -614,13 +606,6 @@ public class IntroScreen {
         // ── Диалоговое окно ──
         if (!finalShopScene && currentEntry < entries.size() && fadeAlpha > 0.2f) {
             drawDialogBox(g, sw, sh);
-        }
-
-        // ── Fade out ──
-        if (finishTick > 0) {
-            float outAlpha = Math.min(1f, (float) (tick - finishTick) / FADE_OUT_TICKS);
-            g.setColor(new Color(0, 0, 0, (int) (outAlpha * 255)));
-            g.fillRect(0, 0, sw, sh);
         }
 
         g.dispose();
