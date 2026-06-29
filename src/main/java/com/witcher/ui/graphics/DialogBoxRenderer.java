@@ -32,21 +32,34 @@ public final class DialogBoxRenderer {
         public final int fontSize;
 
         Layout(int sw, int sh) {
+            this(sw, sh, 0.30f, 1.0f);
+        }
+
+        Layout(int sw, int sh, float heightRatio, float widthRatio) {
             int boxMargin = (int) (sw * 0.03f);
-            boxH = (int) (sh * 0.30f);
-            boxW = sw - boxMargin * 2;
-            boxX = boxMargin;
+            boxH = Math.max(52, (int) (sh * heightRatio));
+            boxW = Math.max(200, (int) (sw * widthRatio));
+            boxX = (sw - boxW) / 2;
             boxY = sh - boxH - (int) (sh * 0.02f);
             pad = (int) (sw * 0.02f);
             textX = boxX + pad;
             textY = boxY + pad;
             textMaxW = boxW - pad * 2;
-            fontSize = Math.max(12, (int) (sh * 0.040f));
+            fontSize = Math.max(11, (int) (sh * 0.038f));
         }
     }
 
     public static Layout computeLayout(int sw, int sh) {
         return new Layout(sw, sh);
+    }
+
+    /** Компактное окно для лавки — ниже и уже стандартного. */
+    public static Layout computeCompactLayout(int sw, int sh) {
+        return new Layout(sw, sh, 0.17f, 0.88f);
+    }
+
+    public static Layout computeLayout(int sw, int sh, float heightRatio, float widthRatio) {
+        return new Layout(sw, sh, heightRatio, widthRatio);
     }
 
     public static void drawBox(Graphics2D g, int boxX, int boxY, int boxW, int boxH, float alpha) {

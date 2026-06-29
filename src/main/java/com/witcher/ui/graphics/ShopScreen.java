@@ -13,6 +13,7 @@ public class ShopScreen {
 
     private static final String UI = "/assets/sprites/lavka/ui/";
     private static final String ICONS = "/assets/sprites/lavka/icons/";
+    private static final float DIALOG_HEIGHT_RATIO = 0.17f;
 
     private enum ShopState {
         WELCOME,
@@ -38,23 +39,23 @@ public class ShopScreen {
 
         ShopLayout(int sw, int sh, int itemCount) {
             hudY = 4;
-            hudH = 26;
-            dialogTop = sh - Math.round(sh * 0.30f);
-            btnH = 26;
-            btnW = 92;
-            rowH = 24;
-            headerH = 22;
+            hudH = 30;
+            dialogTop = sh - Math.round(sh * DIALOG_HEIGHT_RATIO) - 8;
+            btnH = 30;
+            btnW = 100;
+            rowH = 28;
+            headerH = 26;
 
-            panelW = 248;
+            panelW = 272;
             panelX = (sw - panelW) / 2;
-            panelY = hudY + hudH + 6;
-            int listH = headerH + rowH * itemCount + 6;
-            int maxPanelBottom = dialogTop - btnH - 14;
-            panelH = Math.min(listH + 8, maxPanelBottom - panelY);
-            listY = panelY + headerH + 4;
+            panelY = hudY + hudH + 8;
+            int listH = headerH + rowH * itemCount + 8;
+            int maxPanelBottom = dialogTop - btnH - 12;
+            panelH = Math.min(listH + 10, maxPanelBottom - panelY);
+            listY = panelY + headerH + 6;
 
             btnX = panelX + (panelW - btnW) / 2;
-            btnY = panelY + panelH + 6;
+            btnY = panelY + panelH + 8;
         }
     }
 
@@ -209,8 +210,8 @@ public class ShopScreen {
 
         drawAshParticles(g);
 
-        // 4. Диалог
-        DialogBoxRenderer.Layout dialogLayout = DialogBoxRenderer.computeLayout(sw, sh);
+        // 4. Диалог — компактное окно
+        DialogBoxRenderer.Layout dialogLayout = DialogBoxRenderer.computeCompactLayout(sw, sh);
         DialogBoxRenderer.drawSpeakerText(g, "Герцог", currentDialog,
             DialogBoxRenderer.DUKE_COLOR, dialogLayout, 1f);
 
@@ -299,11 +300,11 @@ public class ShopScreen {
         g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
         g.setFont(new Font("Serif", Font.BOLD, 11));
         g.setColor(DialogBoxRenderer.DUKE_COLOR);
-        g.drawString("— Товары —", layout.panelX + layout.panelW / 2 - 32, layout.panelY + 15);
+        g.drawString("— Товары —", layout.panelX + layout.panelW / 2 - 34, layout.panelY + 17);
 
-        int rowX = layout.panelX + 6;
-        int rowW = layout.panelW - 12;
-        int iconSize = 18;
+        int rowX = layout.panelX + 8;
+        int rowW = layout.panelW - 16;
+        int iconSize = 22;
         int y = layout.listY;
 
         for (int i = 0; i < items.size(); i++) {
@@ -317,35 +318,37 @@ public class ShopScreen {
 
             int rowY = y;
             if (rowBg != null) {
-                drawScaledSprite(g, rowBg, rowX, rowY, rowW, layout.rowH - 1, true);
+                drawScaledSprite(g, rowBg, rowX, rowY, rowW, layout.rowH - 2, true);
             } else {
                 g.setColor(selected ? new Color(70, 55, 20, 180) : new Color(30, 24, 12, 160));
-                g.fillRect(rowX, rowY, rowW, layout.rowH - 1);
+                g.fillRect(rowX, rowY, rowW, layout.rowH - 2);
             }
 
-            item.bounds.setBounds(rowX, rowY, rowW, layout.rowH - 1);
+            item.bounds.setBounds(rowX, rowY, rowW, layout.rowH - 2);
 
-            int iconX = rowX + 4;
+            int iconX = rowX + 5;
             int iconY = rowY + (layout.rowH - iconSize) / 2 - 1;
             if (item.icon != null) {
                 drawScaledSprite(g, item.icon, iconX, iconY, iconSize, iconSize, true);
             }
 
-            g.setFont(new Font("Serif", Font.PLAIN, 10));
+            g.setFont(new Font("Serif", Font.PLAIN, 11));
             g.setColor(selected ? new Color(255, 230, 140) : new Color(210, 195, 150));
-            int textX = iconX + iconSize + 4;
-            String label = truncateLabel(item.name, 22);
-            g.drawString(label, textX, rowY + 15);
+            int textX = iconX + iconSize + 6;
+            g.drawString(item.name, textX, rowY + 18);
 
-            g.setFont(new Font("Serif", Font.BOLD, 10));
+            g.setFont(new Font("Serif", Font.BOLD, 11));
             g.setColor(new Color(200, 175, 100));
             FontMetrics fm = g.getFontMetrics();
-            int priceX = rowX + rowW - 6 - fm.stringWidth(item.priceLabel);
+            int crownW = crownIcon != null ? 13 : 0;
+            int priceBlockW = fm.stringWidth(item.priceLabel) + crownW + 2;
+            int priceBlockX = rowX + rowW - 8 - priceBlockW;
             if (crownIcon != null) {
-                drawScaledSprite(g, crownIcon, priceX - 12, rowY + 4, 10, 10, true);
-                priceX -= 2;
+                drawScaledSprite(g, crownIcon, priceBlockX, rowY + 6, 11, 11, true);
+                g.drawString(item.priceLabel, priceBlockX + crownW + 2, rowY + 18);
+            } else {
+                g.drawString(item.priceLabel, priceBlockX, rowY + 18);
             }
-            g.drawString(item.priceLabel, priceX, rowY + 15);
 
             y += layout.rowH;
         }
@@ -359,11 +362,11 @@ public class ShopScreen {
         }
 
         g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-        g.setFont(new Font("Serif", Font.BOLD, 11));
+        g.setFont(new Font("Serif", Font.BOLD, 12));
         g.setColor(new Color(90, 75, 50));
         String label = "Скоро";
         FontMetrics fm = g.getFontMetrics();
-        g.drawString(label, layout.btnX + (layout.btnW - fm.stringWidth(label)) / 2, layout.btnY + 17);
+        g.drawString(label, layout.btnX + (layout.btnW - fm.stringWidth(label)) / 2, layout.btnY + 19);
         g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
     }
 
@@ -371,7 +374,7 @@ public class ShopScreen {
                                boolean isLeft, int dialogTop) {
         if (sprite == null) return;
 
-        float charScale = (sh * 0.62f) / sprite.getHeight();
+        float charScale = (sh * 0.70f) / sprite.getHeight();
         int cw = Math.round(sprite.getWidth() * charScale);
         int ch = Math.round(sprite.getHeight() * charScale);
 
@@ -390,11 +393,6 @@ public class ShopScreen {
             g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, prevInterp);
         }
         g.setComposite(prev);
-    }
-
-    private static String truncateLabel(String text, int maxChars) {
-        if (text.length() <= maxChars) return text;
-        return text.substring(0, maxChars - 1) + "…";
     }
 
     private void drawScaledSprite(Graphics2D g, BufferedImage img, int x, int y, int w, int h, boolean pixelArt) {
