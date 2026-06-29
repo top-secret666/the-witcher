@@ -18,10 +18,13 @@ public class GameWindow {
     private SplashScreen splashScreen;
     private MainMenuScreen mainMenu;
     private IntroScreen introScreen;
+    private ShopScreen shopScreen;
     private boolean splashActive = true;
     private boolean menuActive = false;
     private boolean introActive = false;
+    private boolean shopActive = false;
     private boolean introAdvancePending = false;
+    private boolean shopExitRequested = false;
 
     // Ввод для меню в координатах виртуального экрана
     private int mouseVX = 0;
@@ -121,6 +124,13 @@ public class GameWindow {
                     int code = e.getKeyCode();
                     if (code == KeyEvent.VK_ENTER || code == KeyEvent.VK_SPACE) {
                         introAdvancePending = true;
+                    }
+                    return;
+                }
+
+                if (shopActive) {
+                    if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
+                        shopExitRequested = true;
                     }
                     return;
                 }
@@ -544,9 +554,20 @@ public class GameWindow {
 
                 if (introScreen.isFinished()) {
                     introActive = false;
-                    // Здесь будет переход к основной игре / консольной части
-                    System.out.println("[INTRO] Intro finished — starting game...");
-                    // Пока возвращаемся в меню
+                    shopActive = true;
+                    shopScreen = new ShopScreen();
+                }
+            } else if (shopActive) {
+                shopScreen.update(mouseVX, mouseVY, mouseClickPending, shopExitRequested);
+                shopScreen.render(renderer.screen, mouseVX, mouseVY);
+                renderer.repaint();
+
+                mouseClickPending = false;
+                shopExitRequested = false;
+
+                if (shopScreen.isExitRequested()) {
+                    shopActive = false;
+                    shopScreen.clearExitRequest();
                     menuActive = true;
                     mainMenu = new MainMenuScreen();
                 }

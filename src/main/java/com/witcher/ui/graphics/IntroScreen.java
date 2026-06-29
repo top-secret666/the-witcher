@@ -122,11 +122,6 @@ public class IntroScreen {
     private static final Color GERALT_COLOR = new Color(160, 205, 235);
     private static final Color STRANGER_COLOR = new Color(100, 130, 200);
     private static final Color DUKE_COLOR = new Color(218, 165, 32);
-    private static final Color BOX_BG = new Color(10, 8, 4, 220);
-    private static final Color BOX_BORDER = new Color(140, 100, 35);
-    private static final Color BOX_BORDER_INNER = new Color(90, 65, 20);
-    private static final Color HINT_COLOR = new Color(180, 160, 120, 180);
-    private static final Color SPEECH_COLOR = new Color(220, 190, 100);
 
     private float fadeAlpha = 0f;
 
@@ -811,165 +806,28 @@ public class IntroScreen {
 
     private void drawDialogBox(Graphics2D g, int sw, int sh) {
         DialogEntry entry = entries.get(currentEntry);
-
-        int boxMargin = (int) (sw * 0.03f);
-        int boxH = (int) (sh * 0.30f);
-        int boxW = sw - boxMargin * 2;
-        int boxX = boxMargin;
-        int boxY = sh - boxH - (int)(sh * 0.02f);
-
-        // ── Фон диалогового окна с градиентом ──
-        Composite prev = g.getComposite();
-        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, fadeAlpha * 0.90f));
-        g.setColor(BOX_BG);
-        g.fillRect(boxX, boxY, boxW, boxH);
-        
-        // Легкий градиент сверху вниз для объема
-        GradientPaint bgGradient = new GradientPaint(
-            boxX, boxY, new Color(20, 16, 8, 80),
-            boxX, boxY + boxH / 3, new Color(5, 4, 2, 0)
-        );
-        g.setPaint(bgGradient);
-        g.fillRect(boxX, boxY, boxW, boxH / 3);
-        
-        g.setComposite(prev);
-
-        // ── Красивая многослойная рамка в стиле Ведьмака ──
-        
-        // 1. Внешняя толстая золота+белая рамка (немного темнее)
-        g.setColor(new Color(235, 200, 110, Math.max(0, Math.min(255, (int)(fadeAlpha * 255)))));
-        g.fillRect(boxX - 2, boxY - 2, boxW + 4, 4);  // верх
-        g.fillRect(boxX - 2, boxY + boxH - 2, boxW + 4, 4);  // низ
-        g.fillRect(boxX - 2, boxY - 2, 4, boxH + 4);  // лево
-        g.fillRect(boxX + boxW - 2, boxY - 2, 4, boxH + 4);  // право
-        
-        // 2. Основная яркая золотая рамка
-        g.setColor(new Color(218, 165, 32, Math.max(0, Math.min(255, (int)(fadeAlpha * 255)))));
-        g.fillRect(boxX, boxY, boxW, 2);  // верх
-        g.fillRect(boxX, boxY + boxH - 2, boxW, 2);  // низ
-        g.fillRect(boxX, boxY, 2, boxH);  // лево
-        g.fillRect(boxX + boxW - 2, boxY, 2, boxH);  // право
-        
-        // 3. Внутренняя тонкая темная рамка для контраста
-        g.setColor(new Color(60, 45, 15, Math.max(0, Math.min(255, (int)(fadeAlpha * 200)))));
-        g.fillRect(boxX + 4, boxY + 4, boxW - 8, 1);  // верх
-        g.fillRect(boxX + 4, boxY + boxH - 5, boxW - 8, 1);  // низ
-        g.fillRect(boxX + 4, boxY + 4, 1, boxH - 8);  // лево
-        g.fillRect(boxX + boxW - 5, boxY + 4, 1, boxH - 8);  // право
-        
-        // 4. Декоративные угловые акценты (золотые уголки)
-        int cornerSize = 12;
-        g.setColor(new Color(255, 215, 0, Math.max(0, Math.min(255, (int)(fadeAlpha * 220)))));
-        // Верхний левый
-        g.fillRect(boxX - 2, boxY - 2, cornerSize, 2);
-        g.fillRect(boxX - 2, boxY - 2, 2, cornerSize);
-        // Верхний правый
-        g.fillRect(boxX + boxW - cornerSize + 2, boxY - 2, cornerSize, 2);
-        g.fillRect(boxX + boxW, boxY - 2, 2, cornerSize);
-        // Нижний левый
-        g.fillRect(boxX - 2, boxY + boxH, cornerSize, 2);
-        g.fillRect(boxX - 2, boxY + boxH - cornerSize + 2, 2, cornerSize);
-        // Нижний правый
-        g.fillRect(boxX + boxW - cornerSize + 2, boxY + boxH, cornerSize, 2);
-        g.fillRect(boxX + boxW, boxY + boxH - cornerSize + 2, 2, cornerSize);
-        
-        // 5. Очень яркое золотое свечение изнутри рамки
-        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, fadeAlpha * 0.65f));
-        g.setColor(new Color(255, 245, 160));
-        g.drawRect(boxX + 1, boxY + 1, boxW - 2, boxH - 2);
-        // Двойное интенсивное свечение
-        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, fadeAlpha * 0.45f));
-        g.drawRect(boxX + 2, boxY + 2, boxW - 4, boxH - 4);
-        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, fadeAlpha * 0.25f));
-        g.drawRect(boxX + 3, boxY + 3, boxW - 6, boxH - 6);
-        g.setComposite(prev);
-
-        // ── Пад-отступы ──
-        int pad = (int) (sw * 0.02f);
-        int textX = boxX + pad;
-        int textY = boxY + pad;
-        int textMaxW = boxW - pad * 2;
-
-        int fontSize = Math.max(12, (int) (sh * 0.040f));
-        Font nameFont = new Font("Serif", Font.BOLD, fontSize);
-        Font textFont = new Font("Serif", Font.PLAIN, fontSize);
-
-        // Включаем сглаживание только для диалогов
-        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
-
-        int lineY = textY;
-
-        // ── Имя говорящего (в рамке-плашке) ──
-        if (entry.speaker != null) {
-            g.setFont(nameFont);
-            FontMetrics nfm = g.getFontMetrics();
-            int nameW = nfm.stringWidth(entry.speaker);
-            int nameH = nfm.getHeight();
-
-            // Плашка с именем
-            int nameBoxX = boxX + pad - 4;
-            int nameBoxY = boxY - nameH - 2;
-            int nameBoxW = nameW + 12;
-            int nameBoxH = nameH + 4;
-
-            Composite prevN = g.getComposite();
-            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, fadeAlpha * 0.9f));
-            g.setColor(BOX_BG);
-            g.fillRect(nameBoxX, nameBoxY, nameBoxW, nameBoxH);
-            g.setComposite(prevN);
-            g.setColor(BOX_BORDER);
-            g.drawRect(nameBoxX, nameBoxY, nameBoxW, nameBoxH);
-
-            g.setColor(entry.speakerColor);
-            g.drawString(entry.speaker, nameBoxX + 6, nameBoxY + nfm.getAscent() + 2);
-        }
-
-        // ── Текст реплики (typewriter) ──
-        g.setFont(textFont);
-        FontMetrics fm = g.getFontMetrics();
-        int lineH = fm.getHeight();
+        DialogBoxRenderer.Layout layout = DialogBoxRenderer.computeLayout(sw, sh);
 
         String visibleText = entry.text.substring(0, Math.min(charIndex, entry.text.length()));
-        Color textColor = entry.speaker == null ? entry.speakerColor : SPEECH_COLOR;
+        int lineY = DialogBoxRenderer.drawTypewriterText(
+            g, entry.speaker, visibleText, entry.speakerColor, layout, fadeAlpha);
 
-        String[] rawLines = visibleText.split("\n", -1);
-        for (String rawLine : rawLines) {
-            List<String> wrapped = wrapLine(rawLine, fm, textMaxW);
-            for (String wl : wrapped) {
-                lineY += lineH;
-                if (lineY > boxY + boxH - pad) break;
-
-                // Тень
-                g.setColor(new Color(0, 0, 0, 160));
-                g.drawString(wl, textX + 1, lineY + 1);
-                // Основной
-                g.setColor(textColor);
-                g.drawString(wl, textX, lineY);
-            }
-        }
-
-        // ── Мигающий курсор ──
         if (!waitingForAdvance && (tick / 8) % 2 == 0) {
-            int cursorX = textX + fm.stringWidth(getLastVisibleLine(visibleText, fm, textMaxW));
+            g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+            Font textFont = new Font("Serif", Font.PLAIN, layout.fontSize);
+            g.setFont(textFont);
+            FontMetrics fm = g.getFontMetrics();
+            int cursorX = layout.textX + fm.stringWidth(
+                DialogBoxRenderer.getLastVisibleLine(visibleText, fm, layout.textMaxW));
             g.setColor(entry.speakerColor != null ? entry.speakerColor : NARRATOR_COLOR);
-            g.fillRect(cursorX + 2, lineY - fm.getAscent() + 2, Math.max(2, fontSize / 5), fm.getAscent());
+            g.fillRect(cursorX + 2, lineY - fm.getAscent() + 2,
+                Math.max(2, layout.fontSize / 5), fm.getAscent());
+            g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
         }
 
-        // ── Подсказка [ Enter ] ──
         if (waitingForAdvance && (tick / 15) % 2 == 0) {
-            g.setFont(new Font("Serif", Font.BOLD, Math.max(10, fontSize - 2)));
-            g.setColor(HINT_COLOR);
-            String hint = "\u25B6 Enter";
-            int hw = g.getFontMetrics().stringWidth(hint);
-            g.drawString(hint, boxX + boxW - pad - hw, boxY + boxH - pad + 2);
+            DialogBoxRenderer.drawHint(g, "\u25B6 Enter", layout, layout.fontSize, fadeAlpha);
         }
-
-        // Восстанавливаем пиксельные настройки
-        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
-        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
-        g.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_DEFAULT);
     }
 
     // ─── Утилиты ───
@@ -985,28 +843,6 @@ public class IntroScreen {
         float c1 = 1.70158f;
         float c3 = c1 + 1f;
         return 1f + c3 * (float) Math.pow(t - 1, 3) + c1 * (float) Math.pow(t - 1, 2);
-    }
-
-    private String getLastVisibleLine(String text, FontMetrics fm, int maxW) {
-        String[] lines = text.split("\n", -1);
-        String last = lines[lines.length - 1];
-        List<String> wrapped = wrapLine(last, fm, maxW);
-        return wrapped.isEmpty() ? "" : wrapped.get(wrapped.size() - 1);
-    }
-
-    private List<String> wrapLine(String line, FontMetrics fm, int maxW) {
-        List<String> result = new ArrayList<>();
-        if (line.isEmpty()) { result.add(""); return result; }
-        StringBuilder current = new StringBuilder();
-        for (String word : line.split("(?<=\\s)")) {
-            if (fm.stringWidth(current.toString() + word) > maxW && current.length() > 0) {
-                result.add(current.toString());
-                current = new StringBuilder();
-            }
-            current.append(word);
-        }
-        if (current.length() > 0) result.add(current.toString());
-        return result;
     }
 
     public boolean isFinished() {
