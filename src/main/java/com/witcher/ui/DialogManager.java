@@ -82,6 +82,12 @@ public class DialogManager {
                 """);
 
         showDelayedText("\n*Из стены замка начинает вырастать настоящий торговый прилавок*\n");
+        showDialogLine("Геральт", "...Сгенерировал?");
+        showDialogLine("Герцог", """
+            *похлопывает прилавок*
+            Это... называется... Попросил - получил.
+            """);
+        showDialogLine("Геральт", "Хмм. Я бы попросил лучше спирт.");
     }
 
     public void displayMainMenu() {

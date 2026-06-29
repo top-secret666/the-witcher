@@ -5,6 +5,7 @@ import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.awt.image.RescaleOp;
 import java.io.File;
 import java.io.InputStream;
 import java.nio.file.Paths;
@@ -20,6 +21,8 @@ import java.util.Random;
  */
 public class IntroScreen {
 
+    private static final int SHOP_ANIMATION_ENTRY_INDEX = 5;
+
     // ─── Состояния ───
     private boolean finished = false;
     private int tick = 0;
@@ -32,13 +35,24 @@ public class IntroScreen {
     private final BufferedImage strangerSprite;
     private final BufferedImage geraltEmotionSprite;
     private final BufferedImage dukeLaughSprite;
+    // Спрайты для сцены лавки (альтернативные варианты)
+    private final BufferedImage geraltShopSprite;
+    private final BufferedImage dukeShopSprite;
+    private final BufferedImage geraltEmotionShopSprite;
+    private final BufferedImage dukeLaughShopSprite;
 
     // Фон: кадры GIF (декодированы вручную) или статичный фон
     private final BufferedImage[] bgFrames;  // null если GIF не загрузился
     private final int[] bgFrameDelays;       // задержки кадров в мс
     private final BufferedImage staticBgImg; // fallback если GIF нет
+    private final BufferedImage merchantBgImg;
+    private final BufferedImage[] shopMaterializeFrames;
+    private final int[] shopMaterializeDelays;
     private int bgFrameIndex = 0;
     private long bgLastFrameTime = System.currentTimeMillis();
+    private int shopFrameIndex = 0;
+    private long shopLastFrameTime = System.currentTimeMillis();
+    private float shopReveal = 0f;
 
     // Позиции персонажей (анимированные slide-in, 0.0 = за экраном, 1.0 = на месте)
     private float geraltSlide = 0f;
@@ -103,7 +117,8 @@ public class IntroScreen {
     private BufferedImage rightEmotion = null;
 
     // ─── Цвета ───
-    private static final Color NARRATOR_COLOR = new Color(180, 170, 150);
+    // Тёплый, более контрастный, но не ярко-белый цвет для описательных (нарратор) строк
+    private static final Color NARRATOR_COLOR = new Color(160, 145, 120);
     private static final Color GERALT_COLOR = new Color(160, 205, 235);
     private static final Color STRANGER_COLOR = new Color(100, 130, 200);
     private static final Color DUKE_COLOR = new Color(218, 165, 32);
@@ -111,6 +126,7 @@ public class IntroScreen {
     private static final Color BOX_BORDER = new Color(140, 100, 35);
     private static final Color BOX_BORDER_INNER = new Color(90, 65, 20);
     private static final Color HINT_COLOR = new Color(180, 160, 120, 180);
+    private static final Color SPEECH_COLOR = new Color(220, 190, 100);
 
     private float fadeAlpha = 0f;
 
@@ -124,12 +140,43 @@ public class IntroScreen {
         geraltEmotionSprite = loadTrimmed("/assets/sprites/screen saver/geralt_emotion.png");
         dukeLaughSprite = loadTrimmed("/assets/sprites/screen saver/duke_portrait_fun.png");
 
+        // Попытка загрузить альтернативные спрайты для сцены лавки (фоллбэки к основным)
+        geraltShopSprite = loadTrimmed("/assets/sprites/lavka/geralt_portrait_shop.png");
+        dukeShopSprite = loadTrimmed("/assets/sprites/lavka/duke_portrait_shop.png");
+        geraltEmotionShopSprite = loadTrimmed("/assets/sprites/lavka/geralt_emotion_shop.png");
+        dukeLaughShopSprite = loadTrimmed("/assets/sprites/lavka/duke_portrait_fun_shop.png");
+
         // ─── Загрузка фона (статичная PNG картинка) ───
         bgFrames = null;
         bgFrameDelays = null;
-        Sprite fb = Sprite.load("/assets/sprites/screen saver/kaer_morhen_bg.png");
-        if (fb == null) fb = Sprite.load("/assets/sprites/menu/menu_bg_custom.jpg");
+        Sprite fb = tryLoad("/assets/sprites/screen saver/kaer_morhen_bg.png",
+            "/assets/sprites/kaer_morhen_bg.png",
+            "/assets/sprites/menu/menu_bg_custom.jpg");
         staticBgImg = fb != null ? fb.getImage() : null;
+
+        GifData shopGif = null;
+        // try several likely locations for the shop materialize gif
+        String[] gifCandidates = new String[]{
+            "/assets/sprites/screen saver/shop_materialize.gif",
+            "/assets/sprites/screen saver/59f8bef1-2321-427a-80b3-56655d3e1e4b.gif",
+            "/assets/sprites/lavka/shop_materialize.gif",
+            "/assets/sprites/lavka/shop_materialize_v2.gif"
+        };
+        for (String c : gifCandidates) {
+            shopGif = loadGifFrames(c);
+            if (shopGif != null) break;
+        }
+        shopMaterializeFrames = shopGif != null ? shopGif.frames : null;
+        shopMaterializeDelays = shopGif != null ? shopGif.delays : null;
+
+        Sprite merchantBg = tryLoad(
+            "/assets/sprites/screen saver/lavka.png",
+            "/assets/sprites/lavka.png",
+            "/assets/sprites/lavka/merchant_bg_lavka.png",
+            "/assets/sprites/lavka/lavka.png",
+            "/assets/sprites/menu/menu_bg_custom.jpg"
+        );
+        merchantBgImg = merchantBg != null ? merchantBg.getImage() : null;
 
         // ─── Диалоги (в стиле визуальной новеллы) ───
         // 0: Нарратор — фон, нет персонажей
@@ -161,6 +208,21 @@ public class IntroScreen {
         entries.add(new DialogEntry(null,
                 "*Из стены замка начинает вырастать\nнастоящий торговый прилавок...*",
                 NARRATOR_COLOR, "geralt", "duke", "none"));
+
+        // 6: Геральт после появления прилавка
+        entries.add(new DialogEntry("Геральт",
+            "...Сгенерировал?",
+            GERALT_COLOR, "geralt", "duke", "left"));
+
+        // 7: Герцог отвечает
+        entries.add(new DialogEntry("Герцог",
+            "*похлопывает прилавок*\nЭто... называется... Попросил - получил.",
+            DUKE_COLOR, "geralt", "duke", "right"));
+
+        // 8: Геральт ворчит
+        entries.add(new DialogEntry("Геральт",
+            "Хмм. Я бы попросил лучше спирт.",
+            GERALT_COLOR, "geralt", "duke", "left"));
     }
 
     // ─── Обновление ───
@@ -275,6 +337,48 @@ public class IntroScreen {
 
         int totalChars = entry.text.length();
 
+        boolean shopSceneReached = currentEntry >= SHOP_ANIMATION_ENTRY_INDEX;
+        boolean finalShopScene = currentEntry == SHOP_ANIMATION_ENTRY_INDEX;
+        boolean finalDialogueFinished = finalShopScene && charIndex >= totalChars;
+        float revealTarget = shopSceneReached && (currentEntry > SHOP_ANIMATION_ENTRY_INDEX || finalDialogueFinished) ? 1f : 0f;
+        if (shopReveal < revealTarget) {
+            shopReveal = Math.min(revealTarget, shopReveal + 0.02f);
+        } else {
+            shopReveal = Math.max(revealTarget, shopReveal - 0.05f);
+        }
+
+        if (finalShopScene && shopMaterializeFrames != null && shopMaterializeFrames.length > 0) {
+            long now = System.currentTimeMillis();
+            int delayMs = shopMaterializeDelays[shopFrameIndex];
+            if (delayMs < 20) delayMs = 70;
+            if (now - shopLastFrameTime >= delayMs) {
+                shopFrameIndex = Math.min(shopMaterializeFrames.length - 1, shopFrameIndex + 1);
+                shopLastFrameTime = now;
+            }
+        } else if (!shopSceneReached) {
+            shopFrameIndex = 0;
+            shopLastFrameTime = System.currentTimeMillis();
+        }
+
+        boolean shopAnimationComplete = shopSceneReached
+            && (currentEntry > SHOP_ANIMATION_ENTRY_INDEX
+            || (shopReveal >= 0.995f
+            && (shopMaterializeFrames == null
+            || shopMaterializeFrames.length == 0
+            || shopFrameIndex >= shopMaterializeFrames.length - 1)));
+
+        if (shopSceneReached && shopReveal > 0.03f) {
+            if (shopAnimationComplete) {
+                geraltSlide = geraltVisible ? Math.min(1f, geraltSlide + slideSpeed * 1.2f) : Math.max(0f, geraltSlide - slideSpeed);
+                strangerSlide = Math.max(0f, strangerSlide - slideSpeed * 1.8f);
+                dukeSlide = dukeWanted ? Math.min(1f, dukeSlide + slideSpeed * 1.2f) : Math.max(0f, dukeSlide - slideSpeed);
+            } else {
+                geraltSlide = Math.max(0f, geraltSlide - slideSpeed * 1.8f);
+                strangerSlide = Math.max(0f, strangerSlide - slideSpeed * 1.8f);
+                dukeSlide = Math.max(0f, dukeSlide - slideSpeed * 1.8f);
+            }
+        }
+
         if (waitingForAdvance) {
             if (advancePressed) {
                 currentEntry++;
@@ -331,24 +435,42 @@ public class IntroScreen {
             bgImg = staticBgImg;
         }
         if (bgImg != null) {
-            int srcW = bgImg.getWidth();
-            int srcH = bgImg.getHeight();
-            if (srcW > 0 && srcH > 0) {
-                float scale = Math.max((float) sw / srcW, (float) sh / srcH);
-                int w = Math.round(srcW * scale);
-                int h = Math.round(srcH * scale);
-                int x = (sw - w) / 2;
-                int y = (sh - h) / 2;
-                Composite prev = g.getComposite();
-                // BILINEAR для фона — плавное масштабирование без пиксельных блоков
-                g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-                g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-                g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, fadeAlpha * 0.82f));
-                g.drawImage(bgImg, x, y, w, h, null);
-                // Восстанавливаем пиксельные настройки для остальных элементов
-                g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
-                g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
-                g.setComposite(prev);
+            drawScaledBackground(g, bgImg, sw, sh, fadeAlpha * 0.82f, false);
+        }
+
+        boolean shopSceneReached = currentEntry >= SHOP_ANIMATION_ENTRY_INDEX;
+        boolean finalShopScene = currentEntry == SHOP_ANIMATION_ENTRY_INDEX;
+        boolean shopAnimationComplete = shopSceneReached
+            && (currentEntry > SHOP_ANIMATION_ENTRY_INDEX
+            || (shopReveal >= 0.995f
+            && (shopMaterializeFrames == null
+            || shopMaterializeFrames.length == 0
+            || shopFrameIndex >= shopMaterializeFrames.length - 1)));
+        boolean hideCharactersForShopScene = finalShopScene && shopReveal > 0.03f && !shopAnimationComplete;
+
+        if (shopReveal > 0.001f) {
+            BufferedImage shopFrame = null;
+            if (shopAnimationComplete && merchantBgImg != null) {
+                shopFrame = merchantBgImg;
+            } else if (shopMaterializeFrames != null && shopMaterializeFrames.length > 0) {
+                shopFrame = shopMaterializeFrames[Math.max(0, Math.min(shopFrameIndex, shopMaterializeFrames.length - 1))];
+            } else {
+                shopFrame = merchantBgImg;
+            }
+
+            if (shopFrame != null) {
+                if (shopAnimationComplete) {
+                    drawScaledBackground(g, shopFrame, sw, sh, fadeAlpha, false);
+                } else {
+                    float overlayAlpha = 0.55f + shopReveal * 0.45f;
+                    drawScaledBackground(g, shopFrame, sw, sh, Math.min(1f, overlayAlpha), false);
+
+                    Composite prev = g.getComposite();
+                    g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, shopReveal * 0.08f));
+                    g.setColor(new Color(255, 195, 110));
+                    g.fillRect(0, 0, sw, sh);
+                    g.setComposite(prev);
+                }
             }
         }
 
@@ -358,38 +480,53 @@ public class IntroScreen {
         // ── Персонажи ──
         DialogEntry entry = currentEntry < entries.size() ? entries.get(currentEntry) : null;
         String activeSide = entry != null ? entry.activeSide : "none";
+        boolean leftForceOpaque = (leftEmotion != null) && "left".equals(activeSide);
+        boolean rightForceOpaque = (rightEmotion != null) && "right".equals(activeSide);
 
-        // Рисуем Геральта (слева) - используем эмоциональный спрайт, если он активен и говорит
-        BufferedImage leftSpriteToShow = (leftEmotion != null && "left".equals(activeSide)) ? leftEmotion : geraltSprite;
-        drawCharacterEnhanced(g, sw, sh, leftSpriteToShow, geraltSlide, true,
-                "left".equals(activeSide), leftActiveAnim);
+        // Использовать альтернативные (shop) спрайты, если лавка проявлена
+        boolean usingShopSprites = shopReveal > 0.03f && (shopMaterializeFrames != null || merchantBgImg != null);
 
-        // Рисуем правых персонажей с кроссфейдом (stranger уходит, duke появляется)
-        if (strangerSlide > 0.001f) {
-            drawCharacterEnhanced(g, sw, sh, strangerSprite, strangerSlide, false,
-                    "right".equals(activeSide) && "stranger".equals(rightCharacter), rightActiveAnim);
-        }
-        if (dukeSlide > 0.001f) {
-            // Для герцога используем эмоциональный спрайт (смех), если он активен и говорит
-            BufferedImage rightSpriteToShow = (rightEmotion != null && "right".equals(activeSide)) ? rightEmotion : dukeSprite;
-            drawCharacterEnhanced(g, sw, sh, rightSpriteToShow, dukeSlide, false,
-                    "right".equals(activeSide) && "duke".equals(rightCharacter), rightActiveAnim);
-        }
+        if (!hideCharactersForShopScene) {
+                // Рисуем Геральта (слева) - при показе лавки используем альтернативные shop-спрайты
+                BufferedImage geraltBase = usingShopSprites && geraltShopSprite != null ? geraltShopSprite : geraltSprite;
+                BufferedImage geraltEmotionBase = usingShopSprites && geraltEmotionShopSprite != null ? geraltEmotionShopSprite : geraltEmotionSprite;
+                BufferedImage leftSpriteToShow = ("left".equals(activeSide) && geraltEmotionBase != null) ? geraltEmotionBase : geraltBase;
+                        drawCharacterEnhanced(g, sw, sh, leftSpriteToShow, geraltSlide, true,
+                            "left".equals(activeSide), leftActiveAnim, leftForceOpaque, false, false);
 
-        // ── Частицы смены персонажа ──
-        for (float[] p : switchParticles) {
-            float life = p[4] / p[5];
-            float a = (1f - life) * fadeAlpha;
-            int pr = Math.min(255, (int) p[6]);
-            int pg = Math.min(255, (int) p[7]);
-            int pb = Math.min(255, (int) p[8]);
-            g.setColor(new Color(pr, pg, pb, Math.max(0, Math.min(255, (int) (a * 220)))));
-            int sz = life < 0.3f ? 3 : (life < 0.6f ? 2 : 1);
-            g.fillRect(Math.round(p[0] * sw / 480f), Math.round(p[1] * sh / 360f), sz, sz);
+            // Рисуем правых персонажей с кроссфейдом (stranger уходит, duke появляется)
+            if (strangerSlide > 0.001f) {
+                drawCharacterEnhanced(g, sw, sh, strangerSprite, strangerSlide, false,
+                    "right".equals(activeSide) && "stranger".equals(rightCharacter), rightActiveAnim, false, false, false);
+            }
+            if (dukeSlide > 0.001f) {
+                // Для герцога используем эмоциональный спрайт (смех), если он активен и говорит
+                BufferedImage dukeBase = usingShopSprites && dukeShopSprite != null ? dukeShopSprite : dukeSprite;
+                BufferedImage dukeEmotionBase = usingShopSprites && dukeLaughShopSprite != null ? dukeLaughShopSprite : dukeLaughSprite;
+                BufferedImage rightSpriteToShow = ("right".equals(activeSide) && dukeEmotionBase != null) ? dukeEmotionBase : dukeBase;
+                boolean liftDuke = usingShopSprites && rightSpriteToShow == dukeLaughShopSprite;
+                boolean raiseDuke = usingShopSprites && rightSpriteToShow == dukeLaughShopSprite;
+                drawCharacterEnhanced(g, sw, sh, rightSpriteToShow, dukeSlide, false,
+                    "right".equals(activeSide) && "duke".equals(rightCharacter), rightActiveAnim, rightForceOpaque, liftDuke, raiseDuke);
+            }
+
+            // ── Частицы смены персонажа ── (пропускаем, если показываем непрозрачную эмоцию)
+            if (!(leftForceOpaque || rightForceOpaque)) {
+                for (float[] p : switchParticles) {
+                    float life = p[4] / p[5];
+                    float a = (1f - life) * fadeAlpha;
+                    int pr = Math.min(255, (int) p[6]);
+                    int pg = Math.min(255, (int) p[7]);
+                    int pb = Math.min(255, (int) p[8]);
+                    g.setColor(new Color(pr, pg, pb, Math.max(0, Math.min(255, (int) (a * 220)))));
+                    int sz = life < 0.3f ? 3 : (life < 0.6f ? 2 : 1);
+                    g.fillRect(Math.round(p[0] * sw / 480f), Math.round(p[1] * sh / 360f), sz, sz);
+                }
+            }
         }
 
         // ── Красивая анимация появления герцога (золотые молнии + энергетические волны) ──
-        if (switchFlash > 0.01f && rightCharacterBounds != null) {
+        if (!hideCharactersForShopScene && switchFlash > 0.01f && rightCharacterBounds != null && !rightForceOpaque) {
             Composite prevF = g.getComposite();
             int cx = rightCharacterBounds.x + rightCharacterBounds.width / 2;
             int cy = rightCharacterBounds.y + rightCharacterBounds.height / 2;
@@ -480,7 +617,7 @@ public class IntroScreen {
         }
 
         // ── Диалоговое окно ──
-        if (currentEntry < entries.size() && fadeAlpha > 0.2f) {
+        if (!finalShopScene && currentEntry < entries.size() && fadeAlpha > 0.2f) {
             drawDialogBox(g, sw, sh);
         }
 
@@ -496,7 +633,8 @@ public class IntroScreen {
 
     private void drawCharacterEnhanced(Graphics2D g, int sw, int sh,
                                       BufferedImage sprite, float slide,
-                                      boolean isLeft, boolean isActive, float activeAnim) {
+                                      boolean isLeft, boolean isActive, float activeAnim,
+                                      boolean forceOpaque, boolean liftForShop, boolean raiseAboveOthers) {
         if (sprite == null || slide <= 0.001f) return;
 
         // Размер персонажа — примерно 85% высоты экрана
@@ -505,6 +643,11 @@ public class IntroScreen {
         // Активный персонаж чуть увеличивается (pop-эффект)
         float scaleBoost = 1.0f + activeAnim * 0.06f;
         float charScale = baseCharScale * scaleBoost;
+        
+        // Если передан флаг liftForShop — слегка уменьшим масштаб спрайта (визуально для прилавка)
+        if (liftForShop) {
+            charScale *= 0.92f; // уменьшение на ~8%
+        }
 
         int cw = Math.round(sprite.getWidth() * charScale);
         int ch = Math.round(sprite.getHeight() * charScale);
@@ -537,17 +680,36 @@ public class IntroScreen {
         }
         int cy = baseY + (int) breathe;
 
+        // Если передан флаг liftForShop — слегка сдвинем персонажа вниз (корректировка для прилавка)
+        if (liftForShop) {
+            int down = Math.round(ch * 0.06f);
+            cy = cy + down;
+        }
+
+        // Если передан флаг raiseAboveOthers — приподнимем изображение (используется для конкретного shop-герцога)
+        if (raiseAboveOthers) {
+            int up = Math.round(ch * 0.08f);
+            cy = cy - up;
+        }
+
         Composite prev = g.getComposite();
 
         // ── Спрайт персонажа (УЛУЧШЕННОЕ КАЧЕСТВО - комбинированная интерполяция) ──
         // Используем более высокое качество интерполяции для лучшего вида спрайтов
         g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
         g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, fadeAlpha));
+        float characterAlpha = fadeAlpha * Math.min(1f, 0.2f + slide * 0.9f);
+        // If requested (emotion sprite while active), draw fully opaque for clear face
+        if (forceOpaque && isActive) {
+            characterAlpha = fadeAlpha;
+        }
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, characterAlpha));
         g.drawImage(sprite, cx, cy, cw, ch, null);
         // Восстанавливаем пиксельные настройки для остального интерфейса
         g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
         g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
+        
+        // Никакого дополнительного перерисовывания — рисуем только один экземпляр (исключаем удвоение)
 
         // Сохраняем рамку правого персонажа для эффекта смены
         if (!isLeft) {
@@ -555,6 +717,96 @@ public class IntroScreen {
         }
 
         g.setComposite(prev);
+    }
+
+    private void drawScaledBackground(Graphics2D g, BufferedImage img, int sw, int sh, float alpha, boolean pixelate) {
+        drawScaledBackground(g, img, sw, sh, alpha, pixelate, 1f);
+    }
+
+    private void drawScaledBackground(Graphics2D g, BufferedImage img, int sw, int sh, float alpha,
+                                      boolean pixelate, float pixelSize) {
+        if (img == null || alpha <= 0f) return;
+
+        int srcW = img.getWidth();
+        int srcH = img.getHeight();
+        if (srcW <= 0 || srcH <= 0) return;
+
+        float scale = Math.max((float) sw / srcW, (float) sh / srcH);
+        int w = Math.round(srcW * scale);
+        int h = Math.round(srcH * scale);
+        int x = (sw - w) / 2;
+        int y = (sh - h) / 2;
+
+        Composite prevComposite = g.getComposite();
+        Object prevInterpolation = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
+        Object prevRendering = g.getRenderingHint(RenderingHints.KEY_RENDERING);
+
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
+
+        if (pixelate && pixelSize > 1.5f) {
+            int smallW = Math.max(1, Math.round(w / pixelSize));
+            int smallH = Math.max(1, Math.round(h / pixelSize));
+            BufferedImage reduced = new BufferedImage(smallW, smallH, BufferedImage.TYPE_INT_ARGB);
+            Graphics2D rg = reduced.createGraphics();
+            rg.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+            rg.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+            rg.drawImage(img, 0, 0, smallW, smallH, null);
+            rg.dispose();
+
+            BufferedImage boosted = boostBackgroundImage(reduced,
+                new float[]{1.12f, 1.10f, 1.06f, 1f},
+                new float[]{8f, 6f, 4f, 0f});
+
+            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+            g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
+            g.drawImage(boosted, x, y, w, h, null);
+        } else {
+            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+            g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+            BufferedImage boosted = boostBackgroundImage(img,
+                new float[]{1.08f, 1.06f, 1.03f, 1f},
+                new float[]{6f, 4f, 2f, 0f});
+            g.drawImage(boosted, x, y, w, h, null);
+        }
+
+        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, prevInterpolation);
+        g.setRenderingHint(RenderingHints.KEY_RENDERING, prevRendering);
+        g.setComposite(prevComposite);
+    }
+
+    private BufferedImage boostBackgroundImage(BufferedImage source, float[] scales, float[] offsets) {
+        BufferedImage compatibleSource = ensureArgbImage(source);
+        int components = compatibleSource.getColorModel().hasAlpha() ? 4 : 3;
+        float[] appliedScales = adaptComponents(scales, components, 1f);
+        float[] appliedOffsets = adaptComponents(offsets, components, 0f);
+        BufferedImage boosted = new BufferedImage(
+            compatibleSource.getWidth(),
+            compatibleSource.getHeight(),
+            BufferedImage.TYPE_INT_ARGB
+        );
+        RescaleOp vividOp = new RescaleOp(appliedScales, appliedOffsets, null);
+        vividOp.filter(compatibleSource, boosted);
+        return boosted;
+    }
+
+    private BufferedImage ensureArgbImage(BufferedImage source) {
+        if (source.getType() == BufferedImage.TYPE_INT_ARGB) {
+            return source;
+        }
+
+        BufferedImage converted = new BufferedImage(source.getWidth(), source.getHeight(), BufferedImage.TYPE_INT_ARGB);
+        Graphics2D cg = converted.createGraphics();
+        cg.drawImage(source, 0, 0, null);
+        cg.dispose();
+        return converted;
+    }
+
+    private float[] adaptComponents(float[] values, int count, float fallback) {
+        float[] adapted = new float[count];
+        for (int index = 0; index < count; index++) {
+            adapted[index] = index < values.length ? values[index] : fallback;
+        }
+        return adapted;
     }
 
     private void drawDialogBox(Graphics2D g, int sw, int sh) {
@@ -680,7 +932,7 @@ public class IntroScreen {
         int lineH = fm.getHeight();
 
         String visibleText = entry.text.substring(0, Math.min(charIndex, entry.text.length()));
-        Color textColor = entry.speaker == null ? entry.speakerColor : new Color(255, 220, 80);
+        Color textColor = entry.speaker == null ? entry.speakerColor : SPEECH_COLOR;
 
         String[] rawLines = visibleText.split("\n", -1);
         for (String rawLine : rawLines) {
@@ -765,6 +1017,14 @@ public class IntroScreen {
         Sprite s = Sprite.load(path);
         if (s == null) return null;
         return s.getImage();
+    }
+
+    private static Sprite tryLoad(String... paths) {
+        for (String p : paths) {
+            Sprite s = Sprite.load(p);
+            if (s != null) return s;
+        }
+        return null;
     }
 
     private static BufferedImage[] loadFrameStrip(String path, int cols, int rows) {
