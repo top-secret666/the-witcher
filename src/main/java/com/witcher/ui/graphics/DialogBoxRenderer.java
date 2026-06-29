@@ -206,6 +206,69 @@ public final class DialogBoxRenderer {
         return lineY;
     }
 
+    public static void drawPlainSpeakerText(Graphics2D g, int sw, int sh, String speaker, String text,
+                                            Color speakerColor, float alpha) {
+        enableTextSmoothing(g);
+        Composite prev = g.getComposite();
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
+
+        int fontSize = Math.max(13, (int) (sh * 0.040f));
+        int marginX = 14;
+        int textMaxW = sw - marginX * 2;
+        int lineH = fontSize + 4;
+        int maxLines = 2;
+        int bottomPad = 10;
+
+        Font textFont = new Font("Serif", Font.PLAIN, fontSize);
+        g.setFont(textFont);
+        FontMetrics fm = g.getFontMetrics();
+
+        List<String> lines = new ArrayList<>();
+        for (String rawLine : text.split("\n", -1)) {
+            lines.addAll(wrapLine(rawLine, fm, textMaxW));
+        }
+        if (lines.size() > maxLines) {
+            lines = lines.subList(0, maxLines);
+        }
+
+        int blockH = lineH * lines.size();
+        int startY = sh - bottomPad - blockH + fm.getAscent();
+
+        if (speaker != null && !speaker.isEmpty()) {
+            g.setFont(new Font("Serif", Font.BOLD, fontSize));
+            g.setColor(speakerColor);
+            String label = speaker + ": ";
+            g.drawString(label, marginX, startY);
+            int labelW = g.getFontMetrics().stringWidth(label);
+            if (!lines.isEmpty()) {
+                String first = lines.get(0);
+                g.setFont(textFont);
+                g.setColor(new Color(0, 0, 0, 140));
+                g.drawString(first, marginX + labelW + 1, startY + 1);
+                g.setColor(SPEECH_COLOR);
+                g.drawString(first, marginX + labelW, startY);
+                for (int i = 1; i < lines.size(); i++) {
+                    int y = startY + lineH * i;
+                    g.setColor(new Color(0, 0, 0, 140));
+                    g.drawString(lines.get(i), marginX + 1, y + 1);
+                    g.setColor(SPEECH_COLOR);
+                    g.drawString(lines.get(i), marginX, y);
+                }
+            }
+        } else {
+            for (int i = 0; i < lines.size(); i++) {
+                int y = startY + lineH * i;
+                g.setColor(new Color(0, 0, 0, 140));
+                g.drawString(lines.get(i), marginX + 1, y + 1);
+                g.setColor(SPEECH_COLOR);
+                g.drawString(lines.get(i), marginX, y);
+            }
+        }
+
+        g.setComposite(prev);
+        disableTextSmoothing(g);
+    }
+
     public static void drawHint(Graphics2D g, String hint, Layout layout, int fontSize, float alpha) {
         enableTextSmoothing(g);
         g.setFont(new Font("Serif", Font.BOLD, Math.max(10, fontSize - 2)));
