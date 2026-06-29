@@ -288,7 +288,9 @@ public class ShopScreen {
         Object prevInterp = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
         g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
         g.drawImage(img, x, y, w, h, null);
-        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, prevInterp);
+        if (prevInterp != null) {
+            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, prevInterp);
+        }
         g.setComposite(prev);
     }
 

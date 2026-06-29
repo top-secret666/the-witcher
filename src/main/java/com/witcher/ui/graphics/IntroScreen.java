@@ -764,8 +764,12 @@ public class IntroScreen {
             g.drawImage(boosted, x, y, w, h, null);
         }
 
-        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, prevInterpolation);
-        g.setRenderingHint(RenderingHints.KEY_RENDERING, prevRendering);
+        if (prevInterpolation != null) {
+            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, prevInterpolation);
+        }
+        if (prevRendering != null) {
+            g.setRenderingHint(RenderingHints.KEY_RENDERING, prevRendering);
+        }
         g.setComposite(prevComposite);
     }
 
