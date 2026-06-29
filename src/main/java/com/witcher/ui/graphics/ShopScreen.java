@@ -3,13 +3,11 @@ package main.java.com.witcher.ui.graphics;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 
 /**
  * Пиксельный экран лавки Герцога.
- * Визуальная итерация: каталог мок-товаров, диалог, без логики покупки.
  */
 public class ShopScreen {
 
@@ -20,6 +18,44 @@ public class ShopScreen {
         WELCOME,
         BROWSE,
         IDLE
+    }
+
+    private static final class ShopLayout {
+        final int hudY;
+        final int hudH;
+        final int panelX;
+        final int panelY;
+        final int panelW;
+        final int panelH;
+        final int rowH;
+        final int headerH;
+        final int listY;
+        final int btnX;
+        final int btnY;
+        final int btnW;
+        final int btnH;
+        final int dialogTop;
+
+        ShopLayout(int sw, int sh, int itemCount) {
+            hudY = 4;
+            hudH = 26;
+            dialogTop = sh - Math.round(sh * 0.30f);
+            btnH = 26;
+            btnW = 92;
+            rowH = 24;
+            headerH = 22;
+
+            panelW = 248;
+            panelX = (sw - panelW) / 2;
+            panelY = hudY + hudH + 6;
+            int listH = headerH + rowH * itemCount + 6;
+            int maxPanelBottom = dialogTop - btnH - 14;
+            panelH = Math.min(listH + 8, maxPanelBottom - panelY);
+            listY = panelY + headerH + 4;
+
+            btnX = panelX + (panelW - btnW) / 2;
+            btnY = panelY + panelH + 6;
+        }
     }
 
     private static final class ShopItem {
@@ -43,14 +79,11 @@ public class ShopScreen {
     private final BufferedImage dukeLaughSprite;
 
     private final BufferedImage hudBar;
-    private final BufferedImage signTitle;
     private final BufferedImage catalogPanel;
     private final BufferedImage rowNormal;
     private final BufferedImage rowHover;
     private final BufferedImage rowSelected;
-    private final BufferedImage btnBuyNormal;
     private final BufferedImage btnBuyDisabled;
-    private final BufferedImage counterForeground;
     private final BufferedImage crownIcon;
 
     private final List<ShopItem> items = new ArrayList<>();
@@ -75,8 +108,7 @@ public class ShopScreen {
     public ShopScreen() {
         merchantBg = loadFirstAvailable(
             "/assets/sprites/lavka/merchant_bg_lavka.png",
-            "/assets/sprites/lavka/lavka.png",
-            "/assets/sprites/screen saver/lavka.png"
+            "/assets/sprites/lavka/lavka.png"
         );
 
         geraltSprite = loadWithFallback(
@@ -93,14 +125,11 @@ public class ShopScreen {
         );
 
         hudBar = load(UI + "shop_hud_bar.png");
-        signTitle = load(UI + "shop_sign_title.png");
         catalogPanel = load(UI + "shop_catalog_panel.png");
         rowNormal = load(UI + "shop_row_normal.png");
         rowHover = load(UI + "shop_row_hover.png");
         rowSelected = load(UI + "shop_row_selected.png");
-        btnBuyNormal = load(UI + "shop_btn_buy_normal.png");
         btnBuyDisabled = load(UI + "shop_btn_buy_disabled.png");
-        counterForeground = load(UI + "shop_counter_foreground.png");
         crownIcon = load(ICONS + "icon_crown.png");
 
         items.add(new ShopItem("Кираса волчьей школы", "120",
@@ -157,31 +186,33 @@ public class ShopScreen {
         Graphics2D g = screen.createGraphics();
         int sw = screen.getWidth();
         int sh = screen.getHeight();
+        ShopLayout layout = new ShopLayout(sw, sh, items.size());
 
-        g.setColor(new Color(12, 10, 6));
+        g.setColor(new Color(8, 6, 4));
         g.fillRect(0, 0, sw, sh);
 
-        drawScaledBackground(g, merchantBg, sw, sh, 1f);
-        drawVignette(g, sw, sh);
+        // 1. Фон лавки (приглушённый)
+        drawScaledBackground(g, merchantBg, sw, sh, 0.75f);
+        drawDarkOverlay(g, sw, sh, layout);
 
+        // 2. Персонажи сзади — мельче и по краям
         BufferedImage dukeDraw = (state == ShopState.BROWSE && selectedIndex >= 0)
             ? (dukeLaughSprite != null ? dukeLaughSprite : dukeSprite)
             : dukeSprite;
+        drawCharacter(g, sw, sh, geraltSprite, true, layout.dialogTop);
+        drawCharacter(g, sw, sh, dukeDraw, false, layout.dialogTop);
 
-        drawCharacter(g, sw, sh, geraltSprite, true);
-        drawCharacter(g, sw, sh, dukeDraw, false);
+        // 3. UI поверх персонажей
+        drawHud(g, sw, layout);
+        drawCatalog(g, layout);
+        drawBuyButton(g, layout);
 
-        drawSign(g, sw);
-        drawHud(g, sw);
-        drawCatalog(g, sw, sh);
-        drawBuyButton(g, sw, sh);
+        drawAshParticles(g);
 
-        drawCounterForeground(g, sw, sh);
-        drawAshParticles(g, sw, sh);
-
-        DialogBoxRenderer.Layout layout = DialogBoxRenderer.computeLayout(sw, sh);
+        // 4. Диалог
+        DialogBoxRenderer.Layout dialogLayout = DialogBoxRenderer.computeLayout(sw, sh);
         DialogBoxRenderer.drawSpeakerText(g, "Герцог", currentDialog,
-            DialogBoxRenderer.DUKE_COLOR, layout, 1f);
+            DialogBoxRenderer.DUKE_COLOR, dialogLayout, 1f);
 
         g.dispose();
     }
@@ -194,81 +225,86 @@ public class ShopScreen {
         exitRequested = false;
     }
 
-    private void drawSign(Graphics2D g, int sw) {
-        if (signTitle == null) return;
-        int targetW = Math.min(200, sw / 2);
-        int targetH = Math.round(signTitle.getHeight() * (targetW / (float) signTitle.getWidth()));
-        int x = (sw - targetW) / 2;
-        int y = 42;
-        drawScaledSprite(g, signTitle, x, y, targetW, targetH, true);
+    /** Затемнение по краям + подложка под каталог для читаемости. */
+    private void drawDarkOverlay(Graphics2D g, int sw, int sh, ShopLayout layout) {
+        Composite prev = g.getComposite();
+
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.45f));
+        g.setColor(Color.BLACK);
+        g.fillRect(0, 0, sw, sh);
+
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.55f));
+        int pad = 6;
+        g.fillRoundRect(layout.panelX - pad, layout.panelY - pad,
+            layout.panelW + pad * 2, layout.panelH + layout.btnH + pad * 2 + 10, 4, 4);
+
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.35f));
+        GradientPaint sides = new GradientPaint(0, 0, new Color(0, 0, 0, 200),
+            layout.panelX - 20, 0, new Color(0, 0, 0, 0));
+        g.setPaint(sides);
+        g.fillRect(0, 0, layout.panelX - 10, layout.dialogTop);
+        GradientPaint right = new GradientPaint(layout.panelX + layout.panelW + 20, 0,
+            new Color(0, 0, 0, 0), sw, 0, new Color(0, 0, 0, 200));
+        g.setPaint(right);
+        g.fillRect(layout.panelX + layout.panelW + 10, 0, sw - layout.panelX - layout.panelW - 10, layout.dialogTop);
+
+        g.setComposite(prev);
     }
 
-    private void drawHud(Graphics2D g, int sw) {
-        int pad = 8;
-        int barH = 30;
-        int barW = sw - pad * 2;
-        int barX = pad;
-        int barY = 6;
+    private void drawHud(Graphics2D g, int sw, ShopLayout layout) {
+        int barX = 10;
+        int barW = sw - 20;
 
         if (hudBar != null) {
-            drawScaledSprite(g, hudBar, barX, barY, barW, barH, true);
+            drawScaledSprite(g, hudBar, barX, layout.hudY, barW, layout.hudH, true);
         } else {
-            g.setColor(new Color(10, 8, 4, 200));
-            g.fillRect(barX, barY, barW, barH);
-            g.setColor(DialogBoxRenderer.BOX_BORDER);
-            g.drawRect(barX, barY, barW, barH);
-        }
-
-        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-        g.setFont(new Font("Serif", Font.BOLD, 13));
-        g.setColor(DialogBoxRenderer.DUKE_COLOR);
-        g.drawString("Лавка Герцога", barX + 14, barY + 20);
-
-        String wallet = "???";
-        int crownSize = 16;
-        int walletX = barX + barW - 14;
-        FontMetrics fm = g.getFontMetrics();
-        walletX -= fm.stringWidth(" крон");
-        walletX -= fm.stringWidth(wallet);
-        if (crownIcon != null) {
-            walletX -= crownSize + 4;
-            drawScaledSprite(g, crownIcon, walletX, barY + 7, crownSize, crownSize, true);
-            walletX += crownSize + 4;
-        }
-        g.setColor(new Color(220, 200, 140));
-        g.drawString(wallet, walletX, barY + 20);
-        g.setColor(new Color(180, 165, 120));
-        g.drawString(" крон", walletX + fm.stringWidth(wallet), barY + 20);
-        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
-    }
-
-    private void drawCatalog(Graphics2D g, int sw, int sh) {
-        int panelW = 210;
-        int rowH = 30;
-        int headerH = 28;
-        int panelH = headerH + rowH * items.size() + 12;
-        int panelX = (sw - panelW) / 2;
-        int panelY = 88;
-
-        if (catalogPanel != null) {
-            drawScaledSprite(g, catalogPanel, panelX, panelY, panelW, panelH, true);
-        } else {
-            g.setColor(new Color(8, 6, 3, 210));
-            g.fillRect(panelX, panelY, panelW, panelH);
-            g.setColor(DialogBoxRenderer.BOX_BORDER);
-            g.drawRect(panelX, panelY, panelW, panelH);
+            g.setColor(new Color(10, 8, 4, 220));
+            g.fillRect(barX, layout.hudY, barW, layout.hudH);
         }
 
         g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
         g.setFont(new Font("Serif", Font.BOLD, 12));
         g.setColor(DialogBoxRenderer.DUKE_COLOR);
-        g.drawString("— Товары —", panelX + panelW / 2 - 36, panelY + 18);
-        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
+        g.drawString("Лавка Герцога", barX + 12, layout.hudY + 18);
 
-        int rowX = panelX + 8;
-        int rowW = panelW - 16;
-        int y = panelY + headerH + 4;
-        int iconSize = 22;
+        String wallet = "???";
+        FontMetrics fm = g.getFontMetrics();
+        int crownSize = 14;
+        int textRight = barX + barW - 12;
+        textRight -= fm.stringWidth(" крон");
+        textRight -= fm.stringWidth(wallet);
+        if (crownIcon != null) {
+            textRight -= crownSize + 3;
+            drawScaledSprite(g, crownIcon, textRight, layout.hudY + 6, crownSize, crownSize, true);
+            textRight += crownSize + 3;
+        }
+        g.setColor(new Color(220, 200, 140));
+        g.drawString(wallet, textRight, layout.hudY + 18);
+        g.setColor(new Color(170, 155, 110));
+        g.drawString(" крон", textRight + fm.stringWidth(wallet), layout.hudY + 18);
+        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
+    }
+
+    private void drawCatalog(Graphics2D g, ShopLayout layout) {
+        if (catalogPanel != null) {
+            drawScaledSprite(g, catalogPanel, layout.panelX, layout.panelY,
+                layout.panelW, layout.panelH, true);
+        } else {
+            g.setColor(new Color(12, 9, 5, 230));
+            g.fillRect(layout.panelX, layout.panelY, layout.panelW, layout.panelH);
+            g.setColor(DialogBoxRenderer.BOX_BORDER);
+            g.drawRect(layout.panelX, layout.panelY, layout.panelW, layout.panelH);
+        }
+
+        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+        g.setFont(new Font("Serif", Font.BOLD, 11));
+        g.setColor(DialogBoxRenderer.DUKE_COLOR);
+        g.drawString("— Товары —", layout.panelX + layout.panelW / 2 - 32, layout.panelY + 15);
+
+        int rowX = layout.panelX + 6;
+        int rowW = layout.panelW - 12;
+        int iconSize = 18;
+        int y = layout.listY;
 
         for (int i = 0; i < items.size(); i++) {
             ShopItem item = items.get(i);
@@ -276,104 +312,89 @@ public class ShopScreen {
             boolean hovered = i == hoveredIndex;
 
             BufferedImage rowBg = rowNormal;
-            if (selected && rowSelected != null) {
-                rowBg = rowSelected;
-            } else if (hovered && rowHover != null) {
-                rowBg = rowHover;
-            }
+            if (selected && rowSelected != null) rowBg = rowSelected;
+            else if (hovered && rowHover != null) rowBg = rowHover;
 
             int rowY = y;
             if (rowBg != null) {
-                drawScaledSprite(g, rowBg, rowX, rowY, rowW, rowH - 2, true);
+                drawScaledSprite(g, rowBg, rowX, rowY, rowW, layout.rowH - 1, true);
+            } else {
+                g.setColor(selected ? new Color(70, 55, 20, 180) : new Color(30, 24, 12, 160));
+                g.fillRect(rowX, rowY, rowW, layout.rowH - 1);
             }
 
-            item.bounds.setBounds(rowX, rowY, rowW, rowH - 2);
+            item.bounds.setBounds(rowX, rowY, rowW, layout.rowH - 1);
 
-            int iconX = rowX + 6;
-            int iconY = rowY + (rowH - iconSize) / 2 - 1;
+            int iconX = rowX + 4;
+            int iconY = rowY + (layout.rowH - iconSize) / 2 - 1;
             if (item.icon != null) {
                 drawScaledSprite(g, item.icon, iconX, iconY, iconSize, iconSize, true);
             }
 
-            g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-            g.setFont(new Font("Serif", Font.PLAIN, 11));
+            g.setFont(new Font("Serif", Font.PLAIN, 10));
             g.setColor(selected ? new Color(255, 230, 140) : new Color(210, 195, 150));
-            int textX = iconX + iconSize + 6;
-            g.drawString(item.name, textX, rowY + 18);
+            int textX = iconX + iconSize + 4;
+            String label = truncateLabel(item.name, 22);
+            g.drawString(label, textX, rowY + 15);
 
-            g.setFont(new Font("Serif", Font.BOLD, 11));
+            g.setFont(new Font("Serif", Font.BOLD, 10));
             g.setColor(new Color(200, 175, 100));
-            String price = item.priceLabel;
             FontMetrics fm = g.getFontMetrics();
-            int priceX = rowX + rowW - 8 - fm.stringWidth(price);
-            g.drawString(price, priceX, rowY + 18);
-
+            int priceX = rowX + rowW - 6 - fm.stringWidth(item.priceLabel);
             if (crownIcon != null) {
-                drawScaledSprite(g, crownIcon, priceX - 14, rowY + 5, 12, 12, true);
+                drawScaledSprite(g, crownIcon, priceX - 12, rowY + 4, 10, 10, true);
+                priceX -= 2;
             }
-            g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
+            g.drawString(item.priceLabel, priceX, rowY + 15);
 
-            y += rowH;
+            y += layout.rowH;
         }
-    }
-
-    private void drawBuyButton(Graphics2D g, int sw, int sh) {
-        int btnW = 100;
-        int btnH = 30;
-        int btnX = (int) (sw * 0.72f) - btnW / 2;
-        int btnY = (int) (sh * 0.48f);
-
-        BufferedImage btn = btnBuyDisabled != null ? btnBuyDisabled : btnBuyNormal;
-        if (btn != null) {
-            drawScaledSprite(g, btn, btnX, btnY, btnW, btnH, true);
-        } else {
-            g.setColor(new Color(40, 32, 18, 200));
-            g.fillRect(btnX, btnY, btnW, btnH);
-        }
-
-        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-        g.setFont(new Font("Serif", Font.BOLD, 12));
-        g.setColor(new Color(100, 85, 55));
-        String label = "Скоро";
-        FontMetrics fm = g.getFontMetrics();
-        g.drawString(label, btnX + (btnW - fm.stringWidth(label)) / 2, btnY + 19);
         g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
     }
 
-    private void drawCounterForeground(Graphics2D g, int sw, int sh) {
-        if (counterForeground == null) return;
-        float scale = sw / (float) counterForeground.getWidth();
-        int w = sw;
-        int h = Math.round(counterForeground.getHeight() * scale);
-        int x = 0;
-        int y = sh - h;
-        drawScaledSprite(g, counterForeground, x, y, w, h, true);
+    private void drawBuyButton(Graphics2D g, ShopLayout layout) {
+        if (btnBuyDisabled != null) {
+            drawScaledSprite(g, btnBuyDisabled, layout.btnX, layout.btnY,
+                layout.btnW, layout.btnH, true);
+        }
+
+        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+        g.setFont(new Font("Serif", Font.BOLD, 11));
+        g.setColor(new Color(90, 75, 50));
+        String label = "Скоро";
+        FontMetrics fm = g.getFontMetrics();
+        g.drawString(label, layout.btnX + (layout.btnW - fm.stringWidth(label)) / 2, layout.btnY + 17);
+        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
     }
 
-    private void drawCharacter(Graphics2D g, int sw, int sh, BufferedImage sprite, boolean isLeft) {
+    private void drawCharacter(Graphics2D g, int sw, int sh, BufferedImage sprite,
+                               boolean isLeft, int dialogTop) {
         if (sprite == null) return;
 
-        float charScale = (sh * 0.85f) / sprite.getHeight() * 0.92f;
+        float charScale = (sh * 0.62f) / sprite.getHeight();
         int cw = Math.round(sprite.getWidth() * charScale);
         int ch = Math.round(sprite.getHeight() * charScale);
 
-        int dialogZone = (int) (sh * 0.15f);
-        int baseY = sh - dialogZone - ch + (int) (ch * 0.15f) + Math.round(ch * 0.06f);
-        int cx = isLeft ? (int) (sw * 0.02f) : (int) (sw - cw - sw * 0.02f);
+        int baseY = dialogTop - ch + Math.round(ch * 0.12f);
+        int cx = isLeft ? -Math.round(cw * 0.12f) : sw - cw + Math.round(cw * 0.12f);
 
-        if (!isLeft) {
-            baseY -= Math.round(ch * 0.08f);
-        }
-
-        float breathe = (float) Math.sin(tick * 0.04 + (isLeft ? 0 : 2)) * 2;
+        float breathe = (float) Math.sin(tick * 0.04 + (isLeft ? 0 : 2)) * 1.5f;
         int cy = baseY + (int) breathe;
 
+        Composite prev = g.getComposite();
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.92f));
         Object prevInterp = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
-        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
         g.drawImage(sprite, cx, cy, cw, ch, null);
         if (prevInterp != null) {
             g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, prevInterp);
         }
+        g.setComposite(prev);
+    }
+
+    private static String truncateLabel(String text, int maxChars) {
+        if (text.length() <= maxChars) return text;
+        return text.substring(0, maxChars - 1) + "…";
     }
 
     private void drawScaledSprite(Graphics2D g, BufferedImage img, int x, int y, int w, int h, boolean pixelArt) {
@@ -412,43 +433,24 @@ public class ShopScreen {
         g.setComposite(prev);
     }
 
-    private void drawVignette(Graphics2D g, int sw, int sh) {
-        Composite prev = g.getComposite();
-        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.25f));
-        GradientPaint top = new GradientPaint(0, 0, new Color(0, 0, 0, 140), 0, sh * 0.15f, new Color(0, 0, 0, 0));
-        g.setPaint(top);
-        g.fillRect(0, 0, sw, (int) (sh * 0.15f));
-        g.setComposite(prev);
-    }
-
     private void updateAshParticles() {
-        if (tick % 4 == 0 && ashParticles.size() < 25) {
-            float x = 80 + rng.nextFloat() * 320;
-            float y = 60 + rng.nextFloat() * 200;
-            float vx = (rng.nextFloat() - 0.5f) * 0.15f;
-            float vy = -0.1f - rng.nextFloat() * 0.25f;
-            int maxAge = 80 + rng.nextInt(100);
-            float size = 1 + rng.nextFloat();
-            ashParticles.add(new float[]{x, y, vx, vy, 0, maxAge, size});
+        if (tick % 6 == 0 && ashParticles.size() < 15) {
+            float x = 130 + rng.nextFloat() * 220;
+            float y = 50 + rng.nextFloat() * 140;
+            ashParticles.add(new float[]{x, y, 0, -0.12f, 0, 60 + rng.nextInt(60), 1});
         }
-
-        Iterator<float[]> it = ashParticles.iterator();
-        while (it.hasNext()) {
-            float[] p = it.next();
-            p[0] += p[2];
+        ashParticles.removeIf(p -> ++p[4] >= p[5]);
+        for (float[] p : ashParticles) {
             p[1] += p[3];
-            p[4]++;
-            if (p[4] >= p[5]) it.remove();
         }
     }
 
-    private void drawAshParticles(Graphics2D g, int sw, int sh) {
+    private void drawAshParticles(Graphics2D g) {
         for (float[] p : ashParticles) {
             float life = 1f - p[4] / p[5];
-            int alpha = Math.max(0, Math.min(255, (int) (life * 70)));
-            int size = Math.max(1, Math.round(p[6]));
+            int alpha = Math.max(0, Math.min(255, (int) (life * 50)));
             g.setColor(new Color(200, 170, 100, alpha));
-            g.fillRect(Math.round(p[0]), Math.round(p[1]), size, size);
+            g.fillRect(Math.round(p[0]), Math.round(p[1]), 1, 1);
         }
     }
 
