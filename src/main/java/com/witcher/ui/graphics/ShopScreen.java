@@ -52,7 +52,7 @@ public class ShopScreen {
             rowH = 36;
             headerH = 24;
 
-            panelW = 304;
+            panelW = Math.min(sw - 96, 372);
             panelX = (sw - panelW) / 2;
             panelY = hudY + hudH + 6;
             int listH = headerH + rowH * itemCount + 6;
@@ -94,6 +94,7 @@ public class ShopScreen {
     private final BufferedImage crownIcon;
 
     private final GifFrames materializeGif;
+    private final Rectangle hudSrcCrop;
     private final int hudDrawX;
     private final int hudDrawW;
     private final int hudDrawH;
@@ -155,15 +156,17 @@ public class ShopScreen {
         );
 
         if (hudBar != null && hudBar.getWidth() > 0) {
-            float aspect = (float) hudBar.getHeight() / hudBar.getWidth();
-            hudDrawW = 468;
-            int naturalH = Math.round(hudDrawW * aspect);
-            hudDrawH = Math.max(30, Math.min(36, naturalH));
+            hudSrcCrop = computeContentBounds(hudBar);
+            hudDrawW = 476;
+            float cropAspect = (float) hudSrcCrop.height / hudSrcCrop.width;
+            hudDrawH = Math.round(hudDrawW * cropAspect);
+            hudDrawH = Math.max(52, Math.min(64, hudDrawH));
             hudDrawX = (480 - hudDrawW) / 2;
         } else {
-            hudDrawX = 6;
-            hudDrawW = 468;
-            hudDrawH = 34;
+            hudSrcCrop = null;
+            hudDrawX = 2;
+            hudDrawW = 476;
+            hudDrawH = 56;
         }
 
         items.add(new ShopItem("Кираса волчьей школы", "120",
@@ -327,24 +330,29 @@ public class ShopScreen {
         g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
 
         if (hudBar != null) {
-            drawScaledSprite(g, hudBar, layout.hudX, layout.hudY, layout.hudW, layout.hudH, true);
+            if (hudSrcCrop != null) {
+                drawCroppedScaledSprite(g, hudBar, hudSrcCrop,
+                    layout.hudX, layout.hudY, layout.hudW, layout.hudH, false);
+            } else {
+                drawScaledSprite(g, hudBar, layout.hudX, layout.hudY, layout.hudW, layout.hudH, false);
+            }
         } else {
             g.setColor(new Color(10, 8, 4, 220));
             g.fillRect(layout.hudX, layout.hudY, layout.hudW, layout.hudH);
         }
 
         g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-        g.setFont(new Font("Serif", Font.BOLD, 14));
+        g.setFont(new Font("Serif", Font.BOLD, 15));
         g.setColor(DialogBoxRenderer.DUKE_COLOR);
         FontMetrics titleFm = g.getFontMetrics();
         int titleY = layout.hudY + (layout.hudH + titleFm.getAscent()) / 2 - 1;
-        g.drawString("Лавка Герцога", layout.hudX + 14, titleY);
+        g.drawString("Лавка Герцога", layout.hudX + 18, titleY);
 
         String wallet = "???";
-        int crownSize = 16;
-        g.setFont(new Font("Serif", Font.BOLD, 13));
+        int crownSize = 18;
+        g.setFont(new Font("Serif", Font.BOLD, 14));
         FontMetrics fm = g.getFontMetrics();
-        int textRight = layout.hudX + layout.hudW - 16;
+        int textRight = layout.hudX + layout.hudW - 20;
         textRight -= fm.stringWidth(" крон");
         textRight -= fm.stringWidth(wallet);
         if (crownIcon != null) {
@@ -368,7 +376,7 @@ public class ShopScreen {
 
         if (catalogPanel != null) {
             drawScaledSprite(g, catalogPanel, layout.panelX, layout.panelY,
-                layout.panelW, layout.panelH, true);
+                layout.panelW, layout.panelH, false);
         }
 
         g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
@@ -515,6 +523,43 @@ public class ShopScreen {
         if (prevInterp != null) {
             g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, prevInterp);
         }
+    }
+
+    private void drawCroppedScaledSprite(Graphics2D g, BufferedImage img, Rectangle crop,
+                                         int x, int y, int w, int h, boolean pixelArt) {
+        if (img == null || crop == null || crop.width <= 0 || crop.height <= 0 || w <= 0 || h <= 0) return;
+        Object prevInterp = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
+        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+            pixelArt ? RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR
+                     : RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+        g.drawImage(img, x, y, x + w, y + h,
+            crop.x, crop.y, crop.x + crop.width, crop.y + crop.height, null);
+        if (prevInterp != null) {
+            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, prevInterp);
+        }
+    }
+
+    private static Rectangle computeContentBounds(BufferedImage img) {
+        int w = img.getWidth();
+        int h = img.getHeight();
+        int minX = w;
+        int minY = h;
+        int maxX = 0;
+        int maxY = 0;
+        for (int y = 0; y < h; y++) {
+            for (int x = 0; x < w; x++) {
+                if ((img.getRGB(x, y) >>> 24) > 20) {
+                    minX = Math.min(minX, x);
+                    minY = Math.min(minY, y);
+                    maxX = Math.max(maxX, x);
+                    maxY = Math.max(maxY, y);
+                }
+            }
+        }
+        if (maxX < minX || maxY < minY) {
+            return new Rectangle(0, 0, w, h);
+        }
+        return new Rectangle(minX, minY, maxX - minX + 1, maxY - minY + 1);
     }
 
     private void drawScaledBackground(Graphics2D g, BufferedImage img, int sw, int sh, float alpha) {
