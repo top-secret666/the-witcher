@@ -41,15 +41,16 @@ public final class DialogBoxRenderer {
             boxW = Math.max(200, (int) (sw * widthRatio));
             boxX = (sw - boxW) / 2;
             boxY = sh - boxH - (int) (sh * 0.02f);
-            pad = (int) (sw * 0.02f);
+            if (heightRatio <= 0.11f) {
+                fontSize = Math.max(13, (int) (sh * 0.042f));
+                pad = Math.max(6, (int) (sw * 0.018f));
+            } else {
+                fontSize = Math.max(11, (int) (sh * 0.038f));
+                pad = (int) (sw * 0.02f);
+            }
             textX = boxX + pad;
             textY = boxY + pad;
             textMaxW = boxW - pad * 2;
-            if (heightRatio <= 0.14f) {
-                fontSize = Math.max(10, (int) (sh * 0.030f));
-            } else {
-                fontSize = Math.max(11, (int) (sh * 0.038f));
-            }
         }
     }
 
@@ -57,9 +58,9 @@ public final class DialogBoxRenderer {
         return new Layout(sw, sh);
     }
 
-    /** Компактное окно для лавки — низкая полоска внизу. */
+    /** Компактное окно для лавки — низкая полоска, крупный текст. */
     public static Layout computeCompactLayout(int sw, int sh) {
-        return new Layout(sw, sh, 0.12f, 0.82f);
+        return new Layout(sw, sh, 0.10f, 0.78f);
     }
 
     public static Layout computeLayout(int sw, int sh, float heightRatio, float widthRatio) {

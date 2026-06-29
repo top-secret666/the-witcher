@@ -13,8 +13,7 @@ public class ShopScreen {
 
     private static final String UI = "/assets/sprites/lavka/ui/";
     private static final String ICONS = "/assets/sprites/lavka/icons/";
-    private static final float DIALOG_HEIGHT_RATIO = 0.12f;
-    private static final int PRICE_COL_W = 58;
+    private static final float DIALOG_HEIGHT_RATIO = 0.10f;
 
     private enum ShopState {
         WELCOME,
@@ -46,11 +45,11 @@ public class ShopScreen {
             this.hudW = hudW;
             hudY = 4;
             this.hudH = hudH;
-            iconSize = 32;
+            iconSize = 36;
             dialogTop = sh - Math.round(sh * DIALOG_HEIGHT_RATIO) - 6;
             btnH = 32;
             btnW = 104;
-            rowH = 38;
+            rowH = 42;
             headerH = 28;
 
             panelW = 288;
@@ -158,13 +157,13 @@ public class ShopScreen {
         if (hudBar != null && hudBar.getWidth() > 0) {
             float aspect = (float) hudBar.getHeight() / hudBar.getWidth();
             hudDrawW = 456;
-            int computedH = Math.round(hudDrawW * aspect);
-            hudDrawH = Math.max(38, Math.min(52, computedH));
+            int computedH = Math.round(hudDrawW * aspect * 1.45f);
+            hudDrawH = Math.max(52, Math.min(68, computedH));
             hudDrawX = (480 - hudDrawW) / 2;
         } else {
             hudDrawX = 12;
             hudDrawW = 456;
-            hudDrawH = 44;
+            hudDrawH = 56;
         }
 
         items.add(new ShopItem("Кираса волчьей школы", "120",
@@ -336,23 +335,23 @@ public class ShopScreen {
         }
 
         g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-        g.setFont(new Font("Serif", Font.BOLD, 15));
+        g.setFont(new Font("Serif", Font.BOLD, 16));
         g.setColor(DialogBoxRenderer.DUKE_COLOR);
         FontMetrics titleFm = g.getFontMetrics();
         int titleY = layout.hudY + (layout.hudH + titleFm.getAscent()) / 2 - 2;
-        g.drawString("Лавка Герцога", layout.hudX + 16, titleY);
+        g.drawString("Лавка Герцога", layout.hudX + 18, titleY);
 
         String wallet = "???";
-        int crownSize = 18;
-        g.setFont(new Font("Serif", Font.BOLD, 14));
+        int crownSize = 20;
+        g.setFont(new Font("Serif", Font.BOLD, 15));
         FontMetrics fm = g.getFontMetrics();
         int textRight = layout.hudX + layout.hudW - 16;
         textRight -= fm.stringWidth(" крон");
         textRight -= fm.stringWidth(wallet);
         if (crownIcon != null) {
             textRight -= crownSize + 4;
-            drawScaledSprite(g, crownIcon, textRight, layout.hudY + (layout.hudH - crownSize) / 2,
-                crownSize, crownSize, true);
+            drawCrispIcon(g, crownIcon, textRight, layout.hudY + (layout.hudH - crownSize) / 2,
+                crownSize);
             textRight += crownSize + 4;
         }
         g.setColor(new Color(255, 230, 150));
@@ -402,18 +401,18 @@ public class ShopScreen {
             int iconX = rowX + 6;
             int iconY = rowY + (layout.rowH - iconSize) / 2 - 1;
             if (item.icon != null) {
-                drawScaledSprite(g, item.icon, iconX, iconY, iconSize, iconSize, true);
+                drawCrispIcon(g, item.icon, iconX, iconY, iconSize);
             }
 
             int textBaseline = rowY + layout.rowH / 2 + 5;
-            int nameMaxW = rowW - iconSize - PRICE_COL_W - 16;
+            int priceRight = rowX + rowW - 10;
+            int nameMaxW = rowW - iconSize - 70;
             g.setFont(new Font("Serif", Font.PLAIN, 11));
             g.setColor(selected ? new Color(255, 230, 140) : new Color(220, 205, 165));
             g.drawString(truncateToWidth(item.name, g.getFontMetrics(), nameMaxW),
                 iconX + iconSize + 8, textBaseline);
 
-            drawPriceTag(g, rowX + rowW - PRICE_COL_W - 4, rowY, PRICE_COL_W, layout.rowH,
-                item.priceLabel, textBaseline);
+            drawPrice(g, priceRight, rowY, layout.rowH, item.priceLabel, textBaseline);
 
             y += layout.rowH;
         }
@@ -421,26 +420,37 @@ public class ShopScreen {
         g.setComposite(layer);
     }
 
-    private void drawPriceTag(Graphics2D g, int x, int rowY, int colW, int rowH,
-                              String price, int baseline) {
-        int tagH = rowH - 10;
-        int tagY = rowY + 5;
-        g.setColor(new Color(0, 0, 0, 170));
-        g.fillRoundRect(x, tagY, colW, tagH, 4, 4);
-        g.setColor(new Color(80, 60, 20, 200));
-        g.drawRoundRect(x, tagY, colW, tagH, 4, 4);
-
-        g.setFont(new Font("Serif", Font.BOLD, 13));
-        g.setColor(new Color(255, 235, 140));
+    private void drawPrice(Graphics2D g, int rightX, int rowY, int rowH,
+                           String price, int baseline) {
+        g.setFont(new Font("Serif", Font.BOLD, 14));
+        g.setColor(new Color(255, 245, 160));
         FontMetrics fm = g.getFontMetrics();
-        int crownSize = 13;
-        int totalW = fm.stringWidth(price) + (crownIcon != null ? crownSize + 2 : 0);
-        int startX = x + (colW - totalW) / 2;
+        int crownSize = 14;
+        int totalW = fm.stringWidth(price) + (crownIcon != null ? crownSize + 3 : 0);
+        int startX = rightX - totalW;
         if (crownIcon != null) {
-            drawScaledSprite(g, crownIcon, startX, tagY + (tagH - crownSize) / 2, crownSize, crownSize, true);
-            startX += crownSize + 2;
+            drawCrispIcon(g, crownIcon, startX, rowY + (rowH - crownSize) / 2, crownSize);
+            startX += crownSize + 3;
         }
         g.drawString(price, startX, baseline);
+    }
+
+    /** Отрисовка иконки без размытия — nearest-neighbor, целые координаты. */
+    private void drawCrispIcon(Graphics2D g, BufferedImage icon, int x, int y, int size) {
+        if (icon == null || size <= 0) return;
+        int ix = Math.round(x);
+        int iy = Math.round(y);
+        Object prevInterp = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
+        Object prevRender = g.getRenderingHint(RenderingHints.KEY_RENDERING);
+        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+        g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
+        g.drawImage(icon, ix, iy, ix + size, iy + size, 0, 0, icon.getWidth(), icon.getHeight(), null);
+        if (prevInterp != null) {
+            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, prevInterp);
+        }
+        if (prevRender != null) {
+            g.setRenderingHint(RenderingHints.KEY_RENDERING, prevRender);
+        }
     }
 
     private static String truncateToWidth(String text, FontMetrics fm, int maxW) {
