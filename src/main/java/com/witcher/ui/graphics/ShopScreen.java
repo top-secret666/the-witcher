@@ -13,7 +13,7 @@ public class ShopScreen {
 
     private static final String UI = "/assets/sprites/lavka/ui/";
     private static final String ICONS = "/assets/sprites/lavka/icons/";
-    private static final float DIALOG_HEIGHT_RATIO = 0.10f;
+    private static final int DIALOG_TEXT_ZONE = 46;
 
     private enum ShopState {
         WELCOME,
@@ -45,23 +45,23 @@ public class ShopScreen {
             this.hudW = hudW;
             hudY = 4;
             this.hudH = hudH;
-            iconSize = 36;
-            dialogTop = sh - Math.round(sh * DIALOG_HEIGHT_RATIO) - 6;
-            btnH = 32;
-            btnW = 104;
-            rowH = 42;
-            headerH = 28;
+            iconSize = 32;
+            dialogTop = sh - DIALOG_TEXT_ZONE;
+            btnH = 30;
+            btnW = 100;
+            rowH = 36;
+            headerH = 24;
 
-            panelW = 288;
+            panelW = 304;
             panelX = (sw - panelW) / 2;
-            panelY = hudY + hudH + 8;
-            int listH = headerH + rowH * itemCount + 8;
-            int maxPanelBottom = dialogTop - btnH - 10;
-            panelH = Math.min(listH + 12, maxPanelBottom - panelY);
-            listY = panelY + headerH + 6;
+            panelY = hudY + hudH + 6;
+            int listH = headerH + rowH * itemCount + 6;
+            int maxPanelBottom = dialogTop - btnH - 8;
+            panelH = Math.min(listH + 10, maxPanelBottom - panelY);
+            listY = panelY + headerH + 4;
 
             btnX = panelX + (panelW - btnW) / 2;
-            btnY = panelY + panelH + 6;
+            btnY = panelY + panelH + 4;
         }
     }
 
@@ -156,14 +156,14 @@ public class ShopScreen {
 
         if (hudBar != null && hudBar.getWidth() > 0) {
             float aspect = (float) hudBar.getHeight() / hudBar.getWidth();
-            hudDrawW = 456;
-            int computedH = Math.round(hudDrawW * aspect * 1.45f);
-            hudDrawH = Math.max(52, Math.min(68, computedH));
+            hudDrawW = 468;
+            int naturalH = Math.round(hudDrawW * aspect);
+            hudDrawH = Math.max(30, Math.min(36, naturalH));
             hudDrawX = (480 - hudDrawW) / 2;
         } else {
-            hudDrawX = 12;
-            hudDrawW = 456;
-            hudDrawH = 56;
+            hudDrawX = 6;
+            hudDrawW = 468;
+            hudDrawH = 34;
         }
 
         items.add(new ShopItem("Кираса волчьей школы", "120",
@@ -277,9 +277,8 @@ public class ShopScreen {
             drawAshParticles(g);
         }
 
-        DialogBoxRenderer.Layout dialogLayout = DialogBoxRenderer.computeCompactLayout(sw, sh);
-        DialogBoxRenderer.drawSpeakerText(g, "Герцог", currentDialog,
-            DialogBoxRenderer.DUKE_COLOR, dialogLayout, alpha);
+        DialogBoxRenderer.drawPlainSpeakerText(g, sw, sh, "Герцог", currentDialog,
+            DialogBoxRenderer.DUKE_COLOR, alpha);
 
         g.dispose();
     }
@@ -335,15 +334,15 @@ public class ShopScreen {
         }
 
         g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-        g.setFont(new Font("Serif", Font.BOLD, 16));
+        g.setFont(new Font("Serif", Font.BOLD, 14));
         g.setColor(DialogBoxRenderer.DUKE_COLOR);
         FontMetrics titleFm = g.getFontMetrics();
-        int titleY = layout.hudY + (layout.hudH + titleFm.getAscent()) / 2 - 2;
-        g.drawString("Лавка Герцога", layout.hudX + 18, titleY);
+        int titleY = layout.hudY + (layout.hudH + titleFm.getAscent()) / 2 - 1;
+        g.drawString("Лавка Герцога", layout.hudX + 14, titleY);
 
         String wallet = "???";
-        int crownSize = 20;
-        g.setFont(new Font("Serif", Font.BOLD, 15));
+        int crownSize = 16;
+        g.setFont(new Font("Serif", Font.BOLD, 13));
         FontMetrics fm = g.getFontMetrics();
         int textRight = layout.hudX + layout.hudW - 16;
         textRight -= fm.stringWidth(" крон");
