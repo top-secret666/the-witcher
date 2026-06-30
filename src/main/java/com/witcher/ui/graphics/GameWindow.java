@@ -11,6 +11,13 @@ import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 
 public class GameWindow {
+
+    static {
+        System.setProperty("sun.java2d.uiScale.enabled", "false");
+        System.setProperty("awt.useSystemAAFontSettings", "off");
+        System.setProperty("swing.aatext", "false");
+    }
+
     private final JFrame frame;
     private final Renderer renderer;
     private JComponent titleBar;
@@ -44,7 +51,7 @@ public class GameWindow {
         frame = new JFrame("Witcher - Pixel Prototype");
         // Загрузочное/прототип-окно: убираем системную рамку/заголовок (никакого fullscreen/maximize)
         frame.setUndecorated(true);
-        renderer = new Renderer(480, 360, 2); // virtual res 480x360 scaled x2 = окно 960x720
+        renderer = new Renderer(480, 360, 2);
 
         // Иконка окна/приложения
         Sprite appIcon = Sprite.load("/assets/sprites/app_icon.png");
@@ -72,9 +79,13 @@ public class GameWindow {
         frame.add(titleBar, BorderLayout.NORTH);
 
         frame.add(renderer, BorderLayout.CENTER);
-        frame.pack();
 
-        // Загрузочное/прототип-окно: без ресайза и без разворачивания на весь экран
+        // Тонкая рамка вокруг окна (раз уж системную убрали)
+        frame.getRootPane().setOpaque(true);
+        frame.getRootPane().setBackground(Color.BLACK);
+        frame.getRootPane().setBorder(new PixelBorder(TITLE_BORDER, TITLE_FG, TITLE_BG, 10));
+
+        frame.pack();
         frame.setResizable(false);
         Dimension fixedSize = frame.getSize();
         frame.setMinimumSize(fixedSize);
@@ -84,11 +95,6 @@ public class GameWindow {
                 frame.setExtendedState(Frame.NORMAL);
             }
         });
-
-        // Тонкая рамка вокруг окна (раз уж системную убрали)
-        frame.getRootPane().setOpaque(true);
-        frame.getRootPane().setBackground(Color.BLACK);
-        frame.getRootPane().setBorder(new PixelBorder(TITLE_BORDER, TITLE_FG, TITLE_BG, 10));
 
         frame.setLocationRelativeTo(null);
         splashScreen = new SplashScreen();
@@ -152,10 +158,10 @@ public class GameWindow {
     }
 
     private void updateVirtualMouse(MouseEvent e) {
-        int rw = Math.max(1, renderer.getWidth());
-        int rh = Math.max(1, renderer.getHeight());
-        mouseVX = e.getX() * renderer.getVirtualW() / rw;
-        mouseVY = e.getY() * renderer.getVirtualH() / rh;
+        int pw = Math.max(1, renderer.getWidth());
+        int ph = Math.max(1, renderer.getHeight());
+        mouseVX = Math.min(renderer.getVirtualW() - 1, Math.max(0, e.getX() * renderer.getVirtualW() / pw));
+        mouseVY = Math.min(renderer.getVirtualH() - 1, Math.max(0, e.getY() * renderer.getVirtualH() / ph));
     }
 
     private void enterMainMenuMode() {
@@ -532,18 +538,18 @@ public class GameWindow {
     public void start() {
         frame.setVisible(true);
         renderer.requestFocusInWindow();
-        Timer timer = new Timer(16, e -> {
+        Timer timer = new Timer(33, e -> {
             if (splashActive) {
                 splashScreen.update();
                 splashScreen.render(renderer.screen);
-                renderer.repaint();
+                renderer.present();
                 if (splashScreen.isFinished()) {
                     enterMainMenuMode();
                 }
             } else if (menuActive) {
                 mainMenu.update(mouseVX, mouseVY, mouseClickPending, menuNavDir, menuActivate);
                 mainMenu.render(renderer.screen, mouseVX, mouseVY);
-                renderer.repaint();
+                renderer.present();
 
                 MainMenuScreen.Action action = mainMenu.consumeAction();
                 if (menuExitRequested || action == MainMenuScreen.Action.EXIT) {
@@ -565,7 +571,7 @@ public class GameWindow {
                 boolean advance = introAdvancePending || mouseClickPending;
                 introScreen.update(advance);
                 introScreen.render(renderer.screen, mouseVX, mouseVY);
-                renderer.repaint();
+                renderer.present();
 
                 introAdvancePending = false;
                 mouseClickPending = false;
@@ -579,7 +585,7 @@ public class GameWindow {
             } else if (shopActive) {
                 shopScreen.update(mouseVX, mouseVY, mouseClickPending, shopExitRequested);
                 shopScreen.render(renderer.screen, mouseVX, mouseVY);
-                renderer.repaint();
+                renderer.present();
 
                 mouseClickPending = false;
                 shopExitRequested = false;
@@ -593,7 +599,6 @@ public class GameWindow {
                 }
             } else {
                 renderer.update();
-                renderer.repaint();
             }
         });
         timer.start();
