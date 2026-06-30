@@ -4,6 +4,7 @@ import com.badlogic.gdx.utils.Disposable;
 import main.java.com.witcher.gdx.WitcherGame;
 import main.java.com.witcher.gdx.graphics.PixelTextures;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 
 /** Текстуры лавки — один раз загрузить, потом dispose. */
 public final class ShopAssets implements Disposable {
@@ -15,6 +16,7 @@ public final class ShopAssets implements Disposable {
     public Texture dukeLaughPortrait;
 
     public Texture hudBar;
+    public TextureRegion hudBarRegion;
     public Texture catalogPanel;
     public Texture cardFront;
     public Texture cardBack;
@@ -87,18 +89,22 @@ public final class ShopAssets implements Disposable {
                 hud.cropY = crop[1];
                 hud.cropW = crop[2];
                 hud.cropH = crop[3];
+                int srcY = hudBar.getHeight() - crop[1] - crop[3];
+                hudBarRegion = new TextureRegion(hudBar, crop[0], srcY, crop[2], crop[3]);
                 float aspect = (float) crop[3] / crop[2];
                 hud.drawW = 476;
                 hud.drawH = Math.max(52, Math.min(64, Math.round(hud.drawW * aspect)));
             } else {
                 hud.cropped = false;
+                hudBarRegion = new TextureRegion(hudBar);
                 hud.drawW = 476;
                 hud.drawH = Math.max(52, Math.min(64,
                     Math.round(hud.drawW * ((float) hudBar.getHeight() / hudBar.getWidth()))));
             }
             hud.drawX = (int) ((WitcherGame.VIRTUAL_W - hud.drawW) * 0.5f);
             com.badlogic.gdx.Gdx.app.log("ShopAssets",
-                "HUD: cropped=" + hud.cropped + " draw=" + hud.drawW + "x" + hud.drawH);
+                "HUD: cropped=" + hud.cropped + " crop=" + hud.cropW + "x" + hud.cropH
+                    + " draw=" + hud.drawW + "x" + hud.drawH);
         }
 
         catalogPanel = PixelTextures.loadOptional("sprites/lavka/ui/shop_catalog_panel.png");

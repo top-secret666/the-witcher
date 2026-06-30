@@ -148,8 +148,10 @@ public class ShopScreen implements Screen {
 
         game.batch.end();
         drawDarkOverlay(layout, sw, sh);
+        PixelTextures.resetBlend();
 
         game.batch.begin();
+        game.batch.setColor(1f, 1f, 1f, 1f);
         drawPortrait(assets.geraltPortrait, true, layout, sh);
         drawPortrait(dukeTex, false, layout, sh);
         drawHud(layout, sh);
@@ -255,10 +257,8 @@ public class ShopScreen implements Screen {
         float hudBottom = bottomFromTop(layout.hudTop, hudH, sh);
 
         if (assets.hudBar != null) {
-            if (hud.cropped) {
-                PixelTextures.drawCropped(game.batch, assets.hudBar,
-                    hud.cropX, hud.cropY, hud.cropW, hud.cropH,
-                    hudX, hudBottom, hudW, hudH);
+            if (assets.hudBarRegion != null) {
+                game.batch.draw(assets.hudBarRegion, hudX, hudBottom, hudW, hudH);
             } else {
                 game.batch.draw(assets.hudBar, hudX, hudBottom, hudW, hudH);
             }
@@ -388,7 +388,8 @@ public class ShopScreen implements Screen {
         }
         BitmapFont small = fonts.uiSmall;
         small.setColor(235f / 255f, 215f / 255f, 155f / 255f, 1f);
-        drawCentered(small, item.name, card.x + card.width * 0.5f, card.y + card.height - 17f);
+        String name = truncateToWidth(small, item.name, card.width - 6f);
+        drawCentered(small, name, card.x + card.width * 0.5f, card.y + card.height - 17f);
 
         float crownSize = 10f;
         glyph.setText(small, item.priceLabel);

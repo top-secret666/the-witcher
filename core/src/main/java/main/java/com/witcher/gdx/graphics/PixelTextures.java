@@ -2,6 +2,7 @@ package main.java.com.witcher.gdx.graphics;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.files.FileHandle;
+import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
@@ -59,8 +60,7 @@ public final class PixelTextures {
             return null;
         }
         try {
-            Texture texture = new Texture(file);
-            texture.setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest);
+            Texture texture = loadTextureFromFile(file);
             Gdx.app.log("PixelTextures", "OK " + path + " -> " + file.path()
                 + " (" + texture.getWidth() + "x" + texture.getHeight() + ")");
             return new LoadedTexture(texture, path, file.path());
@@ -68,6 +68,28 @@ public final class PixelTextures {
             Gdx.app.error("PixelTextures", "Ne udalos zagruzit: " + path + " -> " + file.path(), e);
             return null;
         }
+    }
+
+    private static Texture loadTextureFromFile(FileHandle file) {
+        Pixmap pixmap = new Pixmap(file);
+        try {
+            if (pixmap.getFormat() != Pixmap.Format.RGBA8888) {
+                Pixmap rgba = new Pixmap(pixmap.getWidth(), pixmap.getHeight(), Pixmap.Format.RGBA8888);
+                rgba.drawPixmap(pixmap, 0, 0);
+                pixmap.dispose();
+                pixmap = rgba;
+            }
+            Texture texture = new Texture(pixmap);
+            texture.setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest);
+            return texture;
+        } finally {
+            pixmap.dispose();
+        }
+    }
+
+    public static void resetBlend() {
+        Gdx.gl.glEnable(GL20.GL_BLEND);
+        Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
     }
 
     private static boolean isUsableImage(Texture texture) {
@@ -200,31 +222,6 @@ public final class PixelTextures {
         batch.setColor(1f, 1f, 1f, a);
     }
 
-    public static void drawFit(SpriteBatch batch, Texture texture, float x, float y, float w, float h) {
-        if (texture == null || w <= 0f || h <= 0f) {
-            return;
-        }
-        float tw = texture.getWidth();
-        float th = texture.getHeight();
-        if (tw <= 0f || th <= 0f) {
-            return;
-        }
-        float srcAspect = tw / th;
-        float dstAspect = w / h;
-        float drawW;
-        float drawH;
-        if (srcAspect > dstAspect) {
-            drawW = w;
-            drawH = w / srcAspect;
-        } else {
-            drawH = h;
-            drawW = h * srcAspect;
-        }
-        float drawX = x + (w - drawW) * 0.5f;
-        float drawY = y + (h - drawH) * 0.5f;
-        batch.draw(texture, drawX, drawY, drawW, drawH);
-    }
-
     public static void drawRegion(SpriteBatch batch, TextureRegion region, float x, float y, float w, float h) {
         if (region == null || w <= 0f || h <= 0f) {
             return;
@@ -241,7 +238,8 @@ public final class PixelTextures {
         }
         int texH = texture.getHeight();
         int srcY = texH - cropY - cropH;
-        batch.draw(texture, x, y, w, h, cropX, srcY, cropW, cropH);
+        TextureRegion region = new TextureRegion(texture, cropX, srcY, cropW, cropH);
+        batch.draw(region, x, y, w, h);
     }
 
     /** Игнорирует прозрачные и почти чёрные пиксели (чёрный фон PNG). */
