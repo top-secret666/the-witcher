@@ -391,14 +391,14 @@ public class ShopScreen {
     private void drawItemCard(Graphics2D g, ShopItem item, int x, int y, int w, int h, int index,
                               boolean selected, boolean hovered, float flip) {
         boolean showBack = flip >= 0.5f;
-        float scaleX = Math.max(0.06f, Math.abs((float) Math.cos(flip * Math.PI)));
+        float fade = 1f;
+        if (flip > 0.05f && flip < 0.95f) {
+            fade = flip < 0.5f ? 1f - flip * 2f : (flip - 0.5f) * 2f;
+            fade = 0.35f + fade * 0.65f;
+        }
 
-        AffineTransform saved = g.getTransform();
-        int cx = x + w / 2;
-        int cy = y + h / 2;
-        g.translate(cx, cy);
-        g.scale(scaleX, 1f);
-        g.translate(-w / 2, -h / 2);
+        Composite savedComposite = g.getComposite();
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, fade));
 
         BufferedImage frame = cardFront;
         if (selected && cardSelected != null) frame = cardSelected;
@@ -406,21 +406,21 @@ public class ShopScreen {
 
         if (showBack) {
             if (cardBack != null) {
-                drawScaledSprite(g, cardBack, 0, 0, w, h, false);
+                drawScaledSprite(g, cardBack, x, y, w, h, false);
             } else {
-                drawFallbackCard(g, 0, 0, w, h, true);
+                drawFallbackCard(g, x, y, w, h, true);
             }
-            drawCardBackText(g, item, w, h);
+            drawCardBackText(g, item, w, h, x, y);
         } else {
             if (frame != null) {
-                drawScaledSprite(g, frame, 0, 0, w, h, false);
+                drawScaledSprite(g, frame, x, y, w, h, false);
             } else {
-                drawFallbackCard(g, 0, 0, w, h, false);
+                drawFallbackCard(g, x, y, w, h, false);
             }
-            drawCardFrontContent(g, item, w, h);
+            drawCardFrontContent(g, item, w, h, x, y);
         }
 
-        g.setTransform(saved);
+        g.setComposite(savedComposite);
     }
 
     private void drawFallbackCard(Graphics2D g, int x, int y, int w, int h, boolean back) {
