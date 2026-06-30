@@ -55,11 +55,14 @@ public final class PixelTextures {
     public static LoadedTexture loadOptionalMeta(String path) {
         FileHandle file = resolve(path);
         if (file == null) {
+            Gdx.app.error("PixelTextures", "Fajl ne najden: " + path);
             return null;
         }
         try {
             Texture texture = new Texture(file);
             texture.setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest);
+            Gdx.app.log("PixelTextures", "OK " + path + " -> " + file.path()
+                + " (" + texture.getWidth() + "x" + texture.getHeight() + ")");
             return new LoadedTexture(texture, path, file.path());
         } catch (Exception e) {
             Gdx.app.error("PixelTextures", "Ne udalos zagruzit: " + path + " -> " + file.path(), e);
@@ -96,8 +99,8 @@ public final class PixelTextures {
     }
 
     /**
-     * LibGDX desktop: ассеты лежат в папке assets (cwd), не в classpath.
-     * Порядок: local (cwd) → абсолютные пути проекта → internal.
+     * LibGDX desktop: ассеты в {@code src/main/resources/assets}.
+     * Порядок: witcher.assets → cwd (если это папка assets) → src/main/resources/assets → internal.
      */
     public static FileHandle resolve(String path) {
         if (path == null || path.isEmpty()) {
@@ -111,14 +114,35 @@ public final class PixelTextures {
             p = p.substring("assets/".length());
         }
 
+        String userDir = System.getProperty("user.dir", "").replace('\\', '/');
+        String assetsRoot = System.getProperty("witcher.assets", "").replace('\\', '/').trim();
+        if (assetsRoot.startsWith("\"") && assetsRoot.endsWith("\"") && assetsRoot.length() > 1) {
+            assetsRoot = assetsRoot.substring(1, assetsRoot.length() - 1);
+        }
+        if (assetsRoot.endsWith("/")) {
+            assetsRoot = assetsRoot.substring(0, assetsRoot.length() - 1);
+        }
+
+        if (!assetsRoot.isEmpty()) {
+            FileHandle fromProp = Gdx.files.absolute(assetsRoot + "/" + p);
+            if (fromProp.exists()) {
+                return fromProp;
+            }
+        }
+
+        if (userDir.endsWith("/assets")) {
+            FileHandle fromCwd = Gdx.files.absolute(userDir + "/" + p);
+            if (fromCwd.exists()) {
+                return fromCwd;
+            }
+        }
+
         FileHandle local = Gdx.files.local(p);
         if (local.exists()) {
             return local;
         }
 
-        String userDir = System.getProperty("user.dir", "").replace('\\', '/');
-        String[] candidates = buildCandidates(userDir, p);
-        for (String absolute : candidates) {
+        for (String absolute : buildCandidates(userDir, p, assetsRoot)) {
             FileHandle file = Gdx.files.absolute(absolute);
             if (file.exists()) {
                 return file;
@@ -129,16 +153,16 @@ public final class PixelTextures {
         if (internal.exists()) {
             return internal;
         }
+        FileHandle internalAssets = Gdx.files.internal("assets/" + p);
+        if (internalAssets.exists()) {
+            return internalAssets;
+        }
         return null;
     }
 
-    private static String[] buildCandidates(String userDir, String path) {
+    private static String[] buildCandidates(String userDir, String path, String assetsRoot) {
         Set<String> candidates = new LinkedHashSet<>();
-        String assetsRoot = System.getProperty("witcher.assets", "").replace('\\', '/');
         if (!assetsRoot.isEmpty()) {
-            if (assetsRoot.endsWith("/")) {
-                assetsRoot = assetsRoot.substring(0, assetsRoot.length() - 1);
-            }
             candidates.add(assetsRoot + "/" + path);
         }
 
@@ -220,6 +244,54 @@ public final class PixelTextures {
         batch.draw(texture, x, y, w, h, cropX, srcY, cropW, cropH);
     }
 
+    /** Игнорирует прозрачные и почти чёрные пиксели (чёрный фон PNG). */
+    public static int[] computeVisibleBounds(String path) {
+        FileHandle file = resolve(path);
+        if (file == null) {
+            return null;
+        }
+        Pixmap pixmap = new Pixmap(file);
+        try {
+            int w = pixmap.getWidth();
+            int h = pixmap.getHeight();
+            int minX = w;
+            int minY = h;
+            int maxX = 0;
+            int maxY = 0;
+            int step = Math.max(1, Math.min(w, h) / 256);
+            for (int py = 0; py < h; py += step) {
+                for (int px = 0; px < w; px += step) {
+                    int rgba = pixmap.getPixel(px, py);
+                    int a = rgba & 0xff;
+                    if (a <= 20) {
+                        continue;
+                    }
+                    int r = (rgba >>> 24) & 0xff;
+                    int g = (rgba >>> 16) & 0xff;
+                    int b = (rgba >>> 8) & 0xff;
+                    if (r < 24 && g < 24 && b < 24) {
+                        continue;
+                    }
+                    minX = Math.min(minX, px);
+                    minY = Math.min(minY, py);
+                    maxX = Math.max(maxX, px);
+                    maxY = Math.max(maxY, py);
+                }
+            }
+            if (maxX < minX || maxY < minY) {
+                return null;
+            }
+            return new int[]{minX, minY, maxX - minX + 1, maxY - minY + 1};
+        } finally {
+            pixmap.dispose();
+        }
+    }
+
+    /** Как Swing {@code computeContentBounds} — по непрозрачным пикселям. */
+    public static int[] computeContentBounds(String path) {
+        return computeOpaqueBounds(path);
+    }
+
     public static int[] computeOpaqueBounds(String path) {
         FileHandle file = resolve(path);
         if (file == null) {
@@ -236,7 +308,8 @@ public final class PixelTextures {
             int step = Math.max(1, Math.min(w, h) / 256);
             for (int py = 0; py < h; py += step) {
                 for (int px = 0; px < w; px += step) {
-                    if ((pixmap.getPixel(px, py) >>> 24) > 20) {
+                    int rgba = pixmap.getPixel(px, py);
+                    if ((rgba & 0xff) > 20) {
                         minX = Math.min(minX, px);
                         minY = Math.min(minY, py);
                         maxX = Math.max(maxX, px);

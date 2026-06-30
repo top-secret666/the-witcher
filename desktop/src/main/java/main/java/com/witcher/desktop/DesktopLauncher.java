@@ -1,6 +1,5 @@
 package main.java.com.witcher.desktop;
 
-import com.badlogic.gdx.Graphics;
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3Application;
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3ApplicationConfiguration;
 import main.java.com.witcher.gdx.WitcherGame;
@@ -12,8 +11,7 @@ public class DesktopLauncher {
         try {
             Lwjgl3ApplicationConfiguration config = new Lwjgl3ApplicationConfiguration();
             config.setTitle("The Witcher");
-            Graphics.DisplayMode displayMode = Lwjgl3ApplicationConfiguration.getDisplayMode();
-            config.setFullscreenMode(displayMode);
+            config.setWindowedMode(960, 720);
             config.setForegroundFPS(60);
             config.useVsync(true);
             new Lwjgl3Application(new WitcherGame(), config);

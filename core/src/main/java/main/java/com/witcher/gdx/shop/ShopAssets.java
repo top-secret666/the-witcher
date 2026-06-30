@@ -15,8 +15,6 @@ public final class ShopAssets implements Disposable {
     public Texture dukeLaughPortrait;
 
     public Texture hudBar;
-    /** Висящая плашка с крюком — название лавки. */
-    public Texture shopSignTitle;
     public Texture catalogPanel;
     public Texture cardFront;
     public Texture cardBack;
@@ -31,21 +29,7 @@ public final class ShopAssets implements Disposable {
     public Texture iconBoots;
     public Texture iconPotion;
 
-    /** Обрезка HUD-плашки (убираем пустые поля в исходном PNG). */
     public final HudLayout hud = new HudLayout();
-    public final SignLayout sign = new SignLayout();
-
-    public static final class SignLayout {
-        public boolean cropped;
-        public int cropX;
-        public int cropY;
-        public int cropW;
-        public int cropH;
-        public int drawX = 4;
-        public int drawY = 2;
-        public int drawW = 148;
-        public int drawH = 108;
-    }
 
     public static final class HudLayout {
         public boolean cropped;
@@ -59,35 +43,19 @@ public final class ShopAssets implements Disposable {
     }
 
     public void load() {
-        String[] bgPaths = {
+        PixelTextures.LoadedTexture bg = PixelTextures.loadFirstMeta(
             "sprites/lavka/merchant_bg_lavka.png",
             "sprites/lavka/lavka.png",
             "sprites/screen saver/lavka.png"
-        };
-        for (String path : bgPaths) {
-            PixelTextures.LoadedTexture loaded = PixelTextures.loadOptionalMeta(path);
-            if (loaded == null || loaded.texture.getWidth() <= 4 || loaded.texture.getHeight() <= 4) {
-                PixelTextures.dispose(loaded != null ? loaded.texture : null);
-                continue;
-            }
-            if (PixelTextures.computeOpaqueBounds(path) == null) {
-                com.badlogic.gdx.Gdx.app.error("ShopAssets",
-                    "Fon prozrachnyj, propuskayu: " + loaded.filePath);
-                PixelTextures.dispose(loaded.texture);
-                continue;
-            }
-            merchantBg = loaded.texture;
-            merchantBgSource = loaded.filePath;
-            com.badlogic.gdx.Gdx.app.log("ShopAssets",
-                "Fon: " + loaded.logicalPath + " -> " + loaded.filePath
-                    + " (" + merchantBg.getWidth() + "x" + merchantBg.getHeight() + ")");
-            break;
-        }
-        if (merchantBg == null) {
+        );
+        if (bg != null) {
+            merchantBg = bg.texture;
+            merchantBgSource = bg.filePath;
+        } else {
             merchantBg = PixelTextures.createFallbackShopBg(640, 360);
             merchantBgSource = "generated";
             com.badlogic.gdx.Gdx.app.error("ShopAssets",
-                "Fon lavki ne najden. Polozhi merchant_bg_lavka.png v assets/sprites/lavka/");
+                "Fon lavki ne najden (merchant_bg_lavka.png / lavka.png)");
         }
 
         geraltPortrait = PixelTextures.loadFirst(
@@ -103,13 +71,17 @@ public final class ShopAssets implements Disposable {
             "sprites/screen saver/duke_portrait_fun.png"
         );
 
-        hudBar = PixelTextures.loadOptional("sprites/lavka/ui/shop_hud_bar.png");
-        if (hudBar == null) {
+        PixelTextures.LoadedTexture hudLoaded = PixelTextures.loadOptionalMeta("sprites/lavka/ui/shop_hud_bar.png");
+        if (hudLoaded == null) {
             com.badlogic.gdx.Gdx.app.error("ShopAssets",
                 "HUD ne najden: sprites/lavka/ui/shop_hud_bar.png");
         } else {
-            int[] crop = PixelTextures.computeOpaqueBounds("sprites/lavka/ui/shop_hud_bar.png");
-            if (crop != null) {
+            hudBar = hudLoaded.texture;
+            int[] crop = PixelTextures.computeVisibleBounds("sprites/lavka/ui/shop_hud_bar.png");
+            if (crop == null) {
+                crop = PixelTextures.computeContentBounds("sprites/lavka/ui/shop_hud_bar.png");
+            }
+            if (crop != null && crop[2] > 4 && crop[3] > 4) {
                 hud.cropped = true;
                 hud.cropX = crop[0];
                 hud.cropY = crop[1];
@@ -118,26 +90,15 @@ public final class ShopAssets implements Disposable {
                 float aspect = (float) crop[3] / crop[2];
                 hud.drawW = 476;
                 hud.drawH = Math.max(52, Math.min(64, Math.round(hud.drawW * aspect)));
+            } else {
+                hud.cropped = false;
+                hud.drawW = 476;
+                hud.drawH = Math.max(52, Math.min(64,
+                    Math.round(hud.drawW * ((float) hudBar.getHeight() / hudBar.getWidth()))));
             }
             hud.drawX = (int) ((WitcherGame.VIRTUAL_W - hud.drawW) * 0.5f);
-        }
-
-        shopSignTitle = PixelTextures.loadOptional("sprites/lavka/ui/shop_sign_title.png");
-        if (shopSignTitle == null) {
-            com.badlogic.gdx.Gdx.app.error("ShopAssets",
-                "Plashka ne najdena: sprites/lavka/ui/shop_sign_title.png");
-        } else {
-            int[] crop = PixelTextures.computeOpaqueBounds("sprites/lavka/ui/shop_sign_title.png");
-            if (crop != null) {
-                sign.cropped = true;
-                sign.cropX = crop[0];
-                sign.cropY = crop[1];
-                sign.cropW = crop[2];
-                sign.cropH = crop[3];
-                float aspect = (float) crop[3] / crop[2];
-                sign.drawW = 148;
-                sign.drawH = Math.max(96, Math.min(120, Math.round(sign.drawW * aspect)));
-            }
+            com.badlogic.gdx.Gdx.app.log("ShopAssets",
+                "HUD: cropped=" + hud.cropped + " draw=" + hud.drawW + "x" + hud.drawH);
         }
 
         catalogPanel = PixelTextures.loadOptional("sprites/lavka/ui/shop_catalog_panel.png");
@@ -165,7 +126,6 @@ public final class ShopAssets implements Disposable {
         PixelTextures.dispose(dukePortrait);
         PixelTextures.dispose(dukeLaughPortrait);
         PixelTextures.dispose(hudBar);
-        PixelTextures.dispose(shopSignTitle);
         PixelTextures.dispose(catalogPanel);
         PixelTextures.dispose(cardFront);
         PixelTextures.dispose(cardBack);

@@ -41,7 +41,8 @@ if not exist "%ASSETS_SRC%" (
   exit /b 1
 )
 
-echo Zapusk igry (assets: %ASSETS_SRC%)...
+echo Zapusk igry (cwd: %ASSETS_SRC%)...
+cd /d "%ASSETS_SRC%"
 "%JAVA_HOME%\bin\java.exe" -Xms64m -Xmx512m ^
   -Dwitcher.assets="%ASSETS_SRC%" ^
   -cp "!GDX_CP!" main.java.com.witcher.desktop.DesktopLauncher
