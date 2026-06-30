@@ -113,25 +113,25 @@ public class ShopScreen {
     private static final String IDLE_LINE = "Ну же, выбирайте. У меня нет вечности, а у вас — монстров полно.";
 
     public ShopScreen() {
-        items.add(new ShopItem("Кираса волчьей школы", "120",
+        items.add(new ShopItem("Кираса", "120",
             "Отличный выбор! Волчья сталь — как раз для таких, как вы.",
-            new String[]{"Защита: 45", "Вес: 12", "Тип: кираса"},
+            new String[]{"Защ. 45", "Вес 12", "Кираса"},
             assets.itemIcons[0], assets.itemArts[0]));
-        items.add(new ShopItem("Укреплённые штаны", "45",
+        items.add(new ShopItem("Штаны", "45",
             "Штаны крепкие. Ноги целее — монстров больше.",
-            new String[]{"Защита: 20", "Вес: 8", "Тип: поножи"},
+            new String[]{"Защ. 20", "Вес 8", "Поножи"},
             assets.itemIcons[1], assets.itemArts[1]));
-        items.add(new ShopItem("Перчатки наездника", "30",
+        items.add(new ShopItem("Перчатки", "30",
             "Рукам тепло, клинку — верно. Берите, не пожалеете.",
-            new String[]{"Защита: 12", "Вес: 3", "Тип: перчатки"},
+            new String[]{"Защ. 12", "Вес 3", "Руки"},
             assets.itemIcons[2], assets.itemArts[2]));
-        items.add(new ShopItem("Сапоги стражника", "55",
+        items.add(new ShopItem("Сапоги", "55",
             "В этих сапогах и по болоту пройдёте, и от удара отскочите.",
-            new String[]{"Защита: 18", "Вес: 6", "Тип: сапоги"},
+            new String[]{"Защ. 18", "Вес 6", "Сапоги"},
             assets.itemIcons[3], assets.itemArts[3]));
-        items.add(new ShopItem("Зелье «Чёрный гриф»", "15",
+        items.add(new ShopItem("Зелье", "15",
             "Хм... Зелье? Ну что ж, ваш выбор, Белый Волк...",
-            new String[]{"Эффект: яд", "Вес: 0.5", "⚠ без чекпоинта"},
+            new String[]{"Яд", "0.5 кг", "Осторожно"},
             assets.itemIcons[4], assets.itemArts[4]));
 
         currentDialog = WELCOME_LINE;
@@ -308,11 +308,6 @@ public class ShopScreen {
             g.drawImage(assets.catalogPanelScaled, layout.panelX, layout.panelY, null);
         }
 
-        drawCrispText(g);
-        g.setFont(new Font("Serif", Font.BOLD, 11));
-        g.setColor(DialogBoxRenderer.DUKE_COLOR);
-        g.drawString("— Товары —", layout.panelX + layout.panelW / 2 - 36, layout.panelY + 16);
-
         for (int i = 0; i < items.size(); i++) {
             ShopItem item = items.get(i);
             int cardX = layout.cardsStartX + i * (layout.cardW + layout.cardGap);
@@ -385,48 +380,77 @@ public class ShopScreen {
         BufferedImage art = item.cardArt != null ? item.cardArt : item.icon;
         if (art != null) {
             int ax = x + (w - art.getWidth()) / 2;
-            int ay = y + 6;
+            int ay = y + 4;
             g.drawImage(art, ax, ay, null);
         }
 
-        drawCrispText(g);
-        g.setFont(new Font("Serif", Font.BOLD, 9));
-        g.setColor(new Color(235, 215, 155));
+        drawCardText(g);
+        g.setFont(cardFont(8));
         FontMetrics nameFm = g.getFontMetrics();
-        String name = truncateToWidth(item.name, nameFm, w - 6);
-        g.drawString(name, x + (w - nameFm.stringWidth(name)) / 2, y + h - 17);
+        String name = truncateToWidth(item.name, nameFm, w - 8);
+        int nameY = y + h - 22;
+        drawOutlinedText(g, name, x + (w - nameFm.stringWidth(name)) / 2, nameY,
+            new Color(245, 230, 190));
 
-        g.setFont(new Font("Serif", Font.BOLD, 11));
-        g.setColor(new Color(255, 230, 120));
+        g.setFont(cardFont(9));
         FontMetrics priceFm = g.getFontMetrics();
         BufferedImage coin = assets.crownIconSmall != null ? assets.crownIconSmall : assets.crownIconScaled;
         int priceW = priceFm.stringWidth(item.priceLabel);
+        int coinH = coin != null ? coin.getHeight() : 0;
         if (coin != null) {
             priceW += coin.getWidth() + 2;
         }
+        int priceRowY = y + h - 9;
         int priceX = x + (w - priceW) / 2;
         if (coin != null) {
-            g.drawImage(coin, priceX, y + h - 11, null);
+            int coinY = priceRowY - coinH + 1;
+            g.drawImage(coin, priceX, coinY, null);
             priceX += coin.getWidth() + 2;
         }
-        g.drawString(item.priceLabel, priceX, y + h - 3);
+        drawOutlinedText(g, item.priceLabel, priceX, priceRowY, new Color(255, 220, 90));
     }
 
     private void drawCardBackText(Graphics2D g, ShopItem item, Rectangle card) {
         int x = card.x;
         int y = card.y;
         int w = card.width;
+        int h = card.height;
 
-        drawCrispText(g);
-        g.setFont(new Font("Serif", Font.BOLD, 8));
-        g.setColor(new Color(255, 220, 130));
+        drawCardText(g);
+        g.setFont(cardFont(7));
         FontMetrics fm = g.getFontMetrics();
-        int lineY = y + 12;
+        int lineStep = fm.getHeight() + 2;
+        int totalH = item.statLines.length * lineStep - 2;
+        int lineY = y + (h - totalH) / 2 + fm.getAscent();
         for (String line : item.statLines) {
-            String text = truncateToWidth(line, fm, w - 6);
-            g.drawString(text, x + (w - fm.stringWidth(text)) / 2, lineY);
-            lineY += fm.getHeight() + 1;
+            String text = truncateToWidth(line, fm, w - 8);
+            drawOutlinedText(g, text, x + (w - fm.stringWidth(text)) / 2, lineY,
+                new Color(255, 225, 140));
+            lineY += lineStep;
         }
+    }
+
+    private static Font cardFont(int size) {
+        return new Font(Font.SANS_SERIF, Font.BOLD, size);
+    }
+
+    private static void drawCardText(Graphics2D g) {
+        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+    }
+
+    /** Тёмная обводка — текст читается на золотой рамке карточки. */
+    private static void drawOutlinedText(Graphics2D g, String text, int tx, int ty, Color fill) {
+        g.setColor(new Color(20, 12, 4, 220));
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dy = -1; dy <= 1; dy++) {
+                if (dx != 0 || dy != 0) {
+                    g.drawString(text, tx + dx, ty + dy);
+                }
+            }
+        }
+        g.setColor(fill);
+        g.drawString(text, tx, ty);
     }
 
     /** Рисует спрайт в слот без искажения пропорций. */
@@ -495,11 +519,11 @@ public class ShopScreen {
         }
 
         drawCrispText(g);
-        g.setFont(new Font("Serif", Font.BOLD, 11));
-        g.setColor(new Color(90, 75, 50));
+        g.setFont(cardFont(10));
         String label = "Купить";
         FontMetrics fm = g.getFontMetrics();
-        g.drawString(label, layout.btnX + (layout.btnW - fm.stringWidth(label)) / 2, layout.btnY + 19);
+        int tx = layout.btnX + (layout.btnW - fm.stringWidth(label)) / 2;
+        drawOutlinedText(g, label, tx, layout.btnY + 19, new Color(220, 200, 140));
         g.setComposite(prev);
     }
 
