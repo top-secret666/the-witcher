@@ -27,6 +27,8 @@ bin/
 
 ### Gradle ###
 .gradle/
+gradle-user-home/
+.tmp/
 build/
 !gradle/wrapper/gradle-wrapper.jar
 
