@@ -8,11 +8,17 @@ import main.java.com.witcher.gdx.WitcherGame;
 public class DesktopLauncher {
 
     public static void main(String[] args) {
-        Lwjgl3ApplicationConfiguration config = new Lwjgl3ApplicationConfiguration();
-        config.setTitle("The Witcher");
-        config.setWindowedMode(960, 720);
-        config.setForegroundFPS(60);
-        config.useVsync(true);
-        new Lwjgl3Application(new WitcherGame(), config);
+        try {
+            Lwjgl3ApplicationConfiguration config = new Lwjgl3ApplicationConfiguration();
+            config.setTitle("The Witcher");
+            config.setWindowedMode(960, 720);
+            config.setForegroundFPS(60);
+            config.useVsync(true);
+            new Lwjgl3Application(new WitcherGame(), config);
+        } catch (Throwable error) {
+            error.printStackTrace();
+            System.err.println("LibGDX crash: " + error.getMessage());
+            System.exit(1);
+        }
     }
 }

@@ -73,7 +73,7 @@ public class ShopScreen implements Screen {
 
         ShopLayout layout = new ShopLayout(sw, sh);
         if (catalogPanel != null) {
-            int panelDrawH = layout.btnY + layout.btnH + 4 - layout.panelY;
+            int panelDrawH = Math.round(layout.btnY + layout.btnH + 4 - layout.panelY);
             game.batch.draw(catalogPanel, layout.panelX, layout.panelY, layout.panelW, panelDrawH);
         }
 
