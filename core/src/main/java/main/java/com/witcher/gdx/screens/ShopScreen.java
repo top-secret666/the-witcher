@@ -411,9 +411,26 @@ public class ShopScreen implements Screen {
         small.setColor(255f / 255f, 220f / 255f, 130f / 255f, 1f);
         float lineY = card.y + 12f;
         for (String line : item.statLines) {
-            drawCentered(small, line, card.x + card.width * 0.5f, lineY);
+            drawCentered(small, truncateToWidth(small, line, card.width - 6f),
+                card.x + card.width * 0.5f, lineY);
             lineY += 11f;
         }
+    }
+
+    private String truncateToWidth(BitmapFont font, String text, float maxW) {
+        glyph.setText(font, text);
+        if (glyph.width <= maxW) {
+            return text;
+        }
+        String ellipsis = "…";
+        for (int len = text.length() - 1; len > 0; len--) {
+            String cut = text.substring(0, len) + ellipsis;
+            glyph.setText(font, cut);
+            if (glyph.width <= maxW) {
+                return cut;
+            }
+        }
+        return ellipsis;
     }
 
     private void drawBuyButton(ShopLayout layout, float sh) {
@@ -460,6 +477,7 @@ public class ShopScreen implements Screen {
         shapes.setColor(DUKE_GOLD.r, DUKE_GOLD.g, DUKE_GOLD.b, 160f / 255f);
         shapes.rect(boxX + 1f, boxY + 1f, boxW - 2f, boxH - 2f);
         shapes.end();
+        PixelTextures.resetBlend();
 
         game.batch.setProjectionMatrix(camera.combined);
         game.batch.begin();
