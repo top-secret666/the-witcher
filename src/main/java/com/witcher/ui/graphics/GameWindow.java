@@ -580,6 +580,17 @@ public class GameWindow {
     }
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new GameWindow().start());
+        Thread.setDefaultUncaughtExceptionHandler((thread, error) -> {
+            System.err.println("Необработанная ошибка в потоке " + thread.getName() + ":");
+            error.printStackTrace();
+        });
+        SwingUtilities.invokeLater(() -> {
+            try {
+                new GameWindow().start();
+            } catch (Throwable t) {
+                System.err.println("Не удалось запустить игру:");
+                t.printStackTrace();
+            }
+        });
     }
 }

@@ -162,10 +162,9 @@ public class IntroScreen {
         shopMaterializeFrames = shopGif != null ? shopGif.frames : null;
         shopMaterializeDelays = shopGif != null ? shopGif.delays : null;
 
-        Sprite merchantBg = tryLoad(
-            "/assets/sprites/screen saver/lavka.png",
-            "/assets/sprites/lavka.png",
+        Sprite merchantBg = tryLoadOptional(
             "/assets/sprites/lavka/merchant_bg_lavka.png",
+            "/assets/sprites/screen saver/lavka.png",
             "/assets/sprites/lavka/lavka.png",
             "/assets/sprites/menu/menu_bg_custom.jpg"
         );
@@ -842,6 +841,14 @@ public class IntroScreen {
         Sprite s = Sprite.load(path);
         if (s == null) return null;
         return s.getImage();
+    }
+
+    private static Sprite tryLoadOptional(String... paths) {
+        for (String p : paths) {
+            Sprite s = Sprite.loadOptional(p);
+            if (s != null) return s;
+        }
+        return null;
     }
 
     private static Sprite tryLoad(String... paths) {

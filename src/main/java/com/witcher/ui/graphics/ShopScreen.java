@@ -576,8 +576,9 @@ public class ShopScreen {
         int minY = h;
         int maxX = 0;
         int maxY = 0;
-        for (int y = 0; y < h; y++) {
-            for (int x = 0; x < w; x++) {
+        int step = Math.max(1, Math.min(w, h) / 256);
+        for (int y = 0; y < h; y += step) {
+            for (int x = 0; x < w; x += step) {
                 if ((img.getRGB(x, y) >>> 24) > 20) {
                     minX = Math.min(minX, x);
                     minY = Math.min(minY, y);
@@ -638,7 +639,7 @@ public class ShopScreen {
     }
 
     private static BufferedImage load(String path) {
-        Sprite s = Sprite.load(path);
+        Sprite s = Sprite.loadOptional(path);
         return s != null ? s.getImage() : null;
     }
 

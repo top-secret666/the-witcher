@@ -28,7 +28,16 @@
          * @param removeBlackBg если true, пиксели близкие к чёрному станут прозрачными
          */
         public static SpriteSheet load(String resourcePath, int cols, int rows, int frameDelay, boolean removeBlackBg) {
-            Sprite sheet = Sprite.load(resourcePath);
+            return loadInternal(resourcePath, cols, rows, frameDelay, removeBlackBg, true);
+        }
+
+        public static SpriteSheet loadOptional(String resourcePath, int cols, int rows, int frameDelay, boolean removeBlackBg) {
+            return loadInternal(resourcePath, cols, rows, frameDelay, removeBlackBg, false);
+        }
+
+        private static SpriteSheet loadInternal(String resourcePath, int cols, int rows, int frameDelay,
+                                                boolean removeBlackBg, boolean logMissing) {
+            Sprite sheet = logMissing ? Sprite.load(resourcePath) : Sprite.loadOptional(resourcePath);
             if (sheet == null) return null;
 
             BufferedImage src = sheet.getImage();

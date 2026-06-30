@@ -49,9 +49,9 @@ public class MainMenuScreen {
     private final Random rng = new Random();
 
     public MainMenuScreen() {
-            boardFrame = loadTrimmed("/assets/sprites/menu/menu_board_single.png"); // путь к вашей табличке
+            boardFrame = loadTrimmedOptional("/assets/sprites/menu/menu_board_single.png");
         background = Sprite.load("/assets/sprites/menu/menu_bg_custom.jpg");
-        boardSheet = SpriteSheet.load("/assets/sprites/menu/menu_board_sheet.png", boardSheetCols, boardSheetRows, 1, false);
+        boardSheet = SpriteSheet.loadOptional("/assets/sprites/menu/menu_board_sheet.png", boardSheetCols, boardSheetRows, 1, false);
         buttons = loadButtonGrid("/assets/sprites/menu/menu_buttons_sheet.png", 3, 3);
         titleLogo = loadFirstFrame("/assets/sprites/witcher_logo_new.png", 2, 3, true);
         logoSignData = loadTrimmed("/assets/sprites/menu/menu_logo_sign.png");
@@ -59,7 +59,7 @@ public class MainMenuScreen {
         // smokeFrames removed per user request (no smoke)
         smokeFrames = new BufferedImage[0];
         dustFrames = loadFrames("/assets/sprites/menu/menu_dust_sheet.png", 8, 1, true);
-        transitionFrames = loadFramesRaw("/assets/sprites/menu/menu_transition_sheet.png", 4, 3);
+        transitionFrames = loadFramesRawOptional("/assets/sprites/menu/menu_transition_sheet.png", 4, 3);
 
         cursor = loadTrimmed("/assets/sprites/menu/menu_cursor.png");
     }
@@ -441,6 +441,34 @@ public class MainMenuScreen {
 
     private static BufferedImage[] loadFramesRaw(String path, int cols, int rows) {
         Sprite s = Sprite.load(path);
+        if (s == null) return new BufferedImage[0];
+
+        BufferedImage src = s.getImage();
+        int cw = src.getWidth() / cols;
+        int ch = src.getHeight() / rows;
+        BufferedImage[] out = new BufferedImage[cols * rows];
+
+        for (int r = 0; r < rows; r++) {
+            for (int c = 0; c < cols; c++) {
+                BufferedImage frame = src.getSubimage(c * cw, r * ch, cw, ch);
+                BufferedImage copy = new BufferedImage(frame.getWidth(), frame.getHeight(), BufferedImage.TYPE_INT_ARGB);
+                Graphics2D g = copy.createGraphics();
+                g.drawImage(frame, 0, 0, null);
+                g.dispose();
+                out[r * cols + c] = copy;
+            }
+        }
+        return out;
+    }
+
+    private static BufferedImage loadTrimmedOptional(String path) {
+        Sprite s = Sprite.loadOptional(path);
+        if (s == null) return null;
+        return trimTransparent(removeNearBlack(s.getImage()));
+    }
+
+    private static BufferedImage[] loadFramesRawOptional(String path, int cols, int rows) {
+        Sprite s = Sprite.loadOptional(path);
         if (s == null) return new BufferedImage[0];
 
         BufferedImage src = s.getImage();
