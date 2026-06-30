@@ -182,10 +182,28 @@ public class GameWindow {
         frame.validate();
 
         // Скрываем системный курсор, рисуем кастомный курсор внутри сцены.
+        useHiddenCursor();
+        renderer.requestFocusInWindow();
+    }
+
+    /** Меню/интро: системный курсор скрыт, рисуется спрайтом в сцене. */
+    private void useHiddenCursor() {
         BufferedImage blank = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
         Cursor invisible = Toolkit.getDefaultToolkit().createCustomCursor(blank, new Point(0, 0), "menu_blank_cursor");
         renderer.setCursor(invisible);
-        renderer.requestFocusInWindow();
+        frame.setCursor(invisible);
+    }
+
+    /** Лавка и игровые экраны: обычный курсор для наведения на UI. */
+    private void useVisibleCursor() {
+        Cursor cursor = Cursor.getDefaultCursor();
+        Sprite cursorSprite = Sprite.loadOptional("/assets/sprites/menu/menu_cursor.png");
+        if (cursorSprite != null && cursorSprite.getImage() != null) {
+            cursor = Toolkit.getDefaultToolkit().createCustomCursor(
+                cursorSprite.getImage(), new Point(4, 4), "witcher_game_cursor");
+        }
+        renderer.setCursor(cursor);
+        frame.setCursor(cursor);
     }
 
     private static final class PixelTitleBar extends JComponent {
@@ -556,6 +574,7 @@ public class GameWindow {
                     introActive = false;
                     shopActive = true;
                     shopScreen = new ShopScreen();
+                    useVisibleCursor();
                 }
             } else if (shopActive) {
                 shopScreen.update(mouseVX, mouseVY, mouseClickPending, shopExitRequested);
@@ -570,6 +589,7 @@ public class GameWindow {
                     shopScreen.clearExitRequest();
                     menuActive = true;
                     mainMenu = new MainMenuScreen();
+                    useHiddenCursor();
                 }
             } else {
                 renderer.update();
