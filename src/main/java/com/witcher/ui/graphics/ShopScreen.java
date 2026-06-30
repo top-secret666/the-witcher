@@ -30,14 +30,16 @@ public class ShopScreen {
         final int panelY;
         final int panelW;
         final int panelH;
-        final int rowH;
         final int headerH;
-        final int listY;
         final int btnX;
         final int btnY;
         final int btnW;
         final int btnH;
-        final int iconSize;
+        final int cardW;
+        final int cardH;
+        final int cardGap;
+        final int cardsStartX;
+        final int cardsY;
         final int dialogTop;
 
         ShopLayout(int sw, int sh, int itemCount, int hudX, int hudW, int hudH) {
@@ -45,23 +47,25 @@ public class ShopScreen {
             this.hudW = hudW;
             hudY = 4;
             this.hudH = hudH;
-            iconSize = 32;
             dialogTop = sh - DIALOG_TEXT_ZONE;
             btnH = 30;
             btnW = 100;
-            rowH = 36;
-            headerH = 24;
+            headerH = 22;
+            cardW = 58;
+            cardH = 90;
+            cardGap = 5;
 
-            panelW = Math.min(sw - 96, 372);
+            int cardsTotalW = itemCount * cardW + (itemCount - 1) * cardGap;
+            panelW = Math.max(cardsTotalW + 28, Math.min(sw - 88, 380));
             panelX = (sw - panelW) / 2;
             panelY = hudY + hudH + 6;
-            int listH = headerH + rowH * itemCount + 6;
-            int maxPanelBottom = dialogTop - btnH - 8;
-            panelH = Math.min(listH + 10, maxPanelBottom - panelY);
-            listY = panelY + headerH + 4;
+            cardsStartX = panelX + (panelW - cardsTotalW) / 2;
+            cardsY = panelY + headerH + 6;
+            int contentBottom = cardsY + cardH;
+            panelH = contentBottom - panelY + 8;
 
             btnX = panelX + (panelW - btnW) / 2;
-            btnY = panelY + panelH + 4;
+            btnY = contentBottom + 6;
         }
     }
 
@@ -69,14 +73,19 @@ public class ShopScreen {
         final String name;
         final String priceLabel;
         final String dukeLine;
+        final String[] statLines;
         final BufferedImage icon;
+        final BufferedImage cardArt;
         Rectangle bounds = new Rectangle();
 
-        ShopItem(String name, String priceLabel, String dukeLine, BufferedImage icon) {
+        ShopItem(String name, String priceLabel, String dukeLine, String[] statLines,
+                 BufferedImage icon, BufferedImage cardArt) {
             this.name = name;
             this.priceLabel = priceLabel;
             this.dukeLine = dukeLine;
+            this.statLines = statLines;
             this.icon = icon;
+            this.cardArt = cardArt;
         }
     }
 
@@ -87,13 +96,13 @@ public class ShopScreen {
 
     private final BufferedImage hudBar;
     private final BufferedImage catalogPanel;
-    private final BufferedImage rowNormal;
-    private final BufferedImage rowHover;
-    private final BufferedImage rowSelected;
+    private final BufferedImage cardFront;
+    private final BufferedImage cardBack;
+    private final BufferedImage cardHover;
+    private final BufferedImage cardSelected;
     private final BufferedImage btnBuyDisabled;
     private final BufferedImage crownIcon;
 
-    private final GifFrames materializeGif;
     private final Rectangle hudSrcCrop;
     private final int hudDrawX;
     private final int hudDrawW;
@@ -101,6 +110,8 @@ public class ShopScreen {
 
     private final List<ShopItem> items = new ArrayList<>();
     private final List<float[]> ashParticles = new ArrayList<>();
+    private final float[] cardFlip = new float[5];
+    private final boolean[] cardFaceBack = new boolean[5];
     private final Random rng = new Random();
 
     private ShopState state = ShopState.WELCOME;
@@ -110,11 +121,6 @@ public class ShopScreen {
     private int tick = 0;
     private int welcomeTicks = 0;
     private boolean exitRequested = false;
-
-    private int materializeFrame = 0;
-    private long materializeLastTime = System.currentTimeMillis();
-    private boolean entranceDone = false;
-    private float uiReveal = 0f;
 
     private static final String WELCOME_LINE = """
             ХО-ХО-ХО-ХА... Приступим к делу, Белый Волк.
@@ -144,16 +150,12 @@ public class ShopScreen {
 
         hudBar = load(UI + "shop_hud_bar.png");
         catalogPanel = load(UI + "shop_catalog_panel.png");
-        rowNormal = load(UI + "shop_row_normal.png");
-        rowHover = load(UI + "shop_row_hover.png");
-        rowSelected = load(UI + "shop_row_selected.png");
+        cardFront = loadFirstAvailable(UI + "shop_card_front.png", UI + "icon_legendary_frame.png");
+        cardBack = load(UI + "shop_card_back.png");
+        cardHover = load(UI + "shop_card_hover.png");
+        cardSelected = load(UI + "shop_card_selected.png");
         btnBuyDisabled = load(UI + "shop_btn_buy_disabled.png");
         crownIcon = load(ICONS + "icon_crown.png");
-
-        materializeGif = GifFrames.loadFirst(
-            "/assets/sprites/lavka/shop_materialize.gif",
-            "/assets/sprites/screen saver/shop_materialize.gif"
-        );
 
         if (hudBar != null && hudBar.getWidth() > 0) {
             hudSrcCrop = computeContentBounds(hudBar);
@@ -170,34 +172,35 @@ public class ShopScreen {
 
         items.add(new ShopItem("Кираса волчьей школы", "120",
             "Отличный выбор! Волчья сталь — как раз для таких, как вы.",
-            load(ICONS + "icon_armor_chest.png")));
+            new String[]{"Защита: 45", "Вес: 12", "Тип: кираса"},
+            load(ICONS + "icon_armor_chest.png"),
+            load(ICONS + "card_art_chest.png")));
         items.add(new ShopItem("Укреплённые штаны", "45",
             "Штаны крепкие. Ноги целее — монстров больше.",
-            load(ICONS + "icon_armor_legs.png")));
+            new String[]{"Защита: 20", "Вес: 8", "Тип: поножи"},
+            load(ICONS + "icon_armor_legs.png"),
+            load(ICONS + "card_art_legs.png")));
         items.add(new ShopItem("Перчатки наездника", "30",
             "Рукам тепло, клинку — верно. Берите, не пожалеете.",
-            load(ICONS + "icon_armor_gloves.png")));
+            new String[]{"Защита: 12", "Вес: 3", "Тип: перчатки"},
+            load(ICONS + "icon_armor_gloves.png"),
+            load(ICONS + "card_art_gloves.png")));
         items.add(new ShopItem("Сапоги стражника", "55",
             "В этих сапогах и по болоту пройдёте, и от удара отскочите.",
-            load(ICONS + "icon_armor_boots.png")));
+            new String[]{"Защита: 18", "Вес: 6", "Тип: сапоги"},
+            load(ICONS + "icon_armor_boots.png"),
+            load(ICONS + "card_art_boots.png")));
         items.add(new ShopItem("Зелье «Чёрный гриф»", "15",
             "Хм... Зелье? Ну что ж, ваш выбор, Белый Волк...",
-            load(ICONS + "icon_potion.png")));
+            new String[]{"Эффект: яд", "Вес: 0.5", "⚠ без чекпоинта"},
+            load(ICONS + "icon_potion.png"),
+            load(ICONS + "card_art_potion.png")));
 
         currentDialog = WELCOME_LINE;
     }
 
     public void update(int mouseX, int mouseY, boolean clicked, boolean escPressed) {
         tick++;
-
-        if (!entranceDone) {
-            updateMaterializeAnimation();
-            return;
-        }
-
-        if (uiReveal < 1f) {
-            uiReveal = Math.min(1f, uiReveal + 0.05f);
-        }
 
         welcomeTicks++;
 
@@ -212,6 +215,7 @@ public class ShopScreen {
         }
 
         updateAshParticles();
+        updateCardFlipAnimation();
 
         hoveredIndex = -1;
         for (int i = 0; i < items.size(); i++) {
@@ -225,22 +229,18 @@ public class ShopScreen {
             selectedIndex = hoveredIndex;
             state = ShopState.BROWSE;
             currentDialog = items.get(hoveredIndex).dukeLine;
+            cardFlip[hoveredIndex] = cardFlip[hoveredIndex] < 0.5f ? 1f : 0f;
         }
     }
 
-    private void updateMaterializeAnimation() {
-        if (materializeGif == null || materializeGif.frames.length == 0) {
-            entranceDone = true;
-            return;
-        }
-        long now = System.currentTimeMillis();
-        int delay = materializeGif.delaysMs[Math.min(materializeFrame, materializeGif.delaysMs.length - 1)];
-        if (now - materializeLastTime >= delay) {
-            if (materializeFrame < materializeGif.frames.length - 1) {
-                materializeFrame++;
-                materializeLastTime = now;
+    private void updateCardFlipAnimation() {
+        for (int i = 0; i < items.size() && i < cardFlip.length; i++) {
+            float target = cardFlip[i] < 0.5f ? 0f : 1f;
+            float diff = target - cardFlip[i];
+            if (Math.abs(diff) > 0.02f) {
+                cardFlip[i] += diff * 0.22f;
             } else {
-                entranceDone = true;
+                cardFlip[i] = target;
             }
         }
     }
@@ -253,14 +253,8 @@ public class ShopScreen {
         g.setColor(Color.BLACK);
         g.fillRect(0, 0, sw, sh);
 
-        if (!entranceDone) {
-            drawMaterializeFrame(g, sw, sh);
-            g.dispose();
-            return;
-        }
-
         ShopLayout layout = new ShopLayout(sw, sh, items.size(), hudDrawX, hudDrawW, hudDrawH);
-        float alpha = uiReveal;
+        float alpha = 1f;
 
         drawScaledBackground(g, merchantBg, sw, sh, 0.75f * alpha);
         drawDarkOverlay(g, sw, sh, layout, alpha);
@@ -272,7 +266,7 @@ public class ShopScreen {
         drawCharacter(g, sw, sh, dukeDraw, false, layout.dialogTop, alpha);
 
         drawHud(g, layout, alpha);
-        drawCatalog(g, layout, alpha);
+        drawCards(g, layout, alpha);
         drawBuyButton(g, layout, alpha);
 
         if (alpha > 0.5f) {
@@ -283,12 +277,6 @@ public class ShopScreen {
             DialogBoxRenderer.DUKE_COLOR, alpha);
 
         g.dispose();
-    }
-
-    private void drawMaterializeFrame(Graphics2D g, int sw, int sh) {
-        if (materializeGif == null || materializeGif.frames.length == 0) return;
-        BufferedImage frame = materializeGif.frames[Math.min(materializeFrame, materializeGif.frames.length - 1)];
-        drawScaledBackground(g, frame, sw, sh, 1f);
     }
 
     public boolean isExitRequested() {
@@ -351,7 +339,8 @@ public class ShopScreen {
         int crownSize = 18;
         g.setFont(new Font("Serif", Font.BOLD, 14));
         FontMetrics fm = g.getFontMetrics();
-        int textRight = layout.hudX + layout.hudW - 20;
+        int walletAnchor = layout.hudX + (int) (layout.hudW * 0.68f);
+        int textRight = walletAnchor;
         textRight -= fm.stringWidth(" крон");
         textRight -= fm.stringWidth(wallet);
         if (crownIcon != null) {
