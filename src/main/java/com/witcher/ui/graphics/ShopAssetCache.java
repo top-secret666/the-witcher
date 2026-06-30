@@ -97,11 +97,9 @@ final class ShopAssetCache {
             itemArts[i] = itemIcons[i];
         }
 
-        setCatalogIcon = loadSized(UI + "icon_legendary_frame.png", cardArtSize, cardArtSize,
+        BufferedImage setIcon = loadSized(UI + "icon_legendary_frame.png", cardArtSize, cardArtSize,
             BASE + "ui/icon_legendary_frame.png", true);
-        if (setCatalogIcon == null) {
-            setCatalogIcon = crownIconScaled;
-        }
+        setCatalogIcon = setIcon != null ? setIcon : crownIconScaled;
 
         int headerH = 22;
         int panelY = hudY + hudH + 6;
