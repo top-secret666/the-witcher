@@ -206,6 +206,83 @@ public final class DialogBoxRenderer {
         return lineY;
     }
 
+    /**
+     * Компактная рамка внизу экрана — чёткий текст без сглаживания (лавка и т.п.).
+     */
+    public static void drawCompactFramedSpeakerText(Graphics2D g, int sw, int sh, String speaker, String text,
+                                                    Color speakerColor, float alpha) {
+        disableTextSmoothing(g);
+        Composite prev = g.getComposite();
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
+
+        int fontSize = Math.max(12, (int) (sh * 0.036f));
+        int boxMarginX = 10;
+        int boxMarginBottom = 5;
+        int pad = 8;
+        int boxW = sw - boxMarginX * 2;
+        int textMaxW = boxW - pad * 2;
+        int lineH = fontSize + 3;
+        int maxLines = 2;
+
+        Font textFont = new Font("Serif", Font.PLAIN, fontSize);
+        g.setFont(textFont);
+        FontMetrics fm = g.getFontMetrics();
+
+        String speakerLabel = (speaker != null && !speaker.isEmpty()) ? speaker + ": " : "";
+        int speakerW = speakerLabel.isEmpty() ? 0 : g.getFontMetrics(
+            new Font("Serif", Font.BOLD, fontSize)).stringWidth(speakerLabel);
+
+        List<String> lines = new ArrayList<>();
+        for (String rawLine : text.split("\n", -1)) {
+            lines.addAll(wrapLine(rawLine, fm, textMaxW - (lines.isEmpty() ? speakerW : 0)));
+        }
+        if (lines.isEmpty()) {
+            lines.add("");
+        }
+        if (lines.size() > maxLines) {
+            lines = lines.subList(0, maxLines);
+        }
+
+        int blockH = lineH * lines.size();
+        int boxH = blockH + pad * 2;
+        int boxX = boxMarginX;
+        int boxY = sh - boxMarginBottom - boxH;
+
+        int alpha255 = Math.max(0, Math.min(255, (int) (alpha * 255)));
+        g.setColor(new Color(10, 8, 4, Math.min(230, alpha255)));
+        g.fillRoundRect(boxX, boxY, boxW, boxH, 5, 5);
+        g.setColor(new Color(140, 100, 35, alpha255));
+        g.drawRoundRect(boxX, boxY, boxW, boxH, 5, 5);
+        g.setColor(new Color(218, 165, 32, Math.max(0, Math.min(255, (int) (alpha * 160)))));
+        g.drawRoundRect(boxX + 1, boxY + 1, boxW - 2, boxH - 2, 4, 4);
+
+        int textX = boxX + pad;
+        int startY = boxY + pad + fm.getAscent();
+
+        if (!speakerLabel.isEmpty()) {
+            g.setFont(new Font("Serif", Font.BOLD, fontSize));
+            g.setColor(speakerColor);
+            g.drawString(speakerLabel, textX, startY);
+            if (!lines.isEmpty()) {
+                String first = lines.get(0);
+                g.setFont(textFont);
+                g.setColor(SPEECH_COLOR);
+                g.drawString(first, textX + speakerW, startY);
+                for (int i = 1; i < lines.size(); i++) {
+                    int y = startY + lineH * i;
+                    g.drawString(lines.get(i), textX, y);
+                }
+            }
+        } else {
+            for (int i = 0; i < lines.size(); i++) {
+                g.setColor(SPEECH_COLOR);
+                g.drawString(lines.get(i), textX, startY + lineH * i);
+            }
+        }
+
+        g.setComposite(prev);
+    }
+
     public static void drawPlainSpeakerText(Graphics2D g, int sw, int sh, String speaker, String text,
                                             Color speakerColor, float alpha) {
         enableTextSmoothing(g);
