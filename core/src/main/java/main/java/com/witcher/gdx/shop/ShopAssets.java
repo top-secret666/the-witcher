@@ -84,13 +84,18 @@ public final class ShopAssets implements Disposable {
                 crop = PixelTextures.computeContentBounds("sprites/lavka/ui/shop_hud_bar.png");
             }
             if (crop != null && crop[2] > 4 && crop[3] > 4) {
+                int pad = 8;
+                int cx = Math.max(0, crop[0] - pad);
+                int cy = Math.max(0, crop[1] - pad);
+                int cw = Math.min(hudBar.getWidth() - cx, crop[2] + pad * 2);
+                int ch = Math.min(hudBar.getHeight() - cy, crop[3] + pad * 2);
                 hud.cropped = true;
-                hud.cropX = crop[0];
-                hud.cropY = crop[1];
-                hud.cropW = crop[2];
-                hud.cropH = crop[3];
-                int srcY = hudBar.getHeight() - crop[1] - crop[3];
-                hudBarRegion = new TextureRegion(hudBar, crop[0], srcY, crop[2], crop[3]);
+                hud.cropX = cx;
+                hud.cropY = cy;
+                hud.cropW = cw;
+                hud.cropH = ch;
+                int srcY = hudBar.getHeight() - cy - ch;
+                hudBarRegion = new TextureRegion(hudBar, cx, srcY, cw, ch);
                 float aspect = (float) crop[3] / crop[2];
                 hud.drawW = 476;
                 hud.drawH = Math.max(52, Math.min(64, Math.round(hud.drawW * aspect)));

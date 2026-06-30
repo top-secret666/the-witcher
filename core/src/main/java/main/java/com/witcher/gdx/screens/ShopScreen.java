@@ -160,6 +160,7 @@ public class ShopScreen implements Screen {
         game.batch.end();
 
         drawAshParticles();
+        PixelTextures.resetBlend();
         drawCompactDialog(sh, currentDialog);
 
         if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
@@ -211,6 +212,7 @@ public class ShopScreen implements Screen {
 
     /** Как в Swing: затемнение до UI, чтобы доска выдвигалась вперёд. */
     private void drawDarkOverlay(ShopLayout layout, float sw, float sh) {
+        PixelTextures.resetBlend();
         shapes.setProjectionMatrix(camera.combined);
         shapes.begin(ShapeRenderer.ShapeType.Filled);
 
@@ -519,6 +521,7 @@ public class ShopScreen implements Screen {
     }
 
     private void drawAshParticles() {
+        PixelTextures.resetBlend();
         shapes.setProjectionMatrix(camera.combined);
         shapes.begin(ShapeRenderer.ShapeType.Filled);
         for (float[] p : ashParticles) {
@@ -563,7 +566,7 @@ public class ShopScreen implements Screen {
     }
 
     private static final class ShopLayout {
-        final float hudTop = 4f;
+        final float hudTop = 12f;
         final float hudX;
         final float hudW;
         final float hudH;
