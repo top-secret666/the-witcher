@@ -1,6 +1,7 @@
 package main.java.com.witcher.ui.graphics;
 
 import java.awt.*;
+import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
