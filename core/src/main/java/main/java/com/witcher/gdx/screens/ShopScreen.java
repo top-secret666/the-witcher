@@ -250,7 +250,6 @@ public class ShopScreen implements Screen {
     }
 
     private void drawHud(ShopLayout layout, float sh) {
-        ShopAssets.HudLayout hud = assets.hud;
         float hudX = layout.hudX;
         float hudW = layout.hudW;
         float hudH = layout.hudH;
