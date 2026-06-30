@@ -134,27 +134,33 @@ public class ShopScreen {
     private static final String IDLE_LINE = "Ну же, выбирайте. У меня нет вечности, а у вас — монстров полно.";
 
     public ShopScreen() {
-        items.add(new ShopItem("Кираса", "120",
+        items.add(new ShopItem(ItemKind.PIECE, "Кираса", "120",
             "Отличный выбор! Волчья сталь — как раз для таких, как вы.",
             new String[]{"Защ. 45", "Вес 12", "Кираса"},
             assets.itemIcons[0], assets.itemArts[0]));
-        items.add(new ShopItem("Штаны", "45",
+        items.add(new ShopItem(ItemKind.PIECE, "Штаны", "45",
             "Штаны крепкие. Ноги целее — монстров больше.",
             new String[]{"Защ. 20", "Вес 8", "Поножи"},
             assets.itemIcons[1], assets.itemArts[1]));
-        items.add(new ShopItem("Перчатки", "30",
+        items.add(new ShopItem(ItemKind.PIECE, "Перчатки", "30",
             "Рукам тепло, клинку — верно. Берите, не пожалеете.",
             new String[]{"Защ. 12", "Вес 3", "Руки"},
             assets.itemIcons[2], assets.itemArts[2]));
-        items.add(new ShopItem("Сапоги", "55",
+        items.add(new ShopItem(ItemKind.PIECE, "Сапоги", "55",
             "В этих сапогах и по болоту пройдёте, и от удара отскочите.",
             new String[]{"Защ. 18", "Вес 6", "Сапоги"},
             assets.itemIcons[3], assets.itemArts[3]));
-        items.add(new ShopItem("Зелье", "15",
+        items.add(new ShopItem(ItemKind.PIECE, "Зелье", "15",
             "Хм... Зелье? Ну что ж, ваш выбор, Белый Волк...",
             new String[]{"Яд", "0.5 кг", "Осторожно"},
             assets.itemIcons[4], assets.itemArts[4]));
+        items.add(new ShopItem(ItemKind.SET_CATALOG, "Комплекты", "···",
+            "Ах, охотник на целые комплекты! Волчья, Кошачья, Грифонья — выбирайте.",
+            new String[]{"Школьные", "Легендар.", "4 части"},
+            assets.setCatalogIcon, assets.setCatalogIcon));
 
+        cardFlip = new float[items.size()];
+        cardFaceBack = new boolean[items.size()];
         currentDialog = WELCOME_LINE;
     }
 
@@ -192,12 +198,18 @@ public class ShopScreen {
             selectedIndex = hoveredIndex;
             state = ShopState.BROWSE;
             currentDialog = items.get(hoveredIndex).dukeLine;
-            cardFaceBack[hoveredIndex] = !cardFaceBack[hoveredIndex];
+            if (items.get(hoveredIndex).kind == ItemKind.PIECE) {
+                cardFaceBack[hoveredIndex] = !cardFaceBack[hoveredIndex];
+            }
         }
     }
 
     private void updateCardFlipAnimation() {
         for (int i = 0; i < items.size() && i < cardFlip.length; i++) {
+            if (items.get(i).kind != ItemKind.PIECE) {
+                cardFlip[i] = 0f;
+                continue;
+            }
             float target = cardFaceBack[i] ? 1f : 0f;
             float diff = target - cardFlip[i];
             if (Math.abs(diff) > 0.02f) {
@@ -331,8 +343,9 @@ public class ShopScreen {
 
         for (int i = 0; i < items.size(); i++) {
             ShopItem item = items.get(i);
-            int cardX = layout.cardsStartX + i * (layout.cardW + layout.cardGap);
-            int cardY = layout.cardsY;
+            Point slot = layout.cardSlot(i);
+            int cardX = slot.x;
+            int cardY = slot.y;
             item.bounds.setBounds(cardX, cardY, layout.cardW, layout.cardH);
             drawItemCard(g, item, cardX, cardY, layout.cardW, layout.cardH, i,
                 i == selectedIndex, i == hoveredIndex, cardFlip[i]);
@@ -343,7 +356,7 @@ public class ShopScreen {
 
     private void drawItemCard(Graphics2D g, ShopItem item, int x, int y, int w, int h, int index,
                               boolean selected, boolean hovered, float flip) {
-        boolean showBack = flip >= 0.5f;
+        boolean showBack = item.kind == ItemKind.PIECE && flip >= 0.5f;
         float fade = 1f;
         if (flip > 0.05f && flip < 0.95f) {
             fade = flip < 0.5f ? 1f - flip * 2f : (flip - 0.5f) * 2f;
@@ -401,7 +414,7 @@ public class ShopScreen {
         BufferedImage art = item.cardArt != null ? item.cardArt : item.icon;
         if (art != null) {
             int ax = x + (w - art.getWidth()) / 2;
-            int ay = y + 4;
+            int ay = y + 8;
             g.drawImage(art, ax, ay, null);
         }
 
@@ -410,8 +423,13 @@ public class ShopScreen {
         FontMetrics nameFm = g.getFontMetrics();
         String name = truncateToWidth(item.name, nameFm, w - 8);
         int nameY = y + h - 22;
-        drawOutlinedText(g, name, x + (w - nameFm.stringWidth(name)) / 2, nameY,
-            new Color(245, 230, 190));
+        Color nameColor = item.kind == ItemKind.SET_CATALOG
+            ? new Color(255, 210, 100) : new Color(245, 230, 190);
+        drawOutlinedText(g, name, x + (w - nameFm.stringWidth(name)) / 2, nameY, nameColor);
+
+        if (item.kind == ItemKind.SET_CATALOG) {
+            return;
+        }
 
         g.setFont(cardFont(9));
         FontMetrics priceFm = g.getFontMetrics();
