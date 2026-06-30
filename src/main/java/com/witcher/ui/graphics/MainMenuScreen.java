@@ -102,10 +102,7 @@ public class MainMenuScreen {
         int hoveredIndex = -1;
         for (int i = 0; i < buttonRects.length; i++) {
             Rectangle r = buttonRects[i];
-            // Проверяем: курсор должен быть полностью внутри по Y
-            // и внутри с отступом 20px по X (исключаем боковые края)
-            if (mouseX >= r.x + 130 && mouseX <= r.x + r.width - 130 &&
-                mouseY >= r.y && mouseY <= r.y + r.height) {
+            if (r.contains(mouseX, mouseY)) {
                 hoveredIndex = i;
                 break;
             }
@@ -236,14 +233,28 @@ public class MainMenuScreen {
 
         // Высота доступной области под кнопки
         int availableH = sh - logoReservedBottom - 16;
-        int gap = (int)(availableH * 0.04f); // 4% от доступной высоты
-        int bh = (int)((availableH - gap * (buttonRects.length - 1)) / buttonRects.length);
-        int bw = (int)(sw * 0.98f); // почти на всю ширину
-        int startX = (sw - bw) / 2;
+        int gap = (int) (availableH * 0.04f);
+        int slotH = (int) ((availableH - gap * (buttonRects.length - 1)) / buttonRects.length);
+
+        float aspect = 1.9f;
+        if (ref != null && ref.getHeight() > 0) {
+            aspect = (float) ref.getWidth() / ref.getHeight();
+        }
+
+        int plankW = (int) (sw * 0.62f);
+        int plankH = Math.round(plankW / aspect);
+        if (plankH > slotH) {
+            plankH = slotH;
+            plankW = Math.round(plankH * aspect);
+        }
+
+        int startX = (sw - plankW) / 2;
         int startY = logoReservedBottom;
 
         for (int i = 0; i < buttonRects.length; i++) {
-            buttonRects[i].setBounds(startX, startY + i * (bh + gap), bw, bh);
+            int slotY = startY + i * (slotH + gap);
+            int plankY = slotY + (slotH - plankH) / 2;
+            buttonRects[i].setBounds(startX, plankY, plankW, plankH);
         }
     }
 
@@ -300,23 +311,9 @@ public class MainMenuScreen {
                 state = 1;
             }
 
-            // Рисуем табличку под кнопкой (еще больше)
-            if (boardFrame != null) {
-                int boardW = (int)(r.width * 36.45); // еще больше ширина таблички
-                int boardH = (int)(r.height * 36.45); // еще больше высота таблички
-                int boardX = r.x - (int)((boardW - r.width) / 2);
-                int boardY = r.y - (int)((boardH - r.height) / 2);
-                g.drawImage(boardFrame, boardX, boardY, boardW, boardH, null);
-            }
-
-            // Рисуем спрайт кнопки, чуть уже
             BufferedImage frame = getButtonFrame(i, state);
             if (frame != null) {
-                int spriteW = (int)(r.width * 0.25); // 40% ширины
-                int spriteH = (int)(r.height * 0.7); // 70% высоты
-                int spriteX = r.x + (r.width - spriteW) / 2;
-                int spriteY = r.y + (r.height - spriteH) / 2;
-                g.drawImage(frame, spriteX, spriteY, spriteW, spriteH, null);
+                g.drawImage(frame, r.x, r.y, r.width, r.height, null);
             }
 
             // Draw label on top to ensure readability (shadow + main color)
