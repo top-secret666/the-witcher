@@ -16,6 +16,26 @@ if not exist "gradlew.bat" (
   exit /b 1
 )
 
-echo === LibGDX: desktop:run ===
+echo === LibGDX: sborka ===
+call gradlew.bat desktop:build --no-daemon
+if errorlevel 1 (
+  echo.
+  echo [OSHIBKA] Sborka ne udalas. Smotri tekst vyshe.
+  pause
+  exit /b 1
+)
+
+echo.
+echo === LibGDX: zapusk ===
 call gradlew.bat desktop:run --no-daemon
+if errorlevel 1 (
+  echo.
+  echo [OSHIBKA] Igra vyletela ili ne zapustilas. Smotri tekst vyshe.
+  pause
+  exit /b 1
+)
+
+echo.
+echo Igra zakrylas normalno.
+pause
 endlocal
