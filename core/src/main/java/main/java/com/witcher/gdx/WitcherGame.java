@@ -16,7 +16,7 @@ public class WitcherGame extends Game {
 
     @Override
     public void create() {
-        batch = new SpriteBatch();
+        batch = new SpriteBatch(2048);
         setScreen(new ShopScreen(this));
     }
 

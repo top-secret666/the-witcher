@@ -25,10 +25,10 @@ public final class GameFonts implements Disposable {
         if (fontFile != null) {
             try {
                 generator = new FreeTypeFontGenerator(fontFile);
-                title = generate(15);
-                ui = generate(13);
-                uiSmall = generate(10);
-                dialog = generate(12);
+                title = generate(16);
+                ui = generate(14);
+                uiSmall = generate(11);
+                dialog = generate(13);
                 Gdx.app.log("GameFonts", "Shrift: " + fontFile.path());
                 return;
             } catch (Exception e) {
@@ -72,14 +72,22 @@ public final class GameFonts implements Disposable {
         FreeTypeFontGenerator.FreeTypeFontParameter p = new FreeTypeFontGenerator.FreeTypeFontParameter();
         p.size = size;
         p.characters = FreeTypeFontGenerator.DEFAULT_CHARS + CYRILLIC;
+        p.hinting = FreeTypeFontGenerator.Hinting.None;
         p.magFilter = com.badlogic.gdx.graphics.Texture.TextureFilter.Nearest;
         p.minFilter = com.badlogic.gdx.graphics.Texture.TextureFilter.Nearest;
-        return generator.generateFont(p);
+        BitmapFont font = generator.generateFont(p);
+        font.getRegion().getTexture().setFilter(
+            com.badlogic.gdx.graphics.Texture.TextureFilter.Nearest,
+            com.badlogic.gdx.graphics.Texture.TextureFilter.Nearest);
+        return font;
     }
 
     private static BitmapFont fallback(float scale) {
         BitmapFont font = new BitmapFont();
         font.getData().setScale(scale);
+        font.getRegion().getTexture().setFilter(
+            com.badlogic.gdx.graphics.Texture.TextureFilter.Nearest,
+            com.badlogic.gdx.graphics.Texture.TextureFilter.Nearest);
         return font;
     }
 

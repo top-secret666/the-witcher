@@ -240,14 +240,18 @@ public final class PixelTextures {
             Gdx.app.error("PixelTextures", "drawCover: pustaya tekstura " + tw + "x" + th);
             return;
         }
-        float scale = Math.max(viewW / tw, viewH / th);
-        float drawW = tw * scale;
-        float drawH = th * scale;
-        float x = (viewW - drawW) * 0.5f;
-        float y = (viewH - drawH) * 0.5f;
         float a = batch.getColor().a;
         batch.setColor(1f, 1f, 1f, alpha);
-        batch.draw(texture, x, y, drawW, drawH);
+        if (Math.abs(tw - viewW) <= 2f && Math.abs(th - viewH) <= 2f) {
+            batch.draw(texture, 0f, 0f, viewW, viewH);
+        } else {
+            int scale = Math.max(1, (int) Math.ceil(Math.max(viewW / tw, viewH / th)));
+            float drawW = tw * scale;
+            float drawH = th * scale;
+            float x = (viewW - drawW) * 0.5f;
+            float y = (viewH - drawH) * 0.5f;
+            batch.draw(texture, x, y, drawW, drawH);
+        }
         batch.setColor(1f, 1f, 1f, a);
     }
 
