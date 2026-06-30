@@ -1,0 +1,31 @@
+buildscript {
+    repositories {
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+
+allprojects {
+    apply plugin: 'eclipse'
+
+    version = '1.0'
+    ext {
+        appName = 'the-witcher'
+        gdxVersion = '1.12.1'
+    }
+
+    repositories {
+        mavenCentral()
+        maven { url 'https://oss.sonatype.org/content/repositories/snapshots/' }
+        maven { url 'https://oss.sonatype.org/content/repositories/releases/' }
+        maven { url 'https://jitpack.io' }
+    }
+}
+
+project(':desktop') {
+    apply plugin: 'java-library'
+}
+
+project(':core') {
+    apply plugin: 'java-library'
+}

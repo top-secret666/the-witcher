@@ -1,0 +1,2 @@
+rootProject.name = 'the-witcher'
+include 'desktop', 'core'
