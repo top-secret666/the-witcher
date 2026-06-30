@@ -15,6 +15,8 @@ public final class ShopAssets implements Disposable {
     public Texture dukeLaughPortrait;
 
     public Texture hudBar;
+    /** Висящая плашка с крюком — название лавки. */
+    public Texture shopSignTitle;
     public Texture catalogPanel;
     public Texture cardFront;
     public Texture cardBack;
@@ -31,6 +33,19 @@ public final class ShopAssets implements Disposable {
 
     /** Обрезка HUD-плашки (убираем пустые поля в исходном PNG). */
     public final HudLayout hud = new HudLayout();
+    public final SignLayout sign = new SignLayout();
+
+    public static final class SignLayout {
+        public boolean cropped;
+        public int cropX;
+        public int cropY;
+        public int cropW;
+        public int cropH;
+        public int drawX = 4;
+        public int drawY = 2;
+        public int drawW = 148;
+        public int drawH = 108;
+    }
 
     public static final class HudLayout {
         public boolean cropped;
@@ -107,6 +122,24 @@ public final class ShopAssets implements Disposable {
             hud.drawX = (int) ((WitcherGame.VIRTUAL_W - hud.drawW) * 0.5f);
         }
 
+        shopSignTitle = PixelTextures.loadOptional("sprites/lavka/ui/shop_sign_title.png");
+        if (shopSignTitle == null) {
+            com.badlogic.gdx.Gdx.app.error("ShopAssets",
+                "Plashka ne najdena: sprites/lavka/ui/shop_sign_title.png");
+        } else {
+            int[] crop = PixelTextures.computeOpaqueBounds("sprites/lavka/ui/shop_sign_title.png");
+            if (crop != null) {
+                sign.cropped = true;
+                sign.cropX = crop[0];
+                sign.cropY = crop[1];
+                sign.cropW = crop[2];
+                sign.cropH = crop[3];
+                float aspect = (float) crop[3] / crop[2];
+                sign.drawW = 148;
+                sign.drawH = Math.max(96, Math.min(120, Math.round(sign.drawW * aspect)));
+            }
+        }
+
         catalogPanel = PixelTextures.loadOptional("sprites/lavka/ui/shop_catalog_panel.png");
         cardFront = PixelTextures.loadFirst(
             "sprites/lavka/ui/shop_card_front.png",
@@ -132,6 +165,7 @@ public final class ShopAssets implements Disposable {
         PixelTextures.dispose(dukePortrait);
         PixelTextures.dispose(dukeLaughPortrait);
         PixelTextures.dispose(hudBar);
+        PixelTextures.dispose(shopSignTitle);
         PixelTextures.dispose(catalogPanel);
         PixelTextures.dispose(cardFront);
         PixelTextures.dispose(cardBack);
