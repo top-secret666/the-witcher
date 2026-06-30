@@ -7,4 +7,7 @@ sourceSets.main.java.srcDirs = ['src/main/java']
 
 dependencies {
     api "com.badlogicgames.gdx:gdx:$gdxVersion"
+    api "com.badlogicgames.gdx:gdx-jnigen-loader:2.3.1"
+    api "com.badlogicgames.gdx:gdx-freetype:$gdxVersion"
+    api "com.badlogicgames.gdx:gdx-freetype-platform:$gdxVersion:natives-desktop"
 }

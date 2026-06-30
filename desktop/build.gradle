@@ -15,6 +15,17 @@ tasks.register('run', JavaExec) {
     standardInput = System.in
     workingDir = project.assetsDir
     ignoreExitValue = true
+    maxHeapSize = '512m'
+}
+
+/** Пишет classpath в файл — для run-gdx-quick.bat без Gradle daemon. */
+tasks.register('writeClasspath') {
+    dependsOn classes
+    doLast {
+        def out = rootProject.file('.gdx-classpath.txt')
+        out.text = sourceSets.main.runtimeClasspath.asPath
+        println 'Classpath zapisан: ' + out.absolutePath
+    }
 }
 
 dependencies {

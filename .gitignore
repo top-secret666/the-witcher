@@ -27,8 +27,11 @@ bin/
 
 ### Gradle ###
 .gradle/
-gradle-user-home/
+.gradle-user-home/
 .tmp/
+.gdx-classpath.txt
+hs_err_pid*.log
+lib/gdx/
 build/
 !gradle/wrapper/gradle-wrapper.jar
 
