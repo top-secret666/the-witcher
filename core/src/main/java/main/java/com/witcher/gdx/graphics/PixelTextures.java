@@ -1,6 +1,8 @@
 package main.java.com.witcher.gdx.graphics;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.files.FileHandle;
+import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
@@ -93,6 +95,53 @@ public final class PixelTextures {
             return;
         }
         batch.draw(region, x, y, w, h);
+    }
+
+    /** Обрезанный спрайт (для HUD-плашки с пустыми полями в PNG). */
+    public static void drawCropped(SpriteBatch batch, Texture texture,
+                                   int srcX, int srcY, int srcW, int srcH,
+                                   float x, float y, float w, float h) {
+        if (texture == null || srcW <= 0 || srcH <= 0 || w <= 0f || h <= 0f) {
+            return;
+        }
+        batch.draw(texture, x, y, w, h, srcX, srcY, srcW, srcH);
+    }
+
+    /**
+     * Находит плотную область непрозрачных пикселей в PNG.
+     * @return int[]{x, y, w, h} или null
+     */
+    public static int[] computeOpaqueBounds(String path) {
+        if (path == null || path.isEmpty() || !Gdx.files.internal(path).exists()) {
+            return null;
+        }
+        FileHandle file = Gdx.files.internal(path);
+        Pixmap pixmap = new Pixmap(file);
+        try {
+            int w = pixmap.getWidth();
+            int h = pixmap.getHeight();
+            int minX = w;
+            int minY = h;
+            int maxX = 0;
+            int maxY = 0;
+            int step = Math.max(1, Math.min(w, h) / 256);
+            for (int y = 0; y < h; y += step) {
+                for (int x = 0; x < w; x += step) {
+                    if ((pixmap.getPixel(x, y) >>> 24) > 20) {
+                        minX = Math.min(minX, x);
+                        minY = Math.min(minY, y);
+                        maxX = Math.max(maxX, x);
+                        maxY = Math.max(maxY, y);
+                    }
+                }
+            }
+            if (maxX < minX || maxY < minY) {
+                return null;
+            }
+            return new int[]{minX, minY, maxX - minX + 1, maxY - minY + 1};
+        } finally {
+            pixmap.dispose();
+        }
     }
 
     public static void dispose(Texture texture) {
