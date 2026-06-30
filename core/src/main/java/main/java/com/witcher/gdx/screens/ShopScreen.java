@@ -13,7 +13,7 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.Array;
-import com.badlogic.gdx.utils.viewport.FillViewport;
+import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import main.java.com.witcher.gdx.WitcherGame;
 import main.java.com.witcher.gdx.graphics.GameFonts;
@@ -29,6 +29,8 @@ import java.util.Random;
 public class ShopScreen implements Screen {
 
     private static final float DIALOG_ZONE = 54f;
+    /** Отступ диалога от низа экрана (больше = выше на экране). */
+    private static final float DIALOG_BOTTOM_MARGIN = 18f;
     private static final Color DUKE_GOLD = new Color(218f / 255f, 165f / 255f, 32f / 255f, 1f);
     private static final Color SPEECH = new Color(220f / 255f, 190f / 255f, 100f / 255f, 1f);
     private static final Color WALLET = new Color(1f, 230f / 255f, 150f / 255f, 1f);
@@ -73,7 +75,7 @@ public class ShopScreen implements Screen {
     @Override
     public void show() {
         camera = new OrthographicCamera();
-        viewport = new FillViewport(WitcherGame.VIRTUAL_W, WitcherGame.VIRTUAL_H, camera);
+        viewport = new FitViewport(WitcherGame.VIRTUAL_W, WitcherGame.VIRTUAL_H, camera);
         shapes = new ShapeRenderer();
 
         fonts = new GameFonts();
@@ -451,7 +453,7 @@ public class ShopScreen implements Screen {
         float sw = WitcherGame.VIRTUAL_W;
         float fontSize = Math.max(12f, sh * 0.036f);
         float boxMarginX = 10f;
-        float boxMarginBottom = 5f;
+        float boxMarginBottom = DIALOG_BOTTOM_MARGIN;
         float pad = 8f;
         float boxW = sw - boxMarginX * 2f;
         float lineH = fontSize + 3f;
@@ -568,7 +570,7 @@ public class ShopScreen implements Screen {
     }
 
     private static final class ShopLayout {
-        final float hudTop = 8f;
+        final float hudTop = 18f;
         final float hudX;
         final float hudW;
         final float hudH;

@@ -11,8 +11,8 @@ import java.util.Random;
  */
 public class ShopScreen {
 
-    private static final String UI = "/assets/sprites/lavka/ui/";
-    private static final String ICONS = "/assets/sprites/lavka/icons/";
+    private static final int VIRTUAL_W = 480;
+    private static final int VIRTUAL_H = 360;
     private static final int DIALOG_TEXT_ZONE = 54;
 
     private enum ShopState {
@@ -42,7 +42,7 @@ public class ShopScreen {
         final int cardsY;
         final int dialogTop;
 
-        ShopLayout(int sw, int sh, int itemCount, int hudX, int hudW, int hudH) {
+        ShopLayout(int sw, int sh, int itemCount, int hudX, int hudW, int hudH, int fixedPanelW) {
             this.hudX = hudX;
             this.hudW = hudW;
             hudY = 4;
@@ -56,7 +56,7 @@ public class ShopScreen {
             cardGap = 6;
 
             int cardsTotalW = itemCount * cardW + (itemCount - 1) * cardGap;
-            panelW = Math.max(cardsTotalW + 28, Math.min(sw - 88, 380));
+            panelW = fixedPanelW;
             panelX = (sw - panelW) / 2;
             panelY = hudY + hudH + 6;
             cardsStartX = panelX + (panelW - cardsTotalW) / 2;
@@ -89,24 +89,7 @@ public class ShopScreen {
         }
     }
 
-    private final BufferedImage merchantBg;
-    private final BufferedImage geraltSprite;
-    private final BufferedImage dukeSprite;
-    private final BufferedImage dukeLaughSprite;
-
-    private final BufferedImage hudBar;
-    private final BufferedImage catalogPanel;
-    private final BufferedImage cardFront;
-    private final BufferedImage cardBack;
-    private final BufferedImage cardHover;
-    private final BufferedImage cardSelected;
-    private final BufferedImage btnBuyDisabled;
-    private final BufferedImage crownIcon;
-
-    private final Rectangle hudSrcCrop;
-    private final int hudDrawX;
-    private final int hudDrawW;
-    private final int hudDrawH;
+    private final ShopAssetCache assets = ShopAssetCache.get();
 
     private final List<ShopItem> items = new ArrayList<>();
     private final List<float[]> ashParticles = new ArrayList<>();
@@ -130,73 +113,32 @@ public class ShopScreen {
     private static final String IDLE_LINE = "Ну же, выбирайте. У меня нет вечности, а у вас — монстров полно.";
 
     public ShopScreen() {
-        merchantBg = loadFirstAvailable(
-            "/assets/sprites/lavka/merchant_bg_lavka.png",
-            "/assets/sprites/lavka/lavka.png"
-        );
-
-        geraltSprite = loadWithFallback(
-            "/assets/sprites/lavka/geralt_portrait_shop.png",
-            "/assets/sprites/screen saver/geralt_portrait.png"
-        );
-        dukeSprite = loadWithFallback(
-            "/assets/sprites/lavka/duke_portrait_shop.png",
-            "/assets/sprites/screen saver/duke_portrait.png"
-        );
-        dukeLaughSprite = loadWithFallback(
-            "/assets/sprites/lavka/duke_portrait_fun_shop.png",
-            "/assets/sprites/screen saver/duke_portrait_fun.png"
-        );
-
-        hudBar = load(UI + "shop_hud_bar.png");
-        catalogPanel = load(UI + "shop_catalog_panel.png");
-        cardFront = loadFirstAvailable(UI + "shop_card_front.png", UI + "icon_legendary_frame.png");
-        cardBack = load(UI + "shop_card_back.png");
-        cardHover = load(UI + "shop_card_hover.png");
-        cardSelected = load(UI + "shop_card_selected.png");
-        btnBuyDisabled = load(UI + "shop_btn_buy_disabled.png");
-        crownIcon = load(ICONS + "icon_crown.png");
-
-        if (hudBar != null && hudBar.getWidth() > 0) {
-            hudSrcCrop = computeContentBounds(hudBar);
-            hudDrawW = 476;
-            float cropAspect = (float) hudSrcCrop.height / hudSrcCrop.width;
-            hudDrawH = Math.max(52, Math.min(64, Math.round(hudDrawW * cropAspect)));
-            hudDrawX = (480 - hudDrawW) / 2;
-        } else {
-            hudSrcCrop = null;
-            hudDrawX = 2;
-            hudDrawW = 476;
-            hudDrawH = 56;
-        }
-
         items.add(new ShopItem("Кираса волчьей школы", "120",
             "Отличный выбор! Волчья сталь — как раз для таких, как вы.",
             new String[]{"Защита: 45", "Вес: 12", "Тип: кираса"},
-            load(ICONS + "icon_armor_chest.png"),
-            load(ICONS + "card_art_chest.png")));
+            assets.itemIcons[0], assets.itemArts[0]));
         items.add(new ShopItem("Укреплённые штаны", "45",
             "Штаны крепкие. Ноги целее — монстров больше.",
             new String[]{"Защита: 20", "Вес: 8", "Тип: поножи"},
-            load(ICONS + "icon_armor_legs.png"),
-            load(ICONS + "card_art_legs.png")));
+            assets.itemIcons[1], assets.itemArts[1]));
         items.add(new ShopItem("Перчатки наездника", "30",
             "Рукам тепло, клинку — верно. Берите, не пожалеете.",
             new String[]{"Защита: 12", "Вес: 3", "Тип: перчатки"},
-            load(ICONS + "icon_armor_gloves.png"),
-            load(ICONS + "card_art_gloves.png")));
+            assets.itemIcons[2], assets.itemArts[2]));
         items.add(new ShopItem("Сапоги стражника", "55",
             "В этих сапогах и по болоту пройдёте, и от удара отскочите.",
             new String[]{"Защита: 18", "Вес: 6", "Тип: сапоги"},
-            load(ICONS + "icon_armor_boots.png"),
-            load(ICONS + "card_art_boots.png")));
+            assets.itemIcons[3], assets.itemArts[3]));
         items.add(new ShopItem("Зелье «Чёрный гриф»", "15",
             "Хм... Зелье? Ну что ж, ваш выбор, Белый Волк...",
             new String[]{"Эффект: яд", "Вес: 0.5", "⚠ без чекпоинта"},
-            load(ICONS + "icon_potion.png"),
-            load(ICONS + "card_art_potion.png")));
+            assets.itemIcons[4], assets.itemArts[4]));
 
         currentDialog = WELCOME_LINE;
+    }
+
+    static Rectangle computeContentBoundsPublic(BufferedImage img) {
+        return computeContentBounds(img);
     }
 
     public void update(int mouseX, int mouseY, boolean clicked, boolean escPressed) {
@@ -254,16 +196,17 @@ public class ShopScreen {
         g.setColor(Color.BLACK);
         g.fillRect(0, 0, sw, sh);
 
-        ShopLayout layout = new ShopLayout(sw, sh, items.size(), hudDrawX, hudDrawW, hudDrawH);
+        ShopLayout layout = new ShopLayout(sw, sh, items.size(),
+            assets.hudX, assets.hudW, assets.hudH, assets.panelW);
         float alpha = 1f;
 
-        drawScaledBackground(g, merchantBg, sw, sh, 0.75f * alpha);
+        drawScaledBackground(g, assets.merchantBgScaled, sw, sh, 0.75f * alpha);
         drawDarkOverlay(g, sw, sh, layout, alpha);
 
         BufferedImage dukeDraw = (state == ShopState.BROWSE && selectedIndex >= 0)
-            ? (dukeLaughSprite != null ? dukeLaughSprite : dukeSprite)
-            : dukeSprite;
-        drawCharacter(g, sw, sh, geraltSprite, true, layout.dialogTop, alpha);
+            ? (assets.dukeLaughScaled != null ? assets.dukeLaughScaled : assets.dukeScaled)
+            : assets.dukeScaled;
+        drawCharacter(g, sw, sh, assets.geraltScaled, true, layout.dialogTop, alpha);
         drawCharacter(g, sw, sh, dukeDraw, false, layout.dialogTop, alpha);
 
         drawHud(g, layout, alpha);
@@ -317,13 +260,8 @@ public class ShopScreen {
         Composite prev = g.getComposite();
         g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
 
-        if (hudBar != null) {
-            if (hudSrcCrop != null) {
-                drawCroppedScaledSprite(g, hudBar, hudSrcCrop,
-                    layout.hudX, layout.hudY, layout.hudW, layout.hudH, true);
-            } else {
-                drawScaledSprite(g, hudBar, layout.hudX, layout.hudY, layout.hudW, layout.hudH, true);
-            }
+        if (assets.hudBar != null) {
+            g.drawImage(assets.hudBar, layout.hudX, layout.hudY, null);
         } else {
             g.setColor(new Color(10, 8, 4, 220));
             g.fillRect(layout.hudX, layout.hudY, layout.hudW, layout.hudH);
@@ -337,24 +275,27 @@ public class ShopScreen {
         g.drawString("Лавка Герцога", layout.hudX + 18, titleY);
 
         String wallet = "???";
+        String suffix = " крон";
         int crownSize = 18;
+        int crownGap = 4;
         g.setFont(new Font("Serif", Font.BOLD, 13));
         FontMetrics fm = g.getFontMetrics();
-        int walletAnchor = layout.hudX + (int) (layout.hudW * 0.68f);
-        int textRight = walletAnchor;
-        textRight -= fm.stringWidth(" крон");
-        textRight -= fm.stringWidth(wallet);
-        if (crownIcon != null) {
-            textRight -= crownSize + 4;
-            drawCrispIcon(g, crownIcon, textRight, layout.hudY + (layout.hudH - crownSize) / 2,
-                crownSize);
-            textRight += crownSize + 4;
+        int blockW = fm.stringWidth(wallet) + fm.stringWidth(suffix);
+        if (assets.crownIconScaled != null) {
+            blockW += crownSize + crownGap;
+        }
+        int blockX = layout.hudX + (layout.hudW - blockW) / 2;
+        int textX = blockX;
+        if (assets.crownIconScaled != null) {
+            int crownY = layout.hudY + (layout.hudH - crownSize) / 2;
+            g.drawImage(assets.crownIconScaled, blockX, crownY, null);
+            textX = blockX + crownSize + crownGap;
         }
         g.setColor(new Color(255, 230, 150));
         int walletY = layout.hudY + (layout.hudH + fm.getAscent()) / 2 - 2;
-        g.drawString(wallet, textRight, walletY);
+        g.drawString(wallet, textX, walletY);
         g.setColor(new Color(200, 180, 120));
-        g.drawString(" крон", textRight + fm.stringWidth(wallet), walletY);
+        g.drawString(suffix, textX + fm.stringWidth(wallet), walletY);
         g.setComposite(prev);
     }
 
@@ -363,10 +304,8 @@ public class ShopScreen {
         g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
 
         int panelBottom = layout.btnY + layout.btnH + 4;
-        int panelDrawH = panelBottom - layout.panelY;
-        if (catalogPanel != null) {
-            drawScaledSprite(g, catalogPanel, layout.panelX, layout.panelY,
-                layout.panelW, panelDrawH, true);
+        if (assets.catalogPanelScaled != null) {
+            g.drawImage(assets.catalogPanelScaled, layout.panelX, layout.panelY, null);
         }
 
         drawCrispText(g);
@@ -398,17 +337,19 @@ public class ShopScreen {
         Composite savedComposite = g.getComposite();
         g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, fade));
 
-        BufferedImage frame = cardFront;
-        if (selected && cardSelected != null) {
-            frame = cardSelected;
-        } else if (hovered && cardHover != null) {
-            frame = cardHover;
+        BufferedImage frame = assets.cardFrontScaled;
+        if (selected && assets.cardSelectedScaled != null) {
+            frame = assets.cardSelectedScaled;
+        } else if (hovered && assets.cardHoverScaled != null) {
+            frame = assets.cardHoverScaled;
         }
 
         Rectangle cardRect;
         if (showBack) {
-            if (cardBack != null) {
-                cardRect = drawAspectFitSprite(g, cardBack, x, y, w, h, true);
+            BufferedImage back = assets.cardBackScaled;
+            if (back != null) {
+                g.drawImage(back, x, y, null);
+                cardRect = new Rectangle(x, y, w, h);
             } else {
                 drawFallbackCard(g, x, y, w, h, true);
                 cardRect = new Rectangle(x, y, w, h);
@@ -416,7 +357,8 @@ public class ShopScreen {
             drawCardBackText(g, item, cardRect);
         } else {
             if (frame != null) {
-                cardRect = drawAspectFitSprite(g, frame, x, y, w, h, true);
+                g.drawImage(frame, x, y, null);
+                cardRect = new Rectangle(x, y, w, h);
             } else {
                 drawFallbackCard(g, x, y, w, h, false);
                 cardRect = new Rectangle(x, y, w, h);
@@ -441,9 +383,10 @@ public class ShopScreen {
         int h = card.height;
 
         BufferedImage art = item.cardArt != null ? item.cardArt : item.icon;
-        int artSize = Math.min(w - 10, h - 32);
         if (art != null) {
-            drawCrispIcon(g, art, x + (w - artSize) / 2, y + 6, artSize);
+            int ax = x + (w - art.getWidth()) / 2;
+            int ay = y + 6;
+            g.drawImage(art, ax, ay, null);
         }
 
         drawCrispText(g);
@@ -456,12 +399,15 @@ public class ShopScreen {
         g.setFont(new Font("Serif", Font.BOLD, 11));
         g.setColor(new Color(255, 230, 120));
         FontMetrics priceFm = g.getFontMetrics();
-        int crownSize = 10;
-        int priceW = priceFm.stringWidth(item.priceLabel) + (crownIcon != null ? crownSize + 2 : 0);
+        BufferedImage coin = assets.crownIconSmall != null ? assets.crownIconSmall : assets.crownIconScaled;
+        int priceW = priceFm.stringWidth(item.priceLabel);
+        if (coin != null) {
+            priceW += coin.getWidth() + 2;
+        }
         int priceX = x + (w - priceW) / 2;
-        if (crownIcon != null) {
-            drawCrispIcon(g, crownIcon, priceX, y + h - 11, crownSize);
-            priceX += crownSize + 2;
+        if (coin != null) {
+            g.drawImage(coin, priceX, y + h - 11, null);
+            priceX += coin.getWidth() + 2;
         }
         g.drawString(item.priceLabel, priceX, y + h - 3);
     }
@@ -544,15 +490,14 @@ public class ShopScreen {
         Composite prev = g.getComposite();
         g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
 
-        if (btnBuyDisabled != null) {
-            drawScaledSprite(g, btnBuyDisabled, layout.btnX, layout.btnY,
-                layout.btnW, layout.btnH, true);
+        if (assets.btnBuyScaled != null) {
+            g.drawImage(assets.btnBuyScaled, layout.btnX, layout.btnY, null);
         }
 
         drawCrispText(g);
         g.setFont(new Font("Serif", Font.BOLD, 11));
         g.setColor(new Color(90, 75, 50));
-        String label = "Скоро";
+        String label = "Купить";
         FontMetrics fm = g.getFontMetrics();
         g.drawString(label, layout.btnX + (layout.btnW - fm.stringWidth(label)) / 2, layout.btnY + 19);
         g.setComposite(prev);
@@ -575,23 +520,17 @@ public class ShopScreen {
                                boolean isLeft, int dialogTop, float alpha) {
         if (sprite == null) return;
 
-        float charScale = (sh * 0.70f) / sprite.getHeight();
-        int cw = Math.round(sprite.getWidth() * charScale);
-        int ch = Math.round(sprite.getHeight() * charScale);
+        int cw = sprite.getWidth();
+        int ch = sprite.getHeight();
 
         int baseY = dialogTop - ch + Math.round(ch * 0.12f);
         int cx = isLeft ? -Math.round(cw * 0.12f) : sw - cw + Math.round(cw * 0.12f);
         float breathe = (float) Math.sin(tick * 0.04 + (isLeft ? 0 : 2)) * 1.5f;
-        int cy = baseY + (int) breathe;
+        int cy = baseY + Math.round(breathe);
 
         Composite prev = g.getComposite();
         g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.92f * alpha));
-        Object prevInterp = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
-        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
-        g.drawImage(sprite, cx, cy, cw, ch, null);
-        if (prevInterp != null) {
-            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, prevInterp);
-        }
+        g.drawImage(sprite, cx, cy, null);
         g.setComposite(prev);
     }
 
@@ -631,12 +570,21 @@ public class ShopScreen {
         int step = Math.max(1, Math.min(w, h) / 256);
         for (int y = 0; y < h; y += step) {
             for (int x = 0; x < w; x += step) {
-                if ((img.getRGB(x, y) >>> 24) > 20) {
-                    minX = Math.min(minX, x);
-                    minY = Math.min(minY, y);
-                    maxX = Math.max(maxX, x);
-                    maxY = Math.max(maxY, y);
+                int argb = img.getRGB(x, y);
+                int a = (argb >>> 24) & 0xff;
+                if (a <= 20) {
+                    continue;
                 }
+                int r = (argb >>> 16) & 0xff;
+                int g = (argb >>> 8) & 0xff;
+                int b = argb & 0xff;
+                if (r < 24 && g < 24 && b < 24) {
+                    continue;
+                }
+                minX = Math.min(minX, x);
+                minY = Math.min(minY, y);
+                maxX = Math.max(maxX, x);
+                maxY = Math.max(maxY, y);
             }
         }
         if (maxX < minX || maxY < minY) {
@@ -648,24 +596,16 @@ public class ShopScreen {
     private void drawScaledBackground(Graphics2D g, BufferedImage img, int sw, int sh, float alpha) {
         if (img == null) return;
 
-        int srcW = img.getWidth();
-        int srcH = img.getHeight();
-        if (srcW <= 0 || srcH <= 0) return;
+        int w = img.getWidth();
+        int h = img.getHeight();
+        if (w <= 0 || h <= 0) return;
 
-        float scale = Math.max((float) sw / srcW, (float) sh / srcH);
-        int w = Math.round(srcW * scale);
-        int h = Math.round(srcH * scale);
         int x = (sw - w) / 2;
         int y = (sh - h) / 2;
 
         Composite prev = g.getComposite();
         g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
-        Object prevInterp = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
-        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
-        g.drawImage(img, x, y, w, h, null);
-        if (prevInterp != null) {
-            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, prevInterp);
-        }
+        g.drawImage(img, x, y, null);
         g.setComposite(prev);
     }
 
@@ -688,23 +628,5 @@ public class ShopScreen {
             g.setColor(new Color(200, 170, 100, a));
             g.fillRect(Math.round(p[0]), Math.round(p[1]), 1, 1);
         }
-    }
-
-    private static BufferedImage load(String path) {
-        Sprite s = Sprite.loadOptional(path);
-        return s != null ? s.getImage() : null;
-    }
-
-    private static BufferedImage loadFirstAvailable(String... paths) {
-        for (String path : paths) {
-            BufferedImage img = load(path);
-            if (img != null) return img;
-        }
-        return null;
-    }
-
-    private static BufferedImage loadWithFallback(String primary, String fallback) {
-        BufferedImage img = loadFirstAvailable(primary);
-        return img != null ? img : loadFirstAvailable(fallback);
     }
 }
