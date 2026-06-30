@@ -1,6 +1,7 @@
 package main.java.com.witcher.ui.graphics;
 
 import java.awt.*;
+import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -319,25 +320,26 @@ public class MainMenuScreen {
             // Draw label on top to ensure readability (shadow + main color)
             String label = buttonLabels.length > i ? buttonLabels[i] : "";
             if (!label.isEmpty()) {
-                int fontSize = Math.max(18, (int) (r.height * 0.35f)); // увеличиваем размер текста
+                int fontSize = Math.max(16, (int) (r.height * 0.36f));
                 Font font = new Font("Serif", Font.BOLD, fontSize);
                 g.setFont(font);
+                g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
                 FontMetrics fm = g.getFontMetrics(font);
-                int textW = fm.stringWidth(label);
-                int textH = fm.getAscent() - fm.getDescent();
-                int tx = r.x + (r.width - textW) / 2;
-                int ty = r.y + (r.height + fm.getAscent() - fm.getDescent()) / 2;
+                Rectangle2D bounds = fm.getStringBounds(label, g);
 
-                // Shadow
-                Color shadow = new Color(0, 0, 0, 180);
-                g.setColor(shadow);
+                // Оптический центр пергамента (чуть левее геометрического — сургуч слева)
+                double anchorX = r.x + r.width * 0.47;
+                double anchorY = r.y + r.height * 0.54;
+                int tx = (int) Math.round(anchorX - bounds.getWidth() / 2.0 - bounds.getX());
+                int ty = (int) Math.round(anchorY - bounds.getHeight() / 2.0 - bounds.getY());
+
+                g.setColor(new Color(0, 0, 0, 180));
                 g.drawString(label, tx + 1, ty + 1);
 
-                // Main text (bright)
-                Color main = new Color(245, 220, 120);
-                if (state == 2) main = main.darker();
+                Color main = state == 2 ? new Color(200, 170, 90) : new Color(245, 220, 120);
                 g.setColor(main);
                 g.drawString(label, tx, ty);
+                g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
             }
         }
     }
