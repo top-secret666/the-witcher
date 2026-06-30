@@ -229,13 +229,13 @@ public class ShopScreen {
             selectedIndex = hoveredIndex;
             state = ShopState.BROWSE;
             currentDialog = items.get(hoveredIndex).dukeLine;
-            cardFlip[hoveredIndex] = cardFlip[hoveredIndex] < 0.5f ? 1f : 0f;
+            cardFaceBack[hoveredIndex] = !cardFaceBack[hoveredIndex];
         }
     }
 
     private void updateCardFlipAnimation() {
         for (int i = 0; i < items.size() && i < cardFlip.length; i++) {
-            float target = cardFlip[i] < 0.5f ? 0f : 1f;
+            float target = cardFaceBack[i] ? 1f : 0f;
             float diff = target - cardFlip[i];
             if (Math.abs(diff) > 0.02f) {
                 cardFlip[i] += diff * 0.22f;
