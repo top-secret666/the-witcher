@@ -21,9 +21,9 @@
       "output": "1x/ui/shop_catalog_panel.png",
       "size": [
         380,
-        145
+        240
       ],
-      "bytes": 88599
+      "bytes": 142919
     },
     {
       "output": "1x/ui/shop_card_front.png",
@@ -92,42 +92,42 @@
     {
       "output": "1x/icons/icon_armor_chest.png",
       "size": [
-        44,
-        44
+        32,
+        32
       ],
-      "bytes": 4358
+      "bytes": 2601
     },
     {
       "output": "1x/icons/icon_armor_legs.png",
       "size": [
-        44,
-        44
+        32,
+        32
       ],
-      "bytes": 4620
+      "bytes": 2576
     },
     {
       "output": "1x/icons/icon_armor_gloves.png",
       "size": [
-        44,
-        44
+        32,
+        32
       ],
-      "bytes": 4441
+      "bytes": 2577
     },
     {
       "output": "1x/icons/icon_armor_boots.png",
       "size": [
-        44,
-        44
+        32,
+        32
       ],
-      "bytes": 4180
+      "bytes": 2392
     },
     {
       "output": "1x/icons/icon_potion.png",
       "size": [
-        44,
-        44
+        32,
+        32
       ],
-      "bytes": 3766
+      "bytes": 2296
     },
     {
       "output": "1x/geralt_portrait_shop.png",
