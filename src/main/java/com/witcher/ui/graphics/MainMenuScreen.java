@@ -49,9 +49,9 @@ public class MainMenuScreen {
     private final Random rng = new Random();
 
     public MainMenuScreen() {
-            boardFrame = loadTrimmedOptional("/assets/sprites/menu/menu_board_single.png");
+        boardFrame = null;
         background = Sprite.load("/assets/sprites/menu/menu_bg_custom.jpg");
-        boardSheet = SpriteSheet.loadOptional("/assets/sprites/menu/menu_board_sheet.png", boardSheetCols, boardSheetRows, 1, false);
+        boardSheet = null;
         buttons = loadButtonGrid("/assets/sprites/menu/menu_buttons_sheet.png", 3, 3);
         titleLogo = loadFirstFrame("/assets/sprites/witcher_logo_new.png", 2, 3, true);
         logoSignData = loadTrimmed("/assets/sprites/menu/menu_logo_sign.png");
@@ -101,11 +101,7 @@ public class MainMenuScreen {
         // По умолчанию — ни одна кнопка не выбрана
         int hoveredIndex = -1;
         for (int i = 0; i < buttonRects.length; i++) {
-            Rectangle r = buttonRects[i];
-            // Проверяем: курсор должен быть полностью внутри по Y
-            // и внутри с отступом 20px по X (исключаем боковые края)
-            if (mouseX >= r.x + 130 && mouseX <= r.x + r.width - 130 &&
-                mouseY >= r.y && mouseY <= r.y + r.height) {
+            if (buttonRects[i].contains(mouseX, mouseY)) {
                 hoveredIndex = i;
                 break;
             }
@@ -289,7 +285,6 @@ public class MainMenuScreen {
     }
 
     private void drawButtons(Graphics2D g) {
-        // drawButtons — рисует кнопки меню с нужным состоянием (обычная, hover, pressed)
         for (int i = 0; i < buttonRects.length; i++) {
             Rectangle r = buttonRects[i];
             int state = 0;
@@ -299,45 +294,27 @@ public class MainMenuScreen {
                 state = 1;
             }
 
-            // Табличка чуть больше области кнопки
-            if (boardFrame != null) {
-                int boardW = (int) (r.width * 1.08f);
-                int boardH = (int) (r.height * 1.20f);
-                int boardX = r.x - (boardW - r.width) / 2;
-                int boardY = r.y - (boardH - r.height) / 2;
-                g.drawImage(boardFrame, boardX, boardY, boardW, boardH, null);
-            }
-
-            // Рисуем спрайт кнопки, чуть уже
             BufferedImage frame = getButtonFrame(i, state);
             if (frame != null) {
-                int spriteW = (int)(r.width * 0.25); // 40% ширины
-                int spriteH = (int)(r.height * 0.7); // 70% высоты
+                int spriteW = (int) (r.width * 0.52f);
+                int spriteH = (int) (r.height * 0.92f);
                 int spriteX = r.x + (r.width - spriteW) / 2;
                 int spriteY = r.y + (r.height - spriteH) / 2;
                 g.drawImage(frame, spriteX, spriteY, spriteW, spriteH, null);
             }
 
-            // Draw label on top to ensure readability (shadow + main color)
             String label = buttonLabels.length > i ? buttonLabels[i] : "";
             if (!label.isEmpty()) {
-                int fontSize = Math.max(18, (int) (r.height * 0.35f)); // увеличиваем размер текста
+                int fontSize = Math.max(16, (int) (r.height * 0.32f));
                 Font font = new Font("Serif", Font.BOLD, fontSize);
                 g.setFont(font);
                 FontMetrics fm = g.getFontMetrics(font);
-                int textW = fm.stringWidth(label);
-                int textH = fm.getAscent() - fm.getDescent();
-                int tx = r.x + (r.width - textW) / 2;
+                int tx = r.x + (r.width - fm.stringWidth(label)) / 2;
                 int ty = r.y + (r.height + fm.getAscent() - fm.getDescent()) / 2;
 
-                // Shadow
-                Color shadow = new Color(0, 0, 0, 180);
-                g.setColor(shadow);
+                g.setColor(new Color(0, 0, 0, 180));
                 g.drawString(label, tx + 1, ty + 1);
-
-                // Main text (bright)
-                Color main = new Color(245, 220, 120);
-                if (state == 2) main = main.darker();
+                Color main = state == 2 ? new Color(200, 170, 90) : new Color(245, 220, 120);
                 g.setColor(main);
                 g.drawString(label, tx, ty);
             }
