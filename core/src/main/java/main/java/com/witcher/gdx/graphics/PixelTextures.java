@@ -37,6 +37,35 @@ public final class PixelTextures {
         return loaded != null ? loaded.texture : null;
     }
 
+    /**
+     * Сначала {@code sprites/lavka/1x/…} (нарезка bake_lavka_assets.py), потом полный PNG.
+     */
+    public static Texture loadLavka(String relativePath, String... extraFallbacks) {
+        String baked = "sprites/lavka/1x/" + relativePath;
+        String full = "sprites/lavka/" + relativePath;
+        if (extraFallbacks == null || extraFallbacks.length == 0) {
+            return loadFirst(baked, full);
+        }
+        String[] all = new String[2 + extraFallbacks.length];
+        all[0] = baked;
+        all[1] = full;
+        System.arraycopy(extraFallbacks, 0, all, 2, extraFallbacks.length);
+        return loadFirst(all);
+    }
+
+    public static LoadedTexture loadLavkaMeta(String relativePath, String... extraFallbacks) {
+        String baked = "sprites/lavka/1x/" + relativePath;
+        String full = "sprites/lavka/" + relativePath;
+        if (extraFallbacks == null || extraFallbacks.length == 0) {
+            return loadFirstMeta(baked, full);
+        }
+        String[] all = new String[2 + extraFallbacks.length];
+        all[0] = baked;
+        all[1] = full;
+        System.arraycopy(extraFallbacks, 0, all, 2, extraFallbacks.length);
+        return loadFirstMeta(all);
+    }
+
     public static LoadedTexture loadFirstMeta(String... paths) {
         for (String path : paths) {
             LoadedTexture loaded = loadOptionalMeta(path);
