@@ -464,7 +464,6 @@ public class ShopScreen {
             priceX += crownSize + 2;
         }
         g.drawString(item.priceLabel, priceX, y + h - 3);
-        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
     }
 
     private void drawCardBackText(Graphics2D g, ShopItem item, Rectangle card) {
@@ -472,8 +471,8 @@ public class ShopScreen {
         int y = card.y;
         int w = card.width;
 
-        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-        g.setFont(new Font("Serif", Font.BOLD, 7));
+        drawCrispText(g);
+        g.setFont(new Font("Serif", Font.BOLD, 8));
         g.setColor(new Color(255, 220, 130));
         FontMetrics fm = g.getFontMetrics();
         int lineY = y + 12;
@@ -482,7 +481,6 @@ public class ShopScreen {
             g.drawString(text, x + (w - fm.stringWidth(text)) / 2, lineY);
             lineY += fm.getHeight() + 1;
         }
-        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
     }
 
     /** Рисует спрайт в слот без искажения пропорций. */
