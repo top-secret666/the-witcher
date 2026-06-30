@@ -136,7 +136,7 @@ public class ShopScreen implements Screen {
         Gdx.gl.glEnable(GL20.GL_BLEND);
         Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
 
-        ShopLayout layout = new ShopLayout(sw, sh, items.size, assets.hud.drawH);
+        ShopLayout layout = new ShopLayout(sw, sh, items.size, assets.hud.drawH, assets.sign.drawH);
 
         Texture dukeTex = (state == ShopState.BROWSE && selectedIndex >= 0 && assets.dukeLaughPortrait != null)
             ? assets.dukeLaughPortrait : assets.dukePortrait;
@@ -145,18 +145,17 @@ public class ShopScreen implements Screen {
         game.batch.begin();
 
         if (assets.merchantBg != null) {
-            PixelTextures.drawCover(game.batch, assets.merchantBg, sw, sh, 0.75f);
+            PixelTextures.drawCover(game.batch, assets.merchantBg, sw, sh, 1f);
         }
 
         drawPortrait(assets.geraltPortrait, true, layout, sh);
         drawPortrait(dukeTex, false, layout, sh);
         drawHud(layout, sh);
+        drawShopSign(layout, sh);
         drawCatalog(layout, sh);
         drawCards(layout, sh);
         drawBuyButton(layout, sh);
         game.batch.end();
-
-        drawDarkOverlay(layout, sw, sh);
 
         drawAshParticles();
         drawDialogFrame();
@@ -212,27 +211,6 @@ public class ShopScreen implements Screen {
         }
     }
 
-    private void drawDarkOverlay(ShopLayout layout, float sw, float sh) {
-        Gdx.gl.glEnable(GL20.GL_BLEND);
-        Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
-        shapes.setProjectionMatrix(camera.combined);
-        shapes.begin(ShapeRenderer.ShapeType.Filled);
-        shapes.setColor(0, 0, 0, 0.45f);
-        shapes.rect(0, 0, sw, sh);
-
-        shapes.setColor(0, 0, 0, 0.55f);
-        float pad = 6f;
-        float overlayH = layout.panelBottom - layout.panelTop + pad * 2f;
-        float overlayY = bottomFromTop(layout.panelTop - pad, overlayH, sh);
-        shapes.rect(layout.panelX - pad, overlayY, layout.panelW + pad * 2, overlayH);
-
-        shapes.setColor(0, 0, 0, 0.35f);
-        shapes.rect(0, bottomFromTop(0, layout.dialogTop, sh), layout.panelX - 10, layout.dialogTop);
-        shapes.rect(layout.panelX + layout.panelW + 10, bottomFromTop(0, layout.dialogTop, sh),
-            sw - layout.panelX - layout.panelW - 10, layout.dialogTop);
-        shapes.end();
-    }
-
     private void drawPortrait(Texture sprite, boolean left, ShopLayout layout, float sh) {
         if (sprite == null) {
             return;
@@ -274,10 +252,6 @@ public class ShopScreen implements Screen {
             game.batch.begin();
         }
 
-        BitmapFont titleFont = fonts.title;
-        titleFont.setColor(DUKE_GOLD);
-        titleFont.draw(game.batch, "Лавка Герцога", hudX + 18, textYFromTop(layout.hudTop + 18, sh));
-
         String wallet = "???";
         int crownSize = 18;
         BitmapFont wFont = fonts.ui;
@@ -298,6 +272,40 @@ public class ShopScreen implements Screen {
         wFont.draw(game.batch, wallet, textX, textYFromTop(layout.hudTop + 20, sh));
         wFont.setColor(WALLET_SUFFIX);
         wFont.draw(game.batch, " крон", textX + walletW, textYFromTop(layout.hudTop + 20, sh));
+    }
+
+    private void drawShopSign(ShopLayout layout, float sh) {
+        ShopAssets.SignLayout sign = assets.sign;
+        float signX = sign.drawX;
+        float signW = sign.drawW;
+        float signH = sign.drawH;
+        float signBottom = bottomFromTop(sign.drawY, signH, sh);
+
+        if (assets.shopSignTitle != null) {
+            if (sign.cropped) {
+                PixelTextures.drawCropped(game.batch, assets.shopSignTitle,
+                    sign.cropX, sign.cropY, sign.cropW, sign.cropH,
+                    signX, signBottom, signW, signH);
+            } else {
+                game.batch.draw(assets.shopSignTitle, signX, signBottom, signW, signH);
+            }
+        } else {
+            game.batch.end();
+            shapes.setProjectionMatrix(camera.combined);
+            shapes.begin(ShapeRenderer.ShapeType.Filled);
+            shapes.setColor(0.12f, 0.09f, 0.05f, 0.92f);
+            shapes.rect(signX, signBottom, signW, signH);
+            shapes.end();
+            game.batch.begin();
+        }
+
+        BitmapFont titleFont = fonts.title;
+        titleFont.setColor(DUKE_GOLD);
+        String title = "Лавка Герцога";
+        glyph.setText(titleFont, title);
+        float textX = signX + signW * 0.58f - glyph.width * 0.5f;
+        float textY = textYFromTop(sign.drawY + signH * 0.62f, sh);
+        titleFont.draw(game.batch, title, textX, textY);
     }
 
     private void drawCatalog(ShopLayout layout, float sh) {
@@ -547,13 +555,14 @@ public class ShopScreen implements Screen {
         /** Линия «верх диалога» — от верха экрана. */
         final float dialogTop;
 
-        ShopLayout(float sw, float sh, int itemCount, int hudDrawH) {
+        ShopLayout(float sw, float sh, int itemCount, int hudDrawH, int signDrawH) {
             dialogTop = sh - DIALOG_ZONE;
             float headerH = 22f;
             int cardsTotalW = itemCount * (int) cardW + (itemCount - 1) * (int) cardGap;
             panelW = Math.max(cardsTotalW + 28, Math.min(sw - 88f, 380f));
             panelX = (sw - panelW) * 0.5f;
-            panelTop = hudTop + hudDrawH + 6f;
+            float headerBottom = Math.max(hudTop + hudDrawH, signDrawH > 0 ? 2f + signDrawH : 0f);
+            panelTop = headerBottom + 6f;
             cardsTop = panelTop + headerH + 6f;
             float contentBottom = cardsTop + cardH;
             btnTop = contentBottom + 6f;
