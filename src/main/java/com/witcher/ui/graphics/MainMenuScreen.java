@@ -327,8 +327,13 @@ public class MainMenuScreen {
                 FontMetrics fm = g.getFontMetrics(font);
                 Rectangle2D bounds = fm.getStringBounds(label, g);
 
-                // Оптический центр пергамента (чуть левее геометрического — сургуч слева)
-                double anchorX = r.x + r.width * 0.47;
+                // Якорь текста на пергаменте (у каждой доски чуть свой центр)
+                float anchorRatioX = switch (i) {
+                    case 0 -> 0.43f; // «Играть» — короче, сдвигаем левее
+                    case 1 -> 0.47f;
+                    default -> 0.47f;
+                };
+                double anchorX = r.x + r.width * anchorRatioX;
                 double anchorY = r.y + r.height * 0.54;
                 int tx = (int) Math.round(anchorX - bounds.getWidth() / 2.0 - bounds.getX());
                 int ty = (int) Math.round(anchorY - bounds.getHeight() / 2.0 - bounds.getY());
