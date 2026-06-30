@@ -200,19 +200,18 @@ public class MainMenuScreen {
             }
         }
 
-        // Fallback: use boardSheet frames if available (keeps previous behaviour)
-        if (boardSheet == null) return;
-        int frameIdx = Math.min(boardSheetCols - 1, Math.max(0, (int) Math.round((double) (sw - 400) / 200)));
-        BufferedImage frame = boardSheet.getFrame(frameIdx);
-        if (frame == null) return;
-        int srcW = boardSheet.getFrameWidth();
-        int srcH = boardSheet.getFrameHeight();
-        float scale = Math.max((float) sw / srcW, (float) sh / srcH);
-        int w = Math.round(srcW * scale);
-        int h = Math.round(srcH * scale);
-        int x = (sw - w) / 2;
-        int y = (sh - h) / 2;
-        g.drawImage(frame, x, y, w, h, null);
+        // Fallback: тёмный фон, если JPG не загрузился
+        g.setColor(new Color(22, 16, 10));
+        g.fillRect(0, 0, sw, sh);
+
+        Sprite splashBg = Sprite.loadOptional("/assets/sprites/splash_bg.png");
+        if (splashBg != null && splashBg.getImage() != null) {
+            BufferedImage bg = splashBg.getImage();
+            float scale = Math.max((float) sw / bg.getWidth(), (float) sh / bg.getHeight());
+            int w = Math.round(bg.getWidth() * scale);
+            int h = Math.round(bg.getHeight() * scale);
+            g.drawImage(bg, (sw - w) / 2, (sh - h) / 2, w, h, null);
+        }
     }
 
     private void layoutButtons(int sw, int sh) {
@@ -300,12 +299,12 @@ public class MainMenuScreen {
                 state = 1;
             }
 
-            // Рисуем табличку под кнопкой (еще больше)
+            // Табличка чуть больше области кнопки
             if (boardFrame != null) {
-                int boardW = (int)(r.width * 36.45); // еще больше ширина таблички
-                int boardH = (int)(r.height * 36.45); // еще больше высота таблички
-                int boardX = r.x - (int)((boardW - r.width) / 2);
-                int boardY = r.y - (int)((boardH - r.height) / 2);
+                int boardW = (int) (r.width * 1.08f);
+                int boardH = (int) (r.height * 1.20f);
+                int boardX = r.x - (boardW - r.width) / 2;
+                int boardY = r.y - (boardH - r.height) / 2;
                 g.drawImage(boardFrame, boardX, boardY, boardW, boardH, null);
             }
 
