@@ -21,6 +21,8 @@ public class ShopScreen {
         IDLE
     }
 
+    private static final int GRID_COLS = 5;
+
     private static final class ShopLayout {
         final int hudY;
         final int hudH;
@@ -40,6 +42,8 @@ public class ShopScreen {
         final int cardGap;
         final int cardsStartX;
         final int cardsY;
+        final int gridCols;
+        final int gridRows;
         final int dialogTop;
 
         ShopLayout(int sw, int sh, int itemCount, int hudX, int hudW, int hudH, int fixedPanelW) {
@@ -54,22 +58,38 @@ public class ShopScreen {
             cardW = 54;
             cardH = 81;
             cardGap = 6;
+            gridCols = GRID_COLS;
+            gridRows = Math.max(1, (itemCount + gridCols - 1) / gridCols);
 
-            int cardsTotalW = itemCount * cardW + (itemCount - 1) * cardGap;
+            int rowW = gridCols * cardW + (gridCols - 1) * cardGap;
             panelW = fixedPanelW;
             panelX = (sw - panelW) / 2;
             panelY = hudY + hudH + 6;
-            cardsStartX = panelX + (panelW - cardsTotalW) / 2;
+            cardsStartX = panelX + (panelW - rowW) / 2;
             cardsY = panelY + headerH + 6;
-            int contentBottom = cardsY + cardH;
+            int contentBottom = cardsY + gridRows * cardH + (gridRows - 1) * cardGap;
             panelH = contentBottom - panelY + 8;
 
             btnX = panelX + (panelW - btnW) / 2;
             btnY = contentBottom + 6;
         }
+
+        Point cardSlot(int index) {
+            int col = index % gridCols;
+            int row = index / gridCols;
+            int x = cardsStartX + col * (cardW + cardGap);
+            int y = cardsY + row * (cardH + cardGap);
+            return new Point(x, y);
+        }
+    }
+
+    private enum ItemKind {
+        PIECE,
+        SET_CATALOG
     }
 
     private static final class ShopItem {
+        final ItemKind kind;
         final String name;
         final String priceLabel;
         final String dukeLine;
@@ -78,8 +98,9 @@ public class ShopScreen {
         final BufferedImage cardArt;
         Rectangle bounds = new Rectangle();
 
-        ShopItem(String name, String priceLabel, String dukeLine, String[] statLines,
+        ShopItem(ItemKind kind, String name, String priceLabel, String dukeLine, String[] statLines,
                  BufferedImage icon, BufferedImage cardArt) {
+            this.kind = kind;
             this.name = name;
             this.priceLabel = priceLabel;
             this.dukeLine = dukeLine;
@@ -93,8 +114,8 @@ public class ShopScreen {
 
     private final List<ShopItem> items = new ArrayList<>();
     private final List<float[]> ashParticles = new ArrayList<>();
-    private final float[] cardFlip = new float[5];
-    private final boolean[] cardFaceBack = new boolean[5];
+    private float[] cardFlip;
+    private boolean[] cardFaceBack;
     private final Random rng = new Random();
 
     private ShopState state = ShopState.WELCOME;
