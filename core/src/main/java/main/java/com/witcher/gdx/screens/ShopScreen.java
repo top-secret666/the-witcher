@@ -13,10 +13,10 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.Array;
-import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import main.java.com.witcher.gdx.WitcherGame;
 import main.java.com.witcher.gdx.graphics.GameFonts;
+import main.java.com.witcher.gdx.graphics.IntegerScaleViewport;
 import main.java.com.witcher.gdx.graphics.PixelTextures;
 import main.java.com.witcher.gdx.shop.ShopAssets;
 import main.java.com.witcher.gdx.shop.ShopItem;
@@ -49,8 +49,8 @@ public class ShopScreen implements Screen {
     private GameFonts fonts;
     private ShopAssets assets;
     private final Array<ShopItem> items = new Array<>();
-    private final float[] cardFlip = new float[5];
-    private final boolean[] cardFaceBack = new boolean[5];
+    private final float[] cardFlip = new float[8];
+    private final boolean[] cardFaceBack = new boolean[8];
     private final Array<float[]> ashParticles = new Array<>();
 
     private ShopState state = ShopState.WELCOME;
@@ -75,7 +75,8 @@ public class ShopScreen implements Screen {
     @Override
     public void show() {
         camera = new OrthographicCamera();
-        viewport = new FitViewport(WitcherGame.VIRTUAL_W, WitcherGame.VIRTUAL_H, camera);
+        viewport = new IntegerScaleViewport(
+            (int) WitcherGame.VIRTUAL_W, (int) WitcherGame.VIRTUAL_H, camera);
         shapes = new ShapeRenderer();
 
         fonts = new GameFonts();
@@ -104,21 +105,24 @@ public class ShopScreen implements Screen {
     }
 
     private void buildItems() {
-        items.add(new ShopItem("Кираса волчьей школы", "120",
+        items.add(new ShopItem("Кираса", "120", false,
             "Отличный выбор! Волчья сталь — как раз для таких, как вы.",
-            new String[]{"Защита: 45", "Вес: 12", "Тип: кираса"}, assets.iconChest));
-        items.add(new ShopItem("Укреплённые штаны", "45",
+            new String[]{"Защ. 45", "Вес 12", "Кираса"}, assets.iconChest));
+        items.add(new ShopItem("Штаны", "45", false,
             "Штаны крепкие. Ноги целее — монстров больше.",
-            new String[]{"Защита: 20", "Вес: 8", "Тип: поножи"}, assets.iconLegs));
-        items.add(new ShopItem("Перчатки наездника", "30",
+            new String[]{"Защ. 20", "Вес 8", "Поножи"}, assets.iconLegs));
+        items.add(new ShopItem("Перчатки", "30", false,
             "Рукам тепло, клинку — верно. Берите, не пожалеете.",
-            new String[]{"Защита: 12", "Вес: 3", "Тип: перчатки"}, assets.iconGloves));
-        items.add(new ShopItem("Сапоги стражника", "55",
+            new String[]{"Защ. 12", "Вес 3", "Руки"}, assets.iconGloves));
+        items.add(new ShopItem("Сапоги", "55", false,
             "В этих сапогах и по болоту пройдёте, и от удара отскочите.",
-            new String[]{"Защита: 18", "Вес: 6", "Тип: сапоги"}, assets.iconBoots));
-        items.add(new ShopItem("Зелье «Чёрный гриф»", "15",
+            new String[]{"Защ. 18", "Вес 6", "Сапоги"}, assets.iconBoots));
+        items.add(new ShopItem("Зелье", "15", false,
             "Хм... Зелье? Ну что ж, ваш выбор, Белый Волк...",
-            new String[]{"Эффект: яд", "Вес: 0.5", "⚠ без чекпоинта"}, assets.iconPotion));
+            new String[]{"Яд", "0.5 кг", "Осторожно"}, assets.iconPotion));
+        items.add(new ShopItem("Комплекты", "···", true,
+            "Ах, охотник на целые комплекты! Волчья, Кошачья, Грифонья — выбирайте.",
+            new String[]{"Школьные", "Легендар.", "4 части"}, assets.setCatalogIcon));
     }
 
     @Override
@@ -137,7 +141,8 @@ public class ShopScreen implements Screen {
         Gdx.gl.glEnable(GL20.GL_BLEND);
         Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
 
-        ShopLayout layout = new ShopLayout(sw, sh, items.size, assets.hud.drawX, assets.hud.drawW, assets.hud.drawH);
+        ShopLayout layout = new ShopLayout(sw, sh, items.size,
+            assets.hud.drawX, assets.hud.drawW, assets.hud.drawH);
 
         Texture dukeTex = (state == ShopState.BROWSE && selectedIndex >= 0 && assets.dukeLaughPortrait != null)
             ? assets.dukeLaughPortrait : assets.dukePortrait;
@@ -195,14 +200,20 @@ public class ShopScreen implements Screen {
                 selectedIndex = hoveredIndex;
                 state = ShopState.BROWSE;
                 currentDialog = items.get(hoveredIndex).dukeLine;
-                cardFaceBack[hoveredIndex] = !cardFaceBack[hoveredIndex];
+                if (!items.get(hoveredIndex).setCatalog) {
+                    cardFaceBack[hoveredIndex] = !cardFaceBack[hoveredIndex];
+                }
             }
         }
         if (!Gdx.input.isButtonPressed(Input.Buttons.LEFT)) {
             clickLatch = false;
         }
 
-        for (int i = 0; i < cardFlip.length; i++) {
+        for (int i = 0; i < items.size && i < cardFlip.length; i++) {
+            if (items.get(i).setCatalog) {
+                cardFlip[i] = 0f;
+                continue;
+            }
             float target = cardFaceBack[i] ? 1f : 0f;
             float diff = target - cardFlip[i];
             if (Math.abs(diff) > 0.02f) {
@@ -223,7 +234,9 @@ public class ShopScreen implements Screen {
         shapes.rect(0f, 0f, sw, sh);
 
         float pad = 6f;
-        float panelH = layout.cardsTop + layout.cardH - layout.panelTop + 8f;
+        float contentBottom = layout.cardsY + layout.gridRows * layout.cardH
+            + (layout.gridRows - 1) * layout.cardGap;
+        float panelH = contentBottom - layout.panelTop + 8f;
         float overlayH = panelH + layout.btnH + pad * 2f + 10f;
         float overlayY = bottomFromTop(layout.panelTop - pad, overlayH, sh);
         shapes.setColor(0f, 0f, 0f, 0.55f);
@@ -290,13 +303,16 @@ public class ShopScreen implements Screen {
         glyph.setText(wFont, " крон");
         float suffixW = glyph.width;
 
-        float anchor = hudX + hudW * 0.68f;
-        float textX = anchor - suffixW - walletW;
-        float crownY = hudBottom + (hudH - crownSize) * 0.5f;
+        float blockW = walletW + suffixW;
         if (assets.crownIcon != null) {
-            textX -= crownSize + 4f;
-            game.batch.draw(assets.crownIcon, textX, crownY, crownSize, crownSize);
-            textX += crownSize + 4f;
+            blockW += crownSize + 4f;
+        }
+        float blockX = hudX + (hudW - blockW) * 0.5f;
+        float crownY = hudBottom + (hudH - crownSize) * 0.5f;
+        float textX = blockX;
+        if (assets.crownIcon != null) {
+            game.batch.draw(assets.crownIcon, blockX, crownY, crownSize, crownSize);
+            textX = blockX + crownSize + 4f;
         }
         glyph.setText(wFont, wallet);
         float walletY = textYFromTop(layout.hudTop + (hudH + glyph.height) * 0.5f - 2f, sh);
@@ -315,14 +331,10 @@ public class ShopScreen implements Screen {
             game.batch.draw(assets.catalogPanel, layout.panelX, panelY, layout.panelW, panelDrawH);
         }
 
-        fonts.ui.setColor(DUKE_GOLD);
-        drawCentered(fonts.ui, "— Товары —", layout.panelX + layout.panelW * 0.5f,
-            textYFromTop(layout.panelTop + 16f, sh));
-
         for (int i = 0; i < items.size; i++) {
             ShopItem item = items.get(i);
-            float x = layout.cardsStartX + i * (layout.cardW + layout.cardGap);
-            float y = bottomFromTop(layout.cardsTop, layout.cardH, sh);
+            float x = layout.cardX(i);
+            float y = bottomFromTop(layout.cardY(i), layout.cardH, sh);
             item.bounds.set(x, y, layout.cardW, layout.cardH);
             drawItemCard(item, x, y, layout.cardW, layout.cardH,
                 i == selectedIndex, i == hoveredIndex, cardFlip[i]);
@@ -331,9 +343,9 @@ public class ShopScreen implements Screen {
 
     private void drawItemCard(ShopItem item, float x, float y, float w, float h,
                               boolean selected, boolean hovered, float flip) {
-        boolean showBack = flip >= 0.5f;
+        boolean showBack = !item.setCatalog && flip >= 0.5f;
         float fade = 1f;
-        if (flip > 0.05f && flip < 0.95f) {
+        if (!item.setCatalog && flip > 0.05f && flip < 0.95f) {
             fade = flip < 0.5f ? 1f - flip * 2f : (flip - 0.5f) * 2f;
             fade = 0.35f + fade * 0.65f;
         }
@@ -351,63 +363,47 @@ public class ShopScreen implements Screen {
         Rectangle cardRect = new Rectangle(x, y, w, h);
         if (showBack) {
             if (assets.cardBack != null) {
-                cardRect = drawAspectFit(assets.cardBack, x, y, w, h);
+                game.batch.draw(assets.cardBack, x, y, w, h);
             }
             drawCardBack(item, cardRect);
         } else {
             if (frame != null) {
-                cardRect = drawAspectFit(frame, x, y, w, h);
+                game.batch.draw(frame, x, y, w, h);
             }
             drawCardFront(item, cardRect);
         }
         game.batch.setColor(1f, 1f, 1f, prevA);
     }
 
-    private Rectangle drawAspectFit(Texture img, float x, float y, float w, float h) {
-        float tw = img.getWidth();
-        float th = img.getHeight();
-        float srcAspect = tw / th;
-        float dstAspect = w / h;
-        float drawW;
-        float drawH;
-        if (srcAspect > dstAspect) {
-            drawW = w;
-            drawH = w / srcAspect;
-        } else {
-            drawH = h;
-            drawW = h * srcAspect;
-        }
-        float drawX = x + (w - drawW) * 0.5f;
-        float drawY = y + (h - drawH) * 0.5f;
-        game.batch.draw(img, drawX, drawY, drawW, drawH);
-        return new Rectangle(drawX, drawY, drawW, drawH);
-    }
-
     private void drawCardFront(ShopItem item, Rectangle card) {
         Texture art = item.icon;
         if (art != null) {
-            float artSize = Math.min(card.width - 10f, card.height - 32f);
+            float artSize = 32f;
             game.batch.draw(art,
-                card.x + (card.width - artSize) * 0.5f, card.y + 6f, artSize, artSize);
+                card.x + (card.width - artSize) * 0.5f, card.y + 8f, artSize, artSize);
         }
         BitmapFont small = fonts.uiSmall;
-        small.setColor(235f / 255f, 215f / 255f, 155f / 255f, 1f);
-        String name = truncateToWidth(small, item.name, card.width - 6f);
-        drawCentered(small, name, card.x + card.width * 0.5f, card.y + card.height - 17f);
+        Color nameColor = item.setCatalog
+            ? new Color(255f / 255f, 210f / 255f, 100f / 255f, 1f)
+            : new Color(245f / 255f, 230f / 255f, 190f / 255f, 1f);
+        small.setColor(nameColor);
+        String name = truncateToWidth(small, item.name, card.width - 8f);
+        drawCentered(small, name, card.x + card.width * 0.5f, card.y + card.height - 22f);
 
+        Texture priceCrown = assets.crownIconSmall != null ? assets.crownIconSmall : assets.crownIcon;
         float crownSize = 10f;
         glyph.setText(small, item.priceLabel);
         float priceW = glyph.width;
-        if (assets.crownIcon != null) {
+        if (priceCrown != null) {
             priceW += crownSize + 2f;
         }
         float priceX = card.x + (card.width - priceW) * 0.5f;
-        if (assets.crownIcon != null) {
-            game.batch.draw(assets.crownIcon, priceX, card.y + card.height - 11f, crownSize, crownSize);
+        if (priceCrown != null) {
+            game.batch.draw(priceCrown, priceX, card.y + card.height - 14f, crownSize, crownSize);
             priceX += crownSize + 2f;
         }
         small.setColor(255f / 255f, 230f / 255f, 120f / 255f, 1f);
-        small.draw(game.batch, item.priceLabel, priceX, card.y + card.height - 3f);
+        small.draw(game.batch, item.priceLabel, priceX, card.y + card.height - 4f);
     }
 
     private void drawCardBack(ShopItem item, Rectangle card) {
@@ -439,11 +435,12 @@ public class ShopScreen implements Screen {
 
     private void drawBuyButton(ShopLayout layout, float sh) {
         float btnY = bottomFromTop(layout.btnTop, layout.btnH, sh);
-        if (assets.btnBuyDisabled != null) {
-            game.batch.draw(assets.btnBuyDisabled, layout.btnX, btnY, layout.btnW, layout.btnH);
+        Texture btn = assets.btnBuyNormal != null ? assets.btnBuyNormal : assets.btnBuyDisabled;
+        if (btn != null) {
+            game.batch.draw(btn, layout.btnX, btnY, layout.btnW, layout.btnH);
         }
-        fonts.ui.setColor(90f / 255f, 75f / 255f, 50f / 255f, 1f);
-        drawCentered(fonts.ui, "Скоро", layout.btnX + layout.btnW * 0.5f,
+        fonts.ui.setColor(220f / 255f, 200f / 255f, 140f / 255f, 1f);
+        drawCentered(fonts.ui, "Купить", layout.btnX + layout.btnW * 0.5f,
             textYFromTop(layout.btnTop + 19f, sh));
     }
 
@@ -570,23 +567,25 @@ public class ShopScreen implements Screen {
     }
 
     private static final class ShopLayout {
-        final float hudTop = 18f;
+        final float hudTop = 4f;
         final float hudX;
         final float hudW;
         final float hudH;
         final float panelTop;
-        final float cardsTop;
+        final float cardsY;
         final float btnTop;
         final float panelX;
         final float panelW;
         final float btnX;
         final float btnW = 100f;
         final float btnH = 30f;
-        final float cardW = 54f;
-        final float cardH = 81f;
+        final float cardW = ShopAssets.CARD_W;
+        final float cardH = ShopAssets.CARD_H;
         final float cardGap = 6f;
         final float cardsStartX;
         final float dialogTop;
+        final int gridCols;
+        final int gridRows;
 
         ShopLayout(float sw, float sh, int itemCount, int hudX, int hudW, int hudH) {
             this.hudX = hudX;
@@ -595,15 +594,27 @@ public class ShopScreen implements Screen {
             dialogTop = sh - DIALOG_ZONE;
             float headerH = 22f;
 
-            int cardsTotalW = itemCount * (int) cardW + (itemCount - 1) * (int) cardGap;
-            panelW = Math.max(cardsTotalW + 28, Math.min(sw - 88f, 380f));
+            gridCols = ShopAssets.GRID_COLS;
+            gridRows = Math.max(1, (itemCount + gridCols - 1) / gridCols);
+            int rowW = gridCols * (int) cardW + (gridCols - 1) * (int) cardGap;
+            panelW = ShopAssets.PANEL_W;
             panelX = (sw - panelW) * 0.5f;
             panelTop = hudTop + hudH + 6f;
-            cardsTop = panelTop + headerH + 6f;
-            float contentBottom = cardsTop + cardH;
+            cardsY = panelTop + headerH + 6f;
+            float contentBottom = cardsY + gridRows * cardH + (gridRows - 1) * cardGap;
             btnTop = contentBottom + 6f;
-            cardsStartX = panelX + (panelW - cardsTotalW) * 0.5f;
+            cardsStartX = panelX + (panelW - rowW) * 0.5f;
             btnX = panelX + (panelW - btnW) * 0.5f;
+        }
+
+        float cardX(int index) {
+            int col = index % gridCols;
+            return cardsStartX + col * (cardW + cardGap);
+        }
+
+        float cardY(int index) {
+            int row = index / gridCols;
+            return cardsY + row * (cardH + cardGap);
         }
     }
 }

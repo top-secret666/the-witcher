@@ -30,6 +30,7 @@ public final class ShopAssets implements Disposable {
     public Texture cardHover;
     public Texture cardSelected;
     public Texture btnBuyDisabled;
+    public Texture btnBuyNormal;
     public Texture crownIcon;
     public Texture crownIconSmall;
     public Texture setCatalogIcon;
@@ -83,6 +84,7 @@ public final class ShopAssets implements Disposable {
         cardHover = PixelTextures.loadLavka("ui/shop_card_hover.png");
         cardSelected = PixelTextures.loadLavka("ui/shop_card_selected.png");
         btnBuyDisabled = PixelTextures.loadLavka("ui/shop_btn_buy_disabled.png");
+        btnBuyNormal = PixelTextures.loadLavka("ui/shop_btn_buy_normal.png", "ui/shop_btn_buy_disabled.png");
         crownIcon = PixelTextures.loadLavka("icons/icon_crown.png");
         crownIconSmall = PixelTextures.loadLavka("icons/icon_crown_small.png", "icons/icon_crown.png");
 
@@ -111,6 +113,7 @@ public final class ShopAssets implements Disposable {
         PixelTextures.dispose(cardHover);
         PixelTextures.dispose(cardSelected);
         PixelTextures.dispose(btnBuyDisabled);
+        PixelTextures.dispose(btnBuyNormal);
         PixelTextures.dispose(crownIcon);
         PixelTextures.dispose(crownIconSmall);
         PixelTextures.dispose(setCatalogIcon);
