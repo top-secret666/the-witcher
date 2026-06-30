@@ -13,7 +13,7 @@ public class ShopScreen {
 
     private static final String UI = "/assets/sprites/lavka/ui/";
     private static final String ICONS = "/assets/sprites/lavka/icons/";
-    private static final int DIALOG_TEXT_ZONE = 46;
+    private static final int DIALOG_TEXT_ZONE = 54;
 
     private enum ShopState {
         WELCOME,
@@ -249,6 +249,7 @@ public class ShopScreen {
         Graphics2D g = screen.createGraphics();
         int sw = screen.getWidth();
         int sh = screen.getHeight();
+        applyCrispRendering(g);
 
         g.setColor(Color.BLACK);
         g.fillRect(0, 0, sw, sh);
@@ -273,7 +274,7 @@ public class ShopScreen {
             drawAshParticles(g);
         }
 
-        DialogBoxRenderer.drawPlainSpeakerText(g, sw, sh, "Герцог", currentDialog,
+        DialogBoxRenderer.drawCompactFramedSpeakerText(g, sw, sh, "Герцог", currentDialog,
             DialogBoxRenderer.DUKE_COLOR, alpha);
 
         g.dispose();
@@ -319,17 +320,17 @@ public class ShopScreen {
         if (hudBar != null) {
             if (hudSrcCrop != null) {
                 drawCroppedScaledSprite(g, hudBar, hudSrcCrop,
-                    layout.hudX, layout.hudY, layout.hudW, layout.hudH, false);
+                    layout.hudX, layout.hudY, layout.hudW, layout.hudH, true);
             } else {
-                drawScaledSprite(g, hudBar, layout.hudX, layout.hudY, layout.hudW, layout.hudH, false);
+                drawScaledSprite(g, hudBar, layout.hudX, layout.hudY, layout.hudW, layout.hudH, true);
             }
         } else {
             g.setColor(new Color(10, 8, 4, 220));
             g.fillRect(layout.hudX, layout.hudY, layout.hudW, layout.hudH);
         }
 
-        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-        g.setFont(new Font("Serif", Font.BOLD, 15));
+        drawCrispText(g);
+        g.setFont(new Font("Serif", Font.BOLD, 14));
         g.setColor(DialogBoxRenderer.DUKE_COLOR);
         FontMetrics titleFm = g.getFontMetrics();
         int titleY = layout.hudY + (layout.hudH + titleFm.getAscent()) / 2 - 1;
@@ -337,7 +338,7 @@ public class ShopScreen {
 
         String wallet = "???";
         int crownSize = 18;
-        g.setFont(new Font("Serif", Font.BOLD, 14));
+        g.setFont(new Font("Serif", Font.BOLD, 13));
         FontMetrics fm = g.getFontMetrics();
         int walletAnchor = layout.hudX + (int) (layout.hudW * 0.68f);
         int textRight = walletAnchor;
@@ -354,7 +355,6 @@ public class ShopScreen {
         g.drawString(wallet, textRight, walletY);
         g.setColor(new Color(200, 180, 120));
         g.drawString(" крон", textRight + fm.stringWidth(wallet), walletY);
-        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
         g.setComposite(prev);
     }
 
@@ -366,11 +366,11 @@ public class ShopScreen {
         int panelDrawH = panelBottom - layout.panelY;
         if (catalogPanel != null) {
             drawScaledSprite(g, catalogPanel, layout.panelX, layout.panelY,
-                layout.panelW, panelDrawH, false);
+                layout.panelW, panelDrawH, true);
         }
 
-        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-        g.setFont(new Font("Serif", Font.BOLD, 12));
+        drawCrispText(g);
+        g.setFont(new Font("Serif", Font.BOLD, 11));
         g.setColor(DialogBoxRenderer.DUKE_COLOR);
         g.drawString("— Товары —", layout.panelX + layout.panelW / 2 - 36, layout.panelY + 16);
 
@@ -383,7 +383,6 @@ public class ShopScreen {
                 i == selectedIndex, i == hoveredIndex, cardFlip[i]);
         }
 
-        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
         g.setComposite(layer);
     }
 
@@ -409,7 +408,7 @@ public class ShopScreen {
         Rectangle cardRect;
         if (showBack) {
             if (cardBack != null) {
-                cardRect = drawAspectFitSprite(g, cardBack, x, y, w, h, false);
+                cardRect = drawAspectFitSprite(g, cardBack, x, y, w, h, true);
             } else {
                 drawFallbackCard(g, x, y, w, h, true);
                 cardRect = new Rectangle(x, y, w, h);
@@ -417,7 +416,7 @@ public class ShopScreen {
             drawCardBackText(g, item, cardRect);
         } else {
             if (frame != null) {
-                cardRect = drawAspectFitSprite(g, frame, x, y, w, h, false);
+                cardRect = drawAspectFitSprite(g, frame, x, y, w, h, true);
             } else {
                 drawFallbackCard(g, x, y, w, h, false);
                 cardRect = new Rectangle(x, y, w, h);
@@ -447,17 +446,17 @@ public class ShopScreen {
             drawCrispIcon(g, art, x + (w - artSize) / 2, y + 6, artSize);
         }
 
-        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-        g.setFont(new Font("Serif", Font.BOLD, 7));
+        drawCrispText(g);
+        g.setFont(new Font("Serif", Font.BOLD, 9));
         g.setColor(new Color(235, 215, 155));
         FontMetrics nameFm = g.getFontMetrics();
         String name = truncateToWidth(item.name, nameFm, w - 6);
-        g.drawString(name, x + (w - nameFm.stringWidth(name)) / 2, y + h - 16);
+        g.drawString(name, x + (w - nameFm.stringWidth(name)) / 2, y + h - 17);
 
-        g.setFont(new Font("Serif", Font.BOLD, 9));
+        g.setFont(new Font("Serif", Font.BOLD, 11));
         g.setColor(new Color(255, 230, 120));
         FontMetrics priceFm = g.getFontMetrics();
-        int crownSize = 9;
+        int crownSize = 10;
         int priceW = priceFm.stringWidth(item.priceLabel) + (crownIcon != null ? crownSize + 2 : 0);
         int priceX = x + (w - priceW) / 2;
         if (crownIcon != null) {
