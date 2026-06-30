@@ -400,8 +400,8 @@ public class ShopScreen {
         g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, fade));
 
         BufferedImage frame = cardFront;
-        if (selected && cardHover != null) {
-            frame = cardHover;
+        if (selected && cardSelected != null) {
+            frame = cardSelected;
         } else if (hovered && cardHover != null) {
             frame = cardHover;
         }
