@@ -9,6 +9,7 @@ import com.badlogic.gdx.graphics.Texture;
 public final class ShopAssets implements Disposable {
 
     public Texture merchantBg;
+    public String merchantBgSource;
     public Texture geraltPortrait;
     public Texture dukePortrait;
     public Texture dukeLaughPortrait;
@@ -43,12 +44,33 @@ public final class ShopAssets implements Disposable {
     }
 
     public void load() {
-        merchantBg = PixelTextures.loadFirst(
+        String[] bgPaths = {
             "sprites/lavka/merchant_bg_lavka.png",
             "sprites/lavka/lavka.png",
             "sprites/screen saver/lavka.png"
-        );
+        };
+        for (String path : bgPaths) {
+            PixelTextures.LoadedTexture loaded = PixelTextures.loadOptionalMeta(path);
+            if (loaded == null || loaded.texture.getWidth() <= 4 || loaded.texture.getHeight() <= 4) {
+                PixelTextures.dispose(loaded != null ? loaded.texture : null);
+                continue;
+            }
+            if (PixelTextures.computeOpaqueBounds(path) == null) {
+                com.badlogic.gdx.Gdx.app.error("ShopAssets",
+                    "Fon prozrachnyj, propuskayu: " + loaded.filePath);
+                PixelTextures.dispose(loaded.texture);
+                continue;
+            }
+            merchantBg = loaded.texture;
+            merchantBgSource = loaded.filePath;
+            com.badlogic.gdx.Gdx.app.log("ShopAssets",
+                "Fon: " + loaded.logicalPath + " -> " + loaded.filePath
+                    + " (" + merchantBg.getWidth() + "x" + merchantBg.getHeight() + ")");
+            break;
+        }
         if (merchantBg == null) {
+            merchantBg = PixelTextures.createFallbackShopBg(640, 360);
+            merchantBgSource = "generated";
             com.badlogic.gdx.Gdx.app.error("ShopAssets",
                 "Fon lavki ne najden. Polozhi merchant_bg_lavka.png v assets/sprites/lavka/");
         }
@@ -67,7 +89,10 @@ public final class ShopAssets implements Disposable {
         );
 
         hudBar = PixelTextures.loadOptional("sprites/lavka/ui/shop_hud_bar.png");
-        if (hudBar != null) {
+        if (hudBar == null) {
+            com.badlogic.gdx.Gdx.app.error("ShopAssets",
+                "HUD ne najden: sprites/lavka/ui/shop_hud_bar.png");
+        } else {
             int[] crop = PixelTextures.computeOpaqueBounds("sprites/lavka/ui/shop_hud_bar.png");
             if (crop != null) {
                 hud.cropped = true;

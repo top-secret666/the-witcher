@@ -1,6 +1,6 @@
 @echo off
-echo Shrift teper beretsya avtomaticheski iz Windows (arial.ttf / times.ttf).
-echo Skachivanie ne nuzhno. Prosto zapusti run-gdx.bat
-echo.
-echo Opcionalno: polozhi svoj .ttf v src\main\resources\assets\fonts\game.ttf
-pause
+rem Kirillica: beretsya iz C:\Windows\Fonts\ (arial / times / segoe).
+rem Polozhi svoj shrift: src\main\resources\assets\fonts\game.ttf
+echo Shrift podkluchaetsya avtomaticheski pri zapuske igry.
+echo Skachivanie iz interneta ne trebuetsya.
+exit /b 0
