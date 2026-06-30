@@ -31,9 +31,14 @@ public final class PixelTextures {
         if (!Gdx.files.internal(path).exists()) {
             return null;
         }
-        Texture texture = new Texture(Gdx.files.internal(path));
-        texture.setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest);
-        return texture;
+        try {
+            Texture texture = new Texture(Gdx.files.internal(path));
+            texture.setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest);
+            return texture;
+        } catch (Exception e) {
+            Gdx.app.error("PixelTextures", "Ne udalos zagruzit: " + path, e);
+            return null;
+        }
     }
 
     /** Заполняет весь экран с сохранением пропорций (как cover в CSS). */
