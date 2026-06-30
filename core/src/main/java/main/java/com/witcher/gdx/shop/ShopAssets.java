@@ -79,16 +79,15 @@ public final class ShopAssets implements Disposable {
                 "HUD ne najden: sprites/lavka/ui/shop_hud_bar.png");
         } else {
             hudBar = hudLoaded.texture;
-            int[] crop = PixelTextures.computeVisibleBounds("sprites/lavka/ui/shop_hud_bar.png");
-            if (crop == null) {
-                crop = PixelTextures.computeContentBounds("sprites/lavka/ui/shop_hud_bar.png");
-            }
+            int[] crop = PixelTextures.computeContentBounds("sprites/lavka/ui/shop_hud_bar.png");
             if (crop != null && crop[2] > 4 && crop[3] > 4) {
-                int pad = 8;
-                int cx = Math.max(0, crop[0] - pad);
-                int cy = Math.max(0, crop[1] - pad);
-                int cw = Math.min(hudBar.getWidth() - cx, crop[2] + pad * 2);
-                int ch = Math.min(hudBar.getHeight() - cy, crop[3] + pad * 2);
+                int padX = 6;
+                int padTop = 14;
+                int padBottom = 6;
+                int cx = Math.max(0, crop[0] - padX);
+                int cy = Math.max(0, crop[1] - padTop);
+                int cw = Math.min(hudBar.getWidth() - cx, crop[2] + padX * 2);
+                int ch = Math.min(hudBar.getHeight() - cy, crop[3] + padTop + padBottom);
                 hud.cropped = true;
                 hud.cropX = cx;
                 hud.cropY = cy;
@@ -96,15 +95,23 @@ public final class ShopAssets implements Disposable {
                 hud.cropH = ch;
                 int srcY = hudBar.getHeight() - cy - ch;
                 hudBarRegion = new TextureRegion(hudBar, cx, srcY, cw, ch);
-                float aspect = (float) crop[3] / crop[2];
-                hud.drawW = 476;
-                hud.drawH = Math.max(52, Math.min(64, Math.round(hud.drawW * aspect)));
+                float aspect = (float) ch / cw;
+                hud.drawH = 58;
+                hud.drawW = Math.round(hud.drawH / aspect);
+                if (hud.drawW > 476) {
+                    hud.drawW = 476;
+                    hud.drawH = Math.max(40, Math.round(hud.drawW * aspect));
+                }
             } else {
                 hud.cropped = false;
                 hudBarRegion = new TextureRegion(hudBar);
-                hud.drawW = 476;
-                hud.drawH = Math.max(52, Math.min(64,
-                    Math.round(hud.drawW * ((float) hudBar.getHeight() / hudBar.getWidth()))));
+                float aspect = (float) hudBar.getHeight() / hudBar.getWidth();
+                hud.drawH = 58;
+                hud.drawW = Math.round(hud.drawH / aspect);
+                if (hud.drawW > 476) {
+                    hud.drawW = 476;
+                    hud.drawH = Math.max(40, Math.round(hud.drawW * aspect));
+                }
             }
             hud.drawX = (int) ((WitcherGame.VIRTUAL_W - hud.drawW) * 0.5f);
             com.badlogic.gdx.Gdx.app.log("ShopAssets",
