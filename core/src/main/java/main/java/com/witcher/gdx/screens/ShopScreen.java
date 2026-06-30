@@ -446,6 +446,7 @@ public class ShopScreen implements Screen {
 
     /** Порт {@link main.java.com.witcher.ui.graphics.DialogBoxRenderer#drawCompactFramedSpeakerText}. */
     private void drawCompactDialog(float sh, String text) {
+        PixelTextures.resetBlend();
         float sw = WitcherGame.VIRTUAL_W;
         float fontSize = Math.max(12f, sh * 0.036f);
         float boxMarginX = 10f;
