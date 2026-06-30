@@ -8,6 +8,7 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import main.java.com.witcher.gdx.WitcherGame;
+import main.java.com.witcher.gdx.screens.ShopScreen;
 
 /**
  * Первый тестовый экран — проверяем, что viewport 480×360 и запуск работают.
@@ -40,11 +41,14 @@ public class BootScreen implements Screen {
         game.batch.setProjectionMatrix(camera.combined);
         game.batch.begin();
         font.draw(game.batch, "The Witcher — LibGDX", 108, 210);
-        font.draw(game.batch, "Shag 1: zapusk OK", 138, 180);
-        font.draw(game.batch, "480x360 -> 960x720", 138, 155);
-        font.draw(game.batch, "Dal'she: ekran lavki", 108, 120);
+        font.draw(game.batch, "Shag 2: lavka (karkas)", 118, 180);
+        font.draw(game.batch, "ENTER — otkryt lavku", 118, 150);
         font.draw(game.batch, "ESC — vyhod", 168, 90);
         game.batch.end();
+
+        if (Gdx.input.isKeyJustPressed(Input.Keys.ENTER)) {
+            game.setScreen(new ShopScreen(game));
+        }
 
         if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
             Gdx.app.exit();
