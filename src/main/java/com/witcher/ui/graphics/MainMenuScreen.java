@@ -49,9 +49,9 @@ public class MainMenuScreen {
     private final Random rng = new Random();
 
     public MainMenuScreen() {
-        boardFrame = null;
+            boardFrame = loadTrimmed("/assets/sprites/menu/menu_board_single.png"); // путь к вашей табличке
         background = Sprite.load("/assets/sprites/menu/menu_bg_custom.jpg");
-        boardSheet = null;
+        boardSheet = SpriteSheet.load("/assets/sprites/menu/menu_board_sheet.png", boardSheetCols, boardSheetRows, 1, false);
         buttons = loadButtonGrid("/assets/sprites/menu/menu_buttons_sheet.png", 3, 3);
         titleLogo = loadFirstFrame("/assets/sprites/witcher_logo_new.png", 2, 3, true);
         logoSignData = loadTrimmed("/assets/sprites/menu/menu_logo_sign.png");
@@ -59,7 +59,7 @@ public class MainMenuScreen {
         // smokeFrames removed per user request (no smoke)
         smokeFrames = new BufferedImage[0];
         dustFrames = loadFrames("/assets/sprites/menu/menu_dust_sheet.png", 8, 1, true);
-        transitionFrames = loadFramesRawOptional("/assets/sprites/menu/menu_transition_sheet.png", 4, 3);
+        transitionFrames = loadFramesRaw("/assets/sprites/menu/menu_transition_sheet.png", 4, 3);
 
         cursor = loadTrimmed("/assets/sprites/menu/menu_cursor.png");
     }
@@ -101,7 +101,11 @@ public class MainMenuScreen {
         // По умолчанию — ни одна кнопка не выбрана
         int hoveredIndex = -1;
         for (int i = 0; i < buttonRects.length; i++) {
-            if (buttonRects[i].contains(mouseX, mouseY)) {
+            Rectangle r = buttonRects[i];
+            // Проверяем: курсор должен быть полностью внутри по Y
+            // и внутри с отступом 20px по X (исключаем боковые края)
+            if (mouseX >= r.x + 130 && mouseX <= r.x + r.width - 130 &&
+                mouseY >= r.y && mouseY <= r.y + r.height) {
                 hoveredIndex = i;
                 break;
             }
@@ -196,18 +200,19 @@ public class MainMenuScreen {
             }
         }
 
-        // Fallback: тёмный фон, если JPG не загрузился
-        g.setColor(new Color(22, 16, 10));
-        g.fillRect(0, 0, sw, sh);
-
-        Sprite splashBg = Sprite.loadOptional("/assets/sprites/splash_bg.png");
-        if (splashBg != null && splashBg.getImage() != null) {
-            BufferedImage bg = splashBg.getImage();
-            float scale = Math.max((float) sw / bg.getWidth(), (float) sh / bg.getHeight());
-            int w = Math.round(bg.getWidth() * scale);
-            int h = Math.round(bg.getHeight() * scale);
-            g.drawImage(bg, (sw - w) / 2, (sh - h) / 2, w, h, null);
-        }
+        // Fallback: use boardSheet frames if available (keeps previous behaviour)
+        if (boardSheet == null) return;
+        int frameIdx = Math.min(boardSheetCols - 1, Math.max(0, (int) Math.round((double) (sw - 400) / 200)));
+        BufferedImage frame = boardSheet.getFrame(frameIdx);
+        if (frame == null) return;
+        int srcW = boardSheet.getFrameWidth();
+        int srcH = boardSheet.getFrameHeight();
+        float scale = Math.max((float) sw / srcW, (float) sh / srcH);
+        int w = Math.round(srcW * scale);
+        int h = Math.round(srcH * scale);
+        int x = (sw - w) / 2;
+        int y = (sh - h) / 2;
+        g.drawImage(frame, x, y, w, h, null);
     }
 
     private void layoutButtons(int sw, int sh) {
@@ -285,6 +290,7 @@ public class MainMenuScreen {
     }
 
     private void drawButtons(Graphics2D g) {
+        // drawButtons — рисует кнопки меню с нужным состоянием (обычная, hover, pressed)
         for (int i = 0; i < buttonRects.length; i++) {
             Rectangle r = buttonRects[i];
             int state = 0;
@@ -294,27 +300,45 @@ public class MainMenuScreen {
                 state = 1;
             }
 
+            // Рисуем табличку под кнопкой (еще больше)
+            if (boardFrame != null) {
+                int boardW = (int)(r.width * 36.45); // еще больше ширина таблички
+                int boardH = (int)(r.height * 36.45); // еще больше высота таблички
+                int boardX = r.x - (int)((boardW - r.width) / 2);
+                int boardY = r.y - (int)((boardH - r.height) / 2);
+                g.drawImage(boardFrame, boardX, boardY, boardW, boardH, null);
+            }
+
+            // Рисуем спрайт кнопки, чуть уже
             BufferedImage frame = getButtonFrame(i, state);
             if (frame != null) {
-                int spriteW = (int) (r.width * 0.52f);
-                int spriteH = (int) (r.height * 0.92f);
+                int spriteW = (int)(r.width * 0.25); // 40% ширины
+                int spriteH = (int)(r.height * 0.7); // 70% высоты
                 int spriteX = r.x + (r.width - spriteW) / 2;
                 int spriteY = r.y + (r.height - spriteH) / 2;
                 g.drawImage(frame, spriteX, spriteY, spriteW, spriteH, null);
             }
 
+            // Draw label on top to ensure readability (shadow + main color)
             String label = buttonLabels.length > i ? buttonLabels[i] : "";
             if (!label.isEmpty()) {
-                int fontSize = Math.max(16, (int) (r.height * 0.32f));
+                int fontSize = Math.max(18, (int) (r.height * 0.35f)); // увеличиваем размер текста
                 Font font = new Font("Serif", Font.BOLD, fontSize);
                 g.setFont(font);
                 FontMetrics fm = g.getFontMetrics(font);
-                int tx = r.x + (r.width - fm.stringWidth(label)) / 2;
+                int textW = fm.stringWidth(label);
+                int textH = fm.getAscent() - fm.getDescent();
+                int tx = r.x + (r.width - textW) / 2;
                 int ty = r.y + (r.height + fm.getAscent() - fm.getDescent()) / 2;
 
-                g.setColor(new Color(0, 0, 0, 180));
+                // Shadow
+                Color shadow = new Color(0, 0, 0, 180);
+                g.setColor(shadow);
                 g.drawString(label, tx + 1, ty + 1);
-                Color main = state == 2 ? new Color(200, 170, 90) : new Color(245, 220, 120);
+
+                // Main text (bright)
+                Color main = new Color(245, 220, 120);
+                if (state == 2) main = main.darker();
                 g.setColor(main);
                 g.drawString(label, tx, ty);
             }
@@ -417,34 +441,6 @@ public class MainMenuScreen {
 
     private static BufferedImage[] loadFramesRaw(String path, int cols, int rows) {
         Sprite s = Sprite.load(path);
-        if (s == null) return new BufferedImage[0];
-
-        BufferedImage src = s.getImage();
-        int cw = src.getWidth() / cols;
-        int ch = src.getHeight() / rows;
-        BufferedImage[] out = new BufferedImage[cols * rows];
-
-        for (int r = 0; r < rows; r++) {
-            for (int c = 0; c < cols; c++) {
-                BufferedImage frame = src.getSubimage(c * cw, r * ch, cw, ch);
-                BufferedImage copy = new BufferedImage(frame.getWidth(), frame.getHeight(), BufferedImage.TYPE_INT_ARGB);
-                Graphics2D g = copy.createGraphics();
-                g.drawImage(frame, 0, 0, null);
-                g.dispose();
-                out[r * cols + c] = copy;
-            }
-        }
-        return out;
-    }
-
-    private static BufferedImage loadTrimmedOptional(String path) {
-        Sprite s = Sprite.loadOptional(path);
-        if (s == null) return null;
-        return trimTransparent(removeNearBlack(s.getImage()));
-    }
-
-    private static BufferedImage[] loadFramesRawOptional(String path, int cols, int rows) {
-        Sprite s = Sprite.loadOptional(path);
         if (s == null) return new BufferedImage[0];
 
         BufferedImage src = s.getImage();
