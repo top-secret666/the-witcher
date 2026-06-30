@@ -358,76 +358,117 @@ public class ShopScreen {
         g.setComposite(prev);
     }
 
-    private void drawCatalog(Graphics2D g, ShopLayout layout, float alpha) {
+    private void drawCards(Graphics2D g, ShopLayout layout, float alpha) {
         Composite layer = g.getComposite();
         g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
 
+        int panelBottom = layout.btnY + layout.btnH + 4;
+        int panelDrawH = panelBottom - layout.panelY;
         if (catalogPanel != null) {
             drawScaledSprite(g, catalogPanel, layout.panelX, layout.panelY,
-                layout.panelW, layout.panelH, false);
+                layout.panelW, panelDrawH, false);
         }
 
         g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
         g.setFont(new Font("Serif", Font.BOLD, 12));
         g.setColor(DialogBoxRenderer.DUKE_COLOR);
-        g.drawString("— Товары —", layout.panelX + layout.panelW / 2 - 36, layout.panelY + 18);
-
-        int rowX = layout.panelX + 8;
-        int rowW = layout.panelW - 16;
-        int iconSize = layout.iconSize;
-        int y = layout.listY;
+        g.drawString("— Товары —", layout.panelX + layout.panelW / 2 - 36, layout.panelY + 16);
 
         for (int i = 0; i < items.size(); i++) {
             ShopItem item = items.get(i);
-            boolean selected = i == selectedIndex;
-            boolean hovered = i == hoveredIndex;
-
-            BufferedImage rowBg = rowNormal;
-            if (selected && rowSelected != null) rowBg = rowSelected;
-            else if (hovered && rowHover != null) rowBg = rowHover;
-
-            int rowY = y;
-            if (rowBg != null) {
-                drawScaledSprite(g, rowBg, rowX, rowY, rowW, layout.rowH - 2, true);
-            }
-
-            item.bounds.setBounds(rowX, rowY, rowW, layout.rowH - 2);
-
-            int iconX = rowX + 6;
-            int iconY = rowY + (layout.rowH - iconSize) / 2 - 1;
-            if (item.icon != null) {
-                drawCrispIcon(g, item.icon, iconX, iconY, iconSize);
-            }
-
-            int textBaseline = rowY + layout.rowH / 2 + 5;
-            int priceRight = rowX + rowW - 10;
-            int nameMaxW = rowW - iconSize - 70;
-            g.setFont(new Font("Serif", Font.PLAIN, 11));
-            g.setColor(selected ? new Color(255, 230, 140) : new Color(220, 205, 165));
-            g.drawString(truncateToWidth(item.name, g.getFontMetrics(), nameMaxW),
-                iconX + iconSize + 8, textBaseline);
-
-            drawPrice(g, priceRight, rowY, layout.rowH, item.priceLabel, textBaseline);
-
-            y += layout.rowH;
+            int cardX = layout.cardsStartX + i * (layout.cardW + layout.cardGap);
+            int cardY = layout.cardsY;
+            item.bounds.setBounds(cardX, cardY, layout.cardW, layout.cardH);
+            drawItemCard(g, item, cardX, cardY, layout.cardW, layout.cardH, i,
+                i == selectedIndex, i == hoveredIndex, cardFlip[i]);
         }
+
         g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
         g.setComposite(layer);
     }
 
-    private void drawPrice(Graphics2D g, int rightX, int rowY, int rowH,
-                           String price, int baseline) {
-        g.setFont(new Font("Serif", Font.BOLD, 14));
-        g.setColor(new Color(255, 245, 160));
-        FontMetrics fm = g.getFontMetrics();
-        int crownSize = 14;
-        int totalW = fm.stringWidth(price) + (crownIcon != null ? crownSize + 3 : 0);
-        int startX = rightX - totalW;
-        if (crownIcon != null) {
-            drawCrispIcon(g, crownIcon, startX, rowY + (rowH - crownSize) / 2, crownSize);
-            startX += crownSize + 3;
+    private void drawItemCard(Graphics2D g, ShopItem item, int x, int y, int w, int h, int index,
+                              boolean selected, boolean hovered, float flip) {
+        boolean showBack = flip >= 0.5f;
+        float scaleX = Math.max(0.06f, Math.abs((float) Math.cos(flip * Math.PI)));
+
+        AffineTransform saved = g.getTransform();
+        int cx = x + w / 2;
+        int cy = y + h / 2;
+        g.translate(cx, cy);
+        g.scale(scaleX, 1f);
+        g.translate(-w / 2, -h / 2);
+
+        BufferedImage frame = cardFront;
+        if (selected && cardSelected != null) frame = cardSelected;
+        else if (hovered && cardHover != null) frame = cardHover;
+
+        if (showBack) {
+            if (cardBack != null) {
+                drawScaledSprite(g, cardBack, 0, 0, w, h, false);
+            } else {
+                drawFallbackCard(g, 0, 0, w, h, true);
+            }
+            drawCardBackText(g, item, w, h);
+        } else {
+            if (frame != null) {
+                drawScaledSprite(g, frame, 0, 0, w, h, false);
+            } else {
+                drawFallbackCard(g, 0, 0, w, h, false);
+            }
+            drawCardFrontContent(g, item, w, h);
         }
-        g.drawString(price, startX, baseline);
+
+        g.setTransform(saved);
+    }
+
+    private void drawFallbackCard(Graphics2D g, int x, int y, int w, int h, boolean back) {
+        g.setColor(back ? new Color(28, 22, 14, 235) : new Color(38, 28, 16, 235));
+        g.fillRoundRect(x + 1, y + 1, w - 2, h - 2, 6, 6);
+        g.setColor(new Color(180, 130, 45));
+        g.drawRoundRect(x + 1, y + 1, w - 2, h - 2, 6, 6);
+    }
+
+    private void drawCardFrontContent(Graphics2D g, ShopItem item, int w, int h) {
+        BufferedImage art = item.cardArt != null ? item.cardArt : item.icon;
+        int artSize = Math.min(w - 12, h - 36);
+        if (art != null) {
+            drawCrispIcon(g, art, (w - artSize) / 2, 8, artSize);
+        }
+
+        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+        g.setFont(new Font("Serif", Font.BOLD, 8));
+        g.setColor(new Color(235, 215, 155));
+        FontMetrics nameFm = g.getFontMetrics();
+        String name = truncateToWidth(item.name, nameFm, w - 8);
+        g.drawString(name, (w - nameFm.stringWidth(name)) / 2, h - 18);
+
+        g.setFont(new Font("Serif", Font.BOLD, 10));
+        g.setColor(new Color(255, 230, 120));
+        FontMetrics priceFm = g.getFontMetrics();
+        int crownSize = 10;
+        int priceW = priceFm.stringWidth(item.priceLabel) + (crownIcon != null ? crownSize + 2 : 0);
+        int priceX = (w - priceW) / 2;
+        if (crownIcon != null) {
+            drawCrispIcon(g, crownIcon, priceX, h - 12, crownSize);
+            priceX += crownSize + 2;
+        }
+        g.drawString(item.priceLabel, priceX, h - 4);
+        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
+    }
+
+    private void drawCardBackText(Graphics2D g, ShopItem item, int w, int h) {
+        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+        g.setFont(new Font("Serif", Font.BOLD, 8));
+        g.setColor(new Color(255, 220, 130));
+        FontMetrics fm = g.getFontMetrics();
+        int lineY = 14;
+        for (String line : item.statLines) {
+            String text = truncateToWidth(line, fm, w - 8);
+            g.drawString(text, (w - fm.stringWidth(text)) / 2, lineY);
+            lineY += fm.getHeight() + 1;
+        }
+        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
     }
 
     /** Отрисовка иконки без размытия — nearest-neighbor, целые координаты. */
