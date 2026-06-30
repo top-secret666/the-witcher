@@ -1,7 +1,6 @@
 package main.java.com.witcher.ui.graphics;
 
 import java.awt.*;
-import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
@@ -239,7 +238,7 @@ public class ShopScreen {
             float target = cardFaceBack[i] ? 1f : 0f;
             float diff = target - cardFlip[i];
             if (Math.abs(diff) > 0.02f) {
-                cardFlip[i] += diff * 0.22f;
+                cardFlip[i] += diff * 0.32f;
             } else {
                 cardFlip[i] = target;
             }
@@ -430,11 +429,11 @@ public class ShopScreen {
         g.drawRoundRect(x + 1, y + 1, w - 2, h - 2, 6, 6);
     }
 
-    private void drawCardFrontContent(Graphics2D g, ShopItem item, int w, int h) {
+    private void drawCardFrontContent(Graphics2D g, ShopItem item, int w, int h, int x, int y) {
         BufferedImage art = item.cardArt != null ? item.cardArt : item.icon;
         int artSize = Math.min(w - 12, h - 36);
         if (art != null) {
-            drawCrispIcon(g, art, (w - artSize) / 2, 8, artSize);
+            drawCrispIcon(g, art, x + (w - artSize) / 2, y + 8, artSize);
         }
 
         g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
@@ -442,31 +441,31 @@ public class ShopScreen {
         g.setColor(new Color(235, 215, 155));
         FontMetrics nameFm = g.getFontMetrics();
         String name = truncateToWidth(item.name, nameFm, w - 8);
-        g.drawString(name, (w - nameFm.stringWidth(name)) / 2, h - 18);
+        g.drawString(name, x + (w - nameFm.stringWidth(name)) / 2, y + h - 18);
 
         g.setFont(new Font("Serif", Font.BOLD, 10));
         g.setColor(new Color(255, 230, 120));
         FontMetrics priceFm = g.getFontMetrics();
         int crownSize = 10;
         int priceW = priceFm.stringWidth(item.priceLabel) + (crownIcon != null ? crownSize + 2 : 0);
-        int priceX = (w - priceW) / 2;
+        int priceX = x + (w - priceW) / 2;
         if (crownIcon != null) {
-            drawCrispIcon(g, crownIcon, priceX, h - 12, crownSize);
+            drawCrispIcon(g, crownIcon, priceX, y + h - 12, crownSize);
             priceX += crownSize + 2;
         }
-        g.drawString(item.priceLabel, priceX, h - 4);
+        g.drawString(item.priceLabel, priceX, y + h - 4);
         g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
     }
 
-    private void drawCardBackText(Graphics2D g, ShopItem item, int w, int h) {
+    private void drawCardBackText(Graphics2D g, ShopItem item, int w, int h, int x, int y) {
         g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
         g.setFont(new Font("Serif", Font.BOLD, 8));
         g.setColor(new Color(255, 220, 130));
         FontMetrics fm = g.getFontMetrics();
-        int lineY = 14;
+        int lineY = y + 14;
         for (String line : item.statLines) {
             String text = truncateToWidth(line, fm, w - 8);
-            g.drawString(text, (w - fm.stringWidth(text)) / 2, lineY);
+            g.drawString(text, x + (w - fm.stringWidth(text)) / 2, lineY);
             lineY += fm.getHeight() + 1;
         }
         g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
