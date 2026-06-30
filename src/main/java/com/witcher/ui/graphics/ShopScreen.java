@@ -51,9 +51,9 @@ public class ShopScreen {
             btnH = 30;
             btnW = 100;
             headerH = 22;
-            cardW = 58;
-            cardH = 90;
-            cardGap = 5;
+            cardW = 54;
+            cardH = 81;
+            cardGap = 6;
 
             int cardsTotalW = itemCount * cardW + (itemCount - 1) * cardGap;
             panelW = Math.max(cardsTotalW + 28, Math.min(sw - 88, 380));
@@ -400,23 +400,29 @@ public class ShopScreen {
         g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, fade));
 
         BufferedImage frame = cardFront;
-        if (selected && cardSelected != null) frame = cardSelected;
-        else if (hovered && cardHover != null) frame = cardHover;
+        if (selected && cardHover != null) {
+            frame = cardHover;
+        } else if (hovered && cardHover != null) {
+            frame = cardHover;
+        }
 
+        Rectangle cardRect;
         if (showBack) {
             if (cardBack != null) {
-                drawScaledSprite(g, cardBack, x, y, w, h, false);
+                cardRect = drawAspectFitSprite(g, cardBack, x, y, w, h, false);
             } else {
                 drawFallbackCard(g, x, y, w, h, true);
+                cardRect = new Rectangle(x, y, w, h);
             }
-            drawCardBackText(g, item, w, h, x, y);
+            drawCardBackText(g, item, cardRect);
         } else {
             if (frame != null) {
-                drawScaledSprite(g, frame, x, y, w, h, false);
+                cardRect = drawAspectFitSprite(g, frame, x, y, w, h, false);
             } else {
                 drawFallbackCard(g, x, y, w, h, false);
+                cardRect = new Rectangle(x, y, w, h);
             }
-            drawCardFrontContent(g, item, w, h, x, y);
+            drawCardFrontContent(g, item, cardRect);
         }
 
         g.setComposite(savedComposite);
@@ -429,46 +435,84 @@ public class ShopScreen {
         g.drawRoundRect(x + 1, y + 1, w - 2, h - 2, 6, 6);
     }
 
-    private void drawCardFrontContent(Graphics2D g, ShopItem item, int w, int h, int x, int y) {
+    private void drawCardFrontContent(Graphics2D g, ShopItem item, Rectangle card) {
+        int x = card.x;
+        int y = card.y;
+        int w = card.width;
+        int h = card.height;
+
         BufferedImage art = item.cardArt != null ? item.cardArt : item.icon;
-        int artSize = Math.min(w - 12, h - 36);
+        int artSize = Math.min(w - 10, h - 32);
         if (art != null) {
-            drawCrispIcon(g, art, x + (w - artSize) / 2, y + 8, artSize);
+            drawCrispIcon(g, art, x + (w - artSize) / 2, y + 6, artSize);
         }
 
         g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-        g.setFont(new Font("Serif", Font.BOLD, 8));
+        g.setFont(new Font("Serif", Font.BOLD, 7));
         g.setColor(new Color(235, 215, 155));
         FontMetrics nameFm = g.getFontMetrics();
-        String name = truncateToWidth(item.name, nameFm, w - 8);
-        g.drawString(name, x + (w - nameFm.stringWidth(name)) / 2, y + h - 18);
+        String name = truncateToWidth(item.name, nameFm, w - 6);
+        g.drawString(name, x + (w - nameFm.stringWidth(name)) / 2, y + h - 16);
 
-        g.setFont(new Font("Serif", Font.BOLD, 10));
+        g.setFont(new Font("Serif", Font.BOLD, 9));
         g.setColor(new Color(255, 230, 120));
         FontMetrics priceFm = g.getFontMetrics();
-        int crownSize = 10;
+        int crownSize = 9;
         int priceW = priceFm.stringWidth(item.priceLabel) + (crownIcon != null ? crownSize + 2 : 0);
         int priceX = x + (w - priceW) / 2;
         if (crownIcon != null) {
-            drawCrispIcon(g, crownIcon, priceX, y + h - 12, crownSize);
+            drawCrispIcon(g, crownIcon, priceX, y + h - 11, crownSize);
             priceX += crownSize + 2;
         }
-        g.drawString(item.priceLabel, priceX, y + h - 4);
+        g.drawString(item.priceLabel, priceX, y + h - 3);
         g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
     }
 
-    private void drawCardBackText(Graphics2D g, ShopItem item, int w, int h, int x, int y) {
+    private void drawCardBackText(Graphics2D g, ShopItem item, Rectangle card) {
+        int x = card.x;
+        int y = card.y;
+        int w = card.width;
+
         g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-        g.setFont(new Font("Serif", Font.BOLD, 8));
+        g.setFont(new Font("Serif", Font.BOLD, 7));
         g.setColor(new Color(255, 220, 130));
         FontMetrics fm = g.getFontMetrics();
-        int lineY = y + 14;
+        int lineY = y + 12;
         for (String line : item.statLines) {
-            String text = truncateToWidth(line, fm, w - 8);
+            String text = truncateToWidth(line, fm, w - 6);
             g.drawString(text, x + (w - fm.stringWidth(text)) / 2, lineY);
             lineY += fm.getHeight() + 1;
         }
         g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
+    }
+
+    /** Рисует спрайт в слот без искажения пропорций. */
+    private Rectangle drawAspectFitSprite(Graphics2D g, BufferedImage img, int x, int y, int w, int h,
+                                          boolean pixelArt) {
+        if (img == null || w <= 0 || h <= 0) {
+            return new Rectangle(x, y, w, h);
+        }
+        int srcW = img.getWidth();
+        int srcH = img.getHeight();
+        if (srcW <= 0 || srcH <= 0) {
+            return new Rectangle(x, y, w, h);
+        }
+
+        float srcAspect = (float) srcW / srcH;
+        float dstAspect = (float) w / h;
+        int drawW;
+        int drawH;
+        if (srcAspect > dstAspect) {
+            drawW = w;
+            drawH = Math.max(1, Math.round(w / srcAspect));
+        } else {
+            drawH = h;
+            drawW = Math.max(1, Math.round(h * srcAspect));
+        }
+        int drawX = x + (w - drawW) / 2;
+        int drawY = y + (h - drawH) / 2;
+        drawScaledSprite(g, img, drawX, drawY, drawW, drawH, pixelArt);
+        return new Rectangle(drawX, drawY, drawW, drawH);
     }
 
     /** Отрисовка иконки без размытия — nearest-neighbor, целые координаты. */
