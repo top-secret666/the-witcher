@@ -30,7 +30,10 @@ final class ShopAssetCache {
 
     final int cardW = 54;
     final int cardH = 81;
-    final int cardArtSize = cardW - 10;
+    /** Иконка на карточке — меньше рамки, чтобы текст не давил. */
+    final int cardArtSize = 32;
+    final int gridCols = 5;
+    final int gridRows = 2;
     final int btnW = 100;
     final int btnH = 30;
     final int panelW = 380;
@@ -51,6 +54,7 @@ final class ShopAssetCache {
 
     final BufferedImage[] itemIcons = new BufferedImage[5];
     final BufferedImage[] itemArts = new BufferedImage[5];
+    final BufferedImage setCatalogIcon;
 
     private ShopAssetCache() {
         long t0 = System.currentTimeMillis();
@@ -93,7 +97,18 @@ final class ShopAssetCache {
             itemArts[i] = itemIcons[i];
         }
 
-        int panelDrawH = 145;
+        setCatalogIcon = loadSized(UI + "icon_legendary_frame.png", cardArtSize, cardArtSize,
+            BASE + "ui/icon_legendary_frame.png", true);
+        if (setCatalogIcon == null) {
+            setCatalogIcon = crownIconScaled;
+        }
+
+        int headerH = 22;
+        int panelY = hudY + hudH + 6;
+        int cardsY = panelY + headerH + 6;
+        int cardGap = 6;
+        int contentBottom = cardsY + gridRows * cardH + (gridRows - 1) * cardGap;
+        int panelDrawH = contentBottom + 6 + btnH + 4 - panelY;
         catalogPanelScaled = loadSized(UI + "shop_catalog_panel.png", panelW, panelDrawH,
             BASE + "ui/shop_catalog_panel.png", false);
 

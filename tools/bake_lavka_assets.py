@@ -23,11 +23,14 @@ DST = SRC / "1x"
 
 VIRTUAL_W, VIRTUAL_H = 480, 360
 CARD_W, CARD_H = 54, 81
-CARD_ART = CARD_W - 10
+CARD_ART = 32
+GRID_COLS = 5
+GRID_ROWS = 2
 PANEL_W = 380
 BTN_W, BTN_H = 100, 30
 HUD_H = 58
-PANEL_H = 145
+# 2 ряда карточек + заголовок + кнопка
+PANEL_H = 22 + 6 + GRID_ROWS * CARD_H + (GRID_ROWS - 1) * 6 + 6 + BTN_H + 8
 CHAR_H = round(VIRTUAL_H * 0.70)
 
 
