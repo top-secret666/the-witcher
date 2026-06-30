@@ -549,14 +549,26 @@ public class ShopScreen {
                 layout.btnW, layout.btnH, true);
         }
 
-        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-        g.setFont(new Font("Serif", Font.BOLD, 12));
+        drawCrispText(g);
+        g.setFont(new Font("Serif", Font.BOLD, 11));
         g.setColor(new Color(90, 75, 50));
         String label = "Скоро";
         FontMetrics fm = g.getFontMetrics();
         g.drawString(label, layout.btnX + (layout.btnW - fm.stringWidth(label)) / 2, layout.btnY + 19);
-        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
         g.setComposite(prev);
+    }
+
+    private static void applyCrispRendering(Graphics2D g) {
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
+        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+        g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
+        g.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_OFF);
+    }
+
+    private static void drawCrispText(Graphics2D g) {
+        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
     }
 
     private void drawCharacter(Graphics2D g, int sw, int sh, BufferedImage sprite,
@@ -575,7 +587,7 @@ public class ShopScreen {
         Composite prev = g.getComposite();
         g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.92f * alpha));
         Object prevInterp = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
-        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
         g.drawImage(sprite, cx, cy, cw, ch, null);
         if (prevInterp != null) {
             g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, prevInterp);
@@ -649,7 +661,7 @@ public class ShopScreen {
         Composite prev = g.getComposite();
         g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
         Object prevInterp = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
-        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
         g.drawImage(img, x, y, w, h, null);
         if (prevInterp != null) {
             g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, prevInterp);
