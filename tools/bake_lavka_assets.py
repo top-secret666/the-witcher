@@ -29,8 +29,8 @@ GRID_ROWS = 2
 PANEL_W = 380
 BTN_W, BTN_H = 100, 30
 HUD_H = 58
-SIGN_W, SIGN_H = 300, 40
-PANEL_HEADER_H = SIGN_H + 8
+WALLET_FRAME_W, WALLET_FRAME_H = 200, 36
+PANEL_HEADER_H = WALLET_FRAME_H + 10
 PANEL_H = PANEL_HEADER_H + 4 + GRID_ROWS * CARD_H + (GRID_ROWS - 1) * 6 + 6 + BTN_H + 8
 CHAR_H = round(VIRTUAL_H * 0.70)
 
@@ -41,27 +41,27 @@ def ensure_weapon_icon() -> None:
     if path.is_file():
         return
     path.parent.mkdir(parents=True, exist_ok=True)
-    img = Image.new("RGBA", (64, 64), (0, 0, 0, 0))
+    size = 64
+    img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
     px = img.load()
+    cx = size // 2
     steel = (185, 195, 210, 255)
     gold = (210, 170, 55, 255)
     grip = (90, 55, 30, 255)
-    for y in range(10, 50):
-        px[31, y] = steel
-        px[32, y] = steel
-    for y in range(50, 58):
-        px[30, y] = grip
-        px[31, y] = grip
-        px[32, y] = grip
-        px[33, y] = grip
-    for x in range(27, 37):
-        px[x, 58] = gold
-        px[x, 59] = gold
-    for x in range(30, 34):
-        px[x, 8] = steel
-        px[x, 9] = steel
+    for y in range(12, 46):
+        px[cx - 1, y] = steel
+        px[cx, y] = steel
+    for y in range(46, 54):
+        for dx in (-1, 0, 1):
+            px[cx + dx, y] = grip
+    for x in range(cx - 4, cx + 5):
+        px[x, 54] = gold
+        px[x, 55] = gold
+    for x in range(cx - 1, cx + 2):
+        px[x, 10] = steel
+        px[x, 11] = steel
     img.save(path)
-    print(f"  PLACEHOLDER icons/icon_weapon.png (64x64)")
+    print(f"  PLACEHOLDER icons/icon_weapon.png ({size}x{size})")
 
 
 def content_bounds(img: Image.Image) -> tuple[int, int, int, int]:
@@ -162,7 +162,7 @@ def main() -> None:
 
     jobs: list[tuple[str, int, int, dict]] = [
         ("ui/shop_hud_bar.png", PANEL_W, HUD_H, {"crop": True}),
-        ("ui/shop_sign_title.png", SIGN_W, SIGN_H, {"crop": True}),
+        ("ui/shop_sign_title.png", WALLET_FRAME_W, WALLET_FRAME_H, {"crop": True}),
         ("ui/shop_catalog_panel.png", PANEL_W, PANEL_H, {}),
         ("ui/shop_card_front.png", CARD_W, CARD_H, {}),
         ("ui/shop_card_back.png", CARD_W, CARD_H, {}),
