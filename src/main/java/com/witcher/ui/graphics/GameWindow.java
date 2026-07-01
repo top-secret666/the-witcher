@@ -652,10 +652,7 @@ public class GameWindow {
                 if (shopScreen.isExitRequested()) {
                     shopActive = false;
                     shopScreen.clearExitRequest();
-                    mainMenu = new MainMenuScreen();
                     enterMainMenuMode();
-                    menuActive = true;
-                    useHiddenCursor();
                 }
             } else {
                 renderer.update();
