@@ -25,5 +25,5 @@ if exist "%RES%" (
 )
 
 echo Запуск из: %BIN%
-"%JAVA_HOME%\bin\java.exe" -cp "%BIN%" main.java.com.witcher.ui.graphics.GameWindow
+"%JAVA_HOME%\bin\java.exe" -Dsun.java2d.uiScale.enabled=false -Dawt.useSystemAAFontSettings=off -Dswing.aatext=false -cp "%BIN%" main.java.com.witcher.ui.graphics.GameWindow
 endlocal

@@ -118,11 +118,7 @@ public class SplashScreen {
         int sw = screen.getWidth();
         int sh = screen.getHeight();
         Graphics2D g = screen.createGraphics();
-        g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-        // Пиксельная подача: резкие края, без «мыла»
-        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
-        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
-        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
+        PixelDraw.applyNearest(g);
 
         // === ФОН: чёрный ===
         g.setColor(Color.BLACK);
@@ -135,17 +131,19 @@ public class SplashScreen {
                 bgScaledForH = sh;
                 bgScaled = new BufferedImage(sw, sh, BufferedImage.TYPE_INT_ARGB);
                 Graphics2D bg = bgScaled.createGraphics();
-                bg.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+                PixelDraw.applyNearest(bg);
                 bg.setColor(Color.BLACK);
                 bg.fillRect(0, 0, sw, sh);
                 int srcW = background.getWidth();
                 int srcH = background.getHeight();
                 float contain = Math.min((float) sw / srcW, (float) sh / srcH);
-                // Чуть уменьшаем размер, чтобы фон не был «в упор» к границам окна
                 float scale = contain * 0.94f;
                 int drawW = Math.round(srcW * scale);
                 int drawH = Math.round(srcH * scale);
-                bg.drawImage(background.getImage(), (sw - drawW) / 2, (sh - drawH) / 2, drawW, drawH, null);
+                int dx = (sw - drawW) / 2;
+                int dy = (sh - drawH) / 2;
+                bg.drawImage(background.getImage(), dx, dy, dx + drawW, dy + drawH,
+                    0, 0, srcW, srcH, null);
                 bg.dispose();
             }
             g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, clamp(alpha * 0.88f, 0f, 1f)));
