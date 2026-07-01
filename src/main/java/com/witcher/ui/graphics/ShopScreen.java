@@ -16,14 +16,13 @@ public class ShopScreen {
     private static final int DIALOG_TEXT_ZONE = 54;
 
     private enum ShopState {
-        WELCOME,
         REVEAL,
         BROWSE,
         IDLE
     }
 
-    private static final int WELCOME_TICKS = 120;
-    private static final int REVEAL_DURATION_TICKS = 78;
+    /** ~4 с при 30 FPS — заметное появление витрины. */
+    private static final int REVEAL_DURATION_TICKS = 120;
 
     private static final int GRID_COLS = 5;
 
@@ -122,12 +121,11 @@ public class ShopScreen {
     private boolean[] cardFaceBack;
     private final Random rng = new Random();
 
-    private ShopState state = ShopState.WELCOME;
+    private ShopState state = ShopState.REVEAL;
     private String currentDialog;
     private int selectedIndex = -1;
     private int hoveredIndex = -1;
     private int tick = 0;
-    private int welcomeTicks = 0;
     private int revealTicks = 0;
     private boolean exitRequested = false;
 
@@ -176,17 +174,11 @@ public class ShopScreen {
     public void update(int mouseX, int mouseY, boolean clicked, boolean escPressed) {
         tick++;
 
-        welcomeTicks++;
-
         if (escPressed) {
             exitRequested = true;
             return;
         }
 
-        if (state == ShopState.WELCOME && welcomeTicks >= WELCOME_TICKS) {
-            state = ShopState.REVEAL;
-            revealTicks = 0;
-        }
         if (state == ShopState.REVEAL) {
             revealTicks++;
             if (revealTicks >= REVEAL_DURATION_TICKS) {
@@ -239,7 +231,6 @@ public class ShopScreen {
 
     private ShopRevealAnimator revealAnimator() {
         return switch (state) {
-            case WELCOME -> ShopRevealAnimator.hidden(items.size());
             case REVEAL -> ShopRevealAnimator.forProgress(
                 revealTicks / (float) REVEAL_DURATION_TICKS, items.size(), true);
             default -> ShopRevealAnimator.complete(items.size());
@@ -258,29 +249,47 @@ public class ShopScreen {
         ShopLayout layout = new ShopLayout(sw, sh, items.size(),
             assets.hudX, assets.hudW, assets.hudH, assets.panelW);
         ShopRevealAnimator reveal = revealAnimator();
-        float sceneAlpha = 1f;
+        float brighten = reveal.sceneBrighten;
 
-        drawScaledBackground(g, assets.merchantBgScaled, sw, sh, 0.75f * sceneAlpha);
-        drawDarkOverlay(g, sw, sh, layout, sceneAlpha * Math.max(reveal.panelAlpha, 0.35f));
+        drawScaledBackground(g, assets.merchantBgScaled, sw, sh, 0.75f * brighten);
+        drawDarkOverlay(g, sw, sh, layout, brighten * Math.max(0.25f, reveal.panelAlpha * 0.85f));
 
         BufferedImage dukeDraw = (state == ShopState.BROWSE && selectedIndex >= 0)
             ? (assets.dukeLaughScaled != null ? assets.dukeLaughScaled : assets.dukeScaled)
             : assets.dukeScaled;
-        drawCharacter(g, sw, sh, assets.geraltScaled, true, layout.dialogTop, sceneAlpha);
-        drawCharacter(g, sw, sh, dukeDraw, false, layout.dialogTop, sceneAlpha);
+        drawCharacter(g, sw, sh, assets.geraltScaled, true, layout.dialogTop, brighten);
+        drawCharacter(g, sw, sh, dukeDraw, false, layout.dialogTop, brighten);
 
         drawHud(g, layout, reveal.hudAlpha, reveal.hudSlideY);
         drawCards(g, layout, reveal);
-        drawBuyButton(g, layout, reveal.btnAlpha);
+        drawBuyButton(g, layout, reveal.btnAlpha, reveal.btnSlideY);
+
+        if (reveal.panelFlash > 0.02f) {
+            drawPanelFlash(g, layout, reveal);
+        }
 
         if (reveal.panelAlpha > 0.45f) {
             drawAshParticles(g);
         }
 
         DialogBoxRenderer.drawCompactFramedSpeakerText(g, sw, sh, "Герцог", currentDialog,
-            DialogBoxRenderer.DUKE_COLOR, sceneAlpha);
+            DialogBoxRenderer.DUKE_COLOR, 1f);
 
         g.dispose();
+    }
+
+    private void drawPanelFlash(Graphics2D g, ShopLayout layout, ShopRevealAnimator reveal) {
+        Composite prev = g.getComposite();
+        int cx = layout.panelX + layout.panelW / 2;
+        int cy = layout.panelY + layout.panelH / 2;
+        int fw = Math.round(layout.panelW * reveal.panelScale);
+        int fh = Math.round(layout.panelH * reveal.panelScale);
+        int fx = cx - fw / 2;
+        int fy = cy - fh / 2;
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, reveal.panelFlash));
+        g.setColor(new Color(255, 210, 90));
+        g.fillRoundRect(fx - 2, fy - 2, fw + 4, fh + 4, 8, 8);
+        g.setComposite(prev);
     }
 
     public boolean isExitRequested() {
@@ -374,12 +383,13 @@ public class ShopScreen {
         Composite layer = g.getComposite();
         float scale = reveal.panelScale;
         int panelCx = layout.panelX + layout.panelW / 2;
-        int panelCy = layout.panelY + layout.panelH / 2;
+        int panelCy = layout.panelY + layout.panelH / 2 + Math.round(reveal.panelSlideY);
 
         if (assets.catalogPanelScaled != null) {
             g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, reveal.panelAlpha));
             drawScaledCentered(g, assets.catalogPanelScaled,
-                layout.panelX, layout.panelY, layout.panelW, layout.panelH, panelCx, panelCy, scale);
+                layout.panelX, layout.panelY + Math.round(reveal.panelSlideY),
+                layout.panelW, layout.panelH, panelCx, panelCy, scale);
         }
 
         for (int i = 0; i < items.size(); i++) {
@@ -387,6 +397,7 @@ public class ShopScreen {
             Point slot = layout.cardSlot(i);
             float cardA = i < reveal.cardAlpha.length ? reveal.cardAlpha[i] : 1f;
             float cardS = i < reveal.cardScale.length ? reveal.cardScale[i] : 1f;
+            float cardSlide = i < reveal.cardSlideY.length ? reveal.cardSlideY[i] : 0f;
             if (cardA <= 0.01f) {
                 item.bounds.setBounds(0, 0, 0, 0);
                 continue;
@@ -394,7 +405,7 @@ public class ShopScreen {
             int cardW = Math.round(layout.cardW * cardS);
             int cardH = Math.round(layout.cardH * cardS);
             int cardX = slot.x + (layout.cardW - cardW) / 2;
-            int cardY = slot.y + (layout.cardH - cardH) / 2;
+            int cardY = slot.y + (layout.cardH - cardH) / 2 + Math.round(cardSlide);
             item.bounds.setBounds(cardX, cardY, cardW, cardH);
             drawItemCard(g, item, cardX, cardY, cardW, cardH, i,
                 i == selectedIndex, i == hoveredIndex, cardFlip[i], cardA);
@@ -608,15 +619,16 @@ public class ShopScreen {
         return ellipsis;
     }
 
-    private void drawBuyButton(Graphics2D g, ShopLayout layout, float alpha) {
+    private void drawBuyButton(Graphics2D g, ShopLayout layout, float alpha, float slideY) {
         if (alpha <= 0.01f) {
             return;
         }
         Composite prev = g.getComposite();
         g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
+        int btnY = layout.btnY + Math.round(slideY);
 
         if (assets.btnBuyScaled != null) {
-            g.drawImage(assets.btnBuyScaled, layout.btnX, layout.btnY, null);
+            g.drawImage(assets.btnBuyScaled, layout.btnX, btnY, null);
         }
 
         drawCrispText(g);
@@ -624,7 +636,7 @@ public class ShopScreen {
         String label = "Купить";
         FontMetrics fm = g.getFontMetrics();
         int tx = layout.btnX + (layout.btnW - fm.stringWidth(label)) / 2;
-        drawOutlinedText(g, label, tx, layout.btnY + 19, new Color(220, 200, 140));
+        drawOutlinedText(g, label, tx, btnY + 19, new Color(220, 200, 140));
         g.setComposite(prev);
     }
 
