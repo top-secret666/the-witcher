@@ -9,10 +9,10 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
-import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import main.java.com.witcher.gdx.WitcherGame;
+import org.lwjgl.glfw.GLFW;
 
 /**
  * Пиксельная шапка и рамка окна — как Swing {@code GameWindow.PixelTitleBar} / {@code PixelBorder}.
@@ -26,7 +26,6 @@ public final class PixelFrameChrome extends InputAdapter {
 
     private final GlyphLayout glyph = new GlyphLayout();
     private final Vector3 tmp = new Vector3();
-    private final Matrix4 gameMatrix = new Matrix4();
 
     private BitmapFont titleFont;
     private boolean hoverMinimize;
@@ -34,8 +33,9 @@ public final class PixelFrameChrome extends InputAdapter {
     private boolean pressedMinimize;
     private boolean pressedClose;
     private boolean dragging;
-    private int dragStartX;
-    private int dragStartY;
+    private long dragHandle;
+    private double dragCursorStartX;
+    private double dragCursorStartY;
     private int dragWinX;
     private int dragWinY;
 
@@ -51,12 +51,6 @@ public final class PixelFrameChrome extends InputAdapter {
             titleFont.dispose();
             titleFont = null;
         }
-    }
-
-    public Matrix4 gameContentMatrix(Matrix4 frameMatrix) {
-        gameMatrix.set(frameMatrix);
-        gameMatrix.translate(WitcherGame.GAME_VX, WitcherGame.GAME_VY, 0f);
-        return gameMatrix;
     }
 
     public void drawBackground(ShapeRenderer shapes) {
@@ -184,10 +178,17 @@ public final class PixelFrameChrome extends InputAdapter {
         }
         if (hit(titleDragBounds(), w[0], w[1]) && Gdx.graphics instanceof Lwjgl3Graphics lwjgl) {
             dragging = true;
-            dragStartX = screenX;
-            dragStartY = screenY;
-            dragWinX = lwjgl.getWindow().getPositionX();
-            dragWinY = lwjgl.getWindow().getPositionY();
+            dragHandle = lwjgl.getWindow().getWindowHandle();
+            double[] cx = new double[1];
+            double[] cy = new double[1];
+            GLFW.glfwGetCursorPos(dragHandle, cx, cy);
+            dragCursorStartX = cx[0];
+            dragCursorStartY = cy[0];
+            int[] wx = new int[1];
+            int[] wy = new int[1];
+            GLFW.glfwGetWindowPos(dragHandle, wx, wy);
+            dragWinX = wx[0];
+            dragWinY = wy[0];
             return true;
         }
         return false;
@@ -195,12 +196,15 @@ public final class PixelFrameChrome extends InputAdapter {
 
     @Override
     public boolean touchDragged(int screenX, int screenY, int pointer) {
-        if (!dragging || !(Gdx.graphics instanceof Lwjgl3Graphics lwjgl)) {
+        if (!dragging || dragHandle == 0) {
             return false;
         }
-        int dx = screenX - dragStartX;
-        int dy = screenY - dragStartY;
-        lwjgl.getWindow().setPosition(dragWinX + dx, dragWinY - dy);
+        double[] cx = new double[1];
+        double[] cy = new double[1];
+        GLFW.glfwGetCursorPos(dragHandle, cx, cy);
+        int dx = (int) Math.round(cx[0] - dragCursorStartX);
+        int dy = (int) Math.round(cy[0] - dragCursorStartY);
+        GLFW.glfwSetWindowPos(dragHandle, dragWinX + dx, dragWinY + dy);
         return true;
     }
 
