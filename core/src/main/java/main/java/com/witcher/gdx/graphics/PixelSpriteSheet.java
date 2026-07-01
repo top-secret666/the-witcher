@@ -1,5 +1,6 @@
 package main.java.com.witcher.gdx.graphics;
 
+import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
@@ -8,6 +9,7 @@ import com.badlogic.gdx.utils.Disposable;
 
 /**
  * Пиксельный спрайт-лист — кадры с {@link Texture.TextureFilter#Nearest}.
+ * Загрузка только через {@link Pixmap} с диска (без consumePixmap у GPU-текстуры).
  */
 public final class PixelSpriteSheet implements Disposable {
 
@@ -20,13 +22,11 @@ public final class PixelSpriteSheet implements Disposable {
     private int direction = 1;
     private final int frameWidth;
     private final int frameHeight;
-    private boolean ownedTexture;
 
-    private PixelSpriteSheet(Texture texture, TextureRegion[] frames, int frameDelay, boolean ownedTexture) {
+    private PixelSpriteSheet(Texture texture, TextureRegion[] frames, int frameDelay) {
         this.texture = texture;
         this.frames = frames;
         this.frameDelay = frameDelay;
-        this.ownedTexture = ownedTexture;
         frameWidth = frames.length > 0 ? frames[0].getRegionWidth() : 0;
         frameHeight = frames.length > 0 ? frames[0].getRegionHeight() : 0;
     }
@@ -36,57 +36,61 @@ public final class PixelSpriteSheet implements Disposable {
     }
 
     public static PixelSpriteSheet load(String path, int cols, int rows, int frameDelay, boolean removeBlackBg) {
-        Texture texture = PixelTextures.loadOptional(path);
-        if (texture == null) {
+        FileHandle file = PixelTextures.resolve(path);
+        if (file == null) {
             return null;
         }
-        if (removeBlackBg) {
-            Texture processed = stripNearBlack(texture);
-            if (processed != texture) {
-                texture.dispose();
-                texture = processed;
-            }
-        }
-        texture.setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest);
-
-        int fw = texture.getWidth() / cols;
-        int fh = texture.getHeight() / rows;
-        int total = cols * rows;
-        TextureRegion[] regions = new TextureRegion[total];
-        for (int r = 0; r < rows; r++) {
-            for (int c = 0; c < cols; c++) {
-                regions[r * cols + c] = new TextureRegion(texture, c * fw, r * fh, fw, fh);
-            }
-        }
-        return new PixelSpriteSheet(texture, regions, frameDelay, true);
-    }
-
-    private static Texture stripNearBlack(Texture source) {
-        if (!source.getTextureData().isPrepared()) {
-            source.getTextureData().prepare();
-        }
-        Pixmap pixmap = source.getTextureData().consumePixmap();
+        Pixmap pixmap = new Pixmap(file);
         try {
-            for (int y = 0; y < pixmap.getHeight(); y++) {
-                for (int x = 0; x < pixmap.getWidth(); x++) {
-                    int rgba = pixmap.getPixel(x, y);
-                    int a = rgba & 0xff;
-                    if (a <= 20) {
-                        continue;
-                    }
-                    int r = (rgba >>> 24) & 0xff;
-                    int g = (rgba >>> 16) & 0xff;
-                    int b = (rgba >>> 8) & 0xff;
-                    if (r < 30 && g < 30 && b < 30) {
-                        pixmap.drawPixel(x, y, 0);
-                    }
+            pixmap = ensureRgba(pixmap);
+            if (removeBlackBg) {
+                stripNearBlackInPlace(pixmap);
+            }
+            Texture texture = new Texture(pixmap);
+            texture.setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest);
+
+            int fw = texture.getWidth() / cols;
+            int fh = texture.getHeight() / rows;
+            int total = cols * rows;
+            TextureRegion[] regions = new TextureRegion[total];
+            for (int r = 0; r < rows; r++) {
+                for (int c = 0; c < cols; c++) {
+                    regions[r * cols + c] = new TextureRegion(texture, c * fw, r * fh, fw, fh);
                 }
             }
-            Texture out = new Texture(pixmap);
-            out.setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest);
-            return out;
+            return new PixelSpriteSheet(texture, regions, frameDelay);
         } finally {
             pixmap.dispose();
+        }
+    }
+
+    private static Pixmap ensureRgba(Pixmap pixmap) {
+        if (pixmap.getFormat() == Pixmap.Format.RGBA8888) {
+            return pixmap;
+        }
+        Pixmap rgba = new Pixmap(pixmap.getWidth(), pixmap.getHeight(), Pixmap.Format.RGBA8888);
+        rgba.drawPixmap(pixmap, 0, 0);
+        pixmap.dispose();
+        return rgba;
+    }
+
+    private static void stripNearBlackInPlace(Pixmap pixmap) {
+        int w = pixmap.getWidth();
+        int h = pixmap.getHeight();
+        for (int y = 0; y < h; y++) {
+            for (int x = 0; x < w; x++) {
+                int rgba = pixmap.getPixel(x, y);
+                int a = rgba & 0xff;
+                if (a <= 20) {
+                    continue;
+                }
+                int r = (rgba >>> 24) & 0xff;
+                int g = (rgba >>> 16) & 0xff;
+                int b = (rgba >>> 8) & 0xff;
+                if (r < 30 && g < 30 && b < 30) {
+                    pixmap.drawPixel(x, y, 0);
+                }
+            }
         }
     }
 
@@ -135,9 +139,8 @@ public final class PixelSpriteSheet implements Disposable {
 
     @Override
     public void dispose() {
-        if (ownedTexture && texture != null) {
+        if (texture != null) {
             texture.dispose();
-            ownedTexture = false;
         }
     }
 }

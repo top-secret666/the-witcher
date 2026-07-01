@@ -117,6 +117,10 @@ public class SplashScreen implements Screen {
         drawLines();
         shapes.end();
 
+        game.batch.begin();
+        drawLoadText();
+        game.batch.end();
+
         if (finished && !transitioning) {
             transitioning = true;
             game.setScreen(new BootScreen(game));
@@ -297,15 +301,17 @@ public class SplashScreen implements Screen {
             shapes.setColor(0f, 0f, 0f, alpha * 0.4f);
             shapes.rect(lx - 4f, ly - 2f, drawW + 8f, drawH + 4f);
         }
+    }
 
-        game.batch.begin();
+    private void drawLoadText() {
+        int barH = 8;
+        float barBottom = 20f - barH;
         String loadText = "Загрузка... " + progress + "%";
         glyph.setText(fonts.uiSmall, loadText);
         fonts.uiSmall.setColor(GOLD);
         float textX = (VW - glyph.width) / 2f;
         float textY = barBottom + barH + glyph.height + 4f;
         fonts.uiSmall.draw(game.batch, loadText, textX, textY);
-        game.batch.end();
     }
 
     private static float topToBottomY(float top, float height) {
