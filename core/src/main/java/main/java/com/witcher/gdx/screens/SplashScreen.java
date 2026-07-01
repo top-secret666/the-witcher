@@ -116,7 +116,7 @@ public class SplashScreen implements Screen {
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         viewport.update(Gdx.graphics.getWidth(), Gdx.graphics.getHeight(), true);
         viewport.apply();
-        DisplayMetrics.logViewport("splash-render", viewport);
+        DisplayMetrics.logOnceViewport("splash-render", viewport);
 
         if (!metricsLoggedAfterDraw) {
             metricsLoggedAfterDraw = true;
@@ -182,9 +182,9 @@ public class SplashScreen implements Screen {
 
         if (tick % 4 == 0 && alpha > 0.3f) {
             float px = 40 + rng.nextFloat() * 400;
-            float py = 200 + rng.nextFloat() * 120;
+            float py = VH - (200 + rng.nextFloat() * 120);
             float vx = (rng.nextFloat() - 0.5f) * 0.6f;
-            float vy = 0.2f + rng.nextFloat() * 0.5f;
+            float vy = -(0.2f + rng.nextFloat() * 0.5f);
             int life = 30 + rng.nextInt(50);
             Color c = rng.nextFloat() < 0.6f ? GOLD : GOLD_BRIGHT;
             particles.add(new Particle(px, py, vx, vy, life, c, 2 + rng.nextInt(2)));
@@ -199,11 +199,11 @@ public class SplashScreen implements Screen {
 
         if (tick % 10 == 0 && alpha > 0.25f) {
             float px = 35 + rng.nextFloat() * 410;
-            float py = 90 + rng.nextFloat() * 70;
+            float py = VH - (90 + rng.nextFloat() * 70);
             float vx = (rng.nextFloat() - 0.5f) * 0.18f;
-            float vy = 0.12f + rng.nextFloat() * 0.22f;
+            float vy = -(0.12f + rng.nextFloat() * 0.22f);
             int life = 120 + rng.nextInt(120);
-            float r = 6 + rng.nextInt(10);
+            float r = 4 + rng.nextInt(6);
             smokePuffs.add(new SmokePuff(px, py, vx, vy, life, r));
         }
         for (int i = smokePuffs.size - 1; i >= 0; i--) {
@@ -478,13 +478,13 @@ public class SplashScreen implements Screen {
 
         void draw(ShapeRenderer shapes) {
             float t = 1f - (life / (float) maxLife);
-            float a = (float) (Math.sin(t * Math.PI) * 0.12f);
+            float a = (float) (Math.sin(t * Math.PI) * 0.22f);
             if (a <= 0f) {
                 return;
             }
-            shapes.setColor(SMOKE.r, SMOKE.g, SMOKE.b, a);
+            shapes.setColor(SMOKE.r, SMOKE.g, SMOKE.b, a * 0.45f);
             shapes.circle(x, y, r);
-            shapes.setColor(SMOKE.r, SMOKE.g, SMOKE.b, a * 0.55f);
+            shapes.setColor(SMOKE.r, SMOKE.g, SMOKE.b, a * 0.25f);
             shapes.circle(x - 4f, y + 2f, r * 0.85f);
             shapes.circle(x + 6f, y - 1f, r * 0.85f);
         }

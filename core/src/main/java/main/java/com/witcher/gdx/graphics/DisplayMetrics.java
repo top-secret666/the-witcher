@@ -14,8 +14,17 @@ import org.lwjgl.opengl.GL11;
 public final class DisplayMetrics {
 
     private static int logCount;
+    private static boolean viewportLoggedOnce;
 
     private DisplayMetrics() {
+    }
+
+    public static void logOnceViewport(String tag, Viewport viewport) {
+        if (viewportLoggedOnce || viewport == null) {
+            return;
+        }
+        viewportLoggedOnce = true;
+        logViewport(tag, viewport);
     }
 
     public static void log(String tag) {
@@ -120,6 +129,9 @@ public final class DisplayMetrics {
             float[] scaleY = new float[1];
             GLFW.glfwGetWindowContentScale(handle, scaleX, scaleY);
             sb.append("GLFW contentScale: ").append(scaleX[0]).append('x').append(scaleY[0]).append('\n');
+            int physW = Math.round(winW[0] * scaleX[0]);
+            int physH = Math.round(winH[0] * scaleY[0]);
+            sb.append("GLFW physicalClient (window*scale): ").append(physW).append('x').append(physH).append('\n');
 
             int[] posX = new int[1];
             int[] posY = new int[1];
@@ -180,6 +192,17 @@ public final class DisplayMetrics {
                 if (winW[0] != fbW[0] || winH[0] != fbH[0]) {
                     sb.append("Diag: GLFW window != framebuffer — masshtab Windows / HiDPI.\n");
                     sb.append("      Eto chastaya prichina chernyh polej vokrug kadra.\n");
+                }
+                float[] sx = new float[1];
+                float[] sy = new float[1];
+                GLFW.glfwGetWindowContentScale(handle, sx, sy);
+                int physW = Math.round(winW[0] * sx[0]);
+                int physH = Math.round(winH[0] * sy[0]);
+                if (physW != fbW[0] || physH != fbH[0]) {
+                    sb.append("Diag: fizicheskij klient ~").append(physW).append('x').append(physH)
+                        .append(", framebuffer ").append(fbW[0]).append('x').append(fbH[0])
+                        .append(" — OS mozhet risovat chernye polya.\n");
+                    sb.append("      Reshenie: HdpiMode.Pixels v DesktopLauncher.\n");
                 }
                 if (winW[0] > fbW[0] + 4 || winH[0] > fbH[0] + 4) {
                     sb.append("Diag: okno krupnee framebuffer — OS risuet ramku vokrug.\n");
