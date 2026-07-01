@@ -223,8 +223,10 @@ public class GameWindow {
         if (device.getFullScreenWindow() == frame) {
             device.setFullScreenWindow(null);
         }
+        frame.setExtendedState(Frame.NORMAL);
+        frame.setVisible(true);
 
-        frame.setUndecorated(true);
+        // setUndecorated нельзя после show/fullscreen — рамка уже снята в конструкторе.
         frame.getRootPane().setBorder(BorderFactory.createEmptyBorder());
 
         int gw = renderer.getDisplayWidth();
