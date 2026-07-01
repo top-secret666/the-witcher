@@ -956,7 +956,8 @@ public class ShopScreen {
     }
 
     private Rectangle drawAspectFitCroppedSprite(Graphics2D g, BufferedImage img, Rectangle crop,
-                                                 int x, int y, int w, int h, boolean pixelArt) {
+                                                 int x, int y, int w, int h, boolean pixelArt,
+                                                 int maxPixelSize) {
         if (img == null || crop == null || crop.width <= 0 || crop.height <= 0 || w <= 0 || h <= 0) {
             return new Rectangle(x, y, w, h);
         }
@@ -970,6 +971,18 @@ public class ShopScreen {
         } else {
             drawH = h;
             drawW = Math.max(1, Math.round(h * srcAspect));
+        }
+        if (pixelArt && maxPixelSize > 0) {
+            int cap = Math.min(maxPixelSize, Math.min(w, h));
+            if (drawW > cap || drawH > cap) {
+                if (drawW >= drawH) {
+                    drawW = cap;
+                    drawH = Math.max(1, Math.round(cap / srcAspect));
+                } else {
+                    drawH = cap;
+                    drawW = Math.max(1, Math.round(cap * srcAspect));
+                }
+            }
         }
         int drawX = x + (w - drawW) / 2;
         int drawY = y + (h - drawH) / 2;
