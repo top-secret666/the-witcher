@@ -80,6 +80,11 @@ public class GameWindow {
 
         frame.add(renderer, BorderLayout.CENTER);
 
+        Dimension gameSize = new Dimension(renderer.getDisplayWidth(), renderer.getDisplayHeight());
+        renderer.setPreferredSize(gameSize);
+        renderer.setMinimumSize(gameSize);
+        renderer.setMaximumSize(gameSize);
+
         // Тонкая рамка вокруг окна (раз уж системную убрали)
         frame.getRootPane().setOpaque(true);
         frame.getRootPane().setBackground(Color.BLACK);

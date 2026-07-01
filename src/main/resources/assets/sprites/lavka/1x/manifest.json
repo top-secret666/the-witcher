@@ -4,10 +4,13 @@
     360
   ],
   "panelW": 380,
+  "detailPanelW": 292,
   "cardSize": [
     54,
     81
   ],
+  "cardArt": 38,
+  "charHeight": 295,
   "assets": [
     {
       "output": "1x/ui/shop_hud_bar.png",
@@ -26,12 +29,20 @@
       "bytes": 142919
     },
     {
+      "output": "1x/ui/shop_catalog_panel_detail.png",
+      "size": [
+        292,
+        232
+      ],
+      "bytes": 109484
+    },
+    {
       "output": "1x/ui/shop_card_front.png",
       "size": [
         54,
         81
       ],
-      "bytes": 8113
+      "bytes": 12517
     },
     {
       "output": "1x/ui/shop_card_back.png",
@@ -39,7 +50,7 @@
         54,
         81
       ],
-      "bytes": 8213
+      "bytes": 9804
     },
     {
       "output": "1x/ui/shop_card_hover.png",
@@ -47,7 +58,7 @@
         54,
         81
       ],
-      "bytes": 7948
+      "bytes": 12132
     },
     {
       "output": "1x/ui/shop_card_selected.png",
@@ -55,7 +66,7 @@
         54,
         81
       ],
-      "bytes": 11029
+      "bytes": 12549
     },
     {
       "output": "1x/ui/shop_btn_buy_disabled.png",
@@ -72,6 +83,38 @@
         30
       ],
       "bytes": 3444
+    },
+    {
+      "output": "1x/ui/shop_row_normal.png",
+      "size": [
+        276,
+        24
+      ],
+      "bytes": 5585
+    },
+    {
+      "output": "1x/ui/shop_row_hover.png",
+      "size": [
+        276,
+        24
+      ],
+      "bytes": 5449
+    },
+    {
+      "output": "1x/ui/shop_row_selected.png",
+      "size": [
+        276,
+        24
+      ],
+      "bytes": 6579
+    },
+    {
+      "output": "1x/ui/icon_legendary_frame.png",
+      "size": [
+        38,
+        38
+      ],
+      "bytes": 2849
     },
     {
       "output": "1x/icons/icon_crown.png",
@@ -92,70 +135,82 @@
     {
       "output": "1x/icons/icon_armor_chest.png",
       "size": [
-        32,
-        32
+        38,
+        38
       ],
-      "bytes": 2601
+      "bytes": 3514
     },
     {
       "output": "1x/icons/icon_armor_legs.png",
       "size": [
-        32,
-        32
+        38,
+        38
       ],
-      "bytes": 2576
+      "bytes": 3602
     },
     {
       "output": "1x/icons/icon_armor_gloves.png",
       "size": [
-        32,
-        32
+        38,
+        38
       ],
-      "bytes": 2577
+      "bytes": 3363
     },
     {
       "output": "1x/icons/icon_armor_boots.png",
       "size": [
-        32,
-        32
+        38,
+        38
       ],
-      "bytes": 2392
+      "bytes": 3218
     },
     {
       "output": "1x/icons/icon_potion.png",
       "size": [
-        32,
-        32
+        38,
+        38
       ],
-      "bytes": 2296
+      "bytes": 3045
+    },
+    {
+      "output": "1x/ui/shop_counter_foreground.png",
+      "size": [
+        480,
+        238
+      ],
+      "bytes": 175469
     },
     {
       "output": "1x/geralt_portrait_shop.png",
       "size": [
-        124,
-        252
-      ]
+        116,
+        295
+      ],
+      "bytes": 62567
     },
     {
       "output": "1x/duke_portrait_shop.png",
       "size": [
-        169,
-        252
-      ]
+        137,
+        295
+      ],
+      "bytes": 68303
     },
     {
       "output": "1x/duke_portrait_fun_shop.png",
       "size": [
-        169,
-        252
-      ]
+        167,
+        295
+      ],
+      "bytes": 80298
     },
     {
       "output": "1x/merchant_bg_lavka.png",
       "size": [
-        482,
+        480,
         360
-      ]
+      ],
+      "bytes": 372716
     }
   ]
 }

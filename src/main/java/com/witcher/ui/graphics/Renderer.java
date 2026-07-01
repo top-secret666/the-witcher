@@ -103,7 +103,24 @@ public class Renderer extends JPanel {
             PixelDraw.applyNearest(g2);
             g2.setColor(Color.BLACK);
             g2.fillRect(0, 0, pw, ph);
-            g2.drawImage(displayFrame, 0, 0, pw, ph, null);
+
+            int fw = displayFrame.getWidth();
+            int fh = displayFrame.getHeight();
+            if (fw <= 0 || fh <= 0) {
+                return;
+            }
+
+            // Только целочисленный масштаб 1×, 2×, … — иначе Java2D даёт «мыло».
+            if (pw == fw && ph == fh) {
+                g2.drawImage(displayFrame, 0, 0, null);
+            } else {
+                int scale = Math.max(1, Math.min(pw / fw, ph / fh));
+                int dw = fw * scale;
+                int dh = fh * scale;
+                int ox = (pw - dw) / 2;
+                int oy = (ph - dh) / 2;
+                g2.drawImage(displayFrame, ox, oy, ox + dw, oy + dh, 0, 0, fw, fh, null);
+            }
         } finally {
             g2.dispose();
         }

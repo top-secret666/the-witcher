@@ -30,8 +30,8 @@ final class ShopAssetCache {
 
     final int cardW = 54;
     final int cardH = 81;
-    /** Иконка на карточке — меньше рамки, чтобы текст не давил. */
-    final int cardArtSize = 32;
+    /** Иконка на карточке — см. tools/bake_lavka_assets.py CARD_ART. */
+    final int cardArtSize = 38;
     final int gridCols = 5;
     final int gridRows = 2;
     final int btnW = 100;
@@ -95,7 +95,7 @@ final class ShopAssetCache {
             BASE + "icons/icon_crown.png", true);
 
         merchantBgScaled = loadBackground();
-        int charH = Math.round(360 * 0.70f);
+        int charH = Math.round(360 * 0.82f);
         geraltScaled = loadPortrait("geralt_portrait_shop.png", charH);
         dukeScaled = loadPortrait("duke_portrait_shop.png", charH);
         dukeLaughScaled = loadPortrait("duke_portrait_fun_shop.png", charH);
@@ -122,7 +122,7 @@ final class ShopAssetCache {
         int panelDrawH = contentBottom + 6 + btnH + 4 - panelY;
         counterY = hudY + hudH + 2;
         counterH = (360 - 54) - counterY - 4;
-        counterForeground = loadSized(BASE + "ui/shop_counter_foreground.png", counterW, counterH,
+        counterForeground = loadSized(UI + "shop_counter_foreground.png", counterW, counterH,
             BASE + "ui/shop_counter_foreground.png", false);
 
         catalogPanelScaled = loadSized(UI + "shop_catalog_panel.png", panelW, panelDrawH,
@@ -130,7 +130,7 @@ final class ShopAssetCache {
 
         detailPanelW = 292;
         detailPanelH = 232;
-        catalogDetailPanel = loadSized(UI + "shop_catalog_panel.png", detailPanelW, detailPanelH,
+        catalogDetailPanel = loadSized(UI + "shop_catalog_panel_detail.png", detailPanelW, detailPanelH,
             BASE + "ui/shop_catalog_panel.png", false);
         rowW = detailPanelW - 16;
         rowNormal = loadSized(UI + "shop_row_normal.png", rowW, rowH,
@@ -191,8 +191,11 @@ final class ShopAssetCache {
         if (src == null) {
             return baked;
         }
-        int w = Math.round(src.getWidth() * ((float) targetH / src.getHeight()));
-        return PixelScaler.crispScale(src, w, targetH);
+        Rectangle box = ShopScreen.computeContentBoundsPublic(src);
+        int cropW = box.width;
+        int cropH = box.height;
+        int w = Math.round(cropW * ((float) targetH / cropH));
+        return PixelScaler.crispScaleRegion(src, box, w, targetH);
     }
 
     private static String portraitFallback(String shopName) {

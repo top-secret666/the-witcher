@@ -951,12 +951,12 @@ public class ShopScreen {
     }
 
     private void drawScaledSprite(Graphics2D g, BufferedImage img, int x, int y, int w, int h, boolean pixelArt) {
-        if (img == null || w <= 0 || h <= 0) return;
+        if (img == null || w <= 0 || h <= 0) {
+            return;
+        }
         Object prevInterp = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
-        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
-            pixelArt ? RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR
-                     : RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-        g.drawImage(img, x, y, w, h, null);
+        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+        g.drawImage(img, x, y, x + w, y + h, 0, 0, img.getWidth(), img.getHeight(), null);
         if (prevInterp != null) {
             g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, prevInterp);
         }
@@ -964,11 +964,11 @@ public class ShopScreen {
 
     private void drawCroppedScaledSprite(Graphics2D g, BufferedImage img, Rectangle crop,
                                          int x, int y, int w, int h, boolean pixelArt) {
-        if (img == null || crop == null || crop.width <= 0 || crop.height <= 0 || w <= 0 || h <= 0) return;
+        if (img == null || crop == null || crop.width <= 0 || crop.height <= 0 || w <= 0 || h <= 0) {
+            return;
+        }
         Object prevInterp = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
-        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
-            pixelArt ? RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR
-                     : RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
         g.drawImage(img, x, y, x + w, y + h,
             crop.x, crop.y, crop.x + crop.width, crop.y + crop.height, null);
         if (prevInterp != null) {
