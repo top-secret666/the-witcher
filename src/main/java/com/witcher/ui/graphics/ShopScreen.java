@@ -865,13 +865,13 @@ public class ShopScreen {
             ? new Color(255, 210, 100) : new Color(245, 230, 190);
         drawOutlinedText(g, name, x + (w - nameFm.stringWidth(name)) / 2, nameY, nameColor);
 
+        String priceLabel = priceOverride != null ? priceOverride : item.priceLabel;
         if (item.kind == ItemKind.SET_CATALOG && "···".equals(priceLabel)) {
             return;
         }
 
         g.setFont(cardFont(Math.max(7, fontSize)));
         FontMetrics priceFm = g.getFontMetrics();
-        String priceLabel = priceOverride != null ? priceOverride : item.priceLabel;
         BufferedImage coin = assets.crownIconSmall != null ? assets.crownIconSmall : assets.crownIconScaled;
         int priceW = priceFm.stringWidth(priceLabel);
         int coinH = coin != null ? coin.getHeight() : 0;
