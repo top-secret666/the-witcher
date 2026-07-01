@@ -308,7 +308,7 @@ public final class PixelTextures {
     }
 
     public static void drawCover(SpriteBatch batch, Texture texture, float viewW, float viewH, float alpha) {
-        drawCoverAligned(batch, texture, viewW, viewH, alpha, 0.5f, 0f);
+        drawCoverAligned(batch, texture, viewW, viewH, alpha, 0.5f, 0.5f);
     }
 
     /** Cover с привязкой к низу — для splash_bg, где арт в нижней части PNG. */
