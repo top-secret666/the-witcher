@@ -7,7 +7,7 @@ import main.java.com.witcher.gdx.WitcherGame;
 import org.lwjgl.glfw.GLFW;
 
 /**
- * LibGDX desktop — окно 960×720 физ. px (480×360 ×2), integer-scale, без мыла.
+ * LibGDX desktop — окно 960×720 (480×360 ×2), integer-scale, без мыла.
  * Запуск: {@code run-gdx.bat}
  */
 public class DesktopLauncher {
@@ -15,11 +15,18 @@ public class DesktopLauncher {
     public static void main(String[] args) {
         System.setProperty("org.lwjgl.opengl.Display.allowLegacyDXGIScaling", "false");
         try {
+            float contentScale = queryPrimaryMonitorContentScale();
+
+            Lwjgl3ApplicationConfiguration config = new Lwjgl3ApplicationConfiguration();
+            config.setTitle("The Witcher — LibGDX");
             config.setHdpiMode(HdpiMode.Pixels);
             config.setWindowedMode(WitcherGame.WINDOW_W, WitcherGame.WINDOW_H);
+            config.setResizable(false);
+            config.setForegroundFPS(60);
+            config.useVsync(true);
 
             System.out.println("[DesktopLauncher] okno=" + WitcherGame.WINDOW_W + 'x' + WitcherGame.WINDOW_H
-                + " (monitor scale=" + contentScale + ", bez umenjsheniya okna)");
+                + " monitorScale=" + contentScale);
 
             new Lwjgl3Application(new WitcherGame(), config);
         } catch (Throwable error) {
@@ -29,7 +36,7 @@ public class DesktopLauncher {
         }
     }
 
-    /** Масштаб дисплея Windows (1.0 = 100%, 1.25 = 125%). */
+    /** Масштаб дисплея Windows (1.0 = 100%, 1.25 = 125%) — только для лога. */
     static float queryPrimaryMonitorContentScale() {
         try {
             if (!GLFW.glfwInit()) {
@@ -44,19 +51,5 @@ public class DesktopLauncher {
         } catch (Throwable ignored) {
             return 1f;
         }
-    }
-
-    /**
-     * Размер окна для GLFW: при HiDPI уменьшаем логический размер,
-     * чтобы физический клиент ≈ {@link WitcherGame#WINDOW_W}×{@link WitcherGame#WINDOW_H}.
-     */
-    static int[] computeWindowSize(float contentScale) {
-        if (contentScale <= 1.01f) {
-            return new int[]{WitcherGame.WINDOW_W, WitcherGame.WINDOW_H};
-        }
-        return new int[]{
-            Math.round(WitcherGame.WINDOW_W / contentScale),
-            Math.round(WitcherGame.WINDOW_H / contentScale)
-        };
     }
 }

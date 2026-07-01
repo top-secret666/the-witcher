@@ -33,7 +33,9 @@ public class SplashScreen implements Screen {
     private static final Color BAR_BG = new Color(30f / 255f, 22f / 255f, 12f / 255f, 1f);
     private static final Color BAR_BORDER = new Color(140f / 255f, 100f / 255f, 35f / 255f, 1f);
     private static final Color WARM_LIGHT = new Color(1f, 170f / 255f, 85f / 255f, 1f);
+    private static final Color SPLASH_BACKDROP = new Color(18f / 255f, 12f / 255f, 8f / 255f, 1f);
     private static final Color SMOKE = new Color(190f / 255f, 180f / 255f, 165f / 255f, 1f);
+    private static final boolean DRAW_SMOKE = false;
 
     private final WitcherGame game;
     private Viewport viewport;
@@ -112,7 +114,7 @@ public class SplashScreen implements Screen {
             simulateStep();
         }
 
-        Gdx.gl.glClearColor(0f, 0f, 0f, 1f);
+        Gdx.gl.glClearColor(SPLASH_BACKDROP.r, SPLASH_BACKDROP.g, SPLASH_BACKDROP.b, 1f);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         viewport.update(Gdx.graphics.getWidth(), Gdx.graphics.getHeight(), true);
         viewport.apply();
@@ -128,6 +130,8 @@ public class SplashScreen implements Screen {
         PixelTextures.resetBlend();
 
         shapes.begin(ShapeRenderer.ShapeType.Filled);
+        shapes.setColor(SPLASH_BACKDROP);
+        shapes.rect(0f, 0f, VW, VH);
         if (alpha > 0.05f) {
             shapes.setColor(WARM_LIGHT.r, WARM_LIGHT.g, WARM_LIGHT.b, alpha * 0.05f * flicker);
             shapes.rect(0f, 0f, VW, VH);
@@ -197,7 +201,7 @@ public class SplashScreen implements Screen {
             }
         }
 
-        if (tick % 10 == 0 && alpha > 0.25f) {
+        if (tick % 10 == 0 && DRAW_SMOKE && alpha > 0.25f) {
             float px = 35 + rng.nextFloat() * 410;
             float py = VH - (90 + rng.nextFloat() * 70);
             float vx = (rng.nextFloat() - 0.5f) * 0.18f;
@@ -226,8 +230,30 @@ public class SplashScreen implements Screen {
     }
 
     private void drawSprites() {
+        shapes.begin(ShapeRenderer.ShapeType.Filled);
+        shapes.setColor(SPLASH_BACKDROP);
+        shapes.rect(0f, 0f, VW, VH);
+        shapes.end();
+
         if (background != null) {
-            PixelTextures.drawCover(game.batch, background, VW, VH, clamp(alpha * 0.88f, 0f, 1f));
+            int[] bounds = PixelTextures.computeVisibleBounds("sprites/splash_bg.png");
+            if (bounds != null) {
+                float artW = bounds[2];
+                float artH = bounds[3];
+                float cover = Math.max(VW / artW, VH / artH);
+                float drawW = artW * cover;
+                float drawH = artH * cover;
+                float x = (VW - drawW) * 0.5f - bounds[0] * cover;
+                float y = (VH - drawH) * 0.5f - (background.getHeight() - bounds[1] - bounds[3]) * cover;
+                float prev = game.batch.getColor().a;
+                game.batch.setColor(1f, 1f, 1f, clamp(alpha * 0.88f, 0f, 1f));
+                PixelTextures.drawCropped(game.batch, background,
+                    bounds[0], bounds[1], bounds[2], bounds[3],
+                    x, y, drawW, drawH);
+                game.batch.setColor(1f, 1f, 1f, prev);
+            } else {
+                PixelTextures.drawCover(game.batch, background, VW, VH, clamp(alpha * 0.88f, 0f, 1f));
+            }
         }
 
         if (logoAnim != null && alpha > 0.05f) {
@@ -296,7 +322,9 @@ public class SplashScreen implements Screen {
             p.draw(shapes);
         }
         for (SmokePuff p : smokePuffs) {
-            p.draw(shapes);
+            if (DRAW_SMOKE) {
+                p.draw(shapes);
+            }
         }
 
         float barZoneH = 28f;
