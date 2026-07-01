@@ -121,6 +121,7 @@ public class SplashScreen implements Screen {
             simulateStep();
         }
 
+        GdxWindowAlign.refreshFramebufferCache();
         int bbw = GdxWindowAlign.backBufferW();
         int bbh = GdxWindowAlign.backBufferH();
         Gdx.gl.glViewport(0, 0, bbw, bbh);
@@ -242,7 +243,7 @@ public class SplashScreen implements Screen {
     private void drawSprites() {
         if (background != null) {
             float a = clamp(alpha * 0.88f, 0f, 1f);
-            PixelTextures.drawCoverBottom(game.batch, background, VW, VH, a);
+            PixelTextures.drawCover(game.batch, background, VW, VH, a);
         }
 
         if (logoAnim != null && alpha > 0.05f) {
@@ -382,7 +383,8 @@ public class SplashScreen implements Screen {
 
     @Override
     public void resize(int width, int height) {
-        viewport.update(width, height, true);
+        GdxWindowAlign.refreshFramebufferCache();
+        viewport.update(GdxWindowAlign.backBufferW(), GdxWindowAlign.backBufferH(), true);
         DisplayMetrics.log("splash-resize");
         DisplayMetrics.logViewport("splash-resize", viewport);
     }
