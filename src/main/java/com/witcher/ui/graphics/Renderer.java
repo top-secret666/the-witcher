@@ -5,7 +5,7 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 
 /**
- * Виртуальный кадр 480×360 → displayFrame (×N, без сглаживания) → панель с целочисленным upscale.
+ * Виртуальный кадр 480×360 → displayFrame (×N) → растяжка на всю панель (как LibGDX StretchViewport).
  */
 public class Renderer extends JPanel {
 
@@ -43,7 +43,6 @@ public class Renderer extends JPanel {
         setMaximumSize(d);
     }
 
-    /** Меню/лавка fullscreen: увеличить внутренний буфер под монитор (2×…4×). */
     public void setPixelScale(int scale) {
         if (scale < 1) {
             scale = 1;
@@ -123,30 +122,17 @@ public class Renderer extends JPanel {
         Graphics2D g2 = (Graphics2D) g.create();
         try {
             PixelDraw.applyNearest(g2);
-            g2.setColor(Color.BLACK);
-            g2.fillRect(0, 0, pw, ph);
-
             int fw = displayFrame.getWidth();
             int fh = displayFrame.getHeight();
             if (fw <= 0 || fh <= 0) {
+                g2.setColor(Color.BLACK);
+                g2.fillRect(0, 0, pw, ph);
                 return;
             }
-
             if (pw == fw && ph == fh) {
                 g2.drawImage(displayFrame, 0, 0, null);
             } else {
-                int scale = Math.max(1, Math.min(pw / fw, ph / fh));
-                int dw = fw * scale;
-                int dh = fh * scale;
-                int ox = (pw - dw) / 2;
-                int oy = (ph - dh) / 2;
-                if (scale == 1) {
-                    g2.drawImage(displayFrame, ox, oy, null);
-                } else {
-                    BufferedImage up = new BufferedImage(dw, dh, BufferedImage.TYPE_INT_RGB);
-                    PixelDraw.blitIntegerScale(displayFrame, up, scale);
-                    g2.drawImage(up, ox, oy, null);
-                }
+                g2.drawImage(displayFrame, 0, 0, pw, ph, null);
             }
         } finally {
             g2.dispose();

@@ -168,25 +168,10 @@ public class GameWindow {
     private void updateVirtualMouse(MouseEvent e) {
         int pw = Math.max(1, renderer.getWidth());
         int ph = Math.max(1, renderer.getHeight());
-        int fw = Math.max(1, renderer.getDisplayWidth());
-        int fh = Math.max(1, renderer.getDisplayHeight());
-
-        int scale = Math.max(1, Math.min(pw / fw, ph / fh));
-        int dw = fw * scale;
-        int dh = fh * scale;
-        int ox = (pw - dw) / 2;
-        int oy = (ph - dh) / 2;
-
-        int lx = e.getX() - ox;
-        int ly = e.getY() - oy;
-        if (lx < 0 || ly < 0 || lx >= dw || ly >= dh) {
-            return;
-        }
-
         mouseVX = Math.min(renderer.getVirtualW() - 1,
-            Math.max(0, lx * renderer.getVirtualW() / dw));
+            Math.max(0, e.getX() * renderer.getVirtualW() / pw));
         mouseVY = Math.min(renderer.getVirtualH() - 1,
-            Math.max(0, ly * renderer.getVirtualH() / dh));
+            Math.max(0, e.getY() * renderer.getVirtualH() / ph));
     }
 
     private void enterMainMenuMode() {
@@ -213,23 +198,16 @@ public class GameWindow {
         renderer.requestFocusInWindow();
     }
 
-    /** Fullscreen: максимальный целочисленный масштаб 480×360 под монитор. */
+    /** Fullscreen: панель на весь экран, картинка растягивается как в LibGDX. */
     private void applyFullscreenSceneLayout() {
-        int scale = computeMaxPixelScale();
-        renderer.setPixelScale(scale);
+        renderer.setPixelScale(2);
+        renderer.setPreferredSize(new Dimension(10, 10));
         renderer.setMinimumSize(new Dimension(0, 0));
         renderer.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
         frame.setMinimumSize(new Dimension(0, 0));
         frame.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
         frame.revalidate();
-        System.out.println("Fullscreen: " + renderer.getDisplayWidth() + "x" + renderer.getDisplayHeight()
-            + " (virtual 480x360, x" + scale + ")");
-    }
-
-    private static int computeMaxPixelScale() {
-        Rectangle bounds = GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds();
-        int scale = Math.min(bounds.width / 480, bounds.height / 360);
-        return Math.max(2, Math.min(scale, 4));
+        System.out.println("Fullscreen: stretch 480x360 -> весь экран");
     }
 
     /** Меню/интро: системный курсор скрыт, рисуется спрайтом в сцене. */
