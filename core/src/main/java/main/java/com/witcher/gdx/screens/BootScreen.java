@@ -6,8 +6,9 @@ import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import com.badlogic.gdx.utils.viewport.FitViewport;
+import com.badlogic.gdx.utils.viewport.Viewport;
 import main.java.com.witcher.gdx.WitcherGame;
+import main.java.com.witcher.gdx.graphics.IntegerScaleViewport;
 import main.java.com.witcher.gdx.screens.ShopScreen;
 
 /**
@@ -16,7 +17,7 @@ import main.java.com.witcher.gdx.screens.ShopScreen;
 public class BootScreen implements Screen {
 
     private final WitcherGame game;
-    private FitViewport viewport;
+    private Viewport viewport;
     private OrthographicCamera camera;
     private BitmapFont font;
 
@@ -27,7 +28,7 @@ public class BootScreen implements Screen {
     @Override
     public void show() {
         camera = new OrthographicCamera();
-        viewport = new FitViewport(WitcherGame.VIRTUAL_W, WitcherGame.VIRTUAL_H, camera);
+        viewport = new IntegerScaleViewport((int) WitcherGame.VIRTUAL_W, (int) WitcherGame.VIRTUAL_H, camera);
         font = new BitmapFont();
         font.getData().setScale(1.1f);
     }
