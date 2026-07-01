@@ -4,16 +4,14 @@ import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.utils.viewport.Viewport;
 
 /**
- * Пиксельный viewport: заполняет весь экран без чёрных полос.
- * Масштаб по X и Y — отдельные целые числа (×3, ×4…), фильтр Nearest на текстурах.
- * Лишнее за краями экрана обрезается, не размывается.
+ * Пиксельный viewport: один целый масштаб (×3, ×4…) — квадратные пиксели, без растягивания.
+ * Экран заполняется за счёт обрезки краёв; при обрезке по высоте кадр прижат к низу (диалог виден).
  */
 public class IntegerScaleViewport extends Viewport {
 
     private final int worldWidth;
     private final int worldHeight;
-    private int scaleX = 1;
-    private int scaleY = 1;
+    private int scale = 1;
 
     public IntegerScaleViewport(int worldWidth, int worldHeight, Camera camera) {
         this.worldWidth = worldWidth;
@@ -23,25 +21,30 @@ public class IntegerScaleViewport extends Viewport {
 
     @Override
     public void update(int screenWidth, int screenHeight, boolean centerCamera) {
-        scaleX = Math.max(1, (screenWidth + worldWidth - 1) / worldWidth);
-        scaleY = Math.max(1, (screenHeight + worldHeight - 1) / worldHeight);
-        int drawW = worldWidth * scaleX;
-        int drawH = worldHeight * scaleY;
+        scale = Math.max(1, Math.max(
+            (screenWidth + worldWidth - 1) / worldWidth,
+            (screenHeight + worldHeight - 1) / worldHeight));
+
+        int drawW = worldWidth * scale;
+        int drawH = worldHeight * scale;
         setScreenBounds((screenWidth - drawW) / 2, (screenHeight - drawH) / 2, drawW, drawH);
         setWorldSize(worldWidth, worldHeight);
-        apply(centerCamera);
+        apply(false);
+
+        float visibleWorldH = screenHeight > 0 ? screenHeight / (float) scale : worldHeight;
+        float cx = worldWidth * 0.5f;
+        float cy = worldHeight * 0.5f;
+
+        if (drawH > screenHeight) {
+            cy = visibleWorldH * 0.5f;
+        }
+
+        Camera cam = getCamera();
+        cam.position.set(cx, cy, 0);
+        cam.update();
     }
 
-    public int getScaleX() {
-        return scaleX;
-    }
-
-    public int getScaleY() {
-        return scaleY;
-    }
-
-    /** Единый масштаб, если оси совпадают (квадратные пиксели). */
     public int getScale() {
-        return Math.min(scaleX, scaleY);
+        return scale;
     }
 }
