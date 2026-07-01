@@ -39,6 +39,11 @@ final class ShopAssetCache {
     final int panelW = 380;
 
     final BufferedImage hudBar;
+    final BufferedImage counterForeground;
+    final int counterX = 0;
+    final int counterY;
+    final int counterW = 480;
+    final int counterH;
     final BufferedImage catalogPanelScaled;
     final BufferedImage catalogDetailPanel;
     final BufferedImage rowNormal;
@@ -115,6 +120,11 @@ final class ShopAssetCache {
         int cardGap = 6;
         int contentBottom = cardsY + gridRows * cardH + (gridRows - 1) * cardGap;
         int panelDrawH = contentBottom + 6 + btnH + 4 - panelY;
+        counterY = hudY + hudH + 2;
+        counterH = (360 - 54) - counterY - 4;
+        counterForeground = loadSized(BASE + "ui/shop_counter_foreground.png", counterW, counterH,
+            BASE + "ui/shop_counter_foreground.png", false);
+
         catalogPanelScaled = loadSized(UI + "shop_catalog_panel.png", panelW, panelDrawH,
             BASE + "ui/shop_catalog_panel.png", false);
 

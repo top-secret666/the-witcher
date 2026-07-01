@@ -11,13 +11,13 @@ final class ShopCategoryAnimator {
     final int cardW;
     final int cardH;
     final float gridCardsAlpha;
-    final float showcasePanelAlpha;
+    final float counterAlpha;
     final float detailPanelAlpha;
     final float detailPanelSlideX;
     final boolean listInteractive;
 
     private ShopCategoryAnimator(float progress, int cardX, int cardY, int cardW, int cardH,
-                                 float gridCardsAlpha, float showcasePanelAlpha,
+                                 float gridCardsAlpha, float counterAlpha,
                                  float detailPanelAlpha, float detailPanelSlideX,
                                  boolean listInteractive) {
         this.progress = progress;
@@ -26,7 +26,7 @@ final class ShopCategoryAnimator {
         this.cardW = cardW;
         this.cardH = cardH;
         this.gridCardsAlpha = gridCardsAlpha;
-        this.showcasePanelAlpha = showcasePanelAlpha;
+        this.counterAlpha = counterAlpha;
         this.detailPanelAlpha = detailPanelAlpha;
         this.detailPanelSlideX = detailPanelSlideX;
         this.listInteractive = listInteractive;
@@ -42,18 +42,19 @@ final class ShopCategoryAnimator {
         int cardH = Math.round(lerp(fromH, toH, easeOutBack(p)));
 
         float gridFade = 1f - easeOutCubic(Math.min(p * 1.35f, 1f));
-        float panelFade = 1f - easeOutCubic(Math.min(p * 1.2f, 1f));
+        float counterT = segment(p, 0.06f, 0.72f);
+        float counterAlpha = easeOutCubic(counterT);
         float detailT = segment(p, 0.18f, 0.88f);
         float detailAlpha = easeOutCubic(detailT);
         float detailSlide = (1f - easeOutCubic(detailT)) * 36f;
 
         return new ShopCategoryAnimator(p, cardX, cardY, cardW, cardH,
-            gridFade, panelFade, detailAlpha, detailSlide, p >= 1f);
+            gridFade, counterAlpha, detailAlpha, detailSlide, p >= 1f);
     }
 
     static ShopCategoryAnimator open(int toX, int toY, int toW, int toH) {
         return new ShopCategoryAnimator(1f, toX, toY, toW, toH,
-            0f, 0f, 1f, 0f, true);
+            0f, 1f, 1f, 0f, true);
     }
 
     private static float segment(float t, float start, float end) {
