@@ -193,10 +193,10 @@ public final class DisplayMetrics {
                     sb.append("Diag: fizicheskij klient ~").append(physW).append('x').append(physH)
                         .append(" — OK (cel ").append(ew).append('x').append(eh).append(").\n");
                 } else if (physW != fbW[0] || physH != fbH[0]) {
-                    sb.append("Diag: fizicheskij klient ~").append(physW).append('x').append(physH)
-                        .append(", framebuffer ").append(fbW[0]).append('x').append(fbH[0])
-                        .append(" — OS mozhet risovat chernye polya.\n");
-                    sb.append("      Reshenie: DesktopLauncher.computeWindowSize(contentScale).\n");
+                    sb.append("Diag: framebuffer ").append(fbW[0]).append('x').append(fbH[0])
+                        .append(", fizicheskij klient ~").append(physW).append('x').append(physH)
+                        .append(" (scale ").append(sx[0]).append(").\n");
+                    sb.append("      Pri 125% Windows: DesktopLauncher umenshaet GLFW-okno (768x576).\n");
                 }
                 if (winW[0] > fbW[0] + 4 || winH[0] > fbH[0] + 4) {
                     sb.append("Diag: okno krupnee framebuffer — masshtab Windows / HiDPI.\n");

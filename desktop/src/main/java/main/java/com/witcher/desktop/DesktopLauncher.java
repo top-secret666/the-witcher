@@ -7,26 +7,28 @@ import main.java.com.witcher.gdx.WitcherGame;
 import org.lwjgl.glfw.GLFW;
 
 /**
- * LibGDX desktop — окно 960×720 (480×360 ×2), integer-scale, без мыла.
- * Запуск: {@code run-gdx.bat}
+ * LibGDX desktop — целевой кадр 960×720 физ. px (480×360 ×2).
+ * На Windows 125% GLFW-окно уменьшается, чтобы ОС не рисовала чёрные поля.
  */
 public class DesktopLauncher {
 
     public static void main(String[] args) {
         System.setProperty("org.lwjgl.opengl.Display.allowLegacyDXGIScaling", "false");
         try {
-            float contentScale = queryPrimaryMonitorContentScale();
+            float monitorScale = queryPrimaryMonitorContentScale();
+            int[] glfwSize = computeGlfwWindowSize(monitorScale);
 
             Lwjgl3ApplicationConfiguration config = new Lwjgl3ApplicationConfiguration();
             config.setTitle("The Witcher — LibGDX");
             config.setHdpiMode(HdpiMode.Pixels);
-            config.setWindowedMode(WitcherGame.WINDOW_W, WitcherGame.WINDOW_H);
+            config.setWindowedMode(glfwSize[0], glfwSize[1]);
             config.setResizable(false);
             config.setForegroundFPS(60);
             config.useVsync(true);
 
-            System.out.println("[DesktopLauncher] okno=" + WitcherGame.WINDOW_W + 'x' + WitcherGame.WINDOW_H
-                + " monitorScale=" + contentScale);
+            System.out.println("[DesktopLauncher] monitorScale=" + monitorScale
+                + " glfwWindow=" + glfwSize[0] + 'x' + glfwSize[1]
+                + " celFizicheski=" + WitcherGame.WINDOW_W + 'x' + WitcherGame.WINDOW_H);
 
             new Lwjgl3Application(new WitcherGame(), config);
         } catch (Throwable error) {
@@ -36,7 +38,6 @@ public class DesktopLauncher {
         }
     }
 
-    /** Масштаб дисплея Windows (1.0 = 100%, 1.25 = 125%) — только для лога. */
     static float queryPrimaryMonitorContentScale() {
         try {
             if (!GLFW.glfwInit()) {
@@ -51,5 +52,19 @@ public class DesktopLauncher {
         } catch (Throwable ignored) {
             return 1f;
         }
+    }
+
+    /**
+     * При HiDPI: window × scale ≈ {@link WitcherGame#WINDOW_W}×{@link WitcherGame#WINDOW_H} на экране.
+     * Framebuffer = размеру GLFW-окна; игра растягивает 480×360 на весь backbuffer.
+     */
+    static int[] computeGlfwWindowSize(float monitorScale) {
+        if (monitorScale <= 1.01f) {
+            return new int[]{WitcherGame.WINDOW_W, WitcherGame.WINDOW_H};
+        }
+        return new int[]{
+            Math.max(1, Math.round(WitcherGame.WINDOW_W / monitorScale)),
+            Math.max(1, Math.round(WitcherGame.WINDOW_H / monitorScale))
+        };
     }
 }
