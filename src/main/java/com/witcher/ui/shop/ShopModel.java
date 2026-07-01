@@ -114,14 +114,11 @@ public final class ShopModel {
     }
 
     public String priceLabelForCategory(ShopCategory category) {
-        return getCatalog(category).stream()
+        var min = getCatalog(category).stream()
             .mapToInt(e -> e.price)
             .filter(p -> p > 0)
-            .min()
-            .stream()
-            .mapToObj(String::valueOf)
-            .findFirst()
-            .orElse("···");
+            .min();
+        return min.isPresent() ? String.valueOf(min.getAsInt()) : "···";
     }
 
     public List<ShopCatalogEntry> getCatalog(ShopCategory category) {

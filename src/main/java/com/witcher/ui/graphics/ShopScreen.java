@@ -1,5 +1,9 @@
 package main.java.com.witcher.ui.graphics;
 
+import main.java.com.witcher.ui.shop.ShopCatalogEntry;
+import main.java.com.witcher.ui.shop.ShopCategory;
+import main.java.com.witcher.ui.shop.ShopModel;
+
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
@@ -140,48 +144,42 @@ public class ShopScreen {
         }
     }
 
-    private static final class CatalogRow {
-        final String name;
-        final String price;
-        Rectangle bounds = new Rectangle();
-
-        CatalogRow(String name, String price) {
-            this.name = name;
-            this.price = price;
-        }
-    }
-
-    private enum ItemKind {
-        PIECE,
-        SET_CATALOG
-    }
+    private static final ShopCategory[] GRID_CATEGORIES = {
+        ShopCategory.CHEST, ShopCategory.LEGS, ShopCategory.GLOVES,
+        ShopCategory.BOOTS, ShopCategory.POTION, ShopCategory.SETS, ShopCategory.WEAPON
+    };
 
     private static final class ShopItem {
         final ItemKind kind;
-        final String name;
-        final String priceLabel;
+        final ShopCategory category;
+        String priceLabel;
         final String dukeLine;
         final String[] statLines;
         final BufferedImage icon;
         final BufferedImage cardArt;
         Rectangle bounds = new Rectangle();
 
-        ShopItem(ItemKind kind, String name, String priceLabel, String dukeLine, String[] statLines,
-                 BufferedImage icon, BufferedImage cardArt) {
+        ShopItem(ItemKind kind, ShopCategory category, String priceLabel, String dukeLine,
+                 String[] statLines, BufferedImage icon, BufferedImage cardArt) {
             this.kind = kind;
-            this.name = name;
+            this.category = category;
             this.priceLabel = priceLabel;
             this.dukeLine = dukeLine;
             this.statLines = statLines;
             this.icon = icon;
             this.cardArt = cardArt;
         }
+
+        String displayName() {
+            return category.label;
+        }
     }
 
+    private final ShopModel model;
     private final ShopAssetCache assets = ShopAssetCache.get();
 
     private final List<ShopItem> items = new ArrayList<>();
-    private final List<CatalogRow> catalogRows = new ArrayList<>();
+    private final List<ShopCatalogEntry> catalogEntries = new ArrayList<>();
     private final List<float[]> ashParticles = new ArrayList<>();
     private final Random rng = new Random();
 
@@ -196,6 +194,7 @@ public class ShopScreen {
     private int categoryTicks = 0;
     private boolean categoryClosing = false;
     private Rectangle categoryFromRect = new Rectangle();
+    private Rectangle categoryBuyBounds = new Rectangle();
     private boolean exitRequested = false;
 
     private static final String WELCOME_LINE = """
@@ -206,83 +205,58 @@ public class ShopScreen {
     private static final String IDLE_LINE = "Ну же, выбирайте. У меня нет вечности, а у вас — монстров полно.";
 
     public ShopScreen() {
-        items.add(new ShopItem(ItemKind.PIECE, "Кираса", "120",
-            "Отличный выбор! Волчья сталь — как раз для таких, как вы.",
-            new String[]{"Защ. 45", "Вес 12", "Кираса"},
-            assets.itemIcons[0], assets.itemArts[0]));
-        items.add(new ShopItem(ItemKind.PIECE, "Штаны", "45",
-            "Штаны крепкие. Ноги целее — монстров больше.",
-            new String[]{"Защ. 20", "Вес 8", "Поножи"},
-            assets.itemIcons[1], assets.itemArts[1]));
-        items.add(new ShopItem(ItemKind.PIECE, "Перчатки", "30",
-            "Рукам тепло, клинку — верно. Берите, не пожалеете.",
-            new String[]{"Защ. 12", "Вес 3", "Руки"},
-            assets.itemIcons[2], assets.itemArts[2]));
-        items.add(new ShopItem(ItemKind.PIECE, "Сапоги", "55",
-            "В этих сапогах и по болоту пройдёте, и от удара отскочите.",
-            new String[]{"Защ. 18", "Вес 6", "Сапоги"},
-            assets.itemIcons[3], assets.itemArts[3]));
-        items.add(new ShopItem(ItemKind.PIECE, "Зелье", "15",
-            "Хм... Зелье? Ну что ж, ваш выбор, Белый Волк...",
-            new String[]{"Яд", "0.5 кг", "Осторожно"},
-            assets.itemIcons[4], assets.itemArts[4]));
-        items.add(new ShopItem(ItemKind.SET_CATALOG, "Комплекты", "···",
-            "Ах, охотник на целые комплекты! Волчья, Кошачья, Грифонья — выбирайте.",
-            new String[]{"Школьные", "Легендар.", "4 части"},
-            null, null));
-        items.add(new ShopItem(ItemKind.PIECE, "Оружие", "95",
-            "Сталь режет, серебро жжёт. Выбирайте клинок по вкусу.",
-            new String[]{"Урон 48", "Вес 9", "Сталь"},
-            assets.weaponIcon, assets.weaponIcon));
+        this(ShopModel.createNewSession());
+    }
 
+    public ShopScreen(ShopModel model) {
+        this.model = model;
+        initShowcaseFromModel();
         currentDialog = WELCOME_LINE;
     }
 
-    private void buildCatalogRows(ShopItem category) {
-        catalogRows.clear();
-        selectedRowIndex = 0;
-        hoveredRowIndex = -1;
-        switch (category.name) {
-            case "Кираса" -> {
-                catalogRows.add(new CatalogRow("Кираса волчьей школы", "120"));
-                catalogRows.add(new CatalogRow("Укреплённая кираса", "85"));
-                catalogRows.add(new CatalogRow("Кираса стражника", "65"));
-                catalogRows.add(new CatalogRow("Нагрудник охотника", "48"));
-            }
-            case "Штаны" -> {
-                catalogRows.add(new CatalogRow("Укреплённые штаны", "45"));
-                catalogRows.add(new CatalogRow("Поножи наёмника", "38"));
-                catalogRows.add(new CatalogRow("Штаны ведьмака", "52"));
-            }
-            case "Перчатки" -> {
-                catalogRows.add(new CatalogRow("Перчатки наездника", "30"));
-                catalogRows.add(new CatalogRow("Рукавицы стражи", "24"));
-                catalogRows.add(new CatalogRow("Перчатки школы Волка", "55"));
-            }
-            case "Сапоги" -> {
-                catalogRows.add(new CatalogRow("Сапоги стражника", "55"));
-                catalogRows.add(new CatalogRow("Сапоги путника", "32"));
-                catalogRows.add(new CatalogRow("Ботфорты охотника", "41"));
-            }
-            case "Зелье" -> {
-                catalogRows.add(new CatalogRow("Зелье «Чёрный гриф»", "15"));
-                catalogRows.add(new CatalogRow("Эликсир кошки", "22"));
-                catalogRows.add(new CatalogRow("Отвар грифона", "28"));
-            }
-            case "Комплекты" -> {
-                catalogRows.add(new CatalogRow("Школа Волка", "···"));
-                catalogRows.add(new CatalogRow("Школа Кота", "···"));
-                catalogRows.add(new CatalogRow("Школа Грифона", "···"));
-                catalogRows.add(new CatalogRow("Школа Мантикоры", "···"));
-            }
-            case "Оружие" -> {
-                catalogRows.add(new CatalogRow("Стальной меч", "95"));
-                catalogRows.add(new CatalogRow("Серебряный кинжал", "72"));
-                catalogRows.add(new CatalogRow("Двуручный клеймор", "140"));
-                catalogRows.add(new CatalogRow("Арбалет охотника", "88"));
-            }
-            default -> catalogRows.add(new CatalogRow(category.name, category.priceLabel));
+    private void initShowcaseFromModel() {
+        items.clear();
+        for (ShopCategory cat : GRID_CATEGORIES) {
+            ItemKind kind = cat == ShopCategory.SETS ? ItemKind.SET_CATALOG : ItemKind.PIECE;
+            BufferedImage icon = iconForCategory(cat);
+            items.add(new ShopItem(
+                kind, cat,
+                model.priceLabelForCategory(cat),
+                model.dukeLineForCategory(cat),
+                model.statLinesForCategory(cat),
+                icon, icon));
         }
+    }
+
+    private BufferedImage iconForCategory(ShopCategory cat) {
+        if (cat == ShopCategory.SETS) {
+            return null;
+        }
+        if (cat == ShopCategory.WEAPON) {
+            return assets.weaponIcon;
+        }
+        if (cat.iconIndex >= 0 && cat.iconIndex < assets.itemIcons.length) {
+            return assets.itemIcons[cat.iconIndex];
+        }
+        return null;
+    }
+
+    private void refreshShowcasePrices() {
+        for (ShopItem item : items) {
+            item.priceLabel = model.priceLabelForCategory(item.category);
+        }
+    }
+
+    private enum ItemKind {
+        PIECE,
+        SET_CATALOG
+    }
+
+    private void buildCatalogRows(ShopItem category) {
+        catalogEntries.clear();
+        hoveredRowIndex = -1;
+        catalogEntries.addAll(model.getCatalog(category.category));
+        selectedRowIndex = catalogEntries.isEmpty() ? -1 : 0;
     }
 
     static Rectangle computeContentBoundsPublic(BufferedImage img) {
@@ -348,8 +322,8 @@ public class ShopScreen {
             || state == ShopState.CATEGORY_CLOSING) {
             ShopCategoryAnimator catAnim = categoryAnimator(layout);
             if (catAnim.listInteractive) {
-                for (int i = 0; i < catalogRows.size(); i++) {
-                    if (catalogRows.get(i).bounds.contains(mouseX, mouseY)) {
+                for (int i = 0; i < catalogEntries.size(); i++) {
+                    if (catalogEntries.get(i).bounds.contains(mouseX, mouseY)) {
                         hoveredRowIndex = i;
                         break;
                     }
@@ -369,11 +343,32 @@ public class ShopScreen {
             buildCatalogRows(item);
         }
 
-        if ((state == ShopState.CATEGORY) && clicked && hoveredRowIndex >= 0) {
-            selectedRowIndex = hoveredRowIndex;
-            CatalogRow row = catalogRows.get(hoveredRowIndex);
-            currentDialog = "Глядите, " + row.name + " — за " + row.price
-                + (row.price.equals("···") ? "" : " крон. Берите, не стыдно.");
+        if (state == ShopState.CATEGORY && clicked) {
+            if (categoryBuyBounds.contains(mouseX, mouseY)) {
+                tryPurchaseSelected();
+            } else if (hoveredRowIndex >= 0) {
+                selectedRowIndex = hoveredRowIndex;
+                ShopCatalogEntry row = catalogEntries.get(hoveredRowIndex);
+                currentDialog = "Глядите, " + row.name + " — за " + row.priceLabel()
+                    + (row.priceLabel().equals("···") ? "" : " крон. Берите, не стыдно.");
+            }
+        }
+    }
+
+    private void tryPurchaseSelected() {
+        if (selectedRowIndex < 0 || selectedRowIndex >= catalogEntries.size()) {
+            return;
+        }
+        ShopCatalogEntry entry = catalogEntries.get(selectedRowIndex);
+        ShopModel.PurchaseResult result = model.purchase(entry);
+        currentDialog = result.dukeLine();
+        if (result.success()) {
+            int keepIndex = Math.min(selectedRowIndex, Math.max(0, catalogEntries.size() - 2));
+            if (selectedIndex >= 0) {
+                buildCatalogRows(items.get(selectedIndex));
+                selectedRowIndex = catalogEntries.isEmpty() ? -1 : Math.min(keepIndex, catalogEntries.size() - 1);
+            }
+            refreshShowcasePrices();
         }
     }
 
@@ -389,7 +384,7 @@ public class ShopScreen {
         categoryTicks = 0;
         selectedIndex = -1;
         selectedRowIndex = -1;
-        catalogRows.clear();
+        catalogEntries.clear();
         state = ShopState.IDLE;
         currentDialog = IDLE_LINE;
     }
