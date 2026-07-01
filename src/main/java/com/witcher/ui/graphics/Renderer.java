@@ -5,15 +5,15 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 
 /**
- * Виртуальный кадр 480×360 → displayFrame (×2, без сглаживания) → панель 1:1.
+ * Виртуальный кадр 480×360 → displayFrame (×N, без сглаживания) → панель с целочисленным upscale.
  */
 public class Renderer extends JPanel {
 
     private final int virtualW;
     private final int virtualH;
-    private final int pixelScale;
+    private int pixelScale;
     public final BufferedImage screen;
-    private final BufferedImage displayFrame;
+    private BufferedImage displayFrame;
 
     private Sprite sprite;
     private int spriteX, spriteY;
@@ -25,15 +25,34 @@ public class Renderer extends JPanel {
         this.virtualW = virtualW;
         this.virtualH = virtualH;
         this.pixelScale = scale;
-        int dw = virtualW * pixelScale;
-        int dh = virtualH * pixelScale;
         this.screen = new BufferedImage(virtualW, virtualH, BufferedImage.TYPE_INT_ARGB);
-        this.displayFrame = new BufferedImage(dw, dh, BufferedImage.TYPE_INT_RGB);
-        setPreferredSize(new Dimension(dw, dh));
+        rebuildDisplayFrame();
         setFocusable(true);
         setDoubleBuffered(false);
         setOpaque(true);
         setBackground(Color.BLACK);
+    }
+
+    private void rebuildDisplayFrame() {
+        int dw = virtualW * pixelScale;
+        int dh = virtualH * pixelScale;
+        displayFrame = new BufferedImage(dw, dh, BufferedImage.TYPE_INT_RGB);
+        Dimension d = new Dimension(dw, dh);
+        setPreferredSize(d);
+        setMinimumSize(d);
+        setMaximumSize(d);
+    }
+
+    /** Меню/лавка fullscreen: увеличить внутренний буфер под монитор (2×…4×). */
+    public void setPixelScale(int scale) {
+        if (scale < 1) {
+            scale = 1;
+        }
+        if (scale == pixelScale) {
+            return;
+        }
+        pixelScale = scale;
+        rebuildDisplayFrame();
     }
 
     public int getVirtualW() {

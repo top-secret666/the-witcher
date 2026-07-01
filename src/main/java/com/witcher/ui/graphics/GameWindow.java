@@ -201,10 +201,7 @@ public class GameWindow {
         }
         frame.getRootPane().setBorder(BorderFactory.createEmptyBorder());
 
-        // Меню должно быть уже не "окошком", а полноценной fullscreen-сценой.
-        frame.setMinimumSize(new Dimension(0, 0));
-        frame.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
-        frame.revalidate();
+        applyFullscreenSceneLayout();
 
         GraphicsDevice device = GraphicsEnvironment
             .getLocalGraphicsEnvironment()
@@ -212,44 +209,27 @@ public class GameWindow {
         device.setFullScreenWindow(frame);
         frame.validate();
 
-        // Скрываем системный курсор, рисуем кастомный курсор внутри сцены.
         useHiddenCursor();
         renderer.requestFocusInWindow();
     }
 
-    /** Лавка: выходим из fullscreen, окно = игра × целочисленный масштаб (без чёрных полей). */
-    private void enterShopWindowedMode() {
-        GraphicsDevice device = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
-        if (device.getFullScreenWindow() == frame) {
-            device.setFullScreenWindow(null);
-        }
-        frame.setExtendedState(Frame.NORMAL);
-        frame.setVisible(true);
+    /** Fullscreen: максимальный целочисленный масштаб 480×360 под монитор. */
+    private void applyFullscreenSceneLayout() {
+        int scale = computeMaxPixelScale();
+        renderer.setPixelScale(scale);
+        renderer.setMinimumSize(new Dimension(0, 0));
+        renderer.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
+        frame.setMinimumSize(new Dimension(0, 0));
+        frame.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
+        frame.revalidate();
+        System.out.println("Fullscreen: " + renderer.getDisplayWidth() + "x" + renderer.getDisplayHeight()
+            + " (virtual 480x360, x" + scale + ")");
+    }
 
-        // setUndecorated нельзя после show/fullscreen — рамка уже снята в конструкторе.
-        frame.getRootPane().setBorder(BorderFactory.createEmptyBorder());
-
-        int gw = renderer.getDisplayWidth();
-        int gh = renderer.getDisplayHeight();
+    private static int computeMaxPixelScale() {
         Rectangle bounds = GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds();
-        int winScale = Math.max(1, Math.min(bounds.width / gw, bounds.height / gh));
-        winScale = Math.min(winScale, 3);
-
-        Dimension win = new Dimension(gw * winScale, gh * winScale);
-        renderer.setPreferredSize(win);
-        renderer.setMinimumSize(win);
-        renderer.setMaximumSize(win);
-        frame.setResizable(false);
-        frame.pack();
-        frame.setSize(win);
-        frame.setMinimumSize(win);
-        frame.setMaximumSize(win);
-        frame.setLocationRelativeTo(null);
-        frame.validate();
-        renderer.requestFocusInWindow();
-
-        System.out.println("Лавка: окно " + win.width + "x" + win.height
-            + " (игра " + gw + "x" + gh + ", x" + winScale + ")");
+        int scale = Math.min(bounds.width / 480, bounds.height / 360);
+        return Math.max(2, Math.min(scale, 4));
     }
 
     /** Меню/интро: системный курсор скрыт, рисуется спрайтом в сцене. */
@@ -640,7 +620,6 @@ public class GameWindow {
                     introActive = false;
                     shopActive = true;
                     shopScreen = new ShopScreen();
-                    enterShopWindowedMode();
                     useVisibleCursor();
                 }
             } else if (shopActive) {
