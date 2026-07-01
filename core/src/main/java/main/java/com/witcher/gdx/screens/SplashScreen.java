@@ -55,6 +55,10 @@ public class SplashScreen implements Screen {
     private int timer;
     private int tick;
     private float flicker = 1f;
+    /** Как Swing Timer(33 ms) — ~30 кадров/с на логику загрузки. */
+    private static final float SIM_STEP = 1f / 30f;
+    private float simAccumulator;
+    private int progressCooldown;
 
     private final Array<Particle> particles = new Array<>();
     private final Array<SmokePuff> smokePuffs = new Array<>();
@@ -87,6 +91,7 @@ public class SplashScreen implements Screen {
         }
 
         viewport.update(Gdx.graphics.getWidth(), Gdx.graphics.getHeight(), true);
+        IntegerScaleViewport.logDisplaySizeOnce();
         Gdx.app.log("SplashScreen", "assets bg=" + (background != null)
             + " logo=" + (logoAnim != null) + " bar=" + (witcherBar != null)
             + " griffin=" + (griffinAnim != null)
@@ -97,8 +102,11 @@ public class SplashScreen implements Screen {
 
     @Override
     public void render(float delta) {
-        tick++;
-        updateLogic();
+        simAccumulator += delta;
+        while (simAccumulator >= SIM_STEP) {
+            simAccumulator -= SIM_STEP;
+            simulateStep();
+        }
 
         Gdx.gl.glClearColor(0f, 0f, 0f, 1f);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
@@ -138,7 +146,8 @@ public class SplashScreen implements Screen {
         }
     }
 
-    private void updateLogic() {
+    private void simulateStep() {
+        tick++;
         float base = 0.86f + 0.10f * (float) Math.sin(tick * 0.12);
         float jitter = (rng.nextFloat() - 0.5f) * 0.10f;
         flicker = clamp(base + jitter, 0.72f, 1f);
@@ -149,7 +158,11 @@ public class SplashScreen implements Screen {
                 alpha = 1f;
             }
         } else if (progress < 100) {
-            progress++;
+            progressCooldown++;
+            if (progressCooldown >= 2) {
+                progressCooldown = 0;
+                progress++;
+            }
         } else {
             timer++;
             if (timer > 80) {
@@ -159,9 +172,9 @@ public class SplashScreen implements Screen {
 
         if (tick % 4 == 0 && alpha > 0.3f) {
             float px = 40 + rng.nextFloat() * 400;
-            float py = 10 + rng.nextFloat() * 180;
+            float py = 200 + rng.nextFloat() * 120;
             float vx = (rng.nextFloat() - 0.5f) * 0.6f;
-            float vy = -0.2f - rng.nextFloat() * 0.5f;
+            float vy = 0.2f + rng.nextFloat() * 0.5f;
             int life = 30 + rng.nextInt(50);
             Color c = rng.nextFloat() < 0.6f ? GOLD : GOLD_BRIGHT;
             particles.add(new Particle(px, py, vx, vy, life, c, 2 + rng.nextInt(2)));
@@ -174,13 +187,13 @@ public class SplashScreen implements Screen {
             }
         }
 
-        if (tick % 8 == 0 && alpha > 0.25f) {
+        if (tick % 10 == 0 && alpha > 0.25f) {
             float px = 35 + rng.nextFloat() * 410;
-            float py = 60 + rng.nextFloat() * 120;
+            float py = 90 + rng.nextFloat() * 70;
             float vx = (rng.nextFloat() - 0.5f) * 0.18f;
-            float vy = -0.12f - rng.nextFloat() * 0.22f;
+            float vy = 0.12f + rng.nextFloat() * 0.22f;
             int life = 120 + rng.nextInt(120);
-            float r = 10 + rng.nextInt(18);
+            float r = 6 + rng.nextInt(10);
             smokePuffs.add(new SmokePuff(px, py, vx, vy, life, r));
         }
         for (int i = smokePuffs.size - 1; i >= 0; i--) {
@@ -417,8 +430,7 @@ public class SplashScreen implements Screen {
         void draw(ShapeRenderer shapes) {
             float a = (life / (float) maxLife) * 0.7f;
             shapes.setColor(color.r, color.g, color.b, a);
-            float drawY = topToBottomY(y, size);
-            shapes.rect(x, drawY, size, size);
+            shapes.rect(x, y, size, size);
         }
     }
 
@@ -459,11 +471,10 @@ public class SplashScreen implements Screen {
                 return;
             }
             shapes.setColor(SMOKE.r, SMOKE.g, SMOKE.b, a);
-            float drawY = topToBottomY(y, r * 2f);
-            shapes.circle(x, drawY + r, r);
+            shapes.circle(x, y, r);
             shapes.setColor(SMOKE.r, SMOKE.g, SMOKE.b, a * 0.55f);
-            shapes.circle(x - 4f, drawY + r + 2f, r);
-            shapes.circle(x + 6f, drawY + r - 1f, r);
+            shapes.circle(x - 4f, y + 2f, r * 0.85f);
+            shapes.circle(x + 6f, y - 1f, r * 0.85f);
         }
     }
 }

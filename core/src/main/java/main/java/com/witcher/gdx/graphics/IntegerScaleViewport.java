@@ -1,18 +1,20 @@
 package main.java.com.witcher.gdx.graphics;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.utils.viewport.Viewport;
+import main.java.com.witcher.gdx.WitcherGame;
 
 /**
- * Пиксельный viewport: виртуальный кадр {@code worldW×worldH} растягивается на всё окно
- * (без чёрных полей). При совпадении пропорций 4:3 масштаб равномерный.
- * Текстуры — {@link com.badlogic.gdx.graphics.Texture.TextureFilter#Nearest}.
+ * Как Swing {@code Renderer}: виртуальный кадр {@code 480×360} растягивается на весь backbuffer
+ * без чёрных полей. Окно должно быть {@link WitcherGame#WINDOW_W}×{@link WitcherGame#WINDOW_H}.
  */
 public class IntegerScaleViewport extends Viewport {
 
-    private final int worldWidth;
-    private final int worldHeight;
-    private int scale = 1;
+    private final float worldWidth;
+    private final float worldHeight;
+    private int scaleX = 1;
+    private int scaleY = 1;
 
     public IntegerScaleViewport(int worldWidth, int worldHeight, Camera camera) {
         this.worldWidth = worldWidth;
@@ -26,33 +28,46 @@ public class IntegerScaleViewport extends Viewport {
             return;
         }
 
-        float scaleX = screenWidth / (float) worldWidth;
-        float scaleY = screenHeight / (float) worldHeight;
-        float uniform = Math.max(scaleX, scaleY);
-        scale = Math.max(1, Math.round(uniform));
+        scaleX = Math.max(1, Math.round(screenWidth / worldWidth));
+        scaleY = Math.max(1, Math.round(screenHeight / worldHeight));
 
         setScreenBounds(0, 0, screenWidth, screenHeight);
-
-        float visibleW = screenWidth / uniform;
-        float visibleH = screenHeight / uniform;
-        setWorldSize(visibleW, visibleH);
+        setWorldSize(worldWidth, worldHeight);
         apply(centerCamera);
 
-        float cx = worldWidth * 0.5f;
-        float cy = worldHeight * 0.5f;
-        if (visibleH < worldHeight) {
-            cy = visibleH * 0.5f;
-        }
-        if (visibleW < worldWidth) {
-            cx = visibleW * 0.5f;
-        }
-
         Camera cam = getCamera();
-        cam.position.set(cx, cy, 0);
+        cam.position.set(worldWidth * 0.5f, worldHeight * 0.5f, 0);
         cam.update();
     }
 
     public int getScale() {
-        return scale;
+        return Math.min(scaleX, scaleY);
     }
+
+    public int getScaleX() {
+        return scaleX;
+    }
+
+    public int getScaleY() {
+        return scaleY;
+    }
+
+    /** Лог при несовпадении backbuffer и ожидаемого окна (DPI / масштаб Windows). */
+    public static void logDisplaySizeOnce() {
+        if (logged) {
+            return;
+        }
+        logged = true;
+        int w = Gdx.graphics.getWidth();
+        int h = Gdx.graphics.getHeight();
+        if (w != WitcherGame.WINDOW_W || h != WitcherGame.WINDOW_H) {
+            Gdx.app.log("Viewport", "backbuffer=" + w + "x" + h
+                + " (ozhidaetsya " + WitcherGame.WINDOW_W + "x" + WitcherGame.WINDOW_H
+                + ") — esli est chernye polya, prover masshtab Windows (100%)");
+        } else {
+            Gdx.app.log("Viewport", "backbuffer=" + w + "x" + h + " OK");
+        }
+    }
+
+    private static boolean logged;
 }

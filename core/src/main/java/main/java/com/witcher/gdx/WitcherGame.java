@@ -11,6 +11,9 @@ public class WitcherGame extends Game {
 
     public static final float VIRTUAL_W = 480f;
     public static final float VIRTUAL_H = 360f;
+    public static final int PIXEL_SCALE = 2;
+    public static final int WINDOW_W = (int) (VIRTUAL_W * PIXEL_SCALE);
+    public static final int WINDOW_H = (int) (VIRTUAL_H * PIXEL_SCALE);
 
     public SpriteBatch batch;
 
