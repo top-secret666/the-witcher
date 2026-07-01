@@ -29,9 +29,39 @@ GRID_ROWS = 2
 PANEL_W = 380
 BTN_W, BTN_H = 100, 30
 HUD_H = 58
-# 2 ряда карточек + заголовок + кнопка
-PANEL_H = 22 + 6 + GRID_ROWS * CARD_H + (GRID_ROWS - 1) * 6 + 6 + BTN_H + 8
+SIGN_W, SIGN_H = 300, 40
+PANEL_HEADER_H = SIGN_H + 8
+PANEL_H = PANEL_HEADER_H + 4 + GRID_ROWS * CARD_H + (GRID_ROWS - 1) * 6 + 6 + BTN_H + 8
 CHAR_H = round(VIRTUAL_H * 0.70)
+
+
+def ensure_weapon_icon() -> None:
+    """Заглушка, пока нет своего icon_weapon.png."""
+    path = SRC / "icons/icon_weapon.png"
+    if path.is_file():
+        return
+    path.parent.mkdir(parents=True, exist_ok=True)
+    img = Image.new("RGBA", (64, 64), (0, 0, 0, 0))
+    px = img.load()
+    steel = (185, 195, 210, 255)
+    gold = (210, 170, 55, 255)
+    grip = (90, 55, 30, 255)
+    for y in range(10, 50):
+        px[31, y] = steel
+        px[32, y] = steel
+    for y in range(50, 58):
+        px[30, y] = grip
+        px[31, y] = grip
+        px[32, y] = grip
+        px[33, y] = grip
+    for x in range(27, 37):
+        px[x, 58] = gold
+        px[x, 59] = gold
+    for x in range(30, 34):
+        px[x, 8] = steel
+        px[x, 9] = steel
+    img.save(path)
+    print(f"  PLACEHOLDER icons/icon_weapon.png (64x64)")
 
 
 def content_bounds(img: Image.Image) -> tuple[int, int, int, int]:
@@ -126,10 +156,13 @@ def main() -> None:
     print(f"Источник: {SRC}")
     print(f"Выход:    {DST}\n")
 
+    ensure_weapon_icon()
+
     manifest: list[dict] = []
 
     jobs: list[tuple[str, int, int, dict]] = [
         ("ui/shop_hud_bar.png", PANEL_W, HUD_H, {"crop": True}),
+        ("ui/shop_sign_title.png", SIGN_W, SIGN_H, {"crop": True}),
         ("ui/shop_catalog_panel.png", PANEL_W, PANEL_H, {}),
         ("ui/shop_card_front.png", CARD_W, CARD_H, {}),
         ("ui/shop_card_back.png", CARD_W, CARD_H, {}),
@@ -145,6 +178,7 @@ def main() -> None:
         ("icons/icon_armor_gloves.png", CARD_ART, CARD_ART, {"crop": True, "icon": True}),
         ("icons/icon_armor_boots.png", CARD_ART, CARD_ART, {"crop": True, "icon": True}),
         ("icons/icon_potion.png", CARD_ART, CARD_ART, {"crop": True, "icon": True}),
+        ("icons/icon_weapon.png", CARD_ART, CARD_ART, {"crop": True, "icon": True}),
     ]
 
     for rel, w, h, opts in jobs:
