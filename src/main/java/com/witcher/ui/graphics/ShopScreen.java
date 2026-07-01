@@ -28,6 +28,15 @@ public class ShopScreen {
     private static final int CATEGORY_OPEN_DURATION_TICKS = 54;
 
     private static final int GRID_COLS = 5;
+    private static final int TOP_ROW_COLS = 5;
+    private static final int BOTTOM_ROW_COLS = 2;
+
+    private static final BufferedImage MENU_CURSOR = loadMenuCursor();
+
+    private static BufferedImage loadMenuCursor() {
+        Sprite s = Sprite.loadOptional("/assets/sprites/menu/menu_cursor.png");
+        return s != null ? s.getImage() : null;
+    }
 
     private static final class ShopLayout {
         final int hudY;
@@ -51,8 +60,11 @@ public class ShopScreen {
         final int gridCols;
         final int gridRows;
         final int dialogTop;
+        final int signY;
+        final int cardsStartXBottom;
 
-        ShopLayout(int sw, int sh, int itemCount, int hudX, int hudW, int hudH, int fixedPanelW) {
+        ShopLayout(int sw, int sh, int itemCount, int hudX, int hudW, int hudH, int fixedPanelW,
+                   int panelHeaderH, int topRowCols, int bottomRowCols) {
             this.hudX = hudX;
             this.hudW = hudW;
             hudY = 4;
@@ -60,19 +72,25 @@ public class ShopScreen {
             dialogTop = sh - DIALOG_TEXT_ZONE;
             btnH = 30;
             btnW = 100;
-            headerH = 22;
+            headerH = panelHeaderH;
             cardW = 54;
             cardH = 81;
             cardGap = 6;
             gridCols = GRID_COLS;
-            gridRows = Math.max(1, (itemCount + gridCols - 1) / gridCols);
+            gridRows = itemCount > topRowCols ? 2 : 1;
 
-            int rowW = gridCols * cardW + (gridCols - 1) * cardGap;
+            int rowW = topRowCols * cardW + (topRowCols - 1) * cardGap;
             panelW = fixedPanelW;
             panelX = (sw - panelW) / 2;
             panelY = hudY + hudH + 6;
             cardsStartX = panelX + (panelW - rowW) / 2;
-            cardsY = panelY + headerH + 6;
+
+            int bottomCount = Math.min(bottomRowCols, Math.max(0, itemCount - topRowCols));
+            int bottomRowW = bottomCount * cardW + Math.max(0, bottomCount - 1) * cardGap;
+            cardsStartXBottom = panelX + (panelW - bottomRowW) / 2;
+
+            signY = panelY + 4;
+            cardsY = panelY + headerH + 4;
             int contentBottom = cardsY + gridRows * cardH + (gridRows - 1) * cardGap;
             panelH = contentBottom - panelY + 8;
 
@@ -81,10 +99,15 @@ public class ShopScreen {
         }
 
         Point cardSlot(int index) {
-            int col = index % gridCols;
-            int row = index / gridCols;
-            int x = cardsStartX + col * (cardW + cardGap);
-            int y = cardsY + row * (cardH + cardGap);
+            if (index < TOP_ROW_COLS) {
+                int col = index;
+                int x = cardsStartX + col * (cardW + cardGap);
+                int y = cardsY;
+                return new Point(x, y);
+            }
+            int bottomIndex = index - TOP_ROW_COLS;
+            int x = cardsStartXBottom + bottomIndex * (cardW + cardGap);
+            int y = cardsY + cardH + cardGap;
             return new Point(x, y);
         }
 
@@ -208,7 +231,11 @@ public class ShopScreen {
         items.add(new ShopItem(ItemKind.SET_CATALOG, "Комплекты", "···",
             "Ах, охотник на целые комплекты! Волчья, Кошачья, Грифонья — выбирайте.",
             new String[]{"Школьные", "Легендар.", "4 части"},
-            assets.setCatalogIcon, assets.setCatalogIcon));
+            null, null));
+        items.add(new ShopItem(ItemKind.PIECE, "Оружие", "95",
+            "Сталь режет, серебро жжёт. Выбирайте клинок по вкусу.",
+            new String[]{"Урон 48", "Вес 9", "Сталь"},
+            assets.weaponIcon, assets.weaponIcon));
 
         currentDialog = WELCOME_LINE;
     }
@@ -249,6 +276,12 @@ public class ShopScreen {
                 catalogRows.add(new CatalogRow("Школа Кота", "···"));
                 catalogRows.add(new CatalogRow("Школа Грифона", "···"));
                 catalogRows.add(new CatalogRow("Школа Мантикоры", "···"));
+            }
+            case "Оружие" -> {
+                catalogRows.add(new CatalogRow("Стальной меч", "95"));
+                catalogRows.add(new CatalogRow("Серебряный кинжал", "72"));
+                catalogRows.add(new CatalogRow("Двуручный клеймор", "140"));
+                catalogRows.add(new CatalogRow("Арбалет охотника", "88"));
             }
             default -> catalogRows.add(new CatalogRow(category.name, category.priceLabel));
         }
@@ -298,7 +331,8 @@ public class ShopScreen {
         boolean showcaseInteractive = reveal.uiInteractive && state == ShopState.IDLE;
 
         ShopLayout layout = new ShopLayout(VIRTUAL_W, VIRTUAL_H, items.size(),
-            assets.hudX, assets.hudW, assets.hudH, assets.panelW);
+            assets.hudX, assets.hudW, assets.hudH, assets.panelW,
+            assets.panelHeaderH, assets.topRowCols, assets.bottomRowCols);
 
         hoveredIndex = -1;
         hoveredRowIndex = -1;
@@ -399,7 +433,8 @@ public class ShopScreen {
         g.fillRect(0, 0, sw, sh);
 
         ShopLayout layout = new ShopLayout(sw, sh, items.size(),
-            assets.hudX, assets.hudW, assets.hudH, assets.panelW);
+            assets.hudX, assets.hudW, assets.hudH, assets.panelW,
+            assets.panelHeaderH, assets.topRowCols, assets.bottomRowCols);
         ShopRevealAnimator reveal = revealAnimator();
         float brighten = reveal.sceneBrighten;
 
@@ -439,7 +474,22 @@ public class ShopScreen {
         DialogBoxRenderer.drawCompactFramedSpeakerText(g, sw, sh, "Герцог", currentDialog,
             DialogBoxRenderer.DUKE_COLOR, 1f);
 
+        drawCursor(g, mouseX, mouseY);
+
         g.dispose();
+    }
+
+    private static void drawCursor(Graphics2D g, int mouseX, int mouseY) {
+        if (MENU_CURSOR != null) {
+            int cw = 28;
+            int ch = Math.max(1, cw * MENU_CURSOR.getHeight() / MENU_CURSOR.getWidth());
+            Object prevInterp = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
+            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+            g.drawImage(MENU_CURSOR, mouseX - 4, mouseY - 4, cw, ch, null);
+            if (prevInterp != null) {
+                g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, prevInterp);
+            }
+        }
     }
 
     public boolean isExitRequested() {
@@ -595,6 +645,20 @@ public class ShopScreen {
             drawScaledCentered(g, assets.catalogPanelScaled,
                 layout.panelX, layout.panelY + Math.round(reveal.panelSlideY),
                 layout.panelW, layout.panelH, panelCx, panelCy, scale);
+        }
+
+        if (assets.shopSignTitle != null && reveal.panelAlpha > 0.35f) {
+            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, reveal.panelAlpha));
+            int signW = assets.signTitleW;
+            int signH = assets.signTitleH;
+            int signX = layout.panelX + (layout.panelW - signW) / 2;
+            int signY = layout.signY + Math.round(reveal.panelSlideY);
+            Object prevInterp = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
+            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+            g.drawImage(assets.shopSignTitle, signX, signY, signX + signW, signY + signH, null);
+            if (prevInterp != null) {
+                g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, prevInterp);
+            }
         }
 
         for (int i = 0; i < items.size(); i++) {
