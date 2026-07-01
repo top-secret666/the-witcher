@@ -837,7 +837,8 @@ public class ShopScreen {
         g.drawRoundRect(x + 1, y + 1, w - 2, h - 2, 6, 6);
     }
 
-    private void drawCardFrontContent(Graphics2D g, ShopItem item, Rectangle card, int w, int h) {
+    private void drawCardFrontContent(Graphics2D g, ShopItem item, Rectangle card, int w, int h,
+                                    String priceOverride) {
         int x = card.x;
         int y = card.y;
 
@@ -845,7 +846,7 @@ public class ShopScreen {
         int fontSize = w < 60 ? 7 : (h > 200 ? 12 : (w < 90 ? 8 : 10));
         g.setFont(cardFont(fontSize));
         FontMetrics nameFm = g.getFontMetrics();
-        String name = truncateToWidth(item.name, nameFm, w - 8);
+        String name = truncateToWidth(item.displayName(), nameFm, w - 8);
         int nameY = y + h - Math.max(18, Math.round(h * 0.22f));
 
         BufferedImage art = item.cardArt != null ? item.cardArt : item.icon;
@@ -864,14 +865,15 @@ public class ShopScreen {
             ? new Color(255, 210, 100) : new Color(245, 230, 190);
         drawOutlinedText(g, name, x + (w - nameFm.stringWidth(name)) / 2, nameY, nameColor);
 
-        if (item.kind == ItemKind.SET_CATALOG) {
+        if (item.kind == ItemKind.SET_CATALOG && "···".equals(priceLabel)) {
             return;
         }
 
         g.setFont(cardFont(Math.max(7, fontSize)));
         FontMetrics priceFm = g.getFontMetrics();
+        String priceLabel = priceOverride != null ? priceOverride : item.priceLabel;
         BufferedImage coin = assets.crownIconSmall != null ? assets.crownIconSmall : assets.crownIconScaled;
-        int priceW = priceFm.stringWidth(item.priceLabel);
+        int priceW = priceFm.stringWidth(priceLabel);
         int coinH = coin != null ? coin.getHeight() : 0;
         if (coin != null) {
             priceW += coin.getWidth() + 2;
@@ -883,7 +885,7 @@ public class ShopScreen {
             g.drawImage(coin, priceX, coinY, null);
             priceX += coin.getWidth() + 2;
         }
-        drawOutlinedText(g, item.priceLabel, priceX, priceRowY, new Color(255, 220, 90));
+        drawOutlinedText(g, priceLabel, priceX, priceRowY, new Color(255, 220, 90));
     }
 
     /** На сетке — 32 px; на крупном превью категории — целочисленный апскейл (64, 96…). */

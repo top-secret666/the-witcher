@@ -3,6 +3,8 @@ package main.java.com.witcher.ui.shop;
 import main.java.com.witcher.model.armour.Armour;
 import main.java.com.witcher.model.sets.ArmourSet;
 
+import java.awt.Rectangle;
+
 /** Строка списка внутри категории. */
 public final class ShopCatalogEntry {
     public final String name;
