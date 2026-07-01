@@ -2,7 +2,6 @@ package main.java.com.witcher.desktop;
 
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3Application;
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3ApplicationConfiguration;
-import com.badlogic.gdx.backends.lwjgl3.Lwjgl3ApplicationConfiguration.HdpiMode;
 import main.java.com.witcher.gdx.WitcherGame;
 
 /**
@@ -20,7 +19,6 @@ public class DesktopLauncher {
             config.setTitle("The Witcher — LibGDX");
             config.setWindowedMode(WINDOW_W, WINDOW_H);
             config.setResizable(false);
-            config.setHdpiMode(HdpiMode.Pixels);
             config.setForegroundFPS(60);
             config.useVsync(true);
             new Lwjgl3Application(new WitcherGame(), config);

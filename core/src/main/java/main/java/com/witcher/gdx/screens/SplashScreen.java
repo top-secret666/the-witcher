@@ -102,6 +102,7 @@ public class SplashScreen implements Screen {
 
         Gdx.gl.glClearColor(0f, 0f, 0f, 1f);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+        viewport.update(Gdx.graphics.getWidth(), Gdx.graphics.getHeight(), true);
         viewport.apply();
 
         game.batch.setProjectionMatrix(camera.combined);
@@ -453,7 +454,7 @@ public class SplashScreen implements Screen {
 
         void draw(ShapeRenderer shapes) {
             float t = 1f - (life / (float) maxLife);
-            float a = (float) (Math.sin(t * Math.PI) * 0.22f);
+            float a = (float) (Math.sin(t * Math.PI) * 0.12f);
             if (a <= 0f) {
                 return;
             }

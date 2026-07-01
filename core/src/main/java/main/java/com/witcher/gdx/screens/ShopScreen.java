@@ -137,6 +137,7 @@ public class ShopScreen implements Screen {
 
         Gdx.gl.glClearColor(0f, 0f, 0f, 1f);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+        viewport.update(Gdx.graphics.getWidth(), Gdx.graphics.getHeight(), true);
         viewport.apply();
         Gdx.gl.glEnable(GL20.GL_BLEND);
         Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);

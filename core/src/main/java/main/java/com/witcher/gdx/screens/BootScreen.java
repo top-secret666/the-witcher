@@ -38,6 +38,7 @@ public class BootScreen implements Screen {
         Gdx.gl.glClearColor(0.06f, 0.05f, 0.04f, 1f);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
+        viewport.update(Gdx.graphics.getWidth(), Gdx.graphics.getHeight(), true);
         viewport.apply();
         game.batch.setProjectionMatrix(camera.combined);
         game.batch.begin();
