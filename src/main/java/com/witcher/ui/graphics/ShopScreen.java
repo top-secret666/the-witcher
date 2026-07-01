@@ -61,6 +61,7 @@ public class ShopScreen {
         final int gridRows;
         final int dialogTop;
         final int signY;
+        final int walletY;
         final int cardsStartXBottom;
 
         ShopLayout(int sw, int sh, int itemCount, int hudX, int hudW, int hudH, int fixedPanelW,
@@ -90,7 +91,8 @@ public class ShopScreen {
             cardsStartXBottom = panelX + (panelW - bottomRowW) / 2;
 
             signY = panelY + 4;
-            cardsY = panelY + headerH + 4;
+            walletY = signY;
+            cardsY = panelY + headerH + 2;
             int contentBottom = cardsY + gridRows * cardH + (gridRows - 1) * cardGap;
             panelH = contentBottom - panelY + 8;
 
@@ -555,25 +557,51 @@ public class ShopScreen {
             drawCrispIcon(g, assets.dukeSealIconScaled, sealX, sealY, seal);
         }
 
+        g.setComposite(prev);
+    }
+
+    /** Кошелёк в рамке shop_sign_title — в шапке панели товаров. */
+    private void drawPanelWallet(Graphics2D g, ShopLayout layout, float alpha, float slideY) {
+        if (alpha <= 0.01f) {
+            return;
+        }
+        Composite prev = g.getComposite();
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
+
+        int frameW = assets.walletFrameW;
+        int frameH = assets.walletFrameH;
+        int frameX = layout.panelX + (layout.panelW - frameW) / 2;
+        int frameY = layout.walletY + Math.round(slideY);
+
+        if (assets.shopSignTitle != null) {
+            Object prevInterp = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
+            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+            g.drawImage(assets.shopSignTitle, frameX, frameY, frameX + frameW, frameY + frameH, null);
+            if (prevInterp != null) {
+                g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, prevInterp);
+            }
+        }
+
         String wallet = "???";
         String suffix = " крон";
-        int crownSize = 18;
-        int crownGap = 4;
-        g.setFont(new Font("Serif", Font.BOLD, 13));
+        int crownSize = 14;
+        int crownGap = 3;
+        drawCrispText(g);
+        g.setFont(new Font("Serif", Font.BOLD, 11));
         FontMetrics fm = g.getFontMetrics();
         int blockW = fm.stringWidth(wallet) + fm.stringWidth(suffix);
         if (assets.crownIconScaled != null) {
             blockW += crownSize + crownGap;
         }
-        int blockX = layout.hudX + (layout.hudW - blockW) / 2;
+        int blockX = frameX + (frameW - blockW) / 2;
         int textX = blockX;
         if (assets.crownIconScaled != null) {
-            int crownY = hudY + (layout.hudH - crownSize) / 2;
-            g.drawImage(assets.crownIconScaled, blockX, crownY, null);
-            textX = blockX + crownSize + crownGap;
+            int crownY = frameY + (frameH - crownSize) / 2;
+            g.drawImage(assets.crownIconScaled, textX, crownY, crownSize, crownSize, null);
+            textX += crownSize + crownGap;
         }
         g.setColor(new Color(255, 230, 150));
-        int walletY = hudY + (layout.hudH + fm.getAscent()) / 2 - 2;
+        int walletY = frameY + (frameH + fm.getAscent()) / 2 - 2;
         g.drawString(wallet, textX, walletY);
         g.setColor(new Color(200, 180, 120));
         g.drawString(suffix, textX + fm.stringWidth(wallet), walletY);
@@ -648,17 +676,7 @@ public class ShopScreen {
         }
 
         if (assets.shopSignTitle != null && reveal.panelAlpha > 0.35f) {
-            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, reveal.panelAlpha));
-            int signW = assets.signTitleW;
-            int signH = assets.signTitleH;
-            int signX = layout.panelX + (layout.panelW - signW) / 2;
-            int signY = layout.signY + Math.round(reveal.panelSlideY);
-            Object prevInterp = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
-            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
-            g.drawImage(assets.shopSignTitle, signX, signY, signX + signW, signY + signH, null);
-            if (prevInterp != null) {
-                g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, prevInterp);
-            }
+            drawPanelWallet(g, layout, reveal.panelAlpha, reveal.panelSlideY);
         }
 
         for (int i = 0; i < items.size(); i++) {
@@ -841,21 +859,24 @@ public class ShopScreen {
         int x = card.x;
         int y = card.y;
 
-        BufferedImage art = item.cardArt != null ? item.cardArt : item.icon;
-        if (art != null) {
-            int maxArt = w < 60 ? 32 : (h > 200 ? 80 : (w < 90 ? 44 : 56));
-            int artSize = Math.min(maxArt, Math.min(w - 10, h - 48));
-            int ax = x + (w - artSize) / 2;
-            int ay = y + Math.max(6, Math.round(h * 0.08f));
-            drawCrispIcon(g, art, ax, ay, artSize);
-        }
-
         drawCardText(g);
         int fontSize = w < 60 ? 7 : (h > 200 ? 12 : (w < 90 ? 8 : 10));
         g.setFont(cardFont(fontSize));
         FontMetrics nameFm = g.getFontMetrics();
         String name = truncateToWidth(item.name, nameFm, w - 8);
         int nameY = y + h - Math.max(18, Math.round(h * 0.22f));
+
+        BufferedImage art = item.cardArt != null ? item.cardArt : item.icon;
+        if (art != null) {
+            int slotX = x + 4;
+            int slotW = w - 8;
+            int slotTop = y + Math.round(h * 0.12f);
+            int slotBottom = nameY - Math.round(h * 0.10f);
+            int slotH = Math.max(1, slotBottom - slotTop);
+            Rectangle crop = computeContentBounds(art);
+            drawAspectFitCroppedSprite(g, art, crop, slotX, slotTop, slotW, slotH, true, assets.cardArtSize);
+        }
+
         Color nameColor = item.kind == ItemKind.SET_CATALOG
             ? new Color(255, 210, 100) : new Color(245, 230, 190);
         drawOutlinedText(g, name, x + (w - nameFm.stringWidth(name)) / 2, nameY, nameColor);
@@ -931,6 +952,28 @@ public class ShopScreen {
         int drawX = x + (w - drawW) / 2;
         int drawY = y + (h - drawH) / 2;
         drawScaledSprite(g, img, drawX, drawY, drawW, drawH, pixelArt);
+        return new Rectangle(drawX, drawY, drawW, drawH);
+    }
+
+    private Rectangle drawAspectFitCroppedSprite(Graphics2D g, BufferedImage img, Rectangle crop,
+                                                 int x, int y, int w, int h, boolean pixelArt) {
+        if (img == null || crop == null || crop.width <= 0 || crop.height <= 0 || w <= 0 || h <= 0) {
+            return new Rectangle(x, y, w, h);
+        }
+        float srcAspect = (float) crop.width / crop.height;
+        float dstAspect = (float) w / h;
+        int drawW;
+        int drawH;
+        if (srcAspect > dstAspect) {
+            drawW = w;
+            drawH = Math.max(1, Math.round(w / srcAspect));
+        } else {
+            drawH = h;
+            drawW = Math.max(1, Math.round(h * srcAspect));
+        }
+        int drawX = x + (w - drawW) / 2;
+        int drawY = y + (h - drawH) / 2;
+        drawCroppedScaledSprite(g, img, crop, drawX, drawY, drawW, drawH, pixelArt);
         return new Rectangle(drawX, drawY, drawW, drawH);
     }
 
