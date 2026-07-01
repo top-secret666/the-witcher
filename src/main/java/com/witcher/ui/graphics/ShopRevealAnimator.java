@@ -11,7 +11,6 @@ final class ShopRevealAnimator {
     final float panelAlpha;
     final float panelScale;
     final float panelSlideY;
-    final float panelFlash;
     final float btnAlpha;
     final float btnSlideY;
     final float[] cardAlpha;
@@ -20,7 +19,7 @@ final class ShopRevealAnimator {
     final boolean uiInteractive;
 
     private ShopRevealAnimator(float sceneBrighten, float hudAlpha, float hudSlideY,
-                               float panelAlpha, float panelScale, float panelSlideY, float panelFlash,
+                               float panelAlpha, float panelScale, float panelSlideY,
                                float btnAlpha, float btnSlideY,
                                float[] cardAlpha, float[] cardScale, float[] cardSlideY,
                                boolean uiInteractive) {
@@ -30,7 +29,6 @@ final class ShopRevealAnimator {
         this.panelAlpha = panelAlpha;
         this.panelScale = panelScale;
         this.panelSlideY = panelSlideY;
-        this.panelFlash = panelFlash;
         this.btnAlpha = btnAlpha;
         this.btnSlideY = btnSlideY;
         this.cardAlpha = cardAlpha;
@@ -64,9 +62,6 @@ final class ShopRevealAnimator {
         float panelScale = lerp(0.62f, 1f, easeOutBack(panelT));
         float panelSlideY = (1f - easeOutCubic(panelT)) * 48f;
 
-        float flashT = segment(panelT, 0.72f, 1f);
-        float panelFlash = (1f - flashT) * 0.55f * panelAlpha;
-
         float btnAlpha = easeOutCubic(btnT);
         float btnSlideY = (1f - easeOutCubic(btnT)) * 20f;
 
@@ -84,7 +79,7 @@ final class ShopRevealAnimator {
 
         boolean uiInteractive = interactiveWhenDone && done;
         return new ShopRevealAnimator(sceneBrighten, hudAlpha, hudSlideY,
-            panelAlpha, panelScale, panelSlideY, panelFlash,
+            panelAlpha, panelScale, panelSlideY,
             btnAlpha, btnSlideY, cardAlpha, cardScale, cardSlideY, uiInteractive);
     }
 

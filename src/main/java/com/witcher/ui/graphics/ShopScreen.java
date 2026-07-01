@@ -264,10 +264,6 @@ public class ShopScreen {
         drawCards(g, layout, reveal);
         drawBuyButton(g, layout, reveal.btnAlpha, reveal.btnSlideY);
 
-        if (reveal.panelFlash > 0.02f) {
-            drawPanelFlash(g, layout, reveal);
-        }
-
         if (reveal.panelAlpha > 0.45f) {
             drawAshParticles(g);
         }
@@ -276,20 +272,6 @@ public class ShopScreen {
             DialogBoxRenderer.DUKE_COLOR, 1f);
 
         g.dispose();
-    }
-
-    private void drawPanelFlash(Graphics2D g, ShopLayout layout, ShopRevealAnimator reveal) {
-        Composite prev = g.getComposite();
-        int cx = layout.panelX + layout.panelW / 2;
-        int cy = layout.panelY + layout.panelH / 2;
-        int fw = Math.round(layout.panelW * reveal.panelScale);
-        int fh = Math.round(layout.panelH * reveal.panelScale);
-        int fx = cx - fw / 2;
-        int fy = cy - fh / 2;
-        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, reveal.panelFlash));
-        g.setColor(new Color(255, 210, 90));
-        g.fillRoundRect(fx - 2, fy - 2, fw + 4, fh + 4, 8, 8);
-        g.setComposite(prev);
     }
 
     public boolean isExitRequested() {
