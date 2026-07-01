@@ -51,11 +51,14 @@ public final class PixelSpriteSheet implements Disposable {
 
             int fw = texture.getWidth() / cols;
             int fh = texture.getHeight() / rows;
+            int texH = texture.getHeight();
             int total = cols * rows;
             TextureRegion[] regions = new TextureRegion[total];
             for (int r = 0; r < rows; r++) {
                 for (int c = 0; c < cols; c++) {
-                    regions[r * cols + c] = new TextureRegion(texture, c * fw, r * fh, fw, fh);
+                    // LibGDX: Y от нижнего края PNG; Swing-листы — от верхнего.
+                    int srcY = texH - (r + 1) * fh;
+                    regions[r * cols + c] = new TextureRegion(texture, c * fw, srcY, fw, fh);
                 }
             }
             return new PixelSpriteSheet(texture, regions, frameDelay);

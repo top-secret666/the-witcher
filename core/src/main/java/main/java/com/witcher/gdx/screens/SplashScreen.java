@@ -89,7 +89,10 @@ public class SplashScreen implements Screen {
         viewport.update(Gdx.graphics.getWidth(), Gdx.graphics.getHeight(), true);
         Gdx.app.log("SplashScreen", "assets bg=" + (background != null)
             + " logo=" + (logoAnim != null) + " bar=" + (witcherBar != null)
-            + " viewport scale=" + ((IntegerScaleViewport) viewport).getScale());
+            + " griffin=" + (griffinAnim != null)
+            + " viewport scale=" + ((IntegerScaleViewport) viewport).getScale()
+            + (logoAnim != null ? " logoFrame=" + logoAnim.getFrameWidth() + "x" + logoAnim.getFrameHeight() : "")
+            + (witcherBar != null ? " barFrame=" + witcherBar.getFrameWidth() + "x" + witcherBar.getFrameHeight() : ""));
     }
 
     @Override
@@ -105,12 +108,19 @@ public class SplashScreen implements Screen {
         shapes.setProjectionMatrix(camera.combined);
         PixelTextures.resetBlend();
 
+        shapes.begin(ShapeRenderer.ShapeType.Filled);
+        if (alpha > 0.05f) {
+            shapes.setColor(WARM_LIGHT.r, WARM_LIGHT.g, WARM_LIGHT.b, alpha * 0.05f * flicker);
+            shapes.rect(0f, 0f, VW, VH);
+        }
+        shapes.end();
+
         game.batch.begin();
         drawSprites();
         game.batch.end();
 
         shapes.begin(ShapeRenderer.ShapeType.Filled);
-        drawFilled();
+        drawFilledOverlay();
         shapes.end();
 
         shapes.begin(ShapeRenderer.ShapeType.Line);
@@ -193,7 +203,7 @@ public class SplashScreen implements Screen {
 
     private void drawSprites() {
         if (background != null) {
-            PixelTextures.drawContainInteger(game.batch, background, VW, VH, 0.94f, clamp(alpha * 0.88f, 0f, 1f));
+            PixelTextures.drawContainFit(game.batch, background, VW, VH, 0.94f, clamp(alpha * 0.88f, 0f, 1f));
         }
 
         if (logoAnim != null && alpha > 0.05f) {
@@ -207,14 +217,26 @@ public class SplashScreen implements Screen {
         }
 
         if (drownerSprite != null && alpha > 0.2f) {
-            float dpScale = (VH * 0.60f) / drownerSprite.getHeight();
-            int dpW = Math.round(drownerSprite.getWidth() * dpScale);
-            int dpH = Math.round(drownerSprite.getHeight() * dpScale);
+            int[] bounds = PixelTextures.computeOpaqueBounds("sprites/drowner_single.png");
+            float artW = bounds != null ? bounds[2] : drownerSprite.getWidth();
+            float artH = bounds != null ? bounds[3] : drownerSprite.getHeight();
+            float dpScale = (VH * 0.60f) / artH;
+            int dpW = Math.round(artW * dpScale);
+            int dpH = Math.round(artH * dpScale);
             float swayX = (float) Math.sin(tick * 0.035) * 4;
             float swayY = (float) Math.sin(tick * 0.025 + 1.0) * 3;
             float dpX = -dpW * 0.35f + swayX;
             float dpTop = VH * 0.18f + swayY;
-            drawTexture(drownerSprite, dpX, topToBottomY(dpTop, dpH), dpW, dpH, alpha * 0.92f);
+            float dpY = topToBottomY(dpTop, dpH);
+            float prev = game.batch.getColor().a;
+            game.batch.setColor(1f, 1f, 1f, alpha * 0.92f);
+            if (bounds != null) {
+                PixelTextures.drawCropped(game.batch, drownerSprite,
+                    bounds[0], bounds[1], bounds[2], bounds[3], dpX, dpY, dpW, dpH);
+            } else {
+                game.batch.draw(drownerSprite, Math.round(dpX), Math.round(dpY), dpW, dpH);
+            }
+            game.batch.setColor(1f, 1f, 1f, prev);
         }
 
         if (griffinAnim != null && alpha > 0.2f) {
@@ -245,12 +267,7 @@ public class SplashScreen implements Screen {
         game.batch.setColor(1f, 1f, 1f, prev);
     }
 
-    private void drawFilled() {
-        if (alpha > 0.05f) {
-            shapes.setColor(WARM_LIGHT.r, WARM_LIGHT.g, WARM_LIGHT.b, alpha * 0.05f * flicker);
-            shapes.rect(0f, 0f, VW, VH);
-        }
-
+    private void drawFilledOverlay() {
         for (Particle p : particles) {
             p.draw(shapes);
         }

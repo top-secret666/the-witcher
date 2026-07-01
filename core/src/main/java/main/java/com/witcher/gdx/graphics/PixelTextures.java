@@ -231,6 +231,30 @@ public final class PixelTextures {
     }
 
     /**
+     * Вписать текстуру (допускается дробный масштаб) — для крупных фонов PNG.
+     */
+    public static void drawContainFit(SpriteBatch batch, Texture texture, float viewW, float viewH,
+                                    float sizeFactor, float alpha) {
+        if (texture == null) {
+            return;
+        }
+        float tw = texture.getWidth();
+        float th = texture.getHeight();
+        if (tw <= 0f || th <= 0f) {
+            return;
+        }
+        float contain = Math.min(viewW / tw, viewH / th) * sizeFactor;
+        float drawW = tw * contain;
+        float drawH = th * contain;
+        float x = (viewW - drawW) * 0.5f;
+        float y = (viewH - drawH) * 0.5f;
+        float prev = batch.getColor().a;
+        batch.setColor(1f, 1f, 1f, alpha);
+        batch.draw(texture, x, y, drawW, drawH);
+        batch.setColor(1f, 1f, 1f, prev);
+    }
+
+    /**
      * Вписать текстуру с целочисленным масштабом (чёткие пиксели), как Swing-сплэш.
      */
     public static void drawContainInteger(SpriteBatch batch, Texture texture, float viewW, float viewH,
