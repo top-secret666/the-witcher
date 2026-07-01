@@ -30,7 +30,7 @@ if errorlevel 1 (
 
 if exist "%RES%" (
   echo === Копирование ресурсов ===
-  powershell -NoProfile -ExecutionPolicy Bypass -Command "Copy-Item -LiteralPath '%RES%\*' -Destination '%OUT%' -Recurse -Force"
+  powershell -NoProfile -ExecutionPolicy Bypass -Command "Copy-Item -Path '%RES%\*' -Destination '%OUT%' -Recurse -Force"
 )
 
 echo.
