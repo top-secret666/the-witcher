@@ -92,10 +92,10 @@
     {
       "output": "1x/icons/icon_duke_seal.png",
       "size": [
-        24,
-        24
+        32,
+        32
       ],
-      "bytes": 1562
+      "bytes": 2611
     },
     {
       "output": "1x/icons/icon_armor_chest.png",

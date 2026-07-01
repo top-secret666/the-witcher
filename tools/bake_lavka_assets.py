@@ -64,6 +64,22 @@ def crisp_resize(img: Image.Image, dst_w: int, dst_h: int) -> Image.Image:
     return work.resize((dst_w, dst_h), Image.NEAREST)
 
 
+def crisp_resize_icon(img: Image.Image, dst_w: int, dst_h: int) -> Image.Image:
+    """Иконки: только деление на 2, без финального «ломающего» ресайза если получилось ровно."""
+    work = img.convert("RGBA")
+    while work.width > dst_w and work.height > dst_h:
+        if work.width == dst_w * 2 and work.height == dst_h * 2:
+            work = work.resize((dst_w, dst_h), Image.NEAREST)
+            return work
+        if work.width > dst_w * 2 and work.height > dst_h * 2:
+            work = work.resize((work.width // 2, work.height // 2), Image.NEAREST)
+            continue
+        break
+    if work.width != dst_w or work.height != dst_h:
+        work = work.resize((dst_w, dst_h), Image.NEAREST)
+    return work
+
+
 def crop_region(img: Image.Image, box: tuple[int, int, int, int]) -> Image.Image:
     x, y, w, h = box
     return img.crop((x, y, x + w, y + h))
@@ -121,14 +137,14 @@ def main() -> None:
         ("ui/shop_card_selected.png", CARD_W, CARD_H, {}),
         ("ui/shop_btn_buy_disabled.png", BTN_W, BTN_H, {}),
         ("ui/shop_btn_buy_normal.png", BTN_W, BTN_H, {}),
-        ("icons/icon_crown.png", 18, 18, {"crop": True}),
-        ("icons/icon_crown_small.png", 10, 10, {"crop": True, "src": "icons/icon_crown.png"}),
-        ("icons/icon_duke_seal.png", 24, 24, {"crop": True}),
-        ("icons/icon_armor_chest.png", CARD_ART, CARD_ART, {"crop": True}),
-        ("icons/icon_armor_legs.png", CARD_ART, CARD_ART, {"crop": True}),
-        ("icons/icon_armor_gloves.png", CARD_ART, CARD_ART, {"crop": True}),
-        ("icons/icon_armor_boots.png", CARD_ART, CARD_ART, {"crop": True}),
-        ("icons/icon_potion.png", CARD_ART, CARD_ART, {"crop": True}),
+        ("icons/icon_crown.png", 18, 18, {"crop": True, "icon": True}),
+        ("icons/icon_crown_small.png", 10, 10, {"crop": True, "src": "icons/icon_crown.png", "icon": True}),
+        ("icons/icon_duke_seal.png", 32, 32, {"crop": True, "icon": True}),
+        ("icons/icon_armor_chest.png", CARD_ART, CARD_ART, {"crop": True, "icon": True}),
+        ("icons/icon_armor_legs.png", CARD_ART, CARD_ART, {"crop": True, "icon": True}),
+        ("icons/icon_armor_gloves.png", CARD_ART, CARD_ART, {"crop": True, "icon": True}),
+        ("icons/icon_armor_boots.png", CARD_ART, CARD_ART, {"crop": True, "icon": True}),
+        ("icons/icon_potion.png", CARD_ART, CARD_ART, {"crop": True, "icon": True}),
     ]
 
     for rel, w, h, opts in jobs:
@@ -140,7 +156,8 @@ def main() -> None:
         img = Image.open(src_path)
         if opts.get("crop"):
             img = crop_region(img, content_bounds(img))
-        out = crisp_resize(img, w, h)
+        resize = crisp_resize_icon if opts.get("icon") else crisp_resize
+        out = resize(img, w, h)
         out_path = DST / rel
         out_path.parent.mkdir(parents=True, exist_ok=True)
         out.save(out_path, optimize=True)
