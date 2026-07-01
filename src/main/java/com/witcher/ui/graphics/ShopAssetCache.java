@@ -128,7 +128,7 @@ final class ShopAssetCache {
         catalogPanelScaled = loadSized(UI + "shop_catalog_panel.png", panelW, panelDrawH,
             BASE + "ui/shop_catalog_panel.png", false);
 
-        detailPanelW = 350;
+        detailPanelW = 292;
         detailPanelH = 232;
         catalogDetailPanel = loadSized(UI + "shop_catalog_panel.png", detailPanelW, detailPanelH,
             BASE + "ui/shop_catalog_panel.png", false);

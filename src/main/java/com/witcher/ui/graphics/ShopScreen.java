@@ -88,16 +88,24 @@ public class ShopScreen {
             return new Point(x, y);
         }
 
-        Rectangle leftCategoryCardSlot() {
-            int w = 108;
-            int h = 162;
-            int x = 8;
-            int y = 52;
+        /** Карточка категории — пропорции как у shop_card (54×81), ширина до панели списка. */
+        Rectangle leftCategoryCardSlot(int detailPanelW) {
+            int catalogX = VIRTUAL_W - detailPanelW - 8;
+            int gap = 10;
+            int x = 4;
+            int w = catalogX - gap - x;
+            int h = w * 81 / 54;
+            int maxH = dialogTop - 12;
+            if (h > maxH) {
+                h = maxH;
+                w = h * 54 / 81;
+            }
+            int y = 8;
             return new Rectangle(x, y, w, h);
         }
 
         Rectangle detailListPanelSlot(int detailW, int detailH) {
-            int x = 122;
+            int x = VIRTUAL_W - detailW - 8;
             int y = 50;
             return new Rectangle(x, y, detailW, detailH);
         }
@@ -363,7 +371,7 @@ public class ShopScreen {
     }
 
     private ShopCategoryAnimator categoryAnimator(ShopLayout layout) {
-        Rectangle to = layout.leftCategoryCardSlot();
+        Rectangle to = layout.leftCategoryCardSlot(assets.detailPanelW);
         float t = categoryAnimProgress();
         if (t >= 1f && !categoryClosing) {
             return ShopCategoryAnimator.open(to.x, to.y, to.width, to.height);
@@ -414,12 +422,11 @@ public class ShopScreen {
 
         if (!categoryMode) {
             drawHud(g, layout, reveal.hudAlpha, reveal.hudSlideY);
-        } else {
-            drawCornerWallet(g, 1f);
         }
 
         if (categoryMode && selectedIndex >= 0) {
             drawCategoryView(g, layout, reveal, categoryAnimator(layout));
+            drawCornerWallet(g, 1f, layout.dialogTop);
         } else {
             drawCards(g, layout, reveal);
             drawBuyButton(g, layout, reveal.btnAlpha, reveal.btnSlideY);
@@ -523,8 +530,8 @@ public class ShopScreen {
         g.setComposite(prev);
     }
 
-    /** Кошелёк в углу — без плашки HUD, для режима категории/товаров. */
-    private void drawCornerWallet(Graphics2D g, float alpha) {
+    /** Кошелёк в правом верхнем углу — поверх прилавка, выше панели списка. */
+    private void drawCornerWallet(Graphics2D g, float alpha, int dialogTop) {
         if (alpha <= 0.01f) {
             return;
         }
@@ -535,8 +542,8 @@ public class ShopScreen {
         String suffix = " крон";
         int crownSize = 16;
         int crownGap = 4;
-        int margin = 10;
-        int padX = 8;
+        int margin = 8;
+        int padX = 7;
         int padY = 4;
 
         drawCrispText(g);
@@ -548,11 +555,11 @@ public class ShopScreen {
         }
         int blockH = Math.max(crownSize, fm.getHeight()) + padY * 2;
         int blockX = VIRTUAL_W - margin - blockW - padX * 2;
-        int blockY = margin;
+        int blockY = 8;
 
-        g.setColor(new Color(8, 6, 3, 170));
+        g.setColor(new Color(10, 7, 3, 185));
         g.fillRoundRect(blockX, blockY, blockW + padX * 2, blockH, 6, 6);
-        g.setColor(new Color(120, 90, 40, 140));
+        g.setColor(new Color(140, 105, 45, 160));
         g.drawRoundRect(blockX, blockY, blockW + padX * 2, blockH, 6, 6);
 
         int textX = blockX + padX;
@@ -772,15 +779,15 @@ public class ShopScreen {
 
         BufferedImage art = item.cardArt != null ? item.cardArt : item.icon;
         if (art != null) {
-            int maxArt = w < 60 ? 32 : (w < 90 ? 44 : 52);
-            int artSize = Math.min(maxArt, Math.min(w - 8, h - 28));
+            int maxArt = w < 60 ? 32 : (h > 200 ? 80 : (w < 90 ? 44 : 56));
+            int artSize = Math.min(maxArt, Math.min(w - 10, h - 48));
             int ax = x + (w - artSize) / 2;
             int ay = y + Math.max(6, Math.round(h * 0.08f));
             drawCrispIcon(g, art, ax, ay, artSize);
         }
 
         drawCardText(g);
-        int fontSize = w < 60 ? 7 : (w < 90 ? 8 : 10);
+        int fontSize = w < 60 ? 7 : (h > 200 ? 12 : (w < 90 ? 8 : 10));
         g.setFont(cardFont(fontSize));
         FontMetrics nameFm = g.getFontMetrics();
         String name = truncateToWidth(item.name, nameFm, w - 8);
