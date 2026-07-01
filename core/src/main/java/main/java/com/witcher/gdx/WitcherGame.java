@@ -2,7 +2,7 @@ package main.java.com.witcher.gdx;
 
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import main.java.com.witcher.gdx.screens.ShopScreen;
+import main.java.com.witcher.gdx.screens.SplashScreen;
 
 /**
  * Корневой класс LibGDX-версии. Постепенно заменит Swing {@code GameWindow}.
@@ -17,7 +17,7 @@ public class WitcherGame extends Game {
     @Override
     public void create() {
         batch = new SpriteBatch(2048);
-        setScreen(new ShopScreen(this));
+        setScreen(new SplashScreen(this));
     }
 
     @Override

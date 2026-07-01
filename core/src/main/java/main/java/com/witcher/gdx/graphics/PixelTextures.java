@@ -230,6 +230,31 @@ public final class PixelTextures {
         return candidates.toArray(new String[0]);
     }
 
+    /**
+     * Вписать текстуру с целочисленным масштабом (чёткие пиксели), как Swing-сплэш.
+     */
+    public static void drawContainInteger(SpriteBatch batch, Texture texture, float viewW, float viewH,
+                                          float sizeFactor, float alpha) {
+        if (texture == null) {
+            return;
+        }
+        float tw = texture.getWidth();
+        float th = texture.getHeight();
+        if (tw <= 0f || th <= 0f) {
+            return;
+        }
+        float contain = Math.min(viewW / tw, viewH / th) * sizeFactor;
+        int scale = Math.max(1, Math.round(contain));
+        float drawW = tw * scale;
+        float drawH = th * scale;
+        float x = (viewW - drawW) * 0.5f;
+        float y = (viewH - drawH) * 0.5f;
+        float prev = batch.getColor().a;
+        batch.setColor(1f, 1f, 1f, alpha);
+        batch.draw(texture, Math.round(x), Math.round(y), Math.round(drawW), Math.round(drawH));
+        batch.setColor(1f, 1f, 1f, prev);
+    }
+
     public static void drawCover(SpriteBatch batch, Texture texture, float viewW, float viewH, float alpha) {
         if (texture == null) {
             return;
