@@ -51,23 +51,4 @@ public class IntegerScaleViewport extends Viewport {
     public int getScaleY() {
         return scaleY;
     }
-
-    /** Лог при несовпадении backbuffer и ожидаемого окна (DPI / масштаб Windows). */
-    public static void logDisplaySizeOnce() {
-        if (logged) {
-            return;
-        }
-        logged = true;
-        int w = Gdx.graphics.getWidth();
-        int h = Gdx.graphics.getHeight();
-        if (w != WitcherGame.WINDOW_W || h != WitcherGame.WINDOW_H) {
-            Gdx.app.log("Viewport", "backbuffer=" + w + "x" + h
-                + " (ozhidaetsya " + WitcherGame.WINDOW_W + "x" + WitcherGame.WINDOW_H
-                + ") — esli est chernye polya, prover masshtab Windows (100%)");
-        } else {
-            Gdx.app.log("Viewport", "backbuffer=" + w + "x" + h + " OK");
-        }
-    }
-
-    private static boolean logged;
 }

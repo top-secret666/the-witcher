@@ -73,16 +73,7 @@ public final class DisplayMetrics {
         if (!(Gdx.graphics instanceof Lwjgl3Graphics lwjgl)) {
             return;
         }
-        Lwjgl3Window window = lwjgl.getWindow();
-        long handle = window.getWindowHandle();
-        int[] win = new int[2];
-        int[] fb = new int[2];
-        GLFW.glfwGetWindowSize(handle, win, null);
-        GLFW.glfwGetFramebufferSize(handle, fb, null);
-        GLFW.glfwGetWindowSize(handle, null, win);
-        win[0] = win[0];
-        GLFW.glfwGetWindowSize(handle, win, new int[1]);
-
+        long handle = lwjgl.getWindow().getWindowHandle();
         int[] winW = new int[1];
         int[] winH = new int[1];
         int[] fbW = new int[1];
@@ -92,16 +83,11 @@ public final class DisplayMetrics {
 
         int targetW = WitcherGame.WINDOW_W;
         int targetH = WitcherGame.WINDOW_H;
-
         boolean fix = false;
-        if (fbW[0] != targetW || fbH[0] != targetH) {
-            Gdx.app.log("DisplayMetrics", "Framebuffer " + fbW[0] + 'x' + fbH[0]
-                + " != cel " + targetW + 'x' + targetH);
-            fix = true;
-        }
+
         if (winW[0] != targetW || winH[0] != targetH) {
             Gdx.app.log("DisplayMetrics", "GLFW window " + winW[0] + 'x' + winH[0]
-                + " != cel " + targetW + 'x' + targetH + " — probuyu glfwSetWindowSize");
+                + " != cel " + targetW + 'x' + targetH + " — glfwSetWindowSize");
             GLFW.glfwSetWindowSize(handle, targetW, targetH);
             fix = true;
         }
@@ -118,8 +104,6 @@ public final class DisplayMetrics {
             Lwjgl3Window window = lwjgl.getWindow();
             long handle = window.getWindowHandle();
 
-            sb.append("Lwjgl3Window.getWidth x Height: ")
-                .append(window.getWidth()).append('x').append(window.getHeight()).append('\n');
             sb.append("Lwjgl3Window position: ")
                 .append(window.getPositionX()).append(',').append(window.getPositionY()).append('\n');
 

@@ -11,6 +11,7 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import main.java.com.witcher.gdx.WitcherGame;
+import main.java.com.witcher.gdx.graphics.DisplayMetrics;
 import main.java.com.witcher.gdx.graphics.GameFonts;
 import main.java.com.witcher.gdx.graphics.IntegerScaleViewport;
 import main.java.com.witcher.gdx.graphics.PixelSpriteSheet;
@@ -63,6 +64,8 @@ public class SplashScreen implements Screen {
     private final Array<Particle> particles = new Array<>();
     private final Array<SmokePuff> smokePuffs = new Array<>();
 
+    private boolean metricsLoggedAfterDraw;
+
     public SplashScreen(WitcherGame game) {
         this.game = game;
     }
@@ -91,7 +94,8 @@ public class SplashScreen implements Screen {
         }
 
         viewport.update(Gdx.graphics.getWidth(), Gdx.graphics.getHeight(), true);
-        IntegerScaleViewport.logDisplaySizeOnce();
+        DisplayMetrics.log("splash-show");
+        DisplayMetrics.tryFixWindowSizeMismatch();
         Gdx.app.log("SplashScreen", "assets bg=" + (background != null)
             + " logo=" + (logoAnim != null) + " bar=" + (witcherBar != null)
             + " griffin=" + (griffinAnim != null)
@@ -112,6 +116,12 @@ public class SplashScreen implements Screen {
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         viewport.update(Gdx.graphics.getWidth(), Gdx.graphics.getHeight(), true);
         viewport.apply();
+        DisplayMetrics.logViewport("splash-render", viewport);
+
+        if (!metricsLoggedAfterDraw) {
+            metricsLoggedAfterDraw = true;
+            DisplayMetrics.log("splash-first-frame");
+        }
 
         game.batch.setProjectionMatrix(camera.combined);
         shapes.setProjectionMatrix(camera.combined);
@@ -356,6 +366,8 @@ public class SplashScreen implements Screen {
     @Override
     public void resize(int width, int height) {
         viewport.update(width, height, true);
+        DisplayMetrics.log("splash-resize");
+        DisplayMetrics.logViewport("splash-resize", viewport);
     }
 
     @Override
