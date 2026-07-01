@@ -27,6 +27,8 @@ public class SplashScreen implements Screen {
 
     private static final float VW = WitcherGame.VIRTUAL_W;
     private static final float VH = WitcherGame.VIRTUAL_H;
+    private static final float FW = WitcherGame.FRAME_VW;
+    private static final float FH = WitcherGame.FRAME_VH;
 
     private static final Color GOLD = new Color(218f / 255f, 165f / 255f, 32f / 255f, 1f);
     private static final Color GOLD_BRIGHT = new Color(1f, 210f / 255f, 80f / 255f, 1f);
@@ -81,7 +83,8 @@ public class SplashScreen implements Screen {
     @Override
     public void show() {
         camera = new OrthographicCamera();
-        viewport = new StretchViewport(VW, VH, camera);
+        viewport = new StretchViewport(FW, FH, camera);
+        game.bindChromeViewport(viewport);
         shapes = new ShapeRenderer();
         fonts = new GameFonts();
         fonts.load();
@@ -101,7 +104,7 @@ public class SplashScreen implements Screen {
             griffinAnim.setPingPong(true);
         }
 
-        GdxWindowAlign.ensureFramebuffer((int) VW * WitcherGame.PIXEL_SCALE, (int) VH * WitcherGame.PIXEL_SCALE);
+        GdxWindowAlign.ensureFramebuffer(WitcherGame.FRAME_W, WitcherGame.FRAME_H);
         viewport.update(GdxWindowAlign.backBufferW(), GdxWindowAlign.backBufferH(), true);
         DisplayMetrics.log("splash-show");
         DisplayMetrics.tryFixWindowSizeMismatch();
@@ -138,6 +141,11 @@ public class SplashScreen implements Screen {
 
         game.batch.setProjectionMatrix(camera.combined);
         shapes.setProjectionMatrix(camera.combined);
+        game.frameChrome.drawBackground(shapes);
+
+        var gameMatrix = game.frameChrome.gameContentMatrix(camera.combined);
+        game.batch.setProjectionMatrix(gameMatrix);
+        shapes.setProjectionMatrix(gameMatrix);
         PixelTextures.resetBlend();
 
         shapes.begin(ShapeRenderer.ShapeType.Filled);
@@ -164,6 +172,10 @@ public class SplashScreen implements Screen {
         game.batch.begin();
         drawLoadText();
         game.batch.end();
+
+        game.batch.setProjectionMatrix(camera.combined);
+        shapes.setProjectionMatrix(camera.combined);
+        game.frameChrome.drawForeground(shapes, game.batch, viewport);
 
         if (finished && !transitioning) {
             transitioning = true;

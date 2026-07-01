@@ -7,16 +7,17 @@ import main.java.com.witcher.gdx.WitcherGame;
 import org.lwjgl.glfw.GLFW;
 
 /**
- * Окно LibGDX — целевой кадр 960×720 (480×360 ×2).
- * <p>
- * На Windows 125% нельзя вызывать {@code setWindowedMode(960, 720)} напрямую:
- * framebuffer и физический клиент расходятся → чёрные поля и «крошечная» картинка.
- * Решение: GLFW-окно меньше на contentScale (как раньше в Swing+OS).
+ * LibGDX: пиксельная рамка, кадр 960×720. Размер GLFW-окна = FRAME/scale (как Swing при 125%).
  */
 public class DesktopLauncher {
 
-    public static void main(String[] args) {
+    static {
+        System.setProperty("sun.java2d.uiScale.enabled", "false");
+        System.setProperty("awt.useSystemAAFontSettings", "off");
         System.setProperty("org.lwjgl.opengl.Display.allowLegacyDXGIScaling", "false");
+    }
+
+    public static void main(String[] args) {
         try {
             float contentScale = queryPrimaryMonitorContentScale();
             int[] glfw = computeGlfwWindowSize(contentScale);
@@ -25,12 +26,14 @@ public class DesktopLauncher {
             config.setTitle("The Witcher — LibGDX");
             config.setHdpiMode(HdpiMode.Pixels);
             config.setWindowedMode(glfw[0], glfw[1]);
+            config.setDecorated(false);
             config.setResizable(false);
             config.setForegroundFPS(60);
             config.useVsync(true);
+            config.setWindowIcon("sprites/app_icon.png");
 
-            System.out.println("[DesktopLauncher] celNaEkrane=" + WitcherGame.WINDOW_W + 'x' + WitcherGame.WINDOW_H
-                + " glfwOkno=" + glfw[0] + 'x' + glfw[1]
+            System.out.println("[DesktopLauncher] cel=" + WitcherGame.FRAME_W + 'x' + WitcherGame.FRAME_H
+                + " glfw=" + glfw[0] + 'x' + glfw[1]
                 + " monitorScale=" + contentScale);
 
             new Lwjgl3Application(new WitcherGame(), config);
@@ -57,12 +60,9 @@ public class DesktopLauncher {
         }
     }
 
-    /**
-     * Размер окна для GLFW: при 125% → 768×576, ОС растягивает до ~960×720 без полей.
-     */
     static int[] computeGlfwWindowSize(float contentScale) {
-        int targetW = WitcherGame.WINDOW_W;
-        int targetH = WitcherGame.WINDOW_H;
+        int targetW = WitcherGame.FRAME_W;
+        int targetH = WitcherGame.FRAME_H;
         if (contentScale <= 1.01f) {
             return new int[] { targetW, targetH };
         }
