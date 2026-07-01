@@ -548,8 +548,8 @@ public class ShopScreen {
             drawCrispIcon(g, assets.dukeSealIconScaled, sealX, sealY, seal);
         }
 
-        String wallet = "???";
-        String suffix = " крон";
+        String wallet = model.walletAmountText();
+        String suffix = model.walletSuffix();
         int crownSize = 18;
         int crownGap = 4;
         drawCrispText(g);
@@ -582,8 +582,8 @@ public class ShopScreen {
         Composite prev = g.getComposite();
         g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
 
-        String wallet = "???";
-        String suffix = " крон";
+        String wallet = model.walletAmountText();
+        String suffix = model.walletSuffix();
         int crownSize = 16;
         int crownGap = 4;
         int margin = 8;
@@ -693,7 +693,7 @@ public class ShopScreen {
 
         item.bounds.setBounds(cat.cardX, cat.cardY, cat.cardW, cat.cardH);
         drawItemCard(g, item, cat.cardX, cat.cardY, cat.cardW, cat.cardH,
-            selectedIndex, true, false, 1f);
+            selectedIndex, true, false, 1f, selectedCatalogPrice());
 
         if (cat.detailPanelAlpha > 0.02f) {
             Rectangle panel = layout.detailListPanelSlot(assets.detailPanelW, assets.detailPanelH);
@@ -704,13 +704,23 @@ public class ShopScreen {
                 g.drawImage(assets.catalogDetailPanel, px, py, null);
             }
             drawCatalogRows(g, px, py, cat.listInteractive);
-            drawCategoryBuyButton(g, px, py, cat.detailPanelAlpha);
+            drawCategoryBuyButton(g, px, py, cat.detailPanelAlpha, cat.listInteractive);
         }
 
         g.setComposite(layer);
     }
 
-    private void drawCategoryBuyButton(Graphics2D g, int panelX, int panelY, float alpha) {
+    private String selectedCatalogPrice() {
+        if (selectedRowIndex >= 0 && selectedRowIndex < catalogEntries.size()) {
+            return catalogEntries.get(selectedRowIndex).priceLabel();
+        }
+        if (selectedIndex >= 0 && selectedIndex < items.size()) {
+            return items.get(selectedIndex).priceLabel;
+        }
+        return "···";
+    }
+
+    private void drawCategoryBuyButton(Graphics2D g, int panelX, int panelY, float alpha, boolean interactive) {
         if (alpha <= 0.01f) {
             return;
         }
@@ -720,6 +730,11 @@ public class ShopScreen {
         int btnH = assets.btnH;
         int btnX = panelX + (assets.detailPanelW - btnW) / 2;
         int btnY = panelY + assets.detailPanelH - btnH - 8;
+        if (interactive) {
+            categoryBuyBounds.setBounds(btnX, btnY, btnW, btnH);
+        } else {
+            categoryBuyBounds.setBounds(0, 0, 0, 0);
+        }
         if (assets.btnBuyScaled != null) {
             g.drawImage(assets.btnBuyScaled, btnX, btnY, null);
         }
@@ -739,8 +754,8 @@ public class ShopScreen {
         drawCardText(g);
         g.setFont(cardFont(8));
 
-        for (int i = 0; i < catalogRows.size(); i++) {
-            CatalogRow row = catalogRows.get(i);
+        for (int i = 0; i < catalogEntries.size(); i++) {
+            ShopCatalogEntry row = catalogEntries.get(i);
             int y = startY + i * (assets.rowH + rowGap);
             boolean hovered = interactive && i == hoveredRowIndex;
             boolean selected = i == selectedRowIndex;
@@ -762,7 +777,7 @@ public class ShopScreen {
             int textY = y + (assets.rowH + fm.getAscent()) / 2 - 2;
             drawOutlinedText(g, label, x + 8, textY, new Color(235, 215, 155));
 
-            String price = row.price;
+            String price = row.priceLabel();
             int priceW = fm.stringWidth(price);
             if (assets.crownIconSmall != null && !price.equals("···")) {
                 priceW += assets.crownIconSmall.getWidth() + 2;
@@ -787,6 +802,11 @@ public class ShopScreen {
 
     private void drawItemCard(Graphics2D g, ShopItem item, int x, int y, int w, int h, int index,
                               boolean selected, boolean hovered, float revealAlpha) {
+        drawItemCard(g, item, x, y, w, h, index, selected, hovered, revealAlpha, null);
+    }
+
+    private void drawItemCard(Graphics2D g, ShopItem item, int x, int y, int w, int h, int index,
+                              boolean selected, boolean hovered, float revealAlpha, String priceOverride) {
         Composite savedComposite = g.getComposite();
         g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, revealAlpha));
 
@@ -805,7 +825,7 @@ public class ShopScreen {
             drawFallbackCard(g, x, y, w, h, false);
             cardRect = new Rectangle(x, y, w, h);
         }
-        drawCardFrontContent(g, item, cardRect, w, h);
+        drawCardFrontContent(g, item, cardRect, w, h, priceOverride);
 
         g.setComposite(savedComposite);
     }

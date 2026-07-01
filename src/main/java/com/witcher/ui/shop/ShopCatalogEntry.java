@@ -10,6 +10,7 @@ public final class ShopCatalogEntry {
     public final Armour armour;
     public final ArmourSet armourSet;
     public final boolean placeholder;
+    public final Rectangle bounds = new Rectangle();
 
     private ShopCatalogEntry(String name, int price, Armour armour, ArmourSet armourSet, boolean placeholder) {
         this.name = name;
