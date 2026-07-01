@@ -62,7 +62,7 @@ final class ShopAssetCache {
     final BufferedImage crownIconSmall;
     /** Печать герцога вместо текста «Лавка Герцога» в шапке. */
     final BufferedImage dukeSealIconScaled;
-    final int dukeSealSize = 24;
+    final int dukeSealSize = 32;
     final BufferedImage merchantBgScaled;
     final BufferedImage geraltScaled;
     final BufferedImage dukeScaled;

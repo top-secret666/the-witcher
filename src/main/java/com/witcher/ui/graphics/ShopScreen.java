@@ -875,16 +875,31 @@ public class ShopScreen {
         if (icon == null || size <= 0) return;
         int ix = Math.round(x);
         int iy = Math.round(y);
+        int iw = icon.getWidth();
+        int ih = icon.getHeight();
         Object prevInterp = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
         Object prevRender = g.getRenderingHint(RenderingHints.KEY_RENDERING);
+        Object prevAa = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
         g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
         g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
-        g.drawImage(icon, ix, iy, ix + size, iy + size, 0, 0, icon.getWidth(), icon.getHeight(), null);
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+        if (iw == size && ih == size) {
+            g.drawImage(icon, ix, iy, null);
+        } else if (iw * 2 == size && ih * 2 == size) {
+            g.drawImage(icon, ix, iy, ix + size, iy + size, 0, 0, iw, ih, null);
+        } else if (iw == size * 2 && ih == size * 2) {
+            g.drawImage(icon, ix, iy, ix + size, iy + size, 0, 0, iw, ih, null);
+        } else {
+            g.drawImage(icon, ix, iy, ix + size, iy + size, 0, 0, iw, ih, null);
+        }
         if (prevInterp != null) {
             g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, prevInterp);
         }
         if (prevRender != null) {
             g.setRenderingHint(RenderingHints.KEY_RENDERING, prevRender);
+        }
+        if (prevAa != null) {
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, prevAa);
         }
     }
 
