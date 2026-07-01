@@ -60,6 +60,9 @@ final class ShopAssetCache {
     final BufferedImage btnBuyScaled;
     final BufferedImage crownIconScaled;
     final BufferedImage crownIconSmall;
+    /** Печать герцога вместо текста «Лавка Герцога» в шапке. */
+    final BufferedImage dukeSealIconScaled;
+    final int dukeSealSize = 24;
     final BufferedImage merchantBgScaled;
     final BufferedImage geraltScaled;
     final BufferedImage dukeScaled;
@@ -93,6 +96,8 @@ final class ShopAssetCache {
             BASE + "icons/icon_crown.png", true);
         crownIconSmall = loadSized(ICONS + "icon_crown_small.png", 10, 10,
             BASE + "icons/icon_crown.png", true);
+        dukeSealIconScaled = loadSized(ICONS + "icon_duke_seal.png", dukeSealSize, dukeSealSize,
+            BASE + "icons/icon_duke_seal.png", true);
 
         merchantBgScaled = loadBackground();
         int charH = Math.round(360 * 0.70f);

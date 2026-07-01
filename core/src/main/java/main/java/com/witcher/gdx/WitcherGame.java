@@ -1,7 +1,8 @@
 package main.java.com.witcher.gdx;
 
-import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Game;
+import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import main.java.com.witcher.gdx.graphics.DisplayMetrics;
 import main.java.com.witcher.gdx.graphics.GdxWindowAlign;

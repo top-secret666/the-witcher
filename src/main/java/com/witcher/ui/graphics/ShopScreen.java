@@ -498,12 +498,12 @@ public class ShopScreen {
             g.fillRect(layout.hudX, hudY, layout.hudW, layout.hudH);
         }
 
-        drawCrispText(g);
-        g.setFont(new Font("Serif", Font.BOLD, 14));
-        g.setColor(DialogBoxRenderer.DUKE_COLOR);
-        FontMetrics titleFm = g.getFontMetrics();
-        int titleY = hudY + (layout.hudH + titleFm.getAscent()) / 2 - 1;
-        g.drawString("Лавка Герцога", layout.hudX + 18, titleY);
+        if (assets.dukeSealIconScaled != null) {
+            int seal = assets.dukeSealSize;
+            int sealX = layout.hudX + 12;
+            int sealY = hudY + (layout.hudH - seal) / 2;
+            drawCrispIcon(g, assets.dukeSealIconScaled, sealX, sealY, seal);
+        }
 
         String wallet = "???";
         String suffix = " крон";

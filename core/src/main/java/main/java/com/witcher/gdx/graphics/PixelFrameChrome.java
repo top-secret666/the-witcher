@@ -3,6 +3,7 @@ package main.java.com.witcher.gdx.graphics;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputAdapter;
+import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3Graphics;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
@@ -162,9 +163,35 @@ public final class PixelFrameChrome extends InputAdapter {
     }
 
     private float[] screenToFrame(int sx, int sy) {
-        float wx = sx * (WitcherGame.FRAME_W / (float) fbW);
-        float wy = sy * (WitcherGame.FRAME_H / (float) fbH);
+        int bx = sx;
+        int by = sy;
+        if (Gdx.graphics instanceof Lwjgl3Graphics g) {
+            long handle = g.getWindow().getWindowHandle();
+            int[] winW = new int[1];
+            int[] winH = new int[1];
+            int[] fbW = new int[1];
+            int[] fbH = new int[1];
+            GLFW.glfwGetWindowSize(handle, winW, winH);
+            GLFW.glfwGetFramebufferSize(handle, fbW, fbH);
+            if (winW[0] > 0 && fbW[0] > 0 && winW[0] != fbW[0]) {
+                bx = Math.round(sx * (fbW[0] / (float) winW[0]));
+            }
+            if (winH[0] > 0 && fbH[0] > 0 && winH[0] != fbH[0]) {
+                by = Math.round(sy * (fbH[0] / (float) winH[0]));
+            }
+        }
+        float wx = bx * (WitcherGame.FRAME_W / (float) fbW);
+        float wy = by * (WitcherGame.FRAME_H / (float) fbH);
         return new float[] { wx, wy };
+    }
+
+    @Override
+    public boolean keyDown(int keycode) {
+        if (keycode == Input.Keys.ESCAPE) {
+            Gdx.app.exit();
+            return true;
+        }
+        return false;
     }
 
     @Override

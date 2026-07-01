@@ -123,6 +123,7 @@ def main() -> None:
         ("ui/shop_btn_buy_normal.png", BTN_W, BTN_H, {}),
         ("icons/icon_crown.png", 18, 18, {"crop": True}),
         ("icons/icon_crown_small.png", 10, 10, {"crop": True, "src": "icons/icon_crown.png"}),
+        ("icons/icon_duke_seal.png", 24, 24, {"crop": True}),
         ("icons/icon_armor_chest.png", CARD_ART, CARD_ART, {"crop": True}),
         ("icons/icon_armor_legs.png", CARD_ART, CARD_ART, {"crop": True}),
         ("icons/icon_armor_gloves.png", CARD_ART, CARD_ART, {"crop": True}),
