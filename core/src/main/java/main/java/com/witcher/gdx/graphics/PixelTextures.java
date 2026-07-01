@@ -307,6 +307,27 @@ public final class PixelTextures {
         batch.setColor(1f, 1f, 1f, prev);
     }
 
+    /** Как Swing: вписать фон с полями, не cover на весь экран. */
+    public static void drawContain(SpriteBatch batch, Texture texture, float viewW, float viewH, float alpha, float margin) {
+        if (texture == null) {
+            return;
+        }
+        float tw = texture.getWidth();
+        float th = texture.getHeight();
+        if (tw <= 0f || th <= 0f) {
+            return;
+        }
+        float a = batch.getColor().a;
+        batch.setColor(1f, 1f, 1f, alpha);
+        float contain = Math.min(viewW / tw, viewH / th) * margin;
+        float drawW = tw * contain;
+        float drawH = th * contain;
+        float x = (viewW - drawW) * 0.5f;
+        float y = (viewH - drawH) * 0.5f;
+        batch.draw(texture, x, y, drawW, drawH);
+        batch.setColor(1f, 1f, 1f, a);
+    }
+
     public static void drawCover(SpriteBatch batch, Texture texture, float viewW, float viewH, float alpha) {
         if (texture == null) {
             return;

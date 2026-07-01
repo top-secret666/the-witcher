@@ -6,7 +6,7 @@ import com.badlogic.gdx.backends.lwjgl3.Lwjgl3ApplicationConfiguration;
 import org.lwjgl.glfw.GLFW;
 
 /**
- * GLFW без масштабирования окна монитором — 1 пиксель кадра = 1 пиксель на экране (как Swing).
+ * GLFW: не масштабировать окно монитором. Hint ставим до {@code glfwInit} (вызовет LibGDX).
  */
 public class WitcherLwjgl3Application extends Lwjgl3Application {
 
@@ -15,9 +15,6 @@ public class WitcherLwjgl3Application extends Lwjgl3Application {
     }
 
     static void applyGlfwHints() {
-        if (!GLFW.glfwInit()) {
-            throw new IllegalStateException("glfwInit failed");
-        }
-        GLFW.glfwWindowHint(GLFW.GLFW_SCALE_TO_MONITOR, GLFW.GLFW_FALSE);
+        GLFW.glfwInitHint(GLFW.GLFW_SCALE_TO_MONITOR, GLFW.GLFW_FALSE);
     }
 }

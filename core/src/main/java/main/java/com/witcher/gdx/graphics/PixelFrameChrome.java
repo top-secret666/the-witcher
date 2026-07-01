@@ -5,17 +5,16 @@ import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3Graphics;
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
-import com.badlogic.gdx.math.Vector3;
-import com.badlogic.gdx.utils.viewport.Viewport;
 import main.java.com.witcher.gdx.WitcherGame;
 import org.lwjgl.glfw.GLFW;
 
 /**
- * Пиксельная шапка и рамка окна — как Swing {@code GameWindow.PixelTitleBar} / {@code PixelBorder}.
+ * Пиксельная шапка и рамка — координаты в пикселях {@code FRAME_W}×{@code FRAME_H}.
  */
 public final class PixelFrameChrome extends InputAdapter {
 
@@ -25,9 +24,10 @@ public final class PixelFrameChrome extends InputAdapter {
     private static final Color TITLE_HOVER = new Color(230f / 255f, 180f / 255f, 60f / 255f, 1f);
 
     private final GlyphLayout glyph = new GlyphLayout();
-    private final Vector3 tmp = new Vector3();
 
     private BitmapFont titleFont;
+    private int fbW = WitcherGame.FRAME_W;
+    private int fbH = WitcherGame.FRAME_H;
     private boolean hoverMinimize;
     private boolean hoverClose;
     private boolean pressedMinimize;
@@ -42,7 +42,7 @@ public final class PixelFrameChrome extends InputAdapter {
     public void loadFont() {
         if (titleFont == null) {
             titleFont = new BitmapFont();
-            titleFont.getData().setScale(0.55f);
+            titleFont.getData().setScale(1.1f);
         }
     }
 
@@ -53,10 +53,15 @@ public final class PixelFrameChrome extends InputAdapter {
         }
     }
 
+    public void bindFramebuffer(int width, int height) {
+        fbW = Math.max(1, width);
+        fbH = Math.max(1, height);
+    }
+
     public void drawBackground(ShapeRenderer shapes) {
-        float fw = WitcherGame.FRAME_VW;
-        float fh = WitcherGame.FRAME_VH;
-        float b = WitcherGame.BORDER_V;
+        float fw = WitcherGame.FRAME_W;
+        float fh = WitcherGame.FRAME_H;
+        float b = WitcherGame.BORDER;
 
         shapes.begin(ShapeRenderer.ShapeType.Filled);
         shapes.setColor(TITLE_BORDER);
@@ -73,20 +78,20 @@ public final class PixelFrameChrome extends InputAdapter {
         shapes.end();
     }
 
-    public void drawForeground(ShapeRenderer shapes, SpriteBatch batch, Viewport viewport) {
-        float fh = WitcherGame.FRAME_VH;
-        float b = WitcherGame.BORDER_V;
-        float th = WitcherGame.TITLE_V;
+    public void drawForeground(ShapeRenderer shapes, SpriteBatch batch) {
+        float fh = WitcherGame.FRAME_H;
+        float b = WitcherGame.BORDER;
+        float th = WitcherGame.TITLE_H;
 
         shapes.begin(ShapeRenderer.ShapeType.Filled);
         shapes.setColor(TITLE_BG);
-        shapes.rect(b, fh - b - th, WitcherGame.VIRTUAL_W, th);
+        shapes.rect(b, fh - b - th, WitcherGame.WINDOW_W, th);
         shapes.setColor(TITLE_BORDER);
-        shapes.rect(b, fh - b - th, WitcherGame.VIRTUAL_W, 1f);
+        shapes.rect(b, fh - b - th, WitcherGame.WINDOW_W, 1f);
         shapes.end();
 
-        drawButton(shapes, minimizeBounds(viewport), hoverMinimize, pressedMinimize, false);
-        drawButton(shapes, closeBounds(viewport), hoverClose, pressedClose, true);
+        drawButton(shapes, minimizeBounds(), hoverMinimize, pressedMinimize, false);
+        drawButton(shapes, closeBounds(), hoverClose, pressedClose, true);
 
         if (titleFont != null) {
             batch.begin();
@@ -122,54 +127,54 @@ public final class PixelFrameChrome extends InputAdapter {
                 shapes.rect(r[0] + r[2] - pad - i, r[1] + pad + i, 1f, 1f);
             }
         } else {
-            float barH = 2.5f;
+            float barH = 5f;
             float barW = r[2] - 6f;
             shapes.rect(r[0] + (r[2] - barW) * 0.5f, r[1] + (r[3] - barH) * 0.5f, barW, barH);
         }
         shapes.end();
     }
 
-    private float[] minimizeBounds(Viewport viewport) {
-        float[] close = closeBounds(viewport);
+    private float[] minimizeBounds() {
+        float[] close = closeBounds();
         float btn = close[2];
         return new float[] { close[0] - 4f - btn, close[1], btn, btn };
     }
 
-    private float[] closeBounds(Viewport viewport) {
-        float fh = WitcherGame.FRAME_VH;
-        float b = WitcherGame.BORDER_V;
-        float th = WitcherGame.TITLE_V;
+    private float[] closeBounds() {
+        float fh = WitcherGame.FRAME_H;
+        float b = WitcherGame.BORDER;
+        float th = WitcherGame.TITLE_H;
         float btn = th - 4f;
-        float x = WitcherGame.FRAME_VW - b - 6f - btn;
+        float x = WitcherGame.FRAME_W - b - 6f - btn;
         float y = fh - b - th + (th - btn) * 0.5f;
         return new float[] { x, y, btn, btn };
     }
 
     private float[] titleDragBounds() {
-        float b = WitcherGame.BORDER_V;
-        float th = WitcherGame.TITLE_V;
-        float fh = WitcherGame.FRAME_VH;
-        return new float[] { b, fh - b - th, WitcherGame.VIRTUAL_W, th };
+        float b = WitcherGame.BORDER;
+        float th = WitcherGame.TITLE_H;
+        float fh = WitcherGame.FRAME_H;
+        return new float[] { b, fh - b - th, WitcherGame.WINDOW_W, th };
     }
 
     private boolean hit(float[] r, float wx, float wy) {
         return wx >= r[0] && wx <= r[0] + r[2] && wy >= r[1] && wy <= r[1] + r[3];
     }
 
-    private float[] screenToWorld(Viewport viewport, int sx, int sy) {
-        tmp.set(sx, sy, 0f);
-        viewport.unproject(tmp);
-        return new float[] { tmp.x, tmp.y };
+    private float[] screenToFrame(int sx, int sy) {
+        float wx = sx * (WitcherGame.FRAME_W / (float) fbW);
+        float wy = sy * (WitcherGame.FRAME_H / (float) fbH);
+        return new float[] { wx, wy };
     }
 
     @Override
     public boolean touchDown(int screenX, int screenY, int pointer, int button) {
-        if (button != Input.Buttons.LEFT || viewport == null) {
+        if (button != Input.Buttons.LEFT) {
             return false;
         }
-        float[] w = screenToWorld(viewport, screenX, screenY);
-        hoverMinimize = hit(minimizeBounds(viewport), w[0], w[1]);
-        hoverClose = hit(closeBounds(viewport), w[0], w[1]);
+        float[] w = screenToFrame(screenX, screenY);
+        hoverMinimize = hit(minimizeBounds(), w[0], w[1]);
+        hoverClose = hit(closeBounds(), w[0], w[1]);
         pressedMinimize = hoverMinimize;
         pressedClose = hoverClose;
 
@@ -227,18 +232,9 @@ public final class PixelFrameChrome extends InputAdapter {
 
     @Override
     public boolean mouseMoved(int screenX, int screenY) {
-        if (viewport == null) {
-            return false;
-        }
-        float[] w = screenToWorld(viewport, screenX, screenY);
-        hoverMinimize = hit(minimizeBounds(viewport), w[0], w[1]);
-        hoverClose = hit(closeBounds(viewport), w[0], w[1]);
+        float[] w = screenToFrame(screenX, screenY);
+        hoverMinimize = hit(minimizeBounds(), w[0], w[1]);
+        hoverClose = hit(closeBounds(), w[0], w[1]);
         return hoverMinimize || hoverClose;
-    }
-
-    private Viewport viewport;
-
-    public void setViewport(Viewport viewport) {
-        this.viewport = viewport;
     }
 }

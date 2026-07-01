@@ -3,7 +3,6 @@ package main.java.com.witcher.gdx;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.utils.viewport.Viewport;
 import main.java.com.witcher.gdx.graphics.DisplayMetrics;
 import main.java.com.witcher.gdx.graphics.GdxWindowAlign;
 import main.java.com.witcher.gdx.graphics.PixelFrameChrome;
@@ -45,8 +44,8 @@ public class WitcherGame extends Game {
         setScreen(new SplashScreen(this));
     }
 
-    public void bindChromeViewport(Viewport viewport) {
-        frameChrome.setViewport(viewport);
+    public void bindChromeFramebuffer(int width, int height) {
+        frameChrome.bindFramebuffer(width, height);
     }
 
     @Override

@@ -9,13 +9,11 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.utils.Array;
-import com.badlogic.gdx.utils.viewport.Viewport;
 import main.java.com.witcher.gdx.WitcherGame;
 import main.java.com.witcher.gdx.graphics.DisplayMetrics;
+import main.java.com.witcher.gdx.graphics.GameFrameLayout;
 import main.java.com.witcher.gdx.graphics.GdxWindowAlign;
 import main.java.com.witcher.gdx.graphics.GameFonts;
-import main.java.com.witcher.gdx.graphics.InsetViewport;
-import com.badlogic.gdx.utils.viewport.StretchViewport;
 import main.java.com.witcher.gdx.graphics.PixelSpriteSheet;
 import main.java.com.witcher.gdx.graphics.PixelTextures;
 
@@ -28,8 +26,6 @@ public class SplashScreen implements Screen {
 
     private static final float VW = WitcherGame.VIRTUAL_W;
     private static final float VH = WitcherGame.VIRTUAL_H;
-    private static final float FW = WitcherGame.FRAME_VW;
-    private static final float FH = WitcherGame.FRAME_VH;
 
     private static final Color GOLD = new Color(218f / 255f, 165f / 255f, 32f / 255f, 1f);
     private static final Color GOLD_BRIGHT = new Color(1f, 210f / 255f, 80f / 255f, 1f);
@@ -47,8 +43,6 @@ public class SplashScreen implements Screen {
     private static final int END_HOLD_TICKS = 100;
 
     private final WitcherGame game;
-    private Viewport frameViewport;
-    private Viewport gameViewport;
     private OrthographicCamera frameCamera;
     private OrthographicCamera gameCamera;
     private ShapeRenderer shapes;
@@ -87,14 +81,6 @@ public class SplashScreen implements Screen {
     public void show() {
         frameCamera = new OrthographicCamera();
         gameCamera = new OrthographicCamera();
-        frameViewport = new StretchViewport(FW, FH, frameCamera);
-        gameViewport = new InsetViewport(
-            FW, FH,
-            WitcherGame.GAME_VX, WitcherGame.GAME_VY,
-            VW, VH,
-            gameCamera
-        );
-        game.bindChromeViewport(frameViewport);
         shapes = new ShapeRenderer();
         fonts = new GameFonts();
         fonts.load();
@@ -117,8 +103,7 @@ public class SplashScreen implements Screen {
         GdxWindowAlign.ensureFramebuffer(WitcherGame.FRAME_W, WitcherGame.FRAME_H);
         int bbw = GdxWindowAlign.backBufferW();
         int bbh = GdxWindowAlign.backBufferH();
-        frameViewport.update(bbw, bbh, true);
-        gameViewport.update(bbw, bbh, true);
+        game.bindChromeFramebuffer(bbw, bbh);
         DisplayMetrics.log("splash-show");
         DisplayMetrics.tryFixWindowSizeMismatch();
         Gdx.app.log("SplashScreen", "assets bg=" + (background != null)
@@ -140,25 +125,17 @@ public class SplashScreen implements Screen {
         GdxWindowAlign.refreshFramebufferCache();
         int bbw = GdxWindowAlign.backBufferW();
         int bbh = GdxWindowAlign.backBufferH();
-        Gdx.gl.glViewport(0, 0, bbw, bbh);
-        Gdx.gl.glClearColor(SPLASH_BACKDROP.r, SPLASH_BACKDROP.g, SPLASH_BACKDROP.b, 1f);
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+        game.bindChromeFramebuffer(bbw, bbh);
+        GameFrameLayout layout = GameFrameLayout.fromFramebuffer(bbw, bbh);
 
-        frameViewport.update(bbw, bbh, true);
-        frameViewport.apply();
-        DisplayMetrics.logOnceViewport("splash-render", frameViewport);
+        layout.clearBackdrop(SPLASH_BACKDROP.r, SPLASH_BACKDROP.g, SPLASH_BACKDROP.b);
 
-        if (!metricsLoggedAfterDraw) {
-            metricsLoggedAfterDraw = true;
-            DisplayMetrics.log("splash-first-frame");
-        }
-
+        layout.bindFullFrame(frameCamera);
         game.batch.setProjectionMatrix(frameCamera.combined);
         shapes.setProjectionMatrix(frameCamera.combined);
         game.frameChrome.drawBackground(shapes);
 
-        gameViewport.update(bbw, bbh, true);
-        gameViewport.apply();
+        layout.bindGame(gameCamera);
         game.batch.setProjectionMatrix(gameCamera.combined);
         shapes.setProjectionMatrix(gameCamera.combined);
         PixelTextures.resetBlend();
@@ -188,10 +165,17 @@ public class SplashScreen implements Screen {
         drawLoadText();
         game.batch.end();
 
-        frameViewport.apply();
+        layout.bindFullFrame(frameCamera);
         game.batch.setProjectionMatrix(frameCamera.combined);
         shapes.setProjectionMatrix(frameCamera.combined);
-        game.frameChrome.drawForeground(shapes, game.batch, frameViewport);
+        game.frameChrome.drawForeground(shapes, game.batch);
+
+        if (!metricsLoggedAfterDraw) {
+            metricsLoggedAfterDraw = true;
+            DisplayMetrics.log("splash-first-frame");
+            Gdx.app.log("SplashScreen", "gameRect=" + layout.gameX + ',' + layout.gameY
+                + ' ' + layout.gameW + 'x' + layout.gameH + " fb=" + bbw + 'x' + bbh);
+        }
 
         if (finished && !transitioning) {
             transitioning = true;
@@ -271,7 +255,7 @@ public class SplashScreen implements Screen {
     private void drawSprites() {
         if (background != null) {
             float a = clamp(alpha * 0.88f, 0f, 1f);
-            PixelTextures.drawCover(game.batch, background, VW, VH, a);
+            PixelTextures.drawContain(game.batch, background, VW, VH, a, 0.94f);
         }
 
         if (logoAnim != null && alpha > 0.05f) {
@@ -412,12 +396,7 @@ public class SplashScreen implements Screen {
     @Override
     public void resize(int width, int height) {
         GdxWindowAlign.refreshFramebufferCache();
-        int bbw = GdxWindowAlign.backBufferW();
-        int bbh = GdxWindowAlign.backBufferH();
-        frameViewport.update(bbw, bbh, true);
-        gameViewport.update(bbw, bbh, true);
         DisplayMetrics.log("splash-resize");
-        DisplayMetrics.logViewport("splash-resize", frameViewport);
     }
 
     @Override
