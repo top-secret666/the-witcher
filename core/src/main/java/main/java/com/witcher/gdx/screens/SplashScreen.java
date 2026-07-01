@@ -9,11 +9,11 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.utils.Array;
+import com.badlogic.gdx.utils.viewport.StretchViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import main.java.com.witcher.gdx.WitcherGame;
 import main.java.com.witcher.gdx.graphics.DisplayMetrics;
 import main.java.com.witcher.gdx.graphics.GameFonts;
-import main.java.com.witcher.gdx.graphics.IntegerScaleViewport;
 import main.java.com.witcher.gdx.graphics.PixelSpriteSheet;
 import main.java.com.witcher.gdx.graphics.PixelTextures;
 
@@ -75,7 +75,7 @@ public class SplashScreen implements Screen {
     @Override
     public void show() {
         camera = new OrthographicCamera();
-        viewport = new IntegerScaleViewport((int) VW, (int) VH, camera);
+        viewport = new StretchViewport(VW, VH, camera);
         shapes = new ShapeRenderer();
         fonts = new GameFonts();
         fonts.load();
@@ -101,7 +101,6 @@ public class SplashScreen implements Screen {
         Gdx.app.log("SplashScreen", "assets bg=" + (background != null)
             + " logo=" + (logoAnim != null) + " bar=" + (witcherBar != null)
             + " griffin=" + (griffinAnim != null)
-            + " viewport scale=" + ((IntegerScaleViewport) viewport).getScale()
             + (logoAnim != null ? " logoFrame=" + logoAnim.getFrameWidth() + "x" + logoAnim.getFrameHeight() : "")
             + (witcherBar != null ? " barFrame=" + witcherBar.getFrameWidth() + "x" + witcherBar.getFrameHeight() : ""));
     }
@@ -232,14 +231,7 @@ public class SplashScreen implements Screen {
     private void drawSprites() {
         if (background != null) {
             float a = clamp(alpha * 0.88f, 0f, 1f);
-            int[] bounds = PixelTextures.computeVisibleBounds("sprites/splash_bg.png");
-            if (bounds != null) {
-                PixelTextures.drawCroppedCover(game.batch, background,
-                    bounds[0], bounds[1], bounds[2], bounds[3],
-                    VW, VH, a, 0.5f, 0f);
-            } else {
-                PixelTextures.drawCoverBottom(game.batch, background, VW, VH, a);
-            }
+            PixelTextures.drawCoverBottom(game.batch, background, VW, VH, a);
         }
 
         if (logoAnim != null && alpha > 0.05f) {

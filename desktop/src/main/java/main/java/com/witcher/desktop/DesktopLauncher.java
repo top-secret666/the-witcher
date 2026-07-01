@@ -7,7 +7,8 @@ import main.java.com.witcher.gdx.WitcherGame;
 import org.lwjgl.glfw.GLFW;
 
 /**
- * LibGDX desktop — 960×720 (480×360 ×2).
+ * Окно как Swing {@code Renderer(480, 360, 2)} — 960×720 на экране.
+ * При 125% Windows GLFW-окно 768×576 (ОС растягивает до ~960×720 без полей).
  */
 public class DesktopLauncher {
 
@@ -15,19 +16,19 @@ public class DesktopLauncher {
         System.setProperty("org.lwjgl.opengl.Display.allowLegacyDXGIScaling", "false");
         try {
             float monitorScale = queryPrimaryMonitorContentScale();
-            int[] size = renderSize(monitorScale);
+            int[] glfw = glfwWindowSize(monitorScale);
 
             Lwjgl3ApplicationConfiguration config = new Lwjgl3ApplicationConfiguration();
             config.setTitle("The Witcher — LibGDX");
             config.setHdpiMode(HdpiMode.Pixels);
-            config.setWindowedMode(size[0], size[1]);
+            config.setWindowedMode(glfw[0], glfw[1]);
             config.setResizable(false);
             config.setForegroundFPS(60);
             config.useVsync(true);
 
-            System.out.println("[DesktopLauncher] framebuffer=" + size[0] + 'x' + size[1]
+            System.out.println("[DesktopLauncher] glfw=" + glfw[0] + 'x' + glfw[1]
                 + " monitorScale=" + monitorScale
-                + " (cel " + WitcherGame.WINDOW_W + 'x' + WitcherGame.WINDOW_H + " na ekrane)");
+                + " celNaEkrane=" + WitcherGame.WINDOW_W + 'x' + WitcherGame.WINDOW_H);
 
             new Lwjgl3Application(new WitcherGame(), config);
         } catch (Throwable error) {
@@ -53,17 +54,15 @@ public class DesktopLauncher {
         }
     }
 
-    /**
-     * При 125% Windows рисуем 1200×900 — тот же физический размер, что занимает окно.
-     * Игра всё равно растягивает 480×360 на весь backbuffer.
-     */
-    static int[] renderSize(float monitorScale) {
+    static int[] glfwWindowSize(float monitorScale) {
+        int targetW = WitcherGame.WINDOW_W;
+        int targetH = WitcherGame.WINDOW_H;
         if (monitorScale <= 1.01f) {
-            return new int[]{WitcherGame.WINDOW_W, WitcherGame.WINDOW_H};
+            return new int[]{targetW, targetH};
         }
         return new int[]{
-            Math.round(WitcherGame.WINDOW_W * monitorScale),
-            Math.round(WitcherGame.WINDOW_H * monitorScale)
+            Math.max(1, Math.round(targetW / monitorScale)),
+            Math.max(1, Math.round(targetH / monitorScale))
         };
     }
 }

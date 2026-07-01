@@ -196,7 +196,11 @@ public final class DisplayMetrics {
                     sb.append("Diag: framebuffer ").append(fbW[0]).append('x').append(fbH[0])
                         .append(", fizicheskij klient ~").append(physW).append('x').append(physH)
                         .append(" (scale ").append(sx[0]).append(").\n");
-                    sb.append("      Pri 125% Windows: DesktopLauncher umenshaet GLFW-okno (768x576).\n");
+                    if (physW > fbW[0] + 2) {
+                        sb.append("      OK esli glfw=").append(Math.round(ew / sx[0])).append('x')
+                            .append(Math.round(eh / sy[0]))
+                            .append(" — OS rastyanet do ").append(ew).append('x').append(eh).append(".\n");
+                    }
                 }
                 if (winW[0] > fbW[0] + 4 || winH[0] > fbH[0] + 4) {
                     sb.append("Diag: okno krupnee framebuffer — masshtab Windows / HiDPI.\n");
