@@ -168,8 +168,25 @@ public class GameWindow {
     private void updateVirtualMouse(MouseEvent e) {
         int pw = Math.max(1, renderer.getWidth());
         int ph = Math.max(1, renderer.getHeight());
-        mouseVX = Math.min(renderer.getVirtualW() - 1, Math.max(0, e.getX() * renderer.getVirtualW() / pw));
-        mouseVY = Math.min(renderer.getVirtualH() - 1, Math.max(0, e.getY() * renderer.getVirtualH() / ph));
+        int fw = Math.max(1, renderer.getDisplayWidth());
+        int fh = Math.max(1, renderer.getDisplayHeight());
+
+        int scale = Math.max(1, Math.min(pw / fw, ph / fh));
+        int dw = fw * scale;
+        int dh = fh * scale;
+        int ox = (pw - dw) / 2;
+        int oy = (ph - dh) / 2;
+
+        int lx = e.getX() - ox;
+        int ly = e.getY() - oy;
+        if (lx < 0 || ly < 0 || lx >= dw || ly >= dh) {
+            return;
+        }
+
+        mouseVX = Math.min(renderer.getVirtualW() - 1,
+            Math.max(0, lx * renderer.getVirtualW() / dw));
+        mouseVY = Math.min(renderer.getVirtualH() - 1,
+            Math.max(0, ly * renderer.getVirtualH() / dh));
     }
 
     private void enterMainMenuMode() {
@@ -198,6 +215,39 @@ public class GameWindow {
         // Скрываем системный курсор, рисуем кастомный курсор внутри сцены.
         useHiddenCursor();
         renderer.requestFocusInWindow();
+    }
+
+    /** Лавка: выходим из fullscreen, окно = игра × целочисленный масштаб (без чёрных полей). */
+    private void enterShopWindowedMode() {
+        GraphicsDevice device = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
+        if (device.getFullScreenWindow() == frame) {
+            device.setFullScreenWindow(null);
+        }
+
+        frame.setUndecorated(true);
+        frame.getRootPane().setBorder(BorderFactory.createEmptyBorder());
+
+        int gw = renderer.getDisplayWidth();
+        int gh = renderer.getDisplayHeight();
+        Rectangle bounds = GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds();
+        int winScale = Math.max(1, Math.min(bounds.width / gw, bounds.height / gh));
+        winScale = Math.min(winScale, 3);
+
+        Dimension win = new Dimension(gw * winScale, gh * winScale);
+        renderer.setPreferredSize(win);
+        renderer.setMinimumSize(win);
+        renderer.setMaximumSize(win);
+        frame.setResizable(false);
+        frame.pack();
+        frame.setSize(win);
+        frame.setMinimumSize(win);
+        frame.setMaximumSize(win);
+        frame.setLocationRelativeTo(null);
+        frame.validate();
+        renderer.requestFocusInWindow();
+
+        System.out.println("Лавка: окно " + win.width + "x" + win.height
+            + " (игра " + gw + "x" + gh + ", x" + winScale + ")");
     }
 
     /** Меню/интро: системный курсор скрыт, рисуется спрайтом в сцене. */
@@ -588,6 +638,7 @@ public class GameWindow {
                     introActive = false;
                     shopActive = true;
                     shopScreen = new ShopScreen();
+                    enterShopWindowedMode();
                     useVisibleCursor();
                 }
             } else if (shopActive) {
@@ -601,8 +652,9 @@ public class GameWindow {
                 if (shopScreen.isExitRequested()) {
                     shopActive = false;
                     shopScreen.clearExitRequest();
-                    menuActive = true;
                     mainMenu = new MainMenuScreen();
+                    enterMainMenuMode();
+                    menuActive = true;
                     useHiddenCursor();
                 }
             } else {
