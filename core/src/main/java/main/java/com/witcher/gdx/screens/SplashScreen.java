@@ -13,7 +13,7 @@ import com.badlogic.gdx.utils.viewport.Viewport;
 import main.java.com.witcher.gdx.WitcherGame;
 import main.java.com.witcher.gdx.graphics.DisplayMetrics;
 import main.java.com.witcher.gdx.graphics.GameFonts;
-import main.java.com.witcher.gdx.graphics.IntegerScaleViewport;
+import com.badlogic.gdx.utils.viewport.StretchViewport;
 import main.java.com.witcher.gdx.graphics.PixelSpriteSheet;
 import main.java.com.witcher.gdx.graphics.PixelTextures;
 
@@ -75,7 +75,7 @@ public class SplashScreen implements Screen {
     @Override
     public void show() {
         camera = new OrthographicCamera();
-        viewport = new IntegerScaleViewport((int) VW, (int) VH, camera);
+        viewport = new StretchViewport(VW, VH, camera);
         shapes = new ShapeRenderer();
         fonts = new GameFonts();
         fonts.load();
@@ -101,7 +101,7 @@ public class SplashScreen implements Screen {
         Gdx.app.log("SplashScreen", "assets bg=" + (background != null)
             + " logo=" + (logoAnim != null) + " bar=" + (witcherBar != null)
             + " griffin=" + (griffinAnim != null)
-            + " viewport scale=" + ((IntegerScaleViewport) viewport).getScale()
+            + " backbuffer=" + Gdx.graphics.getWidth() + "x" + Gdx.graphics.getHeight()
             + (logoAnim != null ? " logoFrame=" + logoAnim.getFrameWidth() + "x" + logoAnim.getFrameHeight() : "")
             + (witcherBar != null ? " barFrame=" + witcherBar.getFrameWidth() + "x" + witcherBar.getFrameHeight() : ""));
     }

@@ -29,7 +29,7 @@ rem Kak run.bat — копируем ассеты в out (PowerShell, т.к. xco
 if exist "%ASSETS_SRC%" (
   if not exist "%ASSETS_OUT%" mkdir "%ASSETS_OUT%"
   powershell -NoProfile -ExecutionPolicy Bypass -Command ^
-    "Copy-Item -LiteralPath '%ASSETS_SRC%\*' -Destination '%ASSETS_OUT%' -Recurse -Force -ErrorAction SilentlyContinue"
+    "Copy-Item -Path '%ASSETS_SRC%\*' -Destination '%ASSETS_OUT%' -Recurse -Force -ErrorAction SilentlyContinue"
 )
 
 set "GDX_CP=%ROOT%desktop\build\classes\javac;%ROOT%core\build\classes\javac"
