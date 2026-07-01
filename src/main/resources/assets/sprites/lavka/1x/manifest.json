@@ -29,9 +29,9 @@
       "output": "1x/ui/shop_catalog_panel.png",
       "size": [
         380,
-        262
+        224
       ],
-      "bytes": 155773
+      "bytes": 133395
     },
     {
       "output": "1x/ui/shop_card_front.png",

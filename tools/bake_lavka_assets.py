@@ -29,8 +29,7 @@ GRID_ROWS = 2
 PANEL_W = 380
 BTN_W, BTN_H = 100, 30
 HUD_H = 58
-WALLET_FRAME_W, WALLET_FRAME_H = 200, 36
-PANEL_HEADER_H = WALLET_FRAME_H + 10
+PANEL_HEADER_H = 8
 PANEL_H = PANEL_HEADER_H + 4 + GRID_ROWS * CARD_H + (GRID_ROWS - 1) * 6 + 6 + BTN_H + 8
 CHAR_H = round(VIRTUAL_H * 0.70)
 
@@ -162,7 +161,6 @@ def main() -> None:
 
     jobs: list[tuple[str, int, int, dict]] = [
         ("ui/shop_hud_bar.png", PANEL_W, HUD_H, {"crop": True}),
-        ("ui/shop_sign_title.png", WALLET_FRAME_W, WALLET_FRAME_H, {"crop": True}),
         ("ui/shop_catalog_panel.png", PANEL_W, PANEL_H, {}),
         ("ui/shop_card_front.png", CARD_W, CARD_H, {}),
         ("ui/shop_card_back.png", CARD_W, CARD_H, {}),
