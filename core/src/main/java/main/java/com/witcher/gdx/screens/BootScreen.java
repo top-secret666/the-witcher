@@ -42,8 +42,8 @@ public class BootScreen implements Screen {
         game.batch.setProjectionMatrix(camera.combined);
         game.batch.begin();
         font.draw(game.batch, "The Witcher — LibGDX", 108, 210);
-        font.draw(game.batch, "Shag 2: lavka (karkas)", 118, 180);
-        font.draw(game.batch, "ENTER — otkryt lavku", 118, 150);
+        font.draw(game.batch, "Zagruzka zavershena", 128, 180);
+        font.draw(game.batch, "ENTER — lavka", 148, 150);
         font.draw(game.batch, "ESC — vyhod", 168, 90);
         game.batch.end();
 
