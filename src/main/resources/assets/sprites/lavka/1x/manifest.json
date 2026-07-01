@@ -55,7 +55,7 @@
         54,
         81
       ],
-      "bytes": 11029
+      "bytes": 10621
     },
     {
       "output": "1x/ui/shop_btn_buy_disabled.png",
@@ -88,6 +88,14 @@
         10
       ],
       "bytes": 434
+    },
+    {
+      "output": "1x/icons/icon_duke_seal.png",
+      "size": [
+        24,
+        24
+      ],
+      "bytes": 1562
     },
     {
       "output": "1x/icons/icon_armor_chest.png",
