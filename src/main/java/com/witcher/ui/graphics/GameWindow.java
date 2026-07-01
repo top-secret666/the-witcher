@@ -580,7 +580,7 @@ public class GameWindow {
                     introActive = false;
                     shopActive = true;
                     shopScreen = new ShopScreen();
-                    useVisibleCursor();
+                    useHiddenCursor();
                 }
             } else if (shopActive) {
                 shopScreen.update(mouseVX, mouseVY, mouseClickPending, shopExitRequested);

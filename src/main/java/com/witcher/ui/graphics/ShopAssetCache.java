@@ -34,6 +34,11 @@ final class ShopAssetCache {
     final int cardArtSize = 32;
     final int gridCols = 5;
     final int gridRows = 2;
+    final int topRowCols = 5;
+    final int bottomRowCols = 2;
+    final int signTitleW = 300;
+    final int signTitleH = 40;
+    final int panelHeaderH = signTitleH + 8;
     final int btnW = 100;
     final int btnH = 30;
     final int panelW = 380;
@@ -58,6 +63,7 @@ final class ShopAssetCache {
     final BufferedImage cardHoverScaled;
     final BufferedImage cardSelectedScaled;
     final BufferedImage btnBuyScaled;
+    final BufferedImage shopSignTitle;
     final BufferedImage crownIconScaled;
     final BufferedImage crownIconSmall;
     /** Печать герцога вместо текста «Лавка Герцога» в шапке. */
@@ -70,7 +76,7 @@ final class ShopAssetCache {
 
     final BufferedImage[] itemIcons = new BufferedImage[5];
     final BufferedImage[] itemArts = new BufferedImage[5];
-    final BufferedImage setCatalogIcon;
+    final BufferedImage weaponIcon;
 
     private ShopAssetCache() {
         long t0 = System.currentTimeMillis();
@@ -91,6 +97,9 @@ final class ShopAssetCache {
             BASE + "ui/shop_card_selected.png", false);
         btnBuyScaled = loadSized(UI + "shop_btn_buy_disabled.png", btnW, btnH,
             BASE + "ui/shop_btn_buy_disabled.png", false);
+
+        shopSignTitle = loadSized(UI + "shop_sign_title.png", signTitleW, signTitleH,
+            BASE + "ui/shop_sign_title.png", true);
 
         crownIconScaled = loadSized(ICONS + "icon_crown.png", 18, 18,
             BASE + "icons/icon_crown.png", true);
@@ -115,11 +124,10 @@ final class ShopAssetCache {
             itemArts[i] = itemIcons[i];
         }
 
-        BufferedImage setIcon = loadSized(UI + "icon_legendary_frame.png", cardArtSize, cardArtSize,
-            BASE + "ui/icon_legendary_frame.png", true);
-        setCatalogIcon = setIcon != null ? setIcon : crownIconScaled;
+        weaponIcon = loadSized(ICONS + "icon_weapon.png", cardArtSize, cardArtSize,
+            BASE + "icons/icon_weapon.png", true);
 
-        int headerH = 22;
+        int headerH = panelHeaderH;
         int panelY = hudY + hudH + 6;
         int cardsY = panelY + headerH + 6;
         int cardGap = 6;
