@@ -203,7 +203,7 @@ public class SplashScreen implements Screen {
 
     private void drawSprites() {
         if (background != null) {
-            PixelTextures.drawContainFit(game.batch, background, VW, VH, 0.94f, clamp(alpha * 0.88f, 0f, 1f));
+            PixelTextures.drawCover(game.batch, background, VW, VH, clamp(alpha * 0.88f, 0f, 1f));
         }
 
         if (logoAnim != null && alpha > 0.05f) {

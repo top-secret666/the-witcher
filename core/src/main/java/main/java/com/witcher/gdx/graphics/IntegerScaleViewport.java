@@ -4,8 +4,9 @@ import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.utils.viewport.Viewport;
 
 /**
- * Пиксельный viewport: один целый масштаб (×3, ×4…) — квадратные пиксели, без растягивания.
- * Экран заполняется за счёт обрезки краёв; при обрезке по высоте кадр прижат к низу (диалог виден).
+ * Пиксельный viewport: виртуальный кадр {@code worldW×worldH} растягивается на всё окно
+ * (без чёрных полей). При совпадении пропорций 4:3 масштаб равномерный.
+ * Текстуры — {@link com.badlogic.gdx.graphics.Texture.TextureFilter#Nearest}.
  */
 public class IntegerScaleViewport extends Viewport {
 
@@ -21,22 +22,29 @@ public class IntegerScaleViewport extends Viewport {
 
     @Override
     public void update(int screenWidth, int screenHeight, boolean centerCamera) {
-        scale = Math.max(1, Math.max(
-            (screenWidth + worldWidth - 1) / worldWidth,
-            (screenHeight + worldHeight - 1) / worldHeight));
+        if (screenWidth <= 0 || screenHeight <= 0) {
+            return;
+        }
 
-        int drawW = worldWidth * scale;
-        int drawH = worldHeight * scale;
-        setScreenBounds((screenWidth - drawW) / 2, (screenHeight - drawH) / 2, drawW, drawH);
-        setWorldSize(worldWidth, worldHeight);
-        apply(false);
+        float scaleX = screenWidth / (float) worldWidth;
+        float scaleY = screenHeight / (float) worldHeight;
+        float uniform = Math.max(scaleX, scaleY);
+        scale = Math.max(1, Math.round(uniform));
 
-        float visibleWorldH = screenHeight > 0 ? screenHeight / (float) scale : worldHeight;
+        setScreenBounds(0, 0, screenWidth, screenHeight);
+
+        float visibleW = screenWidth / uniform;
+        float visibleH = screenHeight / uniform;
+        setWorldSize(visibleW, visibleH);
+        apply(centerCamera);
+
         float cx = worldWidth * 0.5f;
         float cy = worldHeight * 0.5f;
-
-        if (drawH > screenHeight) {
-            cy = visibleWorldH * 0.5f;
+        if (visibleH < worldHeight) {
+            cy = visibleH * 0.5f;
+        }
+        if (visibleW < worldWidth) {
+            cx = visibleW * 0.5f;
         }
 
         Camera cam = getCamera();
