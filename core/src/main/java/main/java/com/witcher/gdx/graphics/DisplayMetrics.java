@@ -77,7 +77,7 @@ public final class DisplayMetrics {
                 + " | Gdx.graphics=" + Gdx.graphics.getWidth() + 'x' + Gdx.graphics.getHeight());
     }
 
-    /** Попытка подогнать GLFW-окно под backbuffer, если разъехались. */
+    /** Логирует размеры; авто-ресайз отключён — на HiDPI см. Diag в логе. */
     public static void tryFixWindowSizeMismatch() {
         if (!(Gdx.graphics instanceof Lwjgl3Graphics lwjgl)) {
             return;
@@ -87,24 +87,18 @@ public final class DisplayMetrics {
         int[] winH = new int[1];
         int[] fbW = new int[1];
         int[] fbH = new int[1];
+        float[] sx = new float[1];
+        float[] sy = new float[1];
         GLFW.glfwGetWindowSize(handle, winW, winH);
         GLFW.glfwGetFramebufferSize(handle, fbW, fbH);
+        GLFW.glfwGetWindowContentScale(handle, sx, sy);
 
-        int targetW = WitcherGame.WINDOW_W;
-        int targetH = WitcherGame.WINDOW_H;
-        boolean fix = false;
-
-        if (winW[0] != targetW || winH[0] != targetH) {
-            Gdx.app.log("DisplayMetrics", "GLFW window " + winW[0] + 'x' + winH[0]
-                + " != cel " + targetW + 'x' + targetH + " — glfwSetWindowSize");
-            GLFW.glfwSetWindowSize(handle, targetW, targetH);
-            fix = true;
-        }
-        if (fix) {
-            GLFW.glfwGetWindowSize(handle, winW, winH);
-            GLFW.glfwGetFramebufferSize(handle, fbW, fbH);
-            Gdx.app.log("DisplayMetrics", "Posle fix: window=" + winW[0] + 'x' + winH[0]
-                + " framebuffer=" + fbW[0] + 'x' + fbH[0]);
+        int physW = Math.round(winW[0] * sx[0]);
+        int physH = Math.round(winH[0] * sy[0]);
+        if (physW != fbW[0] || physH != fbH[0]) {
+            Gdx.app.log("DisplayMetrics", "HiDPI mismatch: physical~" + physW + 'x' + physH
+                + " framebuffer=" + fbW[0] + 'x' + fbH[0]
+                + " (scale=" + sx[0] + 'x' + sy[0] + ')');
         }
     }
 
@@ -173,10 +167,10 @@ public final class DisplayMetrics {
         int eh = WitcherGame.WINDOW_H;
 
         if (gw == ew && gh == eh) {
-            sb.append("Diag: backbuffer sovpadaet s celom.\n");
+            sb.append("Diag: backbuffer sovpadaet s celom (").append(ew).append('x').append(eh).append(").\n");
         } else {
-            sb.append("Diag: backbuffer NE sovpadaet (cel ").append(ew).append('x').append(eh)
-                .append(", fakt ").append(gw).append('x').append(gh).append(").\n");
+            sb.append("Diag: backbuffer ").append(gw).append('x').append(gh)
+                .append(" (mozhet otlichatsya pri HiDPI; sm. physicalClient).\n");
         }
 
         if (Gdx.graphics instanceof Lwjgl3Graphics lwjgl) {
@@ -186,26 +180,26 @@ public final class DisplayMetrics {
                 int[] winH = new int[1];
                 int[] fbW = new int[1];
                 int[] fbH = new int[1];
-                GLFW.glfwGetWindowSize(handle, winW, winH);
-                GLFW.glfwGetFramebufferSize(handle, fbW, fbH);
-
-                if (winW[0] != fbW[0] || winH[0] != fbH[0]) {
-                    sb.append("Diag: GLFW window != framebuffer — masshtab Windows / HiDPI.\n");
-                    sb.append("      Eto chastaya prichina chernyh polej vokrug kadra.\n");
-                }
                 float[] sx = new float[1];
                 float[] sy = new float[1];
+                GLFW.glfwGetWindowSize(handle, winW, winH);
+                GLFW.glfwGetFramebufferSize(handle, fbW, fbH);
                 GLFW.glfwGetWindowContentScale(handle, sx, sy);
+
                 int physW = Math.round(winW[0] * sx[0]);
                 int physH = Math.round(winH[0] * sy[0]);
-                if (physW != fbW[0] || physH != fbH[0]) {
+
+                if (Math.abs(physW - ew) <= 2 && Math.abs(physH - eh) <= 2) {
+                    sb.append("Diag: fizicheskij klient ~").append(physW).append('x').append(physH)
+                        .append(" — OK (cel ").append(ew).append('x').append(eh).append(").\n");
+                } else if (physW != fbW[0] || physH != fbH[0]) {
                     sb.append("Diag: fizicheskij klient ~").append(physW).append('x').append(physH)
                         .append(", framebuffer ").append(fbW[0]).append('x').append(fbH[0])
                         .append(" — OS mozhet risovat chernye polya.\n");
-                    sb.append("      Reshenie: HdpiMode.Pixels v DesktopLauncher.\n");
+                    sb.append("      Reshenie: DesktopLauncher.computeWindowSize(contentScale).\n");
                 }
                 if (winW[0] > fbW[0] + 4 || winH[0] > fbH[0] + 4) {
-                    sb.append("Diag: okno krupnee framebuffer — OS risuet ramku vokrug.\n");
+                    sb.append("Diag: okno krupnee framebuffer — masshtab Windows / HiDPI.\n");
                 }
             } catch (Exception ignored) {
             }

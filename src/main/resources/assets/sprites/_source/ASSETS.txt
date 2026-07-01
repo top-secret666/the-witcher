@@ -1,0 +1,24 @@
+Соглашение об именах (Swing-прототип + LibGDX)
+
+_source/  — мастер-копии (те же имена, что в коде). Здесь правишь фон, Photoroom и т.д.
+sprites/  — то, что реально грузит игра (пути в Java не меняются).
+
+Файлы splash (имена как в SplashScreen.java):
+  splash_bg.png
+  witcher_logo_new.png
+  witcher_bar.png
+  griffin_peek.png
+  drowner_single.png
+  griffin_single.png
+  witcher_logo.png          — старый логотип (GameWindow), не splash
+
+Правило:
+  1) Хранишь и редактируешь в _source/имя.png
+  2) Когда фон прозрачный — копируешь в ../имя.png (в корень sprites/)
+  3) Код не трогаем: /assets/sprites/имя.png
+
+Пока файла нет в sprites/ — splash в run.bat и GDX его не найдёт.
+
+Старые экспорты *-Photoroom.png в корне можно удалить после копирования финала.
+
+Аналогия с лавкой: lavka/1x/ — выпеченные для игры; _source/ — твой «цех» для splash.
