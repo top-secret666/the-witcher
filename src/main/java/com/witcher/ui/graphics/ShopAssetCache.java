@@ -150,8 +150,11 @@ final class ShopAssetCache {
 
     private BufferedImage loadSized(String bakedPath, int w, int h, String fallbackPath, boolean crop) {
         BufferedImage baked = load(bakedPath);
-        if (baked != null && baked.getWidth() == w && baked.getHeight() == h) {
-            return baked;
+        if (baked != null) {
+            if (baked.getWidth() == w && baked.getHeight() == h) {
+                return baked;
+            }
+            return PixelScaler.crispScale(baked, w, h);
         }
         BufferedImage src = load(fallbackPath);
         if (src == null) {

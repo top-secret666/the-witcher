@@ -74,7 +74,8 @@ public class ShopScreen {
             cardsStartX = panelX + (panelW - rowW) / 2;
             cardsY = panelY + headerH + 6;
             int contentBottom = cardsY + gridRows * cardH + (gridRows - 1) * cardGap;
-            panelH = contentBottom - panelY + 8;
+            // Высота панели = до низа кнопки; совпадает с bake_lavka_assets.py PANEL_H
+            panelH = contentBottom + 6 + btnH + 4 - panelY;
 
             btnX = panelX + (panelW - btnW) / 2;
             btnY = contentBottom + 6;
@@ -592,9 +593,15 @@ public class ShopScreen {
 
         if (assets.catalogPanelScaled != null) {
             g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, reveal.panelAlpha));
-            drawScaledCentered(g, assets.catalogPanelScaled,
-                layout.panelX, layout.panelY + Math.round(reveal.panelSlideY),
-                layout.panelW, layout.panelH, panelCx, panelCy, scale);
+            int px = layout.panelX;
+            int py = layout.panelY + Math.round(reveal.panelSlideY);
+            BufferedImage panel = assets.catalogPanelScaled;
+            if (Math.abs(scale - 1f) < 0.001f
+                && panel.getWidth() == layout.panelW && panel.getHeight() == layout.panelH) {
+                g.drawImage(panel, px, py, null);
+            } else {
+                drawScaledCentered(g, panel, px, py, layout.panelW, layout.panelH, panelCx, panelCy, scale);
+            }
         }
 
         for (int i = 0; i < items.size(); i++) {
@@ -628,7 +635,12 @@ public class ShopScreen {
             g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, cat.counterAlpha));
             int cy = layout.categoryCounterY();
             int ch = layout.categoryCounterH(layout.dialogTop);
-            g.drawImage(assets.counterForeground, assets.counterX, cy, assets.counterW, ch, null);
+            BufferedImage counter = assets.counterForeground;
+            if (ch == counter.getHeight() && assets.counterW == counter.getWidth()) {
+                g.drawImage(counter, assets.counterX, cy, null);
+            } else {
+                drawScaledSprite(g, counter, assets.counterX, cy, assets.counterW, ch, true);
+            }
         }
 
         for (int i = 0; i < items.size(); i++) {
@@ -738,7 +750,16 @@ public class ShopScreen {
         int sh = Math.round(h * scale);
         int sx = cx - sw / 2;
         int sy = cy - sh / 2;
+        if (sw == img.getWidth() && sh == img.getHeight()) {
+            g.drawImage(img, sx, sy, null);
+            return;
+        }
+        Object prevInterp = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
+        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
         g.drawImage(img, sx, sy, sw, sh, null);
+        if (prevInterp != null) {
+            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, prevInterp);
+        }
     }
 
     private void drawItemCard(Graphics2D g, ShopItem item, int x, int y, int w, int h, int index,
@@ -755,7 +776,11 @@ public class ShopScreen {
 
         Rectangle cardRect;
         if (frame != null) {
-            g.drawImage(frame, x, y, w, h, null);
+            if (w == frame.getWidth() && h == frame.getHeight()) {
+                g.drawImage(frame, x, y, null);
+            } else {
+                drawScaledSprite(g, frame, x, y, w, h, true);
+            }
             cardRect = new Rectangle(x, y, w, h);
         } else {
             drawFallbackCard(g, x, y, w, h, false);

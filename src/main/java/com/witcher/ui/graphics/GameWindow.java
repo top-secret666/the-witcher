@@ -14,6 +14,9 @@ public class GameWindow {
 
     static {
         System.setProperty("sun.java2d.uiScale.enabled", "false");
+        System.setProperty("sun.java2d.dpiaware", "true");
+        System.setProperty("sun.java2d.d3d", "false");
+        System.setProperty("sun.java2d.opengl", "false");
         System.setProperty("awt.useSystemAAFontSettings", "off");
         System.setProperty("swing.aatext", "false");
     }

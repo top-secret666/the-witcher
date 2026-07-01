@@ -34,7 +34,7 @@ ROW_H = 24
 ROW_W = DETAIL_PANEL_W - 16
 CHAR_H = round(VIRTUAL_H * 0.82)
 
-PANEL_H = 22 + 6 + GRID_ROWS * CARD_H + (GRID_ROWS - 1) * 6 + 6 + BTN_H + 8
+PANEL_H = 22 + 6 + GRID_ROWS * CARD_H + (GRID_ROWS - 1) * 6 + 6 + BTN_H + 4
 
 
 def content_bounds(img: Image.Image) -> tuple[int, int, int, int]:

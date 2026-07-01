@@ -5,7 +5,7 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 
 /**
- * Виртуальный кадр 480×360 → displayFrame (×2) → растягивается на всю панель (Nearest).
+ * Виртуальный кадр 480×360 → displayFrame (×2, без сглаживания) → панель 1:1.
  */
 public class Renderer extends JPanel {
 
@@ -78,15 +78,18 @@ public class Renderer extends JPanel {
     }
 
     public void present() {
-        Graphics2D g = displayFrame.createGraphics();
-        try {
-            PixelDraw.applyNearest(g);
-            g.setColor(Color.BLACK);
-            g.fillRect(0, 0, getDisplayWidth(), getDisplayHeight());
-            g.drawImage(screen, 0, 0, getDisplayWidth(), getDisplayHeight(),
-                0, 0, virtualW, virtualH, null);
-        } finally {
-            g.dispose();
+        if (pixelScale == 1) {
+            Graphics2D g = displayFrame.createGraphics();
+            try {
+                PixelDraw.applyNearest(g);
+                g.setColor(Color.BLACK);
+                g.fillRect(0, 0, getDisplayWidth(), getDisplayHeight());
+                g.drawImage(screen, 0, 0, null);
+            } finally {
+                g.dispose();
+            }
+        } else {
+            PixelDraw.blitIntegerScale(screen, displayFrame, pixelScale);
         }
         repaint();
     }
@@ -110,7 +113,6 @@ public class Renderer extends JPanel {
                 return;
             }
 
-            // Только целочисленный масштаб 1×, 2×, … — иначе Java2D даёт «мыло».
             if (pw == fw && ph == fh) {
                 g2.drawImage(displayFrame, 0, 0, null);
             } else {
@@ -119,7 +121,13 @@ public class Renderer extends JPanel {
                 int dh = fh * scale;
                 int ox = (pw - dw) / 2;
                 int oy = (ph - dh) / 2;
-                g2.drawImage(displayFrame, ox, oy, ox + dw, oy + dh, 0, 0, fw, fh, null);
+                if (scale == 1) {
+                    g2.drawImage(displayFrame, ox, oy, null);
+                } else {
+                    BufferedImage up = new BufferedImage(dw, dh, BufferedImage.TYPE_INT_RGB);
+                    PixelDraw.blitIntegerScale(displayFrame, up, scale);
+                    g2.drawImage(up, ox, oy, null);
+                }
             }
         } finally {
             g2.dispose();

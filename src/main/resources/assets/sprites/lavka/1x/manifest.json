@@ -24,9 +24,9 @@
       "output": "1x/ui/shop_catalog_panel.png",
       "size": [
         380,
-        240
+        236
       ],
-      "bytes": 142919
+      "bytes": 140813
     },
     {
       "output": "1x/ui/shop_catalog_panel_detail.png",
