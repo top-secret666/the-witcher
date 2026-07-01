@@ -49,8 +49,8 @@ final class ShopAssetCache {
     final BufferedImage rowNormal;
     final BufferedImage rowHover;
     final BufferedImage rowSelected;
-    final int rowW = 252;
-    final int rowH = 22;
+    final int rowW;
+    final int rowH = 24;
     final int detailPanelW;
     final int detailPanelH;
     final BufferedImage cardFrontScaled;
@@ -128,10 +128,11 @@ final class ShopAssetCache {
         catalogPanelScaled = loadSized(UI + "shop_catalog_panel.png", panelW, panelDrawH,
             BASE + "ui/shop_catalog_panel.png", false);
 
-        detailPanelW = panelW - 98;
-        detailPanelH = panelDrawH - 24;
+        detailPanelW = 350;
+        detailPanelH = 232;
         catalogDetailPanel = loadSized(UI + "shop_catalog_panel.png", detailPanelW, detailPanelH,
             BASE + "ui/shop_catalog_panel.png", false);
+        rowW = detailPanelW - 16;
         rowNormal = loadSized(UI + "shop_row_normal.png", rowW, rowH,
             BASE + "ui/shop_row_normal.png", false);
         rowHover = loadSized(UI + "shop_row_hover.png", rowW, rowH,

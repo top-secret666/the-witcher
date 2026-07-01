@@ -89,17 +89,25 @@ public class ShopScreen {
         }
 
         Rectangle leftCategoryCardSlot() {
-            int w = 88;
-            int h = 132;
-            int x = panelX + 6;
-            int y = panelY + 24;
+            int w = 108;
+            int h = 162;
+            int x = 8;
+            int y = 52;
             return new Rectangle(x, y, w, h);
         }
 
         Rectangle detailListPanelSlot(int detailW, int detailH) {
-            int x = panelX + 108;
-            int y = panelY + 22;
+            int x = 122;
+            int y = 50;
             return new Rectangle(x, y, detailW, detailH);
+        }
+
+        int categoryCounterY() {
+            return 6;
+        }
+
+        int categoryCounterH(int dialogTop) {
+            return dialogTop - categoryCounterY() - 4;
         }
     }
 
@@ -404,7 +412,11 @@ public class ShopScreen {
             drawCharacter(g, sw, sh, dukeDraw, false, layout.dialogTop, brighten);
         }
 
-        drawHud(g, layout, reveal.hudAlpha, reveal.hudSlideY);
+        if (!categoryMode) {
+            drawHud(g, layout, reveal.hudAlpha, reveal.hudSlideY);
+        } else {
+            drawCornerWallet(g, 1f);
+        }
 
         if (categoryMode && selectedIndex >= 0) {
             drawCategoryView(g, layout, reveal, categoryAnimator(layout));
@@ -511,6 +523,53 @@ public class ShopScreen {
         g.setComposite(prev);
     }
 
+    /** Кошелёк в углу — без плашки HUD, для режима категории/товаров. */
+    private void drawCornerWallet(Graphics2D g, float alpha) {
+        if (alpha <= 0.01f) {
+            return;
+        }
+        Composite prev = g.getComposite();
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
+
+        String wallet = "???";
+        String suffix = " крон";
+        int crownSize = 16;
+        int crownGap = 4;
+        int margin = 10;
+        int padX = 8;
+        int padY = 4;
+
+        drawCrispText(g);
+        g.setFont(new Font("Serif", Font.BOLD, 12));
+        FontMetrics fm = g.getFontMetrics();
+        int blockW = fm.stringWidth(wallet) + fm.stringWidth(suffix);
+        if (assets.crownIconScaled != null) {
+            blockW += crownSize + crownGap;
+        }
+        int blockH = Math.max(crownSize, fm.getHeight()) + padY * 2;
+        int blockX = VIRTUAL_W - margin - blockW - padX * 2;
+        int blockY = margin;
+
+        g.setColor(new Color(8, 6, 3, 170));
+        g.fillRoundRect(blockX, blockY, blockW + padX * 2, blockH, 6, 6);
+        g.setColor(new Color(120, 90, 40, 140));
+        g.drawRoundRect(blockX, blockY, blockW + padX * 2, blockH, 6, 6);
+
+        int textX = blockX + padX;
+        if (assets.crownIconScaled != null) {
+            int crownY = blockY + (blockH - crownSize) / 2;
+            g.drawImage(assets.crownIconScaled, textX, crownY, crownSize, crownSize, null);
+            textX += crownSize + crownGap;
+        }
+        g.setColor(new Color(255, 230, 150));
+        int walletY = blockY + (blockH + fm.getAscent()) / 2 - 2;
+        g.drawString(wallet, textX, walletY);
+        g.setColor(new Color(200, 180, 120));
+        g.drawString(suffix, textX + fm.stringWidth(wallet), walletY);
+
+        g.setComposite(prev);
+    }
+
     private void drawCards(Graphics2D g, ShopLayout layout, ShopRevealAnimator reveal) {
         if (reveal.panelAlpha <= 0.01f) {
             for (int i = 0; i < items.size(); i++) {
@@ -560,7 +619,9 @@ public class ShopScreen {
 
         if (assets.counterForeground != null && cat.counterAlpha > 0.02f) {
             g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, cat.counterAlpha));
-            g.drawImage(assets.counterForeground, assets.counterX, assets.counterY, null);
+            int cy = layout.categoryCounterY();
+            int ch = layout.categoryCounterH(layout.dialogTop);
+            g.drawImage(assets.counterForeground, assets.counterX, cy, assets.counterW, ch, null);
         }
 
         for (int i = 0; i < items.size(); i++) {
@@ -711,14 +772,15 @@ public class ShopScreen {
 
         BufferedImage art = item.cardArt != null ? item.cardArt : item.icon;
         if (art != null) {
-            int artSize = Math.min(32, Math.min(w - 8, h - 28));
+            int maxArt = w < 60 ? 32 : (w < 90 ? 44 : 52);
+            int artSize = Math.min(maxArt, Math.min(w - 8, h - 28));
             int ax = x + (w - artSize) / 2;
             int ay = y + Math.max(6, Math.round(h * 0.08f));
             drawCrispIcon(g, art, ax, ay, artSize);
         }
 
         drawCardText(g);
-        int fontSize = w < 60 ? 7 : 8;
+        int fontSize = w < 60 ? 7 : (w < 90 ? 8 : 10);
         g.setFont(cardFont(fontSize));
         FontMetrics nameFm = g.getFontMetrics();
         String name = truncateToWidth(item.name, nameFm, w - 8);
