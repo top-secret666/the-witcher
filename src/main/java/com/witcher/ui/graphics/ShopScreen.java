@@ -60,8 +60,6 @@ public class ShopScreen {
         final int gridCols;
         final int gridRows;
         final int dialogTop;
-        final int signY;
-        final int walletY;
         final int cardsStartXBottom;
 
         ShopLayout(int sw, int sh, int itemCount, int hudX, int hudW, int hudH, int fixedPanelW,
@@ -90,9 +88,7 @@ public class ShopScreen {
             int bottomRowW = bottomCount * cardW + Math.max(0, bottomCount - 1) * cardGap;
             cardsStartXBottom = panelX + (panelW - bottomRowW) / 2;
 
-            signY = panelY + 4;
-            walletY = signY;
-            cardsY = panelY + headerH + 2;
+            cardsY = panelY + headerH + 4;
             int contentBottom = cardsY + gridRows * cardH + (gridRows - 1) * cardGap;
             panelH = contentBottom - panelY + 8;
 
@@ -463,7 +459,7 @@ public class ShopScreen {
 
         if (categoryMode && selectedIndex >= 0) {
             drawCategoryView(g, layout, reveal, categoryAnimator(layout));
-            drawCornerWallet(g, 1f, layout.dialogTop);
+            drawCornerWallet(g, 1f);
         } else {
             drawCards(g, layout, reveal);
             drawBuyButton(g, layout, reveal.btnAlpha, reveal.btnSlideY);
@@ -557,59 +553,34 @@ public class ShopScreen {
             drawCrispIcon(g, assets.dukeSealIconScaled, sealX, sealY, seal);
         }
 
-        g.setComposite(prev);
-    }
-
-    /** Кошелёк в рамке shop_sign_title — в шапке панели товаров. */
-    private void drawPanelWallet(Graphics2D g, ShopLayout layout, float alpha, float slideY) {
-        if (alpha <= 0.01f) {
-            return;
-        }
-        Composite prev = g.getComposite();
-        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
-
-        int frameW = assets.walletFrameW;
-        int frameH = assets.walletFrameH;
-        int frameX = layout.panelX + (layout.panelW - frameW) / 2;
-        int frameY = layout.walletY + Math.round(slideY);
-
-        if (assets.shopSignTitle != null) {
-            Object prevInterp = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
-            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
-            g.drawImage(assets.shopSignTitle, frameX, frameY, frameX + frameW, frameY + frameH, null);
-            if (prevInterp != null) {
-                g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, prevInterp);
-            }
-        }
-
         String wallet = "???";
         String suffix = " крон";
-        int crownSize = 14;
-        int crownGap = 3;
+        int crownSize = 18;
+        int crownGap = 4;
         drawCrispText(g);
-        g.setFont(new Font("Serif", Font.BOLD, 11));
+        g.setFont(new Font("Serif", Font.BOLD, 13));
         FontMetrics fm = g.getFontMetrics();
         int blockW = fm.stringWidth(wallet) + fm.stringWidth(suffix);
         if (assets.crownIconScaled != null) {
             blockW += crownSize + crownGap;
         }
-        int blockX = frameX + (frameW - blockW) / 2;
+        int blockX = layout.hudX + (layout.hudW - blockW) / 2;
         int textX = blockX;
         if (assets.crownIconScaled != null) {
-            int crownY = frameY + (frameH - crownSize) / 2;
-            g.drawImage(assets.crownIconScaled, textX, crownY, crownSize, crownSize, null);
-            textX += crownSize + crownGap;
+            int crownY = hudY + (layout.hudH - crownSize) / 2;
+            g.drawImage(assets.crownIconScaled, blockX, crownY, null);
+            textX = blockX + crownSize + crownGap;
         }
         g.setColor(new Color(255, 230, 150));
-        int walletY = frameY + (frameH + fm.getAscent()) / 2 - 2;
+        int walletY = hudY + (layout.hudH + fm.getAscent()) / 2 - 2;
         g.drawString(wallet, textX, walletY);
         g.setColor(new Color(200, 180, 120));
         g.drawString(suffix, textX + fm.stringWidth(wallet), walletY);
         g.setComposite(prev);
     }
 
-    /** Кошелёк в правом верхнем углу — поверх прилавка, выше панели списка. */
-    private void drawCornerWallet(Graphics2D g, float alpha, int dialogTop) {
+    /** Кошелёк в правом верхнем углу — экран списка категории. */
+    private void drawCornerWallet(Graphics2D g, float alpha) {
         if (alpha <= 0.01f) {
             return;
         }
@@ -673,10 +644,6 @@ public class ShopScreen {
             drawScaledCentered(g, assets.catalogPanelScaled,
                 layout.panelX, layout.panelY + Math.round(reveal.panelSlideY),
                 layout.panelW, layout.panelH, panelCx, panelCy, scale);
-        }
-
-        if (assets.shopSignTitle != null && reveal.panelAlpha > 0.35f) {
-            drawPanelWallet(g, layout, reveal.panelAlpha, reveal.panelSlideY);
         }
 
         for (int i = 0; i < items.size(); i++) {
@@ -874,7 +841,8 @@ public class ShopScreen {
             int slotBottom = nameY - Math.round(h * 0.10f);
             int slotH = Math.max(1, slotBottom - slotTop);
             Rectangle crop = computeContentBounds(art);
-            drawAspectFitCroppedSprite(g, art, crop, slotX, slotTop, slotW, slotH, true, assets.cardArtSize);
+            int maxArt = iconCapForCard(w, h, slotW, slotH);
+            drawAspectFitCroppedSprite(g, art, crop, slotX, slotTop, slotW, slotH, true, maxArt);
         }
 
         Color nameColor = item.kind == ItemKind.SET_CATALOG
@@ -901,6 +869,22 @@ public class ShopScreen {
             priceX += coin.getWidth() + 2;
         }
         drawOutlinedText(g, item.priceLabel, priceX, priceRowY, new Color(255, 220, 90));
+    }
+
+    /** На сетке — 32 px; на крупном превью категории — целочисленный апскейл (64, 96…). */
+    private int iconCapForCard(int cardW, int cardH, int slotW, int slotH) {
+        if (cardH <= assets.cardH + 6) {
+            return assets.cardArtSize;
+        }
+        int base = assets.cardArtSize;
+        int slotMax = Math.min(slotW, slotH);
+        int target = Math.round(slotMax * 0.72f);
+        int mult = Math.max(1, target / base);
+        int cap = mult * base;
+        if (cap > slotMax) {
+            cap = Math.max(base, (slotMax / base) * base);
+        }
+        return cap;
     }
 
     private static Font cardFont(int size) {

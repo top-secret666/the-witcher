@@ -36,9 +36,8 @@ final class ShopAssetCache {
     final int gridRows = 2;
     final int topRowCols = 5;
     final int bottomRowCols = 2;
-    final int walletFrameW = 200;
-    final int walletFrameH = 36;
-    final int panelHeaderH = walletFrameH + 10;
+    /** Отступ над сеткой карточек на главной витрине. */
+    final int panelHeaderH = 8;
     final int btnW = 100;
     final int btnH = 30;
     final int panelW = 380;
@@ -63,7 +62,6 @@ final class ShopAssetCache {
     final BufferedImage cardHoverScaled;
     final BufferedImage cardSelectedScaled;
     final BufferedImage btnBuyScaled;
-    final BufferedImage shopSignTitle;
     final BufferedImage crownIconScaled;
     final BufferedImage crownIconSmall;
     /** Печать герцога вместо текста «Лавка Герцога» в шапке. */
@@ -97,9 +95,6 @@ final class ShopAssetCache {
             BASE + "ui/shop_card_selected.png", false);
         btnBuyScaled = loadSized(UI + "shop_btn_buy_disabled.png", btnW, btnH,
             BASE + "ui/shop_btn_buy_disabled.png", false);
-
-        shopSignTitle = loadSized(UI + "shop_sign_title.png", walletFrameW, walletFrameH,
-            BASE + "ui/shop_sign_title.png", true);
 
         crownIconScaled = loadSized(ICONS + "icon_crown.png", 18, 18,
             BASE + "icons/icon_crown.png", true);
