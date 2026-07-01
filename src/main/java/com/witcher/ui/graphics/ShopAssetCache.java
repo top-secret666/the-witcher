@@ -40,6 +40,14 @@ final class ShopAssetCache {
 
     final BufferedImage hudBar;
     final BufferedImage catalogPanelScaled;
+    final BufferedImage catalogDetailPanel;
+    final BufferedImage rowNormal;
+    final BufferedImage rowHover;
+    final BufferedImage rowSelected;
+    final int rowW = 252;
+    final int rowH = 22;
+    final int detailPanelW;
+    final int detailPanelH;
     final BufferedImage cardFrontScaled;
     final BufferedImage cardBackScaled;
     final BufferedImage cardHoverScaled;
@@ -109,6 +117,17 @@ final class ShopAssetCache {
         int panelDrawH = contentBottom + 6 + btnH + 4 - panelY;
         catalogPanelScaled = loadSized(UI + "shop_catalog_panel.png", panelW, panelDrawH,
             BASE + "ui/shop_catalog_panel.png", false);
+
+        detailPanelW = panelW - 98;
+        detailPanelH = panelDrawH - 24;
+        catalogDetailPanel = loadSized(UI + "shop_catalog_panel.png", detailPanelW, detailPanelH,
+            BASE + "ui/shop_catalog_panel.png", false);
+        rowNormal = loadSized(UI + "shop_row_normal.png", rowW, rowH,
+            BASE + "ui/shop_row_normal.png", false);
+        rowHover = loadSized(UI + "shop_row_hover.png", rowW, rowH,
+            BASE + "ui/shop_row_hover.png", false);
+        rowSelected = loadSized(UI + "shop_row_selected.png", rowW, rowH,
+            BASE + "ui/shop_row_selected.png", false);
 
         String mode = baked ? "1x (готовые)" : "runtime scale";
         System.out.println("Лавка: ассеты [" + mode + "] за " + (System.currentTimeMillis() - t0) + " мс");
