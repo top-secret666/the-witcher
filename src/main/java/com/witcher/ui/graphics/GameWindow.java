@@ -14,9 +14,6 @@ public class GameWindow {
 
     static {
         System.setProperty("sun.java2d.uiScale.enabled", "false");
-        System.setProperty("sun.java2d.dpiaware", "true");
-        System.setProperty("sun.java2d.d3d", "false");
-        System.setProperty("sun.java2d.opengl", "false");
         System.setProperty("awt.useSystemAAFontSettings", "off");
         System.setProperty("swing.aatext", "false");
     }
@@ -168,10 +165,25 @@ public class GameWindow {
     private void updateVirtualMouse(MouseEvent e) {
         int pw = Math.max(1, renderer.getWidth());
         int ph = Math.max(1, renderer.getHeight());
+        int fw = Math.max(1, renderer.getDisplayWidth());
+        int fh = Math.max(1, renderer.getDisplayHeight());
+
+        int scale = Math.max(1, Math.min(pw / fw, ph / fh));
+        int dw = fw * scale;
+        int dh = fh * scale;
+        int ox = (pw - dw) / 2;
+        int oy = (ph - dh) / 2;
+
+        int lx = e.getX() - ox;
+        int ly = e.getY() - oy;
+        if (lx < 0 || ly < 0 || lx >= dw || ly >= dh) {
+            return;
+        }
+
         mouseVX = Math.min(renderer.getVirtualW() - 1,
-            Math.max(0, e.getX() * renderer.getVirtualW() / pw));
+            Math.max(0, lx * renderer.getVirtualW() / dw));
         mouseVY = Math.min(renderer.getVirtualH() - 1,
-            Math.max(0, e.getY() * renderer.getVirtualH() / ph));
+            Math.max(0, ly * renderer.getVirtualH() / dh));
     }
 
     private void enterMainMenuMode() {
@@ -186,7 +198,9 @@ public class GameWindow {
         }
         frame.getRootPane().setBorder(BorderFactory.createEmptyBorder());
 
-        applyFullscreenSceneLayout();
+        frame.setMinimumSize(new Dimension(0, 0));
+        frame.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
+        frame.revalidate();
 
         GraphicsDevice device = GraphicsEnvironment
             .getLocalGraphicsEnvironment()
@@ -196,18 +210,6 @@ public class GameWindow {
 
         useHiddenCursor();
         renderer.requestFocusInWindow();
-    }
-
-    /** Fullscreen: панель на весь экран, картинка растягивается как в LibGDX. */
-    private void applyFullscreenSceneLayout() {
-        renderer.setPixelScale(2);
-        renderer.setPreferredSize(new Dimension(10, 10));
-        renderer.setMinimumSize(new Dimension(0, 0));
-        renderer.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
-        frame.setMinimumSize(new Dimension(0, 0));
-        frame.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
-        frame.revalidate();
-        System.out.println("Fullscreen: stretch 480x360 -> весь экран");
     }
 
     /** Меню/интро: системный курсор скрыт, рисуется спрайтом в сцене. */

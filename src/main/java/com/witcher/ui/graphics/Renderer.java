@@ -5,15 +5,15 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 
 /**
- * Виртуальный кадр 480×360 → displayFrame (×N) → растяжка на всю панель (как LibGDX StretchViewport).
+ * Виртуальный кадр 480×360 → displayFrame (×2) → панель (целочисленный масштаб, без растяжки).
  */
 public class Renderer extends JPanel {
 
     private final int virtualW;
     private final int virtualH;
-    private int pixelScale;
+    private final int pixelScale;
     public final BufferedImage screen;
-    private BufferedImage displayFrame;
+    private final BufferedImage displayFrame;
 
     private Sprite sprite;
     private int spriteX, spriteY;
@@ -25,33 +25,15 @@ public class Renderer extends JPanel {
         this.virtualW = virtualW;
         this.virtualH = virtualH;
         this.pixelScale = scale;
+        int dw = virtualW * pixelScale;
+        int dh = virtualH * pixelScale;
         this.screen = new BufferedImage(virtualW, virtualH, BufferedImage.TYPE_INT_ARGB);
-        rebuildDisplayFrame();
+        this.displayFrame = new BufferedImage(dw, dh, BufferedImage.TYPE_INT_RGB);
+        setPreferredSize(new Dimension(dw, dh));
         setFocusable(true);
         setDoubleBuffered(false);
         setOpaque(true);
         setBackground(Color.BLACK);
-    }
-
-    private void rebuildDisplayFrame() {
-        int dw = virtualW * pixelScale;
-        int dh = virtualH * pixelScale;
-        displayFrame = new BufferedImage(dw, dh, BufferedImage.TYPE_INT_RGB);
-        Dimension d = new Dimension(dw, dh);
-        setPreferredSize(d);
-        setMinimumSize(d);
-        setMaximumSize(d);
-    }
-
-    public void setPixelScale(int scale) {
-        if (scale < 1) {
-            scale = 1;
-        }
-        if (scale == pixelScale) {
-            return;
-        }
-        pixelScale = scale;
-        rebuildDisplayFrame();
     }
 
     public int getVirtualW() {
@@ -122,17 +104,30 @@ public class Renderer extends JPanel {
         Graphics2D g2 = (Graphics2D) g.create();
         try {
             PixelDraw.applyNearest(g2);
+            g2.setColor(Color.BLACK);
+            g2.fillRect(0, 0, pw, ph);
+
             int fw = displayFrame.getWidth();
             int fh = displayFrame.getHeight();
             if (fw <= 0 || fh <= 0) {
-                g2.setColor(Color.BLACK);
-                g2.fillRect(0, 0, pw, ph);
                 return;
             }
+
             if (pw == fw && ph == fh) {
                 g2.drawImage(displayFrame, 0, 0, null);
             } else {
-                g2.drawImage(displayFrame, 0, 0, pw, ph, null);
+                int scale = Math.max(1, Math.min(pw / fw, ph / fh));
+                int dw = fw * scale;
+                int dh = fh * scale;
+                int ox = (pw - dw) / 2;
+                int oy = (ph - dh) / 2;
+                if (scale == 1) {
+                    g2.drawImage(displayFrame, ox, oy, null);
+                } else {
+                    BufferedImage up = new BufferedImage(dw, dh, BufferedImage.TYPE_INT_RGB);
+                    PixelDraw.blitIntegerScale(displayFrame, up, scale);
+                    g2.drawImage(up, ox, oy, null);
+                }
             }
         } finally {
             g2.dispose();

@@ -16,5 +16,5 @@ if not exist "%OUT%\main\java\com\witcher\ui\graphics\GameWindow.class" (
 
 echo.
 echo Запуск из: %OUT%
-"%JAVA_HOME%\bin\java.exe" -Dsun.java2d.uiScale.enabled=false -Dsun.java2d.dpiaware=true -Dsun.java2d.d3d=false -Dsun.java2d.opengl=false -Dawt.useSystemAAFontSettings=off -Dswing.aatext=false -cp "%OUT%" main.java.com.witcher.ui.graphics.GameWindow
+"%JAVA_HOME%\bin\java.exe" -Dsun.java2d.uiScale.enabled=false -Dawt.useSystemAAFontSettings=off -Dswing.aatext=false -cp "%OUT%" main.java.com.witcher.ui.graphics.GameWindow
 endlocal
