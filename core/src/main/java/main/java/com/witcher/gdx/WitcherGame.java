@@ -3,6 +3,7 @@ package main.java.com.witcher.gdx;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import main.java.com.witcher.gdx.graphics.DisplayMetrics;
+import main.java.com.witcher.gdx.graphics.GdxWindowAlign;
 import main.java.com.witcher.gdx.screens.SplashScreen;
 
 /**
@@ -21,6 +22,7 @@ public class WitcherGame extends Game {
     @Override
     public void create() {
         batch = new SpriteBatch(2048);
+        GdxWindowAlign.ensureFramebuffer(WINDOW_W, WINDOW_H);
         DisplayMetrics.log("game-create");
         setScreen(new SplashScreen(this));
     }

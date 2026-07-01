@@ -328,6 +328,27 @@ public final class PixelTextures {
         batch.setColor(1f, 1f, 1f, a);
     }
 
+    /** Cover, но нижний край картинки прижат к низу экрана (splash_bg с пустым верхом в PNG). */
+    public static void drawCoverBottom(SpriteBatch batch, Texture texture, float viewW, float viewH, float alpha) {
+        if (texture == null) {
+            return;
+        }
+        float tw = texture.getWidth();
+        float th = texture.getHeight();
+        if (tw <= 0f || th <= 0f) {
+            return;
+        }
+        float a = batch.getColor().a;
+        batch.setColor(1f, 1f, 1f, alpha);
+        float cover = Math.max(viewW / tw, viewH / th);
+        float drawW = tw * cover;
+        float drawH = th * cover;
+        float x = (viewW - drawW) * 0.5f;
+        float y = 0f;
+        batch.draw(texture, x, y, drawW, drawH);
+        batch.setColor(1f, 1f, 1f, a);
+    }
+
     public static void drawRegion(SpriteBatch batch, TextureRegion region, float x, float y, float w, float h) {
         if (region == null || w <= 0f || h <= 0f) {
             return;

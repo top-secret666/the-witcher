@@ -12,6 +12,7 @@ import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import main.java.com.witcher.gdx.WitcherGame;
 import main.java.com.witcher.gdx.graphics.DisplayMetrics;
+import main.java.com.witcher.gdx.graphics.GdxWindowAlign;
 import main.java.com.witcher.gdx.graphics.GameFonts;
 import com.badlogic.gdx.utils.viewport.StretchViewport;
 import main.java.com.witcher.gdx.graphics.PixelSpriteSheet;
@@ -36,6 +37,11 @@ public class SplashScreen implements Screen {
     private static final Color SPLASH_BACKDROP = new Color(18f / 255f, 12f / 255f, 8f / 255f, 1f);
     private static final Color SMOKE = new Color(190f / 255f, 180f / 255f, 165f / 255f, 1f);
     private static final boolean DRAW_SMOKE = false;
+
+    /** Скорость загрузки (медленнее, чем было). */
+    private static final float ALPHA_STEP = 0.022f;
+    private static final int PROGRESS_EVERY_STEPS = 5;
+    private static final int END_HOLD_TICKS = 100;
 
     private final WitcherGame game;
     private Viewport viewport;
@@ -95,13 +101,14 @@ public class SplashScreen implements Screen {
             griffinAnim.setPingPong(true);
         }
 
-        viewport.update(Gdx.graphics.getWidth(), Gdx.graphics.getHeight(), true);
+        GdxWindowAlign.ensureFramebuffer((int) VW * WitcherGame.PIXEL_SCALE, (int) VH * WitcherGame.PIXEL_SCALE);
+        viewport.update(GdxWindowAlign.backBufferW(), GdxWindowAlign.backBufferH(), true);
         DisplayMetrics.log("splash-show");
         DisplayMetrics.tryFixWindowSizeMismatch();
         Gdx.app.log("SplashScreen", "assets bg=" + (background != null)
             + " logo=" + (logoAnim != null) + " bar=" + (witcherBar != null)
             + " griffin=" + (griffinAnim != null)
-            + " backbuffer=" + Gdx.graphics.getWidth() + "x" + Gdx.graphics.getHeight()
+            + " backbuffer=" + GdxWindowAlign.backBufferW() + "x" + GdxWindowAlign.backBufferH()
             + (logoAnim != null ? " logoFrame=" + logoAnim.getFrameWidth() + "x" + logoAnim.getFrameHeight() : "")
             + (witcherBar != null ? " barFrame=" + witcherBar.getFrameWidth() + "x" + witcherBar.getFrameHeight() : ""));
     }
@@ -114,9 +121,12 @@ public class SplashScreen implements Screen {
             simulateStep();
         }
 
+        int bbw = GdxWindowAlign.backBufferW();
+        int bbh = GdxWindowAlign.backBufferH();
+        Gdx.gl.glViewport(0, 0, bbw, bbh);
         Gdx.gl.glClearColor(SPLASH_BACKDROP.r, SPLASH_BACKDROP.g, SPLASH_BACKDROP.b, 1f);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-        viewport.update(Gdx.graphics.getWidth(), Gdx.graphics.getHeight(), true);
+        viewport.update(bbw, bbh, true);
         viewport.apply();
         DisplayMetrics.logOnceViewport("splash-render", viewport);
 
@@ -167,19 +177,19 @@ public class SplashScreen implements Screen {
         flicker = clamp(base + jitter, 0.72f, 1f);
 
         if (alpha < 1f) {
-            alpha += 0.06f;
+            alpha += ALPHA_STEP;
             if (alpha > 1f) {
                 alpha = 1f;
             }
         } else if (progress < 100) {
             progressCooldown++;
-            if (progressCooldown >= 2) {
+            if (progressCooldown >= PROGRESS_EVERY_STEPS) {
                 progressCooldown = 0;
                 progress++;
             }
         } else {
             timer++;
-            if (timer > 80) {
+            if (timer > END_HOLD_TICKS) {
                 finished = true;
             }
         }
@@ -231,25 +241,8 @@ public class SplashScreen implements Screen {
 
     private void drawSprites() {
         if (background != null) {
-            int[] bounds = PixelTextures.computeVisibleBounds("sprites/splash_bg.png");
             float a = clamp(alpha * 0.88f, 0f, 1f);
-            if (bounds != null) {
-                float artW = bounds[2];
-                float artH = bounds[3];
-                float cover = Math.max(VW / artW, VH / artH);
-                float drawW = artW * cover;
-                float drawH = artH * cover;
-                float x = (VW - drawW) * 0.5f;
-                float y = (VH - drawH) * 0.5f;
-                float prev = game.batch.getColor().a;
-                game.batch.setColor(1f, 1f, 1f, a);
-                PixelTextures.drawCropped(game.batch, background,
-                    bounds[0], bounds[1], bounds[2], bounds[3],
-                    x, y, drawW, drawH);
-                game.batch.setColor(1f, 1f, 1f, prev);
-            } else {
-                PixelTextures.drawCover(game.batch, background, VW, VH, a);
-            }
+            PixelTextures.drawCoverBottom(game.batch, background, VW, VH, a);
         }
 
         if (logoAnim != null && alpha > 0.05f) {
