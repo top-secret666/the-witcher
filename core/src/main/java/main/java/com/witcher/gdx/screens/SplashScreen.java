@@ -230,29 +230,25 @@ public class SplashScreen implements Screen {
     }
 
     private void drawSprites() {
-        shapes.begin(ShapeRenderer.ShapeType.Filled);
-        shapes.setColor(SPLASH_BACKDROP);
-        shapes.rect(0f, 0f, VW, VH);
-        shapes.end();
-
         if (background != null) {
             int[] bounds = PixelTextures.computeVisibleBounds("sprites/splash_bg.png");
+            float a = clamp(alpha * 0.88f, 0f, 1f);
             if (bounds != null) {
                 float artW = bounds[2];
                 float artH = bounds[3];
                 float cover = Math.max(VW / artW, VH / artH);
                 float drawW = artW * cover;
                 float drawH = artH * cover;
-                float x = (VW - drawW) * 0.5f - bounds[0] * cover;
-                float y = (VH - drawH) * 0.5f - (background.getHeight() - bounds[1] - bounds[3]) * cover;
+                float x = (VW - drawW) * 0.5f;
+                float y = (VH - drawH) * 0.5f;
                 float prev = game.batch.getColor().a;
-                game.batch.setColor(1f, 1f, 1f, clamp(alpha * 0.88f, 0f, 1f));
+                game.batch.setColor(1f, 1f, 1f, a);
                 PixelTextures.drawCropped(game.batch, background,
                     bounds[0], bounds[1], bounds[2], bounds[3],
                     x, y, drawW, drawH);
                 game.batch.setColor(1f, 1f, 1f, prev);
             } else {
-                PixelTextures.drawCover(game.batch, background, VW, VH, clamp(alpha * 0.88f, 0f, 1f));
+                PixelTextures.drawCover(game.batch, background, VW, VH, a);
             }
         }
 
