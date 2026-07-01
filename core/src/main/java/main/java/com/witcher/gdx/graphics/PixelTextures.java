@@ -200,6 +200,23 @@ public final class PixelTextures {
             }
         }
 
+        // Запасной путь: мастер-копии в sprites/_source/ (пока не скопировали в sprites/)
+        String sourcePath = sourceFallbackPath(p);
+        if (sourcePath != null) {
+            for (String absolute : buildCandidates(userDir, sourcePath, assetsRoot)) {
+                FileHandle file = Gdx.files.absolute(absolute);
+                if (file.exists()) {
+                    Gdx.app.log("PixelTextures", "Iz _source: " + path + " -> " + file.path());
+                    return file;
+                }
+            }
+            FileHandle localSource = Gdx.files.local(sourcePath);
+            if (localSource.exists()) {
+                Gdx.app.log("PixelTextures", "Iz _source: " + path + " -> " + localSource.path());
+                return localSource;
+            }
+        }
+
         FileHandle internal = Gdx.files.internal(p);
         if (internal.exists()) {
             return internal;
@@ -228,6 +245,17 @@ public final class PixelTextures {
         }
 
         return candidates.toArray(new String[0]);
+    }
+
+    private static String sourceFallbackPath(String path) {
+        if (path == null || path.isEmpty()) {
+            return null;
+        }
+        String p = path.replace('\\', '/');
+        if (p.startsWith("sprites/")) {
+            return "sprites/_source/" + p.substring("sprites/".length());
+        }
+        return null;
     }
 
     /**

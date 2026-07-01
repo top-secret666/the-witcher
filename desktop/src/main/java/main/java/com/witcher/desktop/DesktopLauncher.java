@@ -15,20 +15,11 @@ public class DesktopLauncher {
     public static void main(String[] args) {
         System.setProperty("org.lwjgl.opengl.Display.allowLegacyDXGIScaling", "false");
         try {
-            float contentScale = queryPrimaryMonitorContentScale();
-            int[] windowSize = computeWindowSize(contentScale);
-
-            Lwjgl3ApplicationConfiguration config = new Lwjgl3ApplicationConfiguration();
-            config.setTitle("The Witcher — LibGDX");
             config.setHdpiMode(HdpiMode.Pixels);
-            config.setWindowedMode(windowSize[0], windowSize[1]);
-            config.setResizable(false);
-            config.setForegroundFPS(60);
-            config.useVsync(true);
+            config.setWindowedMode(WitcherGame.WINDOW_W, WitcherGame.WINDOW_H);
 
-            System.out.println("[DesktopLauncher] monitorContentScale=" + contentScale
-                + " glfwWindow=" + windowSize[0] + 'x' + windowSize[1]
-                + " celFizicheski=" + WitcherGame.WINDOW_W + 'x' + WitcherGame.WINDOW_H);
+            System.out.println("[DesktopLauncher] okno=" + WitcherGame.WINDOW_W + 'x' + WitcherGame.WINDOW_H
+                + " (monitor scale=" + contentScale + ", bez umenjsheniya okna)");
 
             new Lwjgl3Application(new WitcherGame(), config);
         } catch (Throwable error) {
