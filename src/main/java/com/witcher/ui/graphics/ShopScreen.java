@@ -1384,13 +1384,12 @@ public class ShopScreen {
         }
 
         int statsX = portraitX;
-        int statsY = py + EQUIP_PANEL_H - 72;
+        int statsY = py + EQUIP_PANEL_H - 68;
         int statsW = EQUIP_PANEL_W - (statsX - px) - 12;
-        int statsH = 58;
+        int statsH = 52;
         g.setColor(new Color(10, 7, 4, 200));
         g.fillRoundRect(statsX, statsY, statsW, statsH, 4, 4);
-        ShopStatBarRenderer.draw(g, statsX, statsY, statsW, statsH, model.equippedStatPreview(),
-            assets.statVialEmpty, assets.statVialOverlay, assets.statVialEndCap);
+        drawEquipmentStats(g, statsX, statsY, statsW, statsH, model.equippedStatPreview());
 
         int backW = 72;
         int backH = 22;
@@ -1410,6 +1409,32 @@ public class ShopScreen {
         g.drawString("Esc — назад", backX + backW + 10, backY + 15);
 
         g.setComposite(prev);
+    }
+
+    private void drawEquipmentStats(Graphics2D g, int x, int y, int w, int h, ShopModel.StatPreview preview) {
+        drawCrispText(g);
+        g.setFont(new Font("Serif", Font.BOLD, 10));
+        g.setColor(new Color(220, 200, 140));
+        String header = "ХАРАКТЕРИСТИКИ";
+        FontMetrics hfm = g.getFontMetrics();
+        g.drawString(header, x + (w - hfm.stringWidth(header)) / 2, y + 14);
+
+        String[] labels = {"Защита", "Выносл.", "Знаки"};
+        g.setFont(new Font("Serif", Font.PLAIN, 10));
+        int lineY = y + 30;
+        ShopModel.StatRow[] rows = preview.rows();
+        for (int i = 0; i < labels.length && i < rows.length; i++) {
+            ShopModel.StatRow row = rows[i];
+            String delta = "";
+            if (row.delta() > 0) {
+                delta = " (+" + row.delta() + ")";
+            } else if (row.delta() < 0) {
+                delta = " (" + row.delta() + ")";
+            }
+            g.setColor(new Color(200, 180, 130));
+            g.drawString(labels[i] + ": " + row.value() + delta, x + 12, lineY);
+            lineY += 14;
+        }
     }
 
     private void drawInventoryPouchIcon(Graphics2D g, int x, int y, int size,
