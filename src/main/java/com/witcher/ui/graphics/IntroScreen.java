@@ -22,8 +22,8 @@ import java.util.Random;
 public class IntroScreen {
 
     private static final int SHOP_ANIMATION_ENTRY_INDEX = 5;
-    /** Длительность смены stranger → duke в стиле VN (~1.4 с при 30 FPS). */
-    private static final int VN_RIGHT_MORPH_TICKS = 42;
+    /** Длительность смены stranger → duke: дым/частицы (~2 с при 30 FPS). */
+    private static final int VN_RIGHT_MORPH_TICKS = 60;
 
     // ─── Состояния ───
     private boolean finished = false;
@@ -71,9 +71,12 @@ public class IntroScreen {
 
     // Вспышка при смене персонажа (0..1, затухает) — не используется для stranger→duke
     private float switchFlash = 0f;
-    /** Кроссфейд stranger → duke (визуальная новелла). */
+    /** Кроссфейд stranger → duke: дымовая маскировка. */
     private boolean rightMorphActive = false;
     private float rightMorphT = 0f;
+    private Rectangle morphAnchorBounds = null;
+    /** [x, y, vx, vy, size, life, maxLife, r, g, b] */
+    private final List<float[]> morphSmoke = new ArrayList<>();
     // Частицы-искры при смене персонажа
     private final List<float[]> switchParticles = new ArrayList<>(); // [x,y,vx,vy,life,maxLife,r,g,b]
     // Подсилка для эффекта нового правого персонажа
@@ -108,13 +111,20 @@ public class IntroScreen {
     private static final int TICKS_PER_CHAR = 2;
     private boolean waitingForAdvance = false;
 
-    // ─── VN UI: история и назад ───
+    // ─── VN UI: история, назад, авто ───
     private boolean historyOpen = false;
+    private boolean autoMode = false;
     private int historyScroll = 0;
+    private int autoWaitTicks = 0;
+    private static final int AUTO_DELAY_TICKS = 18;
+    private static final int AUTO_CHARS_PER_TICK = 4;
     private Rectangle backButtonBounds = new Rectangle();
     private Rectangle historyButtonBounds = new Rectangle();
+    private Rectangle autoButtonBounds = new Rectangle();
     private Rectangle historyPanelBounds = new Rectangle();
     private int shopAnimStartedForEntry = -1;
+
+    private static final BufferedImage MENU_CURSOR = loadMenuCursor();
 
     // ─── Частицы (огненные искры от факелов) ───
     private final List<float[]> sparks = new ArrayList<>();
@@ -270,6 +280,14 @@ public class IntroScreen {
                 }
                 return;
             }
+            if (autoButtonBounds.contains(mouseX, mouseY)) {
+                autoMode = !autoMode;
+                autoWaitTicks = 0;
+                return;
+            }
+            if (isVnButtonRowClick(mouseX, mouseY)) {
+                return;
+            }
             advance = true;
         }
 
@@ -296,15 +314,9 @@ public class IntroScreen {
             rightEmotion = dukeSprite;
         }
 
-        // Смена правого персонажа: stranger → duke — мягкий VN-кроссфейд вместо вспышек
+        // Смена правого персонажа: stranger → duke — дымовая маскировка
         if (!newRight.equals(prevRightCharacter) && isStrangerToDukeReveal(prevRightCharacter, newRight)) {
-            rightMorphActive = true;
-            rightMorphT = 0f;
-            strangerSlide = 1f;
-            dukeSlide = 1f;
-            switchFlash = 0f;
-            switchParticles.clear();
-            rightSwitchParticles.clear();
+            beginStrangerToDukeMorph();
         } else if (!newRight.equals(prevRightCharacter) && !"none".equals(newRight) && !"none".equals(prevRightCharacter)) {
             switchFlash = 1.0f;
             for (int i = 0; i < 30; i++) {
@@ -335,10 +347,13 @@ public class IntroScreen {
 
         if (rightMorphActive) {
             rightMorphT = Math.min(1f, rightMorphT + 1f / VN_RIGHT_MORPH_TICKS);
+            updateMorphSmoke(rightMorphT);
             if (rightMorphT >= 1f) {
                 rightMorphActive = false;
                 strangerSlide = 0f;
                 dukeSlide = 1f;
+                morphSmoke.clear();
+                morphAnchorBounds = null;
             }
         }
 
@@ -435,14 +450,24 @@ public class IntroScreen {
         }
 
         if (waitingForAdvance) {
-            if (advance) {
-                currentEntry++;
-                charIndex = 0;
-                typeTickCounter = 0;
-                waitingForAdvance = false;
+            boolean morphBlocking = rightMorphActive;
+            if (advance && !morphBlocking) {
+                advanceDialogueEntry();
+            } else if (autoMode && !morphBlocking) {
+                autoWaitTicks++;
+                if (autoWaitTicks >= AUTO_DELAY_TICKS) {
+                    advanceDialogueEntry();
+                }
             }
         } else {
-            if (advance && charIndex < totalChars) {
+            if (autoMode && !rightMorphActive) {
+                charIndex = Math.min(totalChars, charIndex + AUTO_CHARS_PER_TICK);
+                if (charIndex >= totalChars) {
+                    charIndex = totalChars;
+                    waitingForAdvance = true;
+                    autoWaitTicks = 0;
+                }
+            } else if (advance && charIndex < totalChars) {
                 charIndex = totalChars;
                 waitingForAdvance = true;
             } else {
@@ -549,21 +574,9 @@ public class IntroScreen {
                         drawCharacterEnhanced(g, sw, sh, leftSpriteToShow, geraltSlide, true,
                             "left".equals(activeSide), leftActiveAnim, leftForceOpaque, false, false, 1f);
 
-            // Правый персонаж: VN-кроссфейд stranger → duke или обычный slide
+            // Правый персонаж: дымовая маскировка stranger → duke
             if (rightMorphActive) {
-                float t = easeInOutCubic(rightMorphT);
-                float strangerA = 1f - t;
-                float dukeA = t;
-                if (strangerA > 0.01f && strangerSprite != null) {
-                    drawCharacterEnhanced(g, sw, sh, strangerSprite, 1f, false,
-                        false, 0f, false, false, false, strangerA);
-                }
-                if (dukeA > 0.01f) {
-                    BufferedImage dukeBase = usingShopSprites && dukeShopSprite != null ? dukeShopSprite : dukeSprite;
-                    drawCharacterEnhanced(g, sw, sh, dukeBase, 1f, false,
-                        "right".equals(activeSide), rightActiveAnim * dukeA, rightForceOpaque, false, false, dukeA);
-                }
-                drawVnMorphDarken(g, sw, sh, t);
+                drawStrangerToDukeMorph(g, sw, sh, usingShopSprites, activeSide, rightActiveAnim, rightForceOpaque);
             } else {
                 if (strangerSlide > 0.001f) {
                     drawCharacterEnhanced(g, sw, sh, strangerSprite, strangerSlide, false,
@@ -698,6 +711,8 @@ public class IntroScreen {
         if (historyOpen) {
             drawHistoryOverlay(g, sw, sh);
         }
+
+        drawCursor(g, mouseX, mouseY);
 
         g.dispose();
     }
@@ -906,8 +921,10 @@ public class IntroScreen {
             g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
         }
 
-        if (waitingForAdvance && (tick / 15) % 2 == 0) {
+        if (waitingForAdvance && !autoMode && (tick / 15) % 2 == 0) {
             DialogBoxRenderer.drawHint(g, "\u25B6 Enter", layout, layout.fontSize, fadeAlpha);
+        } else if (waitingForAdvance && autoMode && (tick / 12) % 2 == 0) {
+            DialogBoxRenderer.drawHint(g, "Авто \u25B6", layout, layout.fontSize, fadeAlpha * 0.85f);
         }
     }
 
@@ -917,76 +934,376 @@ public class IntroScreen {
         return "stranger".equals(from) && "duke".equals(to);
     }
 
-    /** Тёмная вуаль в середине кроссфейда — классический приём VN. */
-    private void drawVnMorphDarken(Graphics2D g, int sw, int sh, float morphT) {
-        float peak = (float) Math.sin(morphT * Math.PI);
-        float alpha = peak * 0.78f * fadeAlpha;
-        if (alpha <= 0.01f) {
+    private void advanceDialogueEntry() {
+        currentEntry++;
+        charIndex = 0;
+        typeTickCounter = 0;
+        waitingForAdvance = false;
+        autoWaitTicks = 0;
+    }
+
+    private void beginStrangerToDukeMorph() {
+        rightMorphActive = true;
+        rightMorphT = 0f;
+        strangerSlide = 1f;
+        dukeSlide = 1f;
+        switchFlash = 0f;
+        switchParticles.clear();
+        rightSwitchParticles.clear();
+        morphSmoke.clear();
+        morphAnchorBounds = rightCharacterBounds != null
+            ? new Rectangle(rightCharacterBounds)
+            : estimateRightCharacterBounds(480, 360, strangerSprite);
+        spawnMorphSmoke(morphAnchorBounds);
+    }
+
+    private Rectangle estimateRightCharacterBounds(int sw, int sh, BufferedImage sprite) {
+        if (sprite == null) {
+            return new Rectangle((int) (sw * 0.55f), (int) (sh * 0.12f), (int) (sw * 0.4f), (int) (sh * 0.75f));
+        }
+        return computeCharacterRect(sw, sh, sprite, 1f, false, false, 0f, false, false);
+    }
+
+    private void spawnMorphSmoke(Rectangle bounds) {
+        int cx = bounds.x + bounds.width / 2;
+        int cy = bounds.y + bounds.height / 2;
+        for (int i = 0; i < 420; i++) {
+            float px = bounds.x + rng.nextFloat() * bounds.width;
+            float py = bounds.y + rng.nextFloat() * bounds.height;
+            float angle = (float) (rng.nextFloat() * Math.PI * 2);
+            float speed = 0.4f + rng.nextFloat() * 2.8f;
+            float vx = (float) Math.cos(angle) * speed * 0.55f;
+            float vy = -speed * (0.7f + rng.nextFloat() * 0.8f);
+            float size = 1.2f + rng.nextFloat() * 3.5f;
+            int maxLife = 40 + rng.nextInt(50);
+            boolean gold = rng.nextFloat() < 0.12f;
+            float r = gold ? 220 + rng.nextInt(35) : 55 + rng.nextInt(55);
+            float g = gold ? 170 + rng.nextInt(60) : 45 + rng.nextInt(50);
+            float b = gold ? 40 + rng.nextInt(40) : 70 + rng.nextInt(70);
+            morphSmoke.add(new float[]{px, py, vx, vy, size, 0, maxLife, r, g, b});
+        }
+        // дополнительные искры от центра силуэта
+        for (int i = 0; i < 60; i++) {
+            float angle = (float) (rng.nextFloat() * Math.PI * 2);
+            float speed = 1.2f + rng.nextFloat() * 3.5f;
+            float px = cx + (rng.nextFloat() - 0.5f) * bounds.width * 0.2f;
+            float py = cy + (rng.nextFloat() - 0.5f) * bounds.height * 0.15f;
+            morphSmoke.add(new float[]{
+                px, py,
+                (float) Math.cos(angle) * speed,
+                (float) Math.sin(angle) * speed - 1.5f,
+                2f + rng.nextFloat() * 2f,
+                0, 30 + rng.nextInt(25),
+                240 + rng.nextInt(15), 190 + rng.nextInt(40), 30 + rng.nextInt(30)
+            });
+        }
+    }
+
+    private void updateMorphSmoke(float morphT) {
+        if (morphAnchorBounds == null) {
             return;
         }
+        int cx = morphAnchorBounds.x + morphAnchorBounds.width / 2;
+        int cy = morphAnchorBounds.y + morphAnchorBounds.height / 2;
+        float converge = smoothstep(0.42f, 0.92f, morphT);
+        morphSmoke.removeIf(p -> p[5] >= p[6]);
+        for (float[] p : morphSmoke) {
+            p[0] += p[2];
+            p[1] += p[3];
+            p[2] *= 0.97f;
+            p[3] *= 0.97f;
+            p[3] -= 0.03f;
+            if (converge > 0.01f) {
+                p[2] += (cx - p[0]) * converge * 0.035f;
+                p[3] += (cy - p[1]) * converge * 0.028f;
+            }
+            p[5]++;
+        }
+        // подпитываем дым в середине перехода
+        if (morphT > 0.12f && morphT < 0.72f && tick % 3 == 0 && morphSmoke.size() < 520) {
+            Rectangle b = morphAnchorBounds;
+            float px = b.x + rng.nextFloat() * b.width;
+            float py = b.y + b.height * (0.55f + rng.nextFloat() * 0.35f);
+            morphSmoke.add(new float[]{
+                px, py,
+                (rng.nextFloat() - 0.5f) * 1.2f,
+                -1.4f - rng.nextFloat() * 1.6f,
+                1.5f + rng.nextFloat() * 2.5f,
+                0, 35 + rng.nextInt(30),
+                50 + rng.nextInt(40), 40 + rng.nextInt(35), 65 + rng.nextInt(45)
+            });
+        }
+    }
+
+    private void drawStrangerToDukeMorph(Graphics2D g, int sw, int sh, boolean usingShopSprites,
+                                         String activeSide, float rightActiveAnim, boolean rightForceOpaque) {
+        float t = easeInOutCubic(rightMorphT);
+        BufferedImage dukeBase = usingShopSprites && dukeShopSprite != null ? dukeShopSprite : dukeSprite;
+        Rectangle bounds = morphAnchorBounds != null
+            ? morphAnchorBounds
+            : estimateRightCharacterBounds(sw, sh, strangerSprite);
+
+        float dissolve = 1f - smoothstep(0f, 0.58f, t);
+        float scatterOut = smoothstep(0f, 0.62f, t);
+        float manifest = smoothstep(0.36f, 1f, t);
+        float scatterIn = 1f - smoothstep(0.36f, 1f, t);
+
+        drawMorphSmoke(g, t);
+
+        if (strangerSprite != null && dissolve > 0.02f) {
+            Rectangle strangerRect = computeCharacterRect(sw, sh, strangerSprite, 1f, false, false, 0f, false, false);
+            drawSpriteDissolve(g, strangerSprite, strangerRect, dissolve, scatterOut, false);
+        }
+        if (dukeBase != null && manifest > 0.02f) {
+            boolean dukeActive = "right".equals(activeSide);
+            Rectangle dukeRect = computeCharacterRect(sw, sh, dukeBase, 1f, false, dukeActive, rightActiveAnim, false, false);
+            drawSpriteDissolve(g, dukeBase, dukeRect, manifest, scatterIn, true);
+            if (rightForceOpaque && dukeActive && manifest > 0.85f) {
+                drawCharacterEnhanced(g, sw, sh, dukeBase, 1f, false,
+                    true, rightActiveAnim, true, false, false, manifest);
+            }
+        }
+
+        drawMorphAura(g, bounds, t);
+    }
+
+    private void drawMorphSmoke(Graphics2D g, float morphT) {
         Composite prev = g.getComposite();
-        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
-        g.setColor(new Color(6, 4, 10));
-        g.fillRect(0, 0, sw, sh);
+        float peak = (float) Math.sin(morphT * Math.PI);
+        for (float[] p : morphSmoke) {
+            float life = p[5] / p[6];
+            float alpha = (1f - life) * fadeAlpha * (0.35f + peak * 0.55f);
+            if (alpha <= 0.01f) {
+                continue;
+            }
+            int sz = Math.max(1, Math.round(p[4]));
+            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, Math.min(1f, alpha)));
+            g.setColor(new Color(
+                Math.min(255, (int) p[7]),
+                Math.min(255, (int) p[8]),
+                Math.min(255, (int) p[9])));
+            g.fillRect(Math.round(p[0]), Math.round(p[1]), sz, sz);
+            if (sz >= 2) {
+                g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha * 0.35f));
+                g.fillRect(Math.round(p[0]) - 1, Math.round(p[1]) - 1, sz + 2, sz + 2);
+            }
+        }
         g.setComposite(prev);
     }
 
+    private void drawMorphAura(Graphics2D g, Rectangle bounds, float morphT) {
+        float peak = (float) Math.sin(morphT * Math.PI);
+        if (peak <= 0.05f || bounds == null) {
+            return;
+        }
+        int cx = bounds.x + bounds.width / 2;
+        int cy = bounds.y + bounds.height / 2;
+        Composite prev = g.getComposite();
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, peak * 0.22f * fadeAlpha));
+        RadialGradientPaint aura = new RadialGradientPaint(
+            cx, cy, bounds.width * 0.55f,
+            new float[]{0f, 0.55f, 1f},
+            new Color[]{
+                new Color(90, 60, 120, 120),
+                new Color(40, 30, 55, 70),
+                new Color(10, 8, 15, 0)
+            }
+        );
+        g.setPaint(aura);
+        int size = Math.round(bounds.width * 1.15f);
+        g.fillOval(cx - size / 2, cy - size / 2, size, size);
+        g.setComposite(prev);
+    }
+
+    private Rectangle computeCharacterRect(int sw, int sh, BufferedImage sprite, float slide,
+                                           boolean isLeft, boolean isActive, float activeAnim,
+                                           boolean liftForShop, boolean raiseAboveOthers) {
+        float baseCharScale = (sh * 0.85f) / sprite.getHeight();
+        float scaleBoost = 1.0f + activeAnim * 0.06f;
+        float charScale = baseCharScale * scaleBoost;
+        if (liftForShop) {
+            charScale *= 0.92f;
+        }
+        int cw = Math.round(sprite.getWidth() * charScale);
+        int ch = Math.round(sprite.getHeight() * charScale);
+        int dialogZone = (int) (sh * 0.15f);
+        int baseY = sh - dialogZone - ch + (int) (ch * 0.15f);
+        int offscreenX = isLeft ? -cw : sw;
+        int targetX = isLeft ? (int) (sw * 0.02f) : (int) (sw - cw - sw * 0.02f);
+        int activeShift = (int) (sw * 0.03f * activeAnim);
+        if (isLeft) {
+            targetX += activeShift;
+        } else {
+            targetX -= activeShift;
+        }
+        float easedSlide = easeOutBack(slide);
+        int cx = offscreenX + (int) ((targetX - offscreenX) * easedSlide);
+        float breathe = (float) Math.sin(tick * 0.04 + (isLeft ? 0 : 2)) * 2;
+        if (isActive) {
+            breathe += (float) Math.sin(tick * 0.08) * 0.8f;
+        }
+        int cy = baseY + (int) breathe;
+        if (liftForShop) {
+            cy += Math.round(ch * 0.06f);
+        }
+        if (raiseAboveOthers) {
+            cy -= Math.round(ch * 0.08f);
+        }
+        return new Rectangle(cx, cy, cw, ch);
+    }
+
+    private void drawSpriteDissolve(Graphics2D g, BufferedImage sprite, Rectangle rect,
+                                    float solid, float scatter, boolean manifesting) {
+        if (sprite == null || rect == null || solid <= 0.01f) {
+            return;
+        }
+        int cx = rect.x;
+        int cy = rect.y;
+        int cw = rect.width;
+        int ch = rect.height;
+        int block = 7;
+        Composite prev = g.getComposite();
+        Object prevInterp = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
+        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+
+        for (int y = 0; y < ch; y += block) {
+            for (int x = 0; x < cw; x += block) {
+                int hash = (x * 73 + y * 991 + (manifesting ? 17 : 0)) & 0xFFFF;
+                float threshold = hash / 65535f;
+                if (threshold > solid) {
+                    continue;
+                }
+                float fx = ((hash >> 3) & 0xFF) / 255f;
+                float fy = ((hash >> 11) & 0xFF) / 255f;
+                int ox = Math.round((fx - 0.5f) * scatter * 28f);
+                int oy = Math.round((fy - 0.5f) * scatter * -34f - scatter * 12f);
+                int bw = Math.min(block, cw - x);
+                int bh = Math.min(block, ch - y);
+                int sx = Math.min(sprite.getWidth() - 1, (int) ((float) x / cw * sprite.getWidth()));
+                int sy = Math.min(sprite.getHeight() - 1, (int) ((float) y / ch * sprite.getHeight()));
+                int sw = Math.max(1, Math.min(sprite.getWidth() - sx, (int) ((float) bw / cw * sprite.getWidth())));
+                int sh = Math.max(1, Math.min(sprite.getHeight() - sy, (int) ((float) bh / ch * sprite.getHeight())));
+                float blockAlpha = fadeAlpha * solid * (0.45f + (1f - scatter) * 0.55f);
+                g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, blockAlpha));
+                g.drawImage(sprite, cx + x + ox, cy + y + oy, cx + x + ox + bw, cy + y + oy + bh,
+                    sx, sy, sx + sw, sy + sh, null);
+            }
+        }
+        if (prevInterp != null) {
+            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, prevInterp);
+        }
+        g.setComposite(prev);
+    }
+
+    private static float smoothstep(float edge0, float edge1, float x) {
+        float t = Math.max(0f, Math.min(1f, (x - edge0) / (edge1 - edge0)));
+        return t * t * (3f - 2f * t);
+    }
+
     private void layoutVnButtons(int sw, int sh) {
-        int btnH = Math.max(18, (int) (sh * 0.058f));
-        int btnPad = Math.max(6, (int) (sw * 0.018f));
-        int backW = Math.max(58, (int) (sw * 0.13f));
-        int histW = Math.max(72, (int) (sw * 0.16f));
-        int y = Math.max(4, (int) (sh * 0.018f));
-        backButtonBounds.setBounds(btnPad, y, backW, btnH);
-        historyButtonBounds.setBounds(sw - btnPad - histW, y, histW, btnH);
+        DialogBoxRenderer.Layout layout = DialogBoxRenderer.computeLayout(sw, sh);
+        int fontSize = Math.max(10, (int) (sh * 0.031f));
+        int btnH = fontSize + 8;
+        int gap = Math.max(28, (int) (sw * 0.09f));
+
+        Font measureFont = new Font("Serif", Font.PLAIN, fontSize);
+        FontMetrics fm = Toolkit.getDefaultToolkit().getFontMetrics(measureFont);
+        int backW = fm.stringWidth("Назад") + 10;
+        int histW = fm.stringWidth("История") + 10;
+        int autoW = fm.stringWidth("Авто") + 10;
+        int totalW = backW + histW + autoW + gap * 2;
+        int startX = (sw - totalW) / 2;
+
+        int rowY;
+        if (currentEntry == SHOP_ANIMATION_ENTRY_INDEX) {
+            rowY = sh - btnH - 6;
+        } else {
+            rowY = layout.boxY + layout.boxH + 4;
+            if (rowY + btnH > sh - 4) {
+                rowY = sh - btnH - 4;
+            }
+        }
+
+        backButtonBounds.setBounds(startX, rowY, backW, btnH);
+        historyButtonBounds.setBounds(startX + backW + gap, rowY, histW, btnH);
+        autoButtonBounds.setBounds(startX + backW + gap + histW + gap, rowY, autoW, btnH);
 
         int panelW = Math.max(280, (int) (sw * 0.82f));
         int panelH = Math.max(200, (int) (sh * 0.72f));
         historyPanelBounds.setBounds((sw - panelW) / 2, (sh - panelH) / 2, panelW, panelH);
     }
 
+    private boolean isVnButtonRowClick(int mouseX, int mouseY) {
+        return backButtonBounds.contains(mouseX, mouseY)
+            || historyButtonBounds.contains(mouseX, mouseY)
+            || autoButtonBounds.contains(mouseX, mouseY);
+    }
+
     private void drawVnButtons(Graphics2D g, int sw, int sh, int mouseX, int mouseY) {
         layoutVnButtons(sw, sh);
         boolean backEnabled = currentEntry > 0;
-        drawVnButton(g, backButtonBounds, "Назад", backEnabled,
+        drawVnTextButton(g, backButtonBounds, "Назад", backEnabled, false,
             backEnabled && backButtonBounds.contains(mouseX, mouseY));
-        drawVnButton(g, historyButtonBounds, "История", true,
+        drawVnTextButton(g, historyButtonBounds, "История", true, false,
             historyButtonBounds.contains(mouseX, mouseY));
+        drawVnTextButton(g, autoButtonBounds, "Авто", true, autoMode,
+            autoButtonBounds.contains(mouseX, mouseY));
     }
 
-    private void drawVnButton(Graphics2D g, Rectangle r, String label, boolean enabled, boolean hover) {
-        int alpha255 = Math.max(0, Math.min(255, (int) (fadeAlpha * (enabled ? 230 : 120))));
-        Color fill = enabled
-            ? (hover ? new Color(48, 36, 18, alpha255) : new Color(28, 20, 10, alpha255))
-            : new Color(18, 14, 8, alpha255);
-        Color border = enabled
-            ? (hover ? new Color(255, 215, 90, alpha255) : new Color(180, 130, 45, alpha255))
-            : new Color(80, 60, 30, alpha255);
-        Color text = enabled
-            ? (hover ? new Color(255, 235, 170) : new Color(210, 185, 120))
-            : new Color(100, 85, 60);
-
-        g.setColor(fill);
-        g.fillRect(r.x, r.y, r.width, r.height);
-        g.setColor(border);
-        g.drawRect(r.x, r.y, r.width, r.height);
-        if (hover && enabled) {
-            g.setColor(new Color(255, 215, 0, Math.max(0, Math.min(255, (int) (fadeAlpha * 80)))));
-            g.drawRect(r.x + 1, r.y + 1, r.width - 2, r.height - 2);
+    private void drawVnTextButton(Graphics2D g, Rectangle r, String label, boolean enabled,
+                                  boolean active, boolean hover) {
+        int alpha255 = Math.max(0, Math.min(255, (int) (fadeAlpha * (enabled ? 255 : 130))));
+        Color textColor;
+        if (!enabled) {
+            textColor = new Color(95, 80, 58, alpha255);
+        } else if (active) {
+            textColor = new Color(255, 225, 130, alpha255);
+        } else if (hover) {
+            textColor = new Color(255, 235, 170, alpha255);
+        } else {
+            textColor = new Color(205, 180, 115, alpha255);
         }
 
         g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-        int fontSize = Math.max(11, r.height - 6);
-        g.setFont(new Font("Serif", Font.BOLD, fontSize));
+        int fontSize = Math.max(10, r.height - 8);
+        int style = active ? Font.BOLD : Font.PLAIN;
+        g.setFont(new Font("Serif", style, fontSize));
         FontMetrics fm = g.getFontMetrics();
         int tx = r.x + (r.width - fm.stringWidth(label)) / 2;
         int ty = r.y + (r.height + fm.getAscent() - fm.getDescent()) / 2;
-        g.setColor(new Color(0, 0, 0, Math.max(0, Math.min(255, (int) (fadeAlpha * 140)))));
-        g.drawString(label, tx + 1, ty + 1);
-        g.setColor(new Color(text.getRed(), text.getGreen(), text.getBlue(),
-            Math.max(0, Math.min(255, (int) (fadeAlpha * 255)))));
+
+        if (hover && enabled) {
+            g.setColor(new Color(0, 0, 0, Math.max(0, Math.min(255, (int) (fadeAlpha * 100)))));
+            g.drawString(label, tx + 1, ty + 1);
+        }
+        g.setColor(textColor);
         g.drawString(label, tx, ty);
+
+        if ((hover || active) && enabled) {
+            int ulY = ty + 2;
+            g.setColor(new Color(textColor.getRed(), textColor.getGreen(), textColor.getBlue(),
+                Math.max(0, Math.min(255, (int) (fadeAlpha * 180)))));
+            g.drawLine(tx, ulY, tx + fm.stringWidth(label), ulY);
+        }
         g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
+    }
+
+    private void drawCursor(Graphics2D g, int mouseX, int mouseY) {
+        if (MENU_CURSOR != null) {
+            int cw = 16;
+            int ch = Math.max(1, cw * MENU_CURSOR.getHeight() / MENU_CURSOR.getWidth());
+            g.drawImage(MENU_CURSOR, mouseX - 4, mouseY - 4, cw, ch, null);
+        } else {
+            g.setColor(new Color(255, 220, 100));
+            g.drawLine(mouseX, mouseY, mouseX + 8, mouseY + 8);
+            g.drawLine(mouseX, mouseY, mouseX + 6, mouseY);
+            g.drawLine(mouseX, mouseY, mouseX, mouseY + 6);
+        }
+    }
+
+    private static BufferedImage loadMenuCursor() {
+        Sprite s = Sprite.loadOptional("/assets/sprites/menu/menu_cursor.png");
+        return s != null ? s.getImage() : null;
     }
 
     private void drawHistoryOverlay(Graphics2D g, int sw, int sh) {
@@ -1079,6 +1396,7 @@ public class IntroScreen {
         waitingForAdvance = false;
         historyOpen = false;
         historyScroll = 0;
+        autoWaitTicks = 0;
 
         if (currentEntry < SHOP_ANIMATION_ENTRY_INDEX) {
             shopReveal = 0f;
@@ -1095,6 +1413,8 @@ public class IntroScreen {
         dukeSlide = "duke".equals(entry.rightChar) ? 1f : 0f;
         rightMorphActive = false;
         rightMorphT = 0f;
+        morphSmoke.clear();
+        morphAnchorBounds = null;
         switchFlash = 0f;
         switchParticles.clear();
         rightSwitchParticles.clear();
