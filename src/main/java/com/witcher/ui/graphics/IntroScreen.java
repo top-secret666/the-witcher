@@ -116,8 +116,7 @@ public class IntroScreen {
     private boolean autoMode = false;
     private int historyScroll = 0;
     private int autoWaitTicks = 0;
-    private static final int AUTO_DELAY_TICKS = 18;
-    private static final int AUTO_CHARS_PER_TICK = 4;
+    private static final int AUTO_DELAY_TICKS = 72;
     private Rectangle backButtonBounds = new Rectangle();
     private Rectangle historyButtonBounds = new Rectangle();
     private Rectangle autoButtonBounds = new Rectangle();
@@ -461,11 +460,15 @@ public class IntroScreen {
             }
         } else {
             if (autoMode && !rightMorphActive) {
-                charIndex = Math.min(totalChars, charIndex + AUTO_CHARS_PER_TICK);
-                if (charIndex >= totalChars) {
-                    charIndex = totalChars;
-                    waitingForAdvance = true;
-                    autoWaitTicks = 0;
+                typeTickCounter++;
+                if (typeTickCounter >= TICKS_PER_CHAR) {
+                    typeTickCounter = 0;
+                    charIndex++;
+                    if (charIndex >= totalChars) {
+                        charIndex = totalChars;
+                        waitingForAdvance = true;
+                        autoWaitTicks = 0;
+                    }
                 }
             } else if (advance && charIndex < totalChars) {
                 charIndex = totalChars;
@@ -1320,53 +1323,82 @@ public class IntroScreen {
 
         g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
         int fontSize = Math.max(11, (int) (sh * 0.034f));
-        int lineH = fontSize + 3;
+        int lineH = fontSize + 4;
         int pad = Math.max(10, (int) (sw * 0.022f));
         int textX = panel.x + pad;
         int textMaxW = panel.width - pad * 2;
-        int contentTop = panel.y + pad + fontSize;
-        int contentBottom = panel.y + panel.height - pad;
 
-        g.setFont(new Font("Serif", Font.BOLD, fontSize + 1));
-        g.setColor(new Color(218, 165, 32, Math.max(0, Math.min(255, (int) (fadeAlpha * 255)))));
-        g.drawString("История", textX, panel.y + pad + g.getFontMetrics().getAscent());
+        int titleSize = fontSize + 1;
+        Font titleFont = new Font("Serif", Font.BOLD, titleSize);
+        g.setFont(titleFont);
+        FontMetrics titleFm = g.getFontMetrics();
+        int titleBaseline = panel.y + pad + titleFm.getAscent();
+        int headerBottom = titleBaseline + titleFm.getDescent() + 8;
 
-        g.setFont(new Font("Serif", Font.PLAIN, fontSize));
+        int hintSize = Math.max(10, fontSize - 1);
+        Font hintFont = new Font("Serif", Font.ITALIC, hintSize);
+        g.setFont(hintFont);
+        FontMetrics hintFm = g.getFontMetrics();
+        int hintBaseline = panel.y + panel.height - pad;
+        int footerTop = hintBaseline - hintFm.getHeight() - 6;
+
+        int contentTop = headerBottom;
+        int contentBottom = footerTop;
+        int contentH = Math.max(0, contentBottom - contentTop);
+
+        Font bodyFont = new Font("Serif", Font.PLAIN, fontSize);
+        g.setFont(bodyFont);
         FontMetrics fm = g.getFontMetrics();
-        List<String> logLines = buildHistoryLogLines();
-        int totalHeight = logLines.size() * lineH;
-        int maxScroll = Math.max(0, totalHeight - (contentBottom - contentTop));
+        List<String> renderedLines = buildHistoryRenderedLines(fm, textMaxW);
+        int totalHeight = renderedLines.size() * lineH;
+        int maxScroll = Math.max(0, totalHeight - contentH);
         historyScroll = Math.min(historyScroll, maxScroll);
 
-        int y = contentTop + fontSize - historyScroll;
-        for (String line : logLines) {
+        g.setFont(titleFont);
+        g.setColor(new Color(218, 165, 32, Math.max(0, Math.min(255, (int) (fadeAlpha * 255)))));
+        g.drawString("История", textX, titleBaseline);
+
+        g.setColor(new Color(100, 80, 45, Math.max(0, Math.min(255, (int) (fadeAlpha * 160)))));
+        g.drawLine(textX, headerBottom - 4, textX + textMaxW, headerBottom - 4);
+        g.drawLine(textX, footerTop, textX + textMaxW, footerTop);
+
+        Shape oldClip = g.getClip();
+        g.clipRect(textX, contentTop, textMaxW, contentH);
+
+        g.setFont(bodyFont);
+        int y = contentTop + fm.getAscent() - historyScroll;
+        for (String line : renderedLines) {
             if (y > contentBottom) {
                 break;
             }
-            boolean isSpeaker = line.startsWith("[") && line.endsWith("]");
-            g.setColor(isSpeaker
-                ? new Color(180, 150, 90, Math.max(0, Math.min(255, (int) (fadeAlpha * 255))))
-                : new Color(210, 195, 155, Math.max(0, Math.min(255, (int) (fadeAlpha * 255)))));
-            List<String> wrapped = line.isEmpty()
-                ? List.of("")
-                : DialogBoxRenderer.wrapLine(line, fm, textMaxW);
-            for (String wl : wrapped) {
-                if (y > contentBottom) {
-                    break;
-                }
-                if (y >= contentTop - lineH) {
-                    g.drawString(wl, textX, y);
-                }
-                y += lineH;
+            if (y + fm.getDescent() >= contentTop) {
+                boolean isSpeaker = line.startsWith("[") && line.endsWith("]");
+                g.setColor(isSpeaker
+                    ? new Color(180, 150, 90, Math.max(0, Math.min(255, (int) (fadeAlpha * 255))))
+                    : new Color(210, 195, 155, Math.max(0, Math.min(255, (int) (fadeAlpha * 255)))));
+                g.drawString(line, textX, y);
             }
+            y += lineH;
         }
+        g.setClip(oldClip);
 
-        g.setFont(new Font("Serif", Font.ITALIC, Math.max(10, fontSize - 1)));
+        g.setFont(hintFont);
         g.setColor(new Color(150, 130, 95, Math.max(0, Math.min(255, (int) (fadeAlpha * 200)))));
-        String hint = "Колёсико — прокрутка  ·  клик снаружи — закрыть";
-        g.drawString(hint, textX, panel.y + panel.height - pad);
+        g.drawString("Колёсико — прокрутка  ·  клик снаружи — закрыть", textX, hintBaseline);
 
         g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
+    }
+
+    private List<String> buildHistoryRenderedLines(FontMetrics fm, int textMaxW) {
+        List<String> rendered = new ArrayList<>();
+        for (String raw : buildHistoryLogLines()) {
+            if (raw.isEmpty()) {
+                rendered.add("");
+                continue;
+            }
+            rendered.addAll(DialogBoxRenderer.wrapLine(raw, fm, textMaxW));
+        }
+        return rendered;
     }
 
     private List<String> buildHistoryLogLines() {
