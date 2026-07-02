@@ -237,7 +237,7 @@ public class ShopScreen {
 
     private BufferedImage iconForCategory(ShopCategory cat) {
         if (cat == ShopCategory.SETS) {
-            return null;
+            return assets.setsIcon;
         }
         if (cat == ShopCategory.WEAPON) {
             return assets.weaponIcon;
