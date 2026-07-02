@@ -24,6 +24,7 @@ public class ShopScreen {
         REVEAL,
         IDLE,
         WALLET_REVEAL,
+        PURCHASE_REVEAL,
         CATEGORY_OPENING,
         CATEGORY,
         CATEGORY_CLOSING
@@ -40,6 +41,12 @@ public class ShopScreen {
     private static final int WALLET_COUNT_TICKS = 28;
     private static final int WALLET_REVEAL_TOTAL =
         WALLET_APPEAR_TICKS + WALLET_FLY_TICKS + WALLET_BAG_CLOSE_TICKS + WALLET_COUNT_TICKS;
+    /** Сцена покупки: иконка товара → сумка. */
+    private static final int PURCHASE_APPEAR_TICKS = 24;
+    private static final int PURCHASE_FLY_TICKS = 34;
+    private static final int PURCHASE_TUCK_TICKS = 16;
+    private static final int PURCHASE_REVEAL_TOTAL =
+        PURCHASE_APPEAR_TICKS + PURCHASE_FLY_TICKS + PURCHASE_TUCK_TICKS;
     private static final int INVENTORY_BAG_SIZE = 40;
     private static final int INVENTORY_BAG_MARGIN = 8;
     private static final int INVENTORY_PANEL_W = 280;
@@ -215,6 +222,9 @@ public class ShopScreen {
     private Rectangle categoryBuyBounds = new Rectangle();
     private int walletRevealTicks = 0;
     private boolean walletRevealFromCategory = false;
+    private int purchaseRevealTicks = 0;
+    private BufferedImage purchaseRevealIcon;
+    private int purchaseRevealKeepRow = -1;
     private boolean inventoryOpen = false;
     private boolean inventoryPouchFocused = true;
     private boolean inventoryBagHovered = false;
@@ -352,6 +362,10 @@ public class ShopScreen {
                 walletRevealTicks = WALLET_REVEAL_TOTAL - 1;
                 return;
             }
+            if (state == ShopState.PURCHASE_REVEAL) {
+                purchaseRevealTicks = PURCHASE_REVEAL_TOTAL - 1;
+                return;
+            }
             if (state == ShopState.CATEGORY || state == ShopState.CATEGORY_OPENING) {
                 beginCategoryClose();
                 return;
@@ -375,6 +389,13 @@ public class ShopScreen {
             walletRevealTicks++;
             if (walletRevealTicks >= WALLET_REVEAL_TOTAL) {
                 finishWalletReveal();
+            }
+        }
+
+        if (state == ShopState.PURCHASE_REVEAL) {
+            purchaseRevealTicks++;
+            if (purchaseRevealTicks >= PURCHASE_REVEAL_TOTAL) {
+                finishPurchaseReveal();
             }
         }
 
@@ -404,7 +425,14 @@ public class ShopScreen {
             return;
         }
 
-        boolean bagUnlocked = !model.needsWalletReveal() && state != ShopState.WALLET_REVEAL;
+        if (state == ShopState.PURCHASE_REVEAL && clicked) {
+            purchaseRevealTicks = PURCHASE_REVEAL_TOTAL - 1;
+            return;
+        }
+
+        boolean bagUnlocked = !model.needsWalletReveal()
+            && state != ShopState.WALLET_REVEAL
+            && state != ShopState.PURCHASE_REVEAL;
         if (bagUnlocked) {
             updateInventoryInput(mouseX, mouseY, clicked);
         } else {
@@ -574,13 +602,36 @@ public class ShopScreen {
         ShopModel.PurchaseResult result = model.purchase(entry);
         currentDialog = result.dukeLine();
         if (result.success()) {
-            int keepIndex = Math.min(selectedRowIndex, Math.max(0, catalogEntries.size() - 2));
-            if (selectedIndex >= 0) {
-                buildCatalogRows(items.get(selectedIndex));
-                selectedRowIndex = catalogEntries.isEmpty() ? -1 : Math.min(keepIndex, catalogEntries.size() - 1);
-            }
-            refreshShowcasePrices();
+            beginPurchaseReveal(entry);
         }
+    }
+
+    private void beginPurchaseReveal(ShopCatalogEntry entry) {
+        purchaseRevealKeepRow = selectedRowIndex;
+        if (selectedIndex >= 0 && selectedIndex < items.size()) {
+            ShopItem cat = items.get(selectedIndex);
+            purchaseRevealIcon = cat.cardArt != null ? cat.cardArt : cat.icon;
+        } else {
+            purchaseRevealIcon = null;
+        }
+        purchaseRevealTicks = 0;
+        inventoryOpen = false;
+        state = ShopState.PURCHASE_REVEAL;
+    }
+
+    private void finishPurchaseReveal() {
+        purchaseRevealTicks = 0;
+        purchaseRevealIcon = null;
+        if (selectedIndex >= 0) {
+            int keepIndex = Math.min(purchaseRevealKeepRow, Math.max(0, catalogEntries.size() - 2));
+            buildCatalogRows(items.get(selectedIndex));
+            selectedRowIndex = catalogEntries.isEmpty()
+                ? -1
+                : Math.min(keepIndex, catalogEntries.size() - 1);
+        }
+        purchaseRevealKeepRow = -1;
+        refreshShowcasePrices();
+        state = ShopState.CATEGORY;
     }
 
     private void beginCategoryClose() {
@@ -629,7 +680,7 @@ public class ShopScreen {
         return switch (state) {
             case REVEAL -> ShopRevealAnimator.forProgress(
                 revealTicks / (float) REVEAL_DURATION_TICKS, items.size(), true);
-            case WALLET_REVEAL -> ShopRevealAnimator.complete(items.size());
+            case WALLET_REVEAL, PURCHASE_REVEAL -> ShopRevealAnimator.complete(items.size());
             default -> ShopRevealAnimator.complete(items.size());
         };
     }
@@ -654,11 +705,24 @@ public class ShopScreen {
         boolean categoryMode = state == ShopState.CATEGORY_OPENING
             || state == ShopState.CATEGORY || state == ShopState.CATEGORY_CLOSING;
         boolean walletScene = state == ShopState.WALLET_REVEAL;
+        boolean purchaseScene = state == ShopState.PURCHASE_REVEAL;
 
         if (walletScene) {
             drawWalletRevealScene(g, sw, sh, layout, mouseX, mouseY);
             DialogBoxRenderer.drawCompactFramedSpeakerText(g, sw, sh, "Герцог", currentDialog,
                 DialogBoxRenderer.DUKE_COLOR, 1f);
+            drawCursor(g, mouseX, mouseY);
+            g.dispose();
+            return;
+        }
+
+        if (purchaseScene) {
+            drawPurchaseRevealScene(g, sw, sh, layout);
+            DialogBoxRenderer.drawCompactFramedSpeakerText(g, sw, sh, "Герцог", currentDialog,
+                DialogBoxRenderer.DUKE_COLOR, 1f);
+            if (!model.needsWalletReveal()) {
+                drawInventoryBag(g, 1f);
+            }
             drawCursor(g, mouseX, mouseY);
             g.dispose();
             return;
@@ -743,6 +807,114 @@ public class ShopScreen {
 
         drawWalletRevealBag(g, layout);
         drawWalletRevealPouch(g, layout);
+    }
+
+    private void drawPurchaseRevealScene(Graphics2D g, int sw, int sh, ShopLayout layout) {
+        drawScaledBackground(g, assets.merchantBgScaled, sw, sh, 0.35f);
+
+        Composite prev = g.getComposite();
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.78f));
+        g.setColor(Color.BLACK);
+        g.fillRect(0, 0, sw, sh);
+        g.setComposite(prev);
+
+        drawCharacter(g, sw, sh, assets.geraltScaled, true, layout.dialogTop, 1f);
+        drawCharacter(g, sw, sh, assets.dukeScaled, false, layout.dialogTop, 1f);
+
+        drawInventoryBagSprite(g, inventoryBagSlot().x, inventoryBagSlot().y,
+            INVENTORY_BAG_SIZE, 0f, false, 1f);
+        drawPurchaseRevealItem(g, layout);
+    }
+
+    private void drawPurchaseRevealItem(Graphics2D g, ShopLayout layout) {
+        if (purchaseRevealIcon == null) {
+            return;
+        }
+
+        int appearEnd = PURCHASE_APPEAR_TICKS;
+        int flyEnd = appearEnd + PURCHASE_FLY_TICKS;
+        int tuckEnd = flyEnd + PURCHASE_TUCK_TICKS;
+
+        if (purchaseRevealTicks > tuckEnd) {
+            return;
+        }
+
+        float appearT = smoothstep(purchaseRevealTicks / (float) appearEnd);
+        float maxSize = 76f;
+        float minSize = 14f;
+
+        int centerX = VIRTUAL_W / 2;
+        int centerY = layout.dialogTop / 2 + 4;
+        Point bagSlot = inventoryBagSlot();
+        float bagCenterX = bagSlot.x + INVENTORY_BAG_SIZE / 2f;
+        float bagCenterY = bagSlot.y + INVENTORY_BAG_SIZE / 2f;
+
+        float px;
+        float py;
+        float pw;
+        float alpha;
+
+        if (purchaseRevealTicks <= appearEnd) {
+            pw = maxSize * (0.28f + appearT * 0.72f);
+            px = centerX - pw / 2f;
+            py = centerY - pw / 2f;
+            alpha = Math.min(1f, appearT * 1.1f);
+        } else {
+            int travelTicks = PURCHASE_FLY_TICKS + PURCHASE_TUCK_TICKS;
+            float travelT = smoothstep((purchaseRevealTicks - appearEnd) / (float) travelTicks);
+            float posT = smoothstep((purchaseRevealTicks - appearEnd) / (float) PURCHASE_FLY_TICKS);
+            float sizeT = travelT * travelT * (3f - 2f * travelT);
+
+            pw = maxSize + (minSize - maxSize) * sizeT;
+            float cx = centerX + (bagCenterX - centerX) * posT;
+            float cy = centerY + (bagCenterY - centerY) * posT;
+            px = cx - pw / 2f;
+            py = cy - pw / 2f;
+            alpha = 1f;
+            if (purchaseRevealTicks > flyEnd) {
+                float tuckT = smoothstep((purchaseRevealTicks - flyEnd) / (float) PURCHASE_TUCK_TICKS);
+                alpha = 1f - tuckT * 0.4f;
+            }
+        }
+
+        int ipw = Math.round(pw);
+        int ipx = Math.round(px);
+        int ipy = Math.round(py);
+
+        float glowAppearT = purchaseRevealTicks <= appearEnd ? appearT : 1f;
+        float glowFlyT = purchaseRevealTicks <= appearEnd ? 0f
+            : Math.min(1f, (purchaseRevealTicks - appearEnd) / (float) PURCHASE_FLY_TICKS);
+        drawItemRevealGlow(g, ipx, ipy, ipw, alpha, glowAppearT, glowFlyT);
+
+        Rectangle crop = computeContentBounds(purchaseRevealIcon);
+        Composite comp = g.getComposite();
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
+        if (crop.width > 0 && crop.height > 0) {
+            g.drawImage(purchaseRevealIcon, ipx, ipy, ipx + ipw, ipy + ipw,
+                crop.x, crop.y, crop.x + crop.width, crop.y + crop.height, null);
+        } else {
+            g.drawImage(purchaseRevealIcon, ipx, ipy, ipw, ipw, null);
+        }
+        g.setComposite(comp);
+    }
+
+    private void drawItemRevealGlow(Graphics2D g, int px, int py, int pw,
+                                    float alpha, float appearT, float flyT) {
+        Composite prev = g.getComposite();
+        int cx = px + pw / 2;
+        int cy = py + pw / 2;
+        float glow = alpha * (0.4f + appearT * 0.5f) * (1f - flyT * 0.2f);
+
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, glow * 0.2f));
+        g.setColor(new Color(255, 210, 80));
+        int outer = Math.round(pw * 1.7f);
+        g.fillOval(cx - outer / 2, cy - outer / 2, outer, outer);
+
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, glow * 0.38f));
+        g.setColor(new Color(255, 235, 150));
+        int mid = Math.round(pw * 1.1f);
+        g.fillOval(cx - mid / 2, cy - mid / 2, mid, mid);
+        g.setComposite(prev);
     }
 
     private Point inventoryBagSlot() {
@@ -1238,9 +1410,10 @@ public class ShopScreen {
 
         item.bounds.setBounds(cat.cardX, cat.cardY, cat.cardW, cat.cardH);
         boolean cardGrowing = state == ShopState.CATEGORY_OPENING || state == ShopState.CATEGORY_CLOSING;
+        String priceForCard = state == ShopState.CATEGORY ? selectedCatalogPrice() : null;
         ShopCatalogEntry statEntry = selectedCatalogEntry();
         drawFlippableItemCard(g, item, cat.cardX, cat.cardY, cat.cardW, cat.cardH,
-            true, false, 1f, selectedCatalogPrice(), cardGrowing, cardFlipT, statEntry);
+            true, false, 1f, priceForCard, cardGrowing, cardFlipT, statEntry);
 
         if (cat.detailPanelAlpha > 0.02f) {
             Rectangle panel = layout.detailListPanelSlot(assets.detailPanelW, assets.detailPanelH);
