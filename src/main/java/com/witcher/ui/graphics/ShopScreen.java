@@ -31,6 +31,8 @@ public class ShopScreen {
     private static final int REVEAL_DURATION_TICKS = 120;
     private static final int CATEGORY_OPEN_DURATION_TICKS = 72;
     private static final int CARD_FLIP_TICKS = 18;
+    /** ~5 мин при 30 FPS — оборот сам возвращается на лицо, если игрок AFK. */
+    private static final int CARD_FLIP_IDLE_TICKS = 30 * 60 * 5;
 
     private static final int GRID_COLS = 5;
     private static final int TOP_ROW_COLS = 5;
@@ -199,6 +201,7 @@ public class ShopScreen {
     private int catalogScrollOffset = 0;
     private float cardFlipT = 0f;
     private int cardFlipTarget = 0;
+    private int cardFlipIdleTicks = 0;
     private boolean exitRequested = false;
 
     private static final String WELCOME_LINE = """
@@ -262,6 +265,7 @@ public class ShopScreen {
         catalogScrollOffset = 0;
         cardFlipT = 0f;
         cardFlipTarget = 0;
+        cardFlipIdleTicks = 0;
         catalogEntries.addAll(model.getCatalog(category.category));
         selectedRowIndex = catalogEntries.isEmpty() ? -1 : 0;
     }
@@ -399,28 +403,36 @@ public class ShopScreen {
         }
 
         if (state == ShopState.CATEGORY && clicked) {
+            ShopCategoryAnimator cat = categoryAnimator(layout);
             if (categoryBuyBounds.contains(mouseX, mouseY)) {
                 tryPurchaseSelected();
             } else if (hoveredRowIndex >= 0) {
                 selectedRowIndex = hoveredRowIndex;
                 cardFlipTarget = 1;
+                cardFlipIdleTicks = 0;
                 ShopCatalogEntry row = catalogEntries.get(hoveredRowIndex);
                 Rectangle panel = layout.detailListPanelSlot(assets.detailPanelW, assets.detailPanelH);
                 ensureRowVisible(panel.y, selectedRowIndex);
                 currentDialog = "Глядите, " + row.name + " — за " + row.priceLabel()
                     + (row.priceLabel().equals("···") ? "" : " крон. Берите, не стыдно.");
-            } else if (selectedIndex >= 0 && items.get(selectedIndex).bounds.contains(mouseX, mouseY)
-                && cardFlipT > 0.35f) {
-                cardFlipTarget = 0;
+            } else if (cat.listInteractive && categoryCardContains(cat, mouseX, mouseY)) {
+                cardFlipTarget = cardFlipTarget == 0 ? 1 : 0;
+                cardFlipIdleTicks = 0;
             }
         }
     }
 
+    private boolean categoryCardContains(ShopCategoryAnimator cat, int mx, int my) {
+        return mx >= cat.cardX && my >= cat.cardY
+            && mx < cat.cardX + cat.cardW && my < cat.cardY + cat.cardH;
+    }
+
     private void updateCardFlip() {
-        if (state != ShopState.CATEGORY) {
+        if (state != ShopState.CATEGORY && state != ShopState.CATEGORY_CLOSING) {
             if (state == ShopState.IDLE) {
                 cardFlipT = 0f;
                 cardFlipTarget = 0;
+                cardFlipIdleTicks = 0;
             }
             return;
         }
@@ -429,6 +441,16 @@ public class ShopScreen {
             cardFlipT = Math.min(1f, cardFlipT + step);
         } else if (cardFlipT > cardFlipTarget) {
             cardFlipT = Math.max(0f, cardFlipT - step);
+        }
+
+        if (state == ShopState.CATEGORY && cardFlipTarget == 1 && cardFlipT >= 1f) {
+            cardFlipIdleTicks++;
+            if (cardFlipIdleTicks >= CARD_FLIP_IDLE_TICKS) {
+                cardFlipTarget = 0;
+                cardFlipIdleTicks = 0;
+            }
+        } else if (cardFlipTarget == 0 && cardFlipT <= 0f) {
+            cardFlipIdleTicks = 0;
         }
     }
 
@@ -454,6 +476,8 @@ public class ShopScreen {
         categoryTicks = 0;
         state = ShopState.CATEGORY_CLOSING;
         hoveredRowIndex = -1;
+        cardFlipTarget = 0;
+        cardFlipIdleTicks = 0;
     }
 
     private void finishCategoryClose() {
@@ -465,6 +489,7 @@ public class ShopScreen {
         catalogScrollOffset = 0;
         cardFlipT = 0f;
         cardFlipTarget = 0;
+        cardFlipIdleTicks = 0;
         state = ShopState.IDLE;
         currentDialog = IDLE_LINE;
     }
@@ -961,24 +986,30 @@ public class ShopScreen {
                                        boolean selected, boolean hovered, float revealAlpha,
                                        String priceOverride, boolean smoothIconGrowth,
                                        float flipT, ShopCatalogEntry statEntry) {
-        if (flipT <= 0.001f) {
-            drawItemCard(g, item, x, y, w, h, selectedIndex, selected, hovered,
-                revealAlpha, priceOverride, smoothIconGrowth);
-            return;
-        }
-        if (flipT >= 0.999f) {
-            drawItemCardBack(g, x, y, w, h, revealAlpha, statEntry);
-            return;
-        }
+        Shape savedClip = g.getClip();
+        g.clipRect(x, y, w, h);
+        try {
+            if (flipT <= 0.001f) {
+                drawItemCard(g, item, x, y, w, h, selectedIndex, selected, hovered,
+                    revealAlpha, priceOverride, smoothIconGrowth);
+                return;
+            }
+            if (flipT >= 0.999f) {
+                drawItemCardBack(g, x, y, w, h, revealAlpha, statEntry);
+                return;
+            }
 
-        float squeeze = flipT < 0.5f ? 1f - flipT * 2f : (flipT - 0.5f) * 2f;
-        int sw = Math.max(2, Math.round(w * squeeze));
-        int sx = x + (w - sw) / 2;
-        if (flipT < 0.5f) {
-            drawItemCard(g, item, sx, y, sw, h, selectedIndex, selected, hovered,
-                revealAlpha, priceOverride, smoothIconGrowth);
-        } else {
-            drawItemCardBack(g, sx, y, sw, h, revealAlpha, statEntry);
+            float squeeze = flipT < 0.5f ? 1f - flipT * 2f : (flipT - 0.5f) * 2f;
+            int sw = Math.max(2, Math.round(w * squeeze));
+            int sx = x + (w - sw) / 2;
+            if (flipT < 0.5f) {
+                drawItemCard(g, item, sx, y, sw, h, selectedIndex, selected, hovered,
+                    revealAlpha, priceOverride, smoothIconGrowth);
+            } else {
+                drawItemCardBack(g, sx, y, sw, h, revealAlpha, statEntry);
+            }
+        } finally {
+            g.setClip(savedClip);
         }
     }
 
