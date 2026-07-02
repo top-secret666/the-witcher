@@ -39,6 +39,7 @@ public final class ShopModel {
     private final Set<Armour> soldArmor = new HashSet<>();
     private final Set<ArmourSet> soldSets = new HashSet<>();
     private final List<Armour> playerInventory = new ArrayList<>();
+    private final List<String> purchasedLabels = new ArrayList<>();
 
     private int wallet;
     private boolean hideWalletAmount;
@@ -194,15 +195,15 @@ public final class ShopModel {
     }
 
     public List<String> inventoryItemNames() {
-        List<String> names = new ArrayList<>();
-        for (Armour armour : playerInventory) {
-            names.add(armour.getName());
-        }
-        return names;
+        return List.copyOf(purchasedLabels);
     }
 
     public int inventoryItemCount() {
-        return playerInventory.size();
+        return purchasedLabels.size();
+    }
+
+    private void recordPurchase(String label) {
+        purchasedLabels.add(label);
     }
 
     public PurchaseResult purchase(ShopCatalogEntry entry) {
@@ -233,6 +234,7 @@ public final class ShopModel {
         wallet -= price;
         soldArmor.add(armour);
         playerInventory.add(armour);
+        recordPurchase(armour.getName());
         return PurchaseResult.ok(DukeLines.purchaseOk(armour.getName(), price));
     }
 
@@ -248,6 +250,7 @@ public final class ShopModel {
         wallet -= price;
         soldSets.add(set);
         playerInventory.addAll(set.getArmorPieces());
+        recordPurchase(set.getName());
         return PurchaseResult.ok(DukeLines.purchaseOk(set.getName(), price));
     }
 
@@ -256,6 +259,7 @@ public final class ShopModel {
             return PurchaseResult.fail(DukeLines.purchaseFailMoney());
         }
         wallet -= entry.price;
+        recordPurchase(entry.name);
         return PurchaseResult.ok(DukeLines.purchaseOk(entry.name, entry.price));
     }
 
