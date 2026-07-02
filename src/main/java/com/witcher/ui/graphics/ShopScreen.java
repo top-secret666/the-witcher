@@ -419,7 +419,6 @@ public class ShopScreen {
         hoveredIndex = -1;
         hoveredRowIndex = -1;
         categoryBuyHovered = false;
-        inventoryBagHovered = false;
 
         if (showcaseInteractive) {
             for (int i = 0; i < items.size(); i++) {
@@ -480,12 +479,14 @@ public class ShopScreen {
         if (state == ShopState.CATEGORY && categoryBuyBounds.width > 0) {
             categoryBuyHovered = categoryBuyBounds.contains(mouseX, mouseY);
         }
+
+        if (bagUnlocked) {
+            inventoryBagHovered = inventoryBagBounds.contains(mouseX, mouseY);
+        }
     }
 
     private void updateInventoryInput(int mouseX, int mouseY, boolean clicked) {
         inventoryBagSlot();
-        inventoryBagHovered = !inventoryOpen && inventoryBagBounds.contains(mouseX, mouseY);
-
         if (inventoryOpen) {
             inventoryPouchIconHovered = inventoryPouchIconBounds.contains(mouseX, mouseY);
             if (clicked) {
@@ -794,10 +795,10 @@ public class ShopScreen {
         g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
 
         BufferedImage sprite = assets.inventoryBagClosed;
-        if (hovered && assets.inventoryBagHover != null) {
-            sprite = assets.inventoryBagHover;
-        } else if (openT > 0.35f && assets.inventoryBagOpen != null) {
+        if (openT > 0.35f && assets.inventoryBagOpen != null) {
             sprite = assets.inventoryBagOpen;
+        } else if (hovered && assets.inventoryBagHover != null) {
+            sprite = assets.inventoryBagHover;
         } else if (sprite == null) {
             sprite = assets.inventoryBagIcon;
         }
@@ -815,7 +816,7 @@ public class ShopScreen {
             }
         }
 
-        if (hovered) {
+        if (hovered && assets.inventoryBagHover == null) {
             g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha * 0.35f));
             g.setColor(new Color(255, 220, 120));
             g.drawRoundRect(x - 1, y - 1, size + 2, size + 2, 6, 6);

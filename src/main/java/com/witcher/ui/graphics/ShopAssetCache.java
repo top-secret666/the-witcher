@@ -138,12 +138,12 @@ final class ShopAssetCache {
         int bagSize = 40;
         inventoryBagIcon = loadSized(ICONS + "icon_inventory_bag.png", bagSize, bagSize,
             BASE + "icons/icon_inventory_bag.png", true);
-        inventoryBagClosed = loadFirst(BAKED + "ui/inventory_bag_closed.png",
-            BASE + "ui/inventory_bag_closed.png");
-        inventoryBagOpen = loadFirst(BAKED + "ui/inventory_bag_open.png",
-            BASE + "ui/inventory_bag_open.png");
-        inventoryBagHover = loadFirst(BAKED + "ui/inventory_bag_hover.png",
-            BASE + "ui/inventory_bag_hover.png");
+        inventoryBagClosed = loadSized(UI + "inventory_bag_closed.png", bagSize, bagSize,
+            BASE + "ui/inventory_bag_closed.png", true);
+        inventoryBagOpen = loadSized(UI + "inventory_bag_open.png", bagSize, bagSize,
+            BASE + "ui/inventory_bag_open.png", true);
+        inventoryBagHover = loadSized(UI + "inventory_bag_hover.png", bagSize, bagSize,
+            BASE + "ui/inventory_bag_hover.png", true);
         statVialEmpty = loadFirst(BASE + "ui/stat_vial_empty.png");
         statVialOverlay = loadFirst(BASE + "ui/stat_vial_glass_overlay.png");
         statVialEndCap = loadFirst(BAKED + "ui/stat_vial_end_cap.png", BASE + "ui/stat_vial_end_cap.png");

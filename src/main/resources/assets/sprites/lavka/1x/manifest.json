@@ -81,6 +81,30 @@
       "bytes": 3444
     },
     {
+      "output": "1x/ui/inventory_bag_closed.png",
+      "size": [
+        40,
+        40
+      ],
+      "bytes": 4072
+    },
+    {
+      "output": "1x/ui/inventory_bag_open.png",
+      "size": [
+        40,
+        40
+      ],
+      "bytes": 3598
+    },
+    {
+      "output": "1x/ui/inventory_bag_hover.png",
+      "size": [
+        40,
+        40
+      ],
+      "bytes": 4090
+    },
+    {
       "output": "1x/icons/icon_crown.png",
       "size": [
         18,
