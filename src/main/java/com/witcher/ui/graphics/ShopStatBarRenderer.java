@@ -16,13 +16,14 @@ final class ShopStatBarRenderer {
         g.setFont(new Font(Font.SANS_SERIF, Font.BOLD, fontSize));
         FontMetrics fm = g.getFontMetrics();
 
-        int headerY = y + fm.getAscent() + 4;
+        int topInset = Math.max(18, Math.round(h * 0.16f));
+        int headerY = y + topInset + fm.getAscent();
         g.setColor(new Color(220, 200, 140));
         g.drawString("ХАРАКТЕРИСТИКИ", x + 6, headerY);
 
         int barW = w - 16;
-        int rowH = Math.max(28, Math.round(h * 0.22f));
-        int startY = headerY + 8;
+        int rowH = Math.max(28, Math.round(h * 0.20f));
+        int startY = headerY + 10;
         String[] labels = {"Защита", "Выносл.", "Знаки"};
         Color[] colors = {
             new Color(190, 45, 45),
