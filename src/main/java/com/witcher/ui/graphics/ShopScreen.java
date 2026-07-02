@@ -1051,7 +1051,9 @@ public class ShopScreen {
         g.setFont(cardFont(fontSize));
         FontMetrics nameFm = g.getFontMetrics();
         String name = truncateToWidth(item.displayName(), nameFm, w - 8);
-        int nameY = y + h - Math.max(18, Math.round(h * 0.22f));
+        int nameY = priceOverride != null
+            ? y + h - Math.max(18, Math.round(h * 0.22f))
+            : y + h - 10;
 
         BufferedImage art = item.cardArt != null ? item.cardArt : item.icon;
         if (art != null) {
@@ -1067,9 +1069,6 @@ public class ShopScreen {
 
         Color nameColor = item.kind == ItemKind.SET_CATALOG
             ? new Color(255, 210, 100) : new Color(245, 230, 190);
-        int nameY = priceOverride != null
-            ? y + h - Math.max(18, Math.round(h * 0.22f))
-            : y + h - 10;
         drawOutlinedText(g, name, x + (w - nameFm.stringWidth(name)) / 2, nameY, nameColor);
 
         if (priceOverride == null) {
