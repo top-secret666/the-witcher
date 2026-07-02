@@ -22,8 +22,8 @@ import java.util.Random;
 public class IntroScreen {
 
     private static final int SHOP_ANIMATION_ENTRY_INDEX = 5;
-    /** Длительность смены stranger → duke: дым/частицы (~2 с при 30 FPS). */
-    private static final int VN_RIGHT_MORPH_TICKS = 60;
+    /** Длительность смены stranger → duke: дым и золотые искры (~2.2 с при 30 FPS). */
+    private static final int VN_RIGHT_MORPH_TICKS = 66;
 
     // ─── Состояния ───
     private boolean finished = false;
@@ -75,8 +75,10 @@ public class IntroScreen {
     private boolean rightMorphActive = false;
     private float rightMorphT = 0f;
     private Rectangle morphAnchorBounds = null;
-    /** [x, y, vx, vy, size, life, maxLife, r, g, b] */
+    /** [x, y, vx, vy, size, life, maxLife, r, g, b] — дым. */
     private final List<float[]> morphSmoke = new ArrayList<>();
+    /** [x, y, vx, vy, life, maxLife, size] — яркие золотые искры. */
+    private final List<float[]> morphSparks = new ArrayList<>();
     // Частицы-искры при смене персонажа
     private final List<float[]> switchParticles = new ArrayList<>(); // [x,y,vx,vy,life,maxLife,r,g,b]
     // Подсилка для эффекта нового правого персонажа
@@ -353,6 +355,7 @@ public class IntroScreen {
                 strangerSlide = 0f;
                 dukeSlide = 1f;
                 morphSmoke.clear();
+                morphSparks.clear();
                 morphAnchorBounds = null;
             }
         }
@@ -955,10 +958,49 @@ public class IntroScreen {
         switchParticles.clear();
         rightSwitchParticles.clear();
         morphSmoke.clear();
+        morphSparks.clear();
         morphAnchorBounds = rightCharacterBounds != null
             ? new Rectangle(rightCharacterBounds)
             : estimateRightCharacterBounds(480, 360, strangerSprite);
         spawnMorphSmoke(morphAnchorBounds);
+        spawnMorphSparks(morphAnchorBounds, 160);
+    }
+
+    private void spawnMorphSparks(Rectangle bounds, int count) {
+        int cx = bounds.x + bounds.width / 2;
+        int cy = bounds.y + bounds.height / 2;
+        for (int i = 0; i < count; i++) {
+            float angle = (float) (rng.nextFloat() * Math.PI * 2);
+            float speed = 0.8f + rng.nextFloat() * 4.2f;
+            float px = cx + (rng.nextFloat() - 0.5f) * bounds.width * 0.75f;
+            float py = cy + (rng.nextFloat() - 0.5f) * bounds.height * 0.65f;
+            morphSparks.add(new float[]{
+                px, py,
+                (float) Math.cos(angle) * speed,
+                (float) Math.sin(angle) * speed - 1.2f,
+                0,
+                22 + rng.nextInt(28),
+                1.5f + rng.nextFloat() * 2.5f
+            });
+        }
+    }
+
+    private void spawnMorphSparkBurst(Rectangle bounds, int count) {
+        int cx = bounds.x + bounds.width / 2;
+        int cy = bounds.y + bounds.height / 2;
+        for (int i = 0; i < count; i++) {
+            float angle = (float) (rng.nextFloat() * Math.PI * 2);
+            float speed = 1.8f + rng.nextFloat() * 5f;
+            morphSparks.add(new float[]{
+                cx + (rng.nextFloat() - 0.5f) * bounds.width * 0.35f,
+                cy + (rng.nextFloat() - 0.5f) * bounds.height * 0.25f,
+                (float) Math.cos(angle) * speed,
+                (float) Math.sin(angle) * speed - 2f,
+                0,
+                16 + rng.nextInt(20),
+                2f + rng.nextFloat() * 3f
+            });
+        }
     }
 
     private Rectangle estimateRightCharacterBounds(int sw, int sh, BufferedImage sprite) {
@@ -971,34 +1013,33 @@ public class IntroScreen {
     private void spawnMorphSmoke(Rectangle bounds) {
         int cx = bounds.x + bounds.width / 2;
         int cy = bounds.y + bounds.height / 2;
-        for (int i = 0; i < 420; i++) {
+        for (int i = 0; i < 520; i++) {
             float px = bounds.x + rng.nextFloat() * bounds.width;
             float py = bounds.y + rng.nextFloat() * bounds.height;
             float angle = (float) (rng.nextFloat() * Math.PI * 2);
-            float speed = 0.4f + rng.nextFloat() * 2.8f;
-            float vx = (float) Math.cos(angle) * speed * 0.55f;
-            float vy = -speed * (0.7f + rng.nextFloat() * 0.8f);
-            float size = 1.2f + rng.nextFloat() * 3.5f;
-            int maxLife = 40 + rng.nextInt(50);
-            boolean gold = rng.nextFloat() < 0.12f;
-            float r = gold ? 220 + rng.nextInt(35) : 55 + rng.nextInt(55);
-            float g = gold ? 170 + rng.nextInt(60) : 45 + rng.nextInt(50);
-            float b = gold ? 40 + rng.nextInt(40) : 70 + rng.nextInt(70);
+            float speed = 0.5f + rng.nextFloat() * 3.2f;
+            float vx = (float) Math.cos(angle) * speed * 0.65f;
+            float vy = -speed * (0.8f + rng.nextFloat() * 1.1f);
+            float size = 2f + rng.nextFloat() * 5f;
+            int maxLife = 45 + rng.nextInt(55);
+            boolean warm = rng.nextFloat() < 0.22f;
+            float r = warm ? 120 + rng.nextInt(80) : 38 + rng.nextInt(42);
+            float g = warm ? 85 + rng.nextInt(55) : 32 + rng.nextInt(38);
+            float b = warm ? 35 + rng.nextInt(35) : 48 + rng.nextInt(55);
             morphSmoke.add(new float[]{px, py, vx, vy, size, 0, maxLife, r, g, b});
         }
-        // дополнительные искры от центра силуэта
-        for (int i = 0; i < 60; i++) {
+        for (int i = 0; i < 90; i++) {
             float angle = (float) (rng.nextFloat() * Math.PI * 2);
-            float speed = 1.2f + rng.nextFloat() * 3.5f;
-            float px = cx + (rng.nextFloat() - 0.5f) * bounds.width * 0.2f;
-            float py = cy + (rng.nextFloat() - 0.5f) * bounds.height * 0.15f;
+            float speed = 1.4f + rng.nextFloat() * 3.8f;
+            float px = cx + (rng.nextFloat() - 0.5f) * bounds.width * 0.25f;
+            float py = cy + (rng.nextFloat() - 0.5f) * bounds.height * 0.2f;
             morphSmoke.add(new float[]{
                 px, py,
-                (float) Math.cos(angle) * speed,
-                (float) Math.sin(angle) * speed - 1.5f,
-                2f + rng.nextFloat() * 2f,
-                0, 30 + rng.nextInt(25),
-                240 + rng.nextInt(15), 190 + rng.nextInt(40), 30 + rng.nextInt(30)
+                (float) Math.cos(angle) * speed * 0.7f,
+                (float) Math.sin(angle) * speed * 0.5f - 2f,
+                3f + rng.nextFloat() * 4f,
+                0, 38 + rng.nextInt(32),
+                28 + rng.nextInt(30), 22 + rng.nextInt(24), 38 + rng.nextInt(35)
             });
         }
     }
@@ -1014,28 +1055,40 @@ public class IntroScreen {
         for (float[] p : morphSmoke) {
             p[0] += p[2];
             p[1] += p[3];
-            p[2] *= 0.97f;
-            p[3] *= 0.97f;
-            p[3] -= 0.03f;
+            p[2] *= 0.96f;
+            p[3] *= 0.96f;
+            p[3] -= 0.045f;
             if (converge > 0.01f) {
-                p[2] += (cx - p[0]) * converge * 0.035f;
-                p[3] += (cy - p[1]) * converge * 0.028f;
+                p[2] += (cx - p[0]) * converge * 0.04f;
+                p[3] += (cy - p[1]) * converge * 0.032f;
             }
             p[5]++;
         }
-        // подпитываем дым в середине перехода
-        if (morphT > 0.12f && morphT < 0.72f && tick % 3 == 0 && morphSmoke.size() < 520) {
+
+        morphSparks.removeIf(p -> p[4] >= p[5]);
+        for (float[] p : morphSparks) {
+            p[0] += p[2];
+            p[1] += p[3];
+            p[2] *= 0.94f;
+            p[3] = p[3] * 0.94f - 0.06f;
+            p[4]++;
+        }
+
+        if (morphT > 0.1f && morphT < 0.82f && tick % 2 == 0 && morphSmoke.size() < 680) {
             Rectangle b = morphAnchorBounds;
             float px = b.x + rng.nextFloat() * b.width;
-            float py = b.y + b.height * (0.55f + rng.nextFloat() * 0.35f);
+            float py = b.y + b.height * (0.45f + rng.nextFloat() * 0.4f);
             morphSmoke.add(new float[]{
                 px, py,
-                (rng.nextFloat() - 0.5f) * 1.2f,
-                -1.4f - rng.nextFloat() * 1.6f,
-                1.5f + rng.nextFloat() * 2.5f,
-                0, 35 + rng.nextInt(30),
-                50 + rng.nextInt(40), 40 + rng.nextInt(35), 65 + rng.nextInt(45)
+                (rng.nextFloat() - 0.5f) * 1.8f,
+                -1.8f - rng.nextFloat() * 2.2f,
+                2.5f + rng.nextFloat() * 4f,
+                0, 40 + rng.nextInt(35),
+                32 + rng.nextInt(35), 26 + rng.nextInt(28), 42 + rng.nextInt(40)
             });
+        }
+        if (morphT > 0.18f && morphT < 0.78f && tick % 2 == 0 && morphSparks.size() < 320) {
+            spawnMorphSparkBurst(morphAnchorBounds, 6 + rng.nextInt(6));
         }
     }
 
@@ -1052,6 +1105,7 @@ public class IntroScreen {
         float manifest = smoothstep(0.36f, 1f, t);
         float scatterIn = 1f - smoothstep(0.36f, 1f, t);
 
+        drawMorphAura(g, bounds, t);
         drawMorphSmoke(g, t);
 
         if (strangerSprite != null && dissolve > 0.02f) {
@@ -1068,7 +1122,8 @@ public class IntroScreen {
             }
         }
 
-        drawMorphAura(g, bounds, t);
+        drawMorphSparks(g, t);
+        drawMorphGoldenBurst(g, bounds, t);
     }
 
     private void drawMorphSmoke(Graphics2D g, float morphT) {
@@ -1076,22 +1131,80 @@ public class IntroScreen {
         float peak = (float) Math.sin(morphT * Math.PI);
         for (float[] p : morphSmoke) {
             float life = p[5] / p[6];
-            float alpha = (1f - life) * fadeAlpha * (0.35f + peak * 0.55f);
+            float alpha = (1f - life * 0.85f) * fadeAlpha * (0.48f + peak * 0.52f);
             if (alpha <= 0.01f) {
                 continue;
             }
-            int sz = Math.max(1, Math.round(p[4]));
-            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, Math.min(1f, alpha)));
+            int sz = Math.max(2, Math.round(p[4]));
+            int x = Math.round(p[0]);
+            int y = Math.round(p[1]);
+
+            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, Math.min(1f, alpha * 0.35f)));
             g.setColor(new Color(
                 Math.min(255, (int) p[7]),
                 Math.min(255, (int) p[8]),
                 Math.min(255, (int) p[9])));
-            g.fillRect(Math.round(p[0]), Math.round(p[1]), sz, sz);
-            if (sz >= 2) {
-                g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha * 0.35f));
-                g.fillRect(Math.round(p[0]) - 1, Math.round(p[1]) - 1, sz + 2, sz + 2);
+            g.fillOval(x - sz / 2, y - sz / 2, sz + 2, sz + 2);
+
+            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, Math.min(1f, alpha)));
+            g.fillRect(x, y, Math.max(1, sz - 1), Math.max(1, sz - 1));
+        }
+        g.setComposite(prev);
+    }
+
+    private void drawMorphSparks(Graphics2D g, float morphT) {
+        Composite prev = g.getComposite();
+        float peak = (float) Math.sin(morphT * Math.PI);
+        for (float[] p : morphSparks) {
+            float life = 1f - p[4] / p[5];
+            float alpha = life * fadeAlpha * (0.55f + peak * 0.45f);
+            if (alpha <= 0.02f) {
+                continue;
+            }
+            int x = Math.round(p[0]);
+            int y = Math.round(p[1]);
+            int sz = Math.max(1, Math.round(p[6] * (0.6f + life * 0.5f)));
+
+            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha * 0.28f));
+            g.setColor(new Color(255, 190, 40));
+            int glow = sz + 4;
+            g.fillOval(x - glow / 2, y - glow / 2, glow, glow);
+
+            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, Math.min(1f, alpha)));
+            g.setColor(new Color(255, 220, 80));
+            g.fillRect(x, y, sz, sz);
+
+            if (life > 0.45f) {
+                g.setColor(new Color(255, 248, 210, Math.max(0, Math.min(255, (int) (alpha * 220)))));
+                g.fillRect(x, y, Math.max(1, sz - 1), 1);
             }
         }
+        g.setComposite(prev);
+    }
+
+    private void drawMorphGoldenBurst(Graphics2D g, Rectangle bounds, float morphT) {
+        if (bounds == null) {
+            return;
+        }
+        float peak = (float) Math.sin(morphT * Math.PI);
+        if (peak <= 0.35f) {
+            return;
+        }
+        float burst = (peak - 0.35f) / 0.65f;
+        int cx = bounds.x + bounds.width / 2;
+        int cy = bounds.y + bounds.height / 2;
+        Composite prev = g.getComposite();
+
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, burst * 0.18f * fadeAlpha));
+        g.setColor(new Color(255, 225, 120));
+        int flashW = Math.round(bounds.width * 1.1f);
+        int flashH = Math.round(bounds.height * 0.55f);
+        g.fillOval(cx - flashW / 2, cy - flashH / 2, flashW, flashH);
+
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, burst * 0.12f * fadeAlpha));
+        g.setColor(new Color(40, 28, 18));
+        g.fillOval(cx - flashW / 2, cy - flashH / 4, flashW, flashH);
+
         g.setComposite(prev);
     }
 
@@ -1103,19 +1216,37 @@ public class IntroScreen {
         int cx = bounds.x + bounds.width / 2;
         int cy = bounds.y + bounds.height / 2;
         Composite prev = g.getComposite();
-        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, peak * 0.22f * fadeAlpha));
-        RadialGradientPaint aura = new RadialGradientPaint(
-            cx, cy, bounds.width * 0.55f,
-            new float[]{0f, 0.55f, 1f},
+
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, peak * 0.38f * fadeAlpha));
+        RadialGradientPaint smoke = new RadialGradientPaint(
+            cx, cy,
+            bounds.width * 0.62f,
+            new float[]{0f, 0.45f, 1f},
             new Color[]{
-                new Color(90, 60, 120, 120),
-                new Color(40, 30, 55, 70),
-                new Color(10, 8, 15, 0)
+                new Color(22, 16, 28, 200),
+                new Color(48, 32, 42, 120),
+                new Color(8, 6, 12, 0)
             }
         );
-        g.setPaint(aura);
-        int size = Math.round(bounds.width * 1.15f);
-        g.fillOval(cx - size / 2, cy - size / 2, size, size);
+        g.setPaint(smoke);
+        int smokeSize = Math.round(bounds.width * 1.25f);
+        g.fillOval(cx - smokeSize / 2, cy - smokeSize / 2, smokeSize, smokeSize);
+
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, peak * 0.42f * fadeAlpha));
+        RadialGradientPaint gold = new RadialGradientPaint(
+            cx, cy - bounds.height * 0.08f,
+            bounds.width * 0.5f,
+            new float[]{0f, 0.4f, 1f},
+            new Color[]{
+                new Color(255, 230, 130, 200),
+                new Color(255, 185, 55, 100),
+                new Color(255, 160, 30, 0)
+            }
+        );
+        g.setPaint(gold);
+        int goldSize = Math.round(bounds.width * 0.95f);
+        g.fillOval(cx - goldSize / 2, cy - goldSize / 2 - 8, goldSize, goldSize);
+
         g.setComposite(prev);
     }
 
@@ -1447,6 +1578,7 @@ public class IntroScreen {
         rightMorphActive = false;
         rightMorphT = 0f;
         morphSmoke.clear();
+        morphSparks.clear();
         morphAnchorBounds = null;
         switchFlash = 0f;
         switchParticles.clear();
