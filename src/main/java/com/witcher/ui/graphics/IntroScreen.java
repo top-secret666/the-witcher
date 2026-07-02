@@ -116,7 +116,8 @@ public class IntroScreen {
     private boolean autoMode = false;
     private int historyScroll = 0;
     private int autoWaitTicks = 0;
-    private static final int AUTO_DELAY_TICKS = 72;
+    private static final int AUTO_DELAY_TICKS = 50;
+    private static final int AUTO_TICKS_PER_CHAR = 1;
     private Rectangle backButtonBounds = new Rectangle();
     private Rectangle historyButtonBounds = new Rectangle();
     private Rectangle autoButtonBounds = new Rectangle();
@@ -461,7 +462,7 @@ public class IntroScreen {
         } else {
             if (autoMode && !rightMorphActive) {
                 typeTickCounter++;
-                if (typeTickCounter >= TICKS_PER_CHAR) {
+                if (typeTickCounter >= AUTO_TICKS_PER_CHAR) {
                     typeTickCounter = 0;
                     charIndex++;
                     if (charIndex >= totalChars) {
