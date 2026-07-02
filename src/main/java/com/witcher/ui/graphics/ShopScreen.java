@@ -28,10 +28,10 @@ public class ShopScreen {
         CATEGORY_CLOSING
     }
 
-    /** ~4 с при 30 FPS — заметное появление витрины. */
-    private static final int REVEAL_DURATION_TICKS = 120;
-    private static final int CATEGORY_OPEN_DURATION_TICKS = 72;
-    private static final int CARD_FLIP_TICKS = 18;
+    /** ~3 с при 30 FPS — появление витрины. */
+    private static final int REVEAL_DURATION_TICKS = 84;
+    private static final int CATEGORY_OPEN_DURATION_TICKS = 50;
+    private static final int CARD_FLIP_TICKS = 12;
     /** ~1 мин при 30 FPS — оборот сам возвращается на лицо, если игрок AFK. */
     private static final int CARD_FLIP_IDLE_TICKS = 30 * 60;
 
