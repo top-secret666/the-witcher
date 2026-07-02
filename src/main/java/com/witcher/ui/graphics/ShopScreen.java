@@ -31,8 +31,8 @@ public class ShopScreen {
     private static final int REVEAL_DURATION_TICKS = 120;
     private static final int CATEGORY_OPEN_DURATION_TICKS = 72;
     private static final int CARD_FLIP_TICKS = 18;
-    /** ~5 мин при 30 FPS — оборот сам возвращается на лицо, если игрок AFK. */
-    private static final int CARD_FLIP_IDLE_TICKS = 30 * 60 * 5;
+    /** ~1 мин при 30 FPS — оборот сам возвращается на лицо, если игрок AFK. */
+    private static final int CARD_FLIP_IDLE_TICKS = 30 * 60;
 
     private static final int GRID_COLS = 5;
     private static final int TOP_ROW_COLS = 5;
