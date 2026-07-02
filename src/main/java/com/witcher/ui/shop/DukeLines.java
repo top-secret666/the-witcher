@@ -103,6 +103,14 @@ public final class DukeLines {
         );
     }
 
+    public static String walletRevealAfter() {
+        return pick(
+            "Вот и вся сумма. Не думайте, что кошелёк бездонный — каждая крона на счету.",
+            "Четыреста двадцать. Фиксированная плата. Теперь вы знаете, с чем имеете дело.",
+            "Теперь, когда мы прояснили финансы — выбирайте с умом, господин из Ривии."
+        );
+    }
+
     private static String pick(String... lines) {
         return lines[ThreadLocalRandom.current().nextInt(lines.length)];
     }
