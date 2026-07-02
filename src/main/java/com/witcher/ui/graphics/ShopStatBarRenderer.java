@@ -43,18 +43,16 @@ final class ShopStatBarRenderer {
             drawComparisonBar(g, x + 8, barY, barW, barH, colors[i],
                 baseValue, row.value(), row.max());
             String delta = formatDelta(row.delta());
-            Color deltaColor = row.delta() > 0 ? new Color(120, 220, 120)
-                : row.delta() < 0 ? new Color(220, 100, 100) : new Color(160, 150, 130);
+            Color deltaColor = row.delta() != 0 ? DELTA_YELLOW : new Color(160, 150, 130);
             String valueText = row.value() + (delta.isEmpty() ? "" : " " + delta);
             int valueY = barY + barH + fm.getAscent() + 2;
             drawOutlinedText(g, valueText, x + 8, valueY, delta.isEmpty() ? new Color(235, 225, 200) : deltaColor);
         }
     }
 
-    private static final Color GAIN_OVERLAY = new Color(130, 220, 130);
-    private static final Color LOSS_OVERLAY = new Color(200, 75, 75);
+    private static final Color DELTA_YELLOW = new Color(230, 195, 55);
 
-    /** Основной цвет — текущий стат; поверх — прибавка (зелёный) или потеря (красный). */
+    /** Основной цвет — текущий стат; жёлтый — прибавка; при убыле жёлтый смешивается с цветом стата. */
     private static void drawComparisonBar(Graphics2D g, int x, int y, int w, int h,
                                           Color main, int baseValue, int newValue, int max) {
         int tip = Math.max(2, h / 2);
@@ -77,17 +75,34 @@ final class ShopStatBarRenderer {
         int newW = Math.round(trackW * Math.min(1f, Math.max(0, newValue) / (float) max));
         int delta = newValue - baseValue;
 
-        if (baseW > 0) {
-            fillBarSegment(g, ix, iy, ih, main.darker(), baseW);
-            fillBarSegment(g, ix, iy, ih, main, Math.max(1, baseW - 1));
+        if (delta >= 0) {
+            if (baseW > 0) {
+                fillBarSegment(g, ix, iy, ih, main.darker(), baseW);
+                fillBarSegment(g, ix, iy, ih, main, Math.max(1, baseW - 1));
+            }
+            if (delta > 0 && newW > baseW) {
+                int gainW = newW - baseW;
+                fillBarSegment(g, ix + baseW, iy, ih, DELTA_YELLOW.darker(), gainW);
+                fillBarSegment(g, ix + baseW, iy, ih, DELTA_YELLOW, Math.max(1, gainW - 1));
+            }
+        } else if (newW > 0) {
+            fillBarSegment(g, ix, iy, ih, main.darker(), newW);
+            fillBarSegment(g, ix, iy, ih, main, Math.max(1, newW - 1));
         }
-        if (delta > 0 && newW > baseW) {
-            fillBarSegment(g, ix + baseW, iy, ih, GAIN_OVERLAY.darker(), newW - baseW);
-            fillBarSegment(g, ix + baseW, iy, ih, GAIN_OVERLAY, Math.max(1, newW - baseW - 1));
-        } else if (delta < 0 && baseW > newW) {
-            fillBarSegment(g, ix + newW, iy, ih, LOSS_OVERLAY.darker(), baseW - newW);
-            fillBarSegment(g, ix + newW, iy, ih, LOSS_OVERLAY, Math.max(1, baseW - newW - 1));
+        if (delta < 0 && baseW > newW) {
+            int lossW = baseW - newW;
+            Color lossBlend = blendColors(main, DELTA_YELLOW, 0.55f);
+            fillBarSegment(g, ix + newW, iy, ih, lossBlend.darker(), lossW);
+            fillBarSegment(g, ix + newW, iy, ih, lossBlend, Math.max(1, lossW - 1));
         }
+    }
+
+    private static Color blendColors(Color base, Color overlay, float overlayWeight) {
+        float t = Math.max(0f, Math.min(1f, overlayWeight));
+        return new Color(
+            Math.round(base.getRed() * (1f - t) + overlay.getRed() * t),
+            Math.round(base.getGreen() * (1f - t) + overlay.getGreen() * t),
+            Math.round(base.getBlue() * (1f - t) + overlay.getBlue() * t));
     }
 
     private static void fillBarSegment(Graphics2D g, int x, int y, int h, Color color, int width) {
