@@ -673,8 +673,6 @@ public class ShopScreen {
         g.drawString(wallet, textX, walletY);
         g.setColor(new Color(200, 180, 120));
         g.drawString(suffix, textX + fm.stringWidth(wallet), walletY);
-        drawInventoryBagIcon(g, layout.hudX + layout.hudW - assets.dukeSealSize - 14,
-            hudY + (layout.hudH - assets.dukeSealSize) / 2, alpha);
         g.setComposite(prev);
     }
 
@@ -721,20 +719,7 @@ public class ShopScreen {
         g.drawString(wallet, textX, walletY);
         g.setColor(new Color(200, 180, 120));
         g.drawString(suffix, textX + fm.stringWidth(wallet), walletY);
-        drawInventoryBagIcon(g, blockX - assets.dukeSealSize - 6,
-            blockY + (blockH - assets.dukeSealSize) / 2, alpha);
 
-        g.setComposite(prev);
-    }
-
-    private void drawInventoryBagIcon(Graphics2D g, int x, int y, float alpha) {
-        if (assets.inventoryBagIcon == null || alpha <= 0.01f) {
-            return;
-        }
-        int size = assets.dukeSealSize;
-        Composite prev = g.getComposite();
-        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
-        drawCrispIcon(g, assets.inventoryBagIcon, x, y, size);
         g.setComposite(prev);
     }
 
@@ -1082,9 +1067,16 @@ public class ShopScreen {
 
         Color nameColor = item.kind == ItemKind.SET_CATALOG
             ? new Color(255, 210, 100) : new Color(245, 230, 190);
+        int nameY = priceOverride != null
+            ? y + h - Math.max(18, Math.round(h * 0.22f))
+            : y + h - 10;
         drawOutlinedText(g, name, x + (w - nameFm.stringWidth(name)) / 2, nameY, nameColor);
 
-        String priceLabel = priceOverride != null ? priceOverride : item.priceLabel;
+        if (priceOverride == null) {
+            return;
+        }
+
+        String priceLabel = priceOverride;
         if (item.kind == ItemKind.SET_CATALOG && "···".equals(priceLabel)) {
             return;
         }
