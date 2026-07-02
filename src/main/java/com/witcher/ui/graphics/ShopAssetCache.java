@@ -76,6 +76,7 @@ final class ShopAssetCache {
     final BufferedImage[] itemArts = new BufferedImage[5];
     final BufferedImage weaponIcon;
     final BufferedImage setsIcon;
+    final BufferedImage inventoryBagIcon;
 
     private ShopAssetCache() {
         long t0 = System.currentTimeMillis();
@@ -124,6 +125,8 @@ final class ShopAssetCache {
             BASE + "icons/icon_weapon.png", true);
         setsIcon = loadSized(ICONS + "icon_armor_set.png", cardArtSize, cardArtSize,
             BASE + "icons/icon_armor_set.png", true);
+        inventoryBagIcon = loadSized(ICONS + "icon_inventory_bag.png", dukeSealSize, dukeSealSize,
+            BASE + "icons/icon_inventory_bag.png", true);
 
         int headerH = panelHeaderH;
         int panelY = hudY + hudH + 6;

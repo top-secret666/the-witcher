@@ -1,5 +1,6 @@
 package main.java.com.witcher.ui.graphics;
 
+import main.java.com.witcher.ui.shop.DukeLines;
 import main.java.com.witcher.ui.shop.ShopCatalogEntry;
 import main.java.com.witcher.ui.shop.ShopCategory;
 import main.java.com.witcher.ui.shop.ShopModel;
@@ -204,12 +205,9 @@ public class ShopScreen {
     private int cardFlipIdleTicks = 0;
     private boolean exitRequested = false;
 
-    private static final String WELCOME_LINE = """
-            ХО-ХО-ХО-ХА... Приступим к делу, Белый Волк.
-            Броня, кирасы, шлемы, наколенники — всё, что душе угодно.
-            Только не забудьте кошелёк...""";
+    private static final String WELCOME_LINE = DukeLines.WELCOME;
 
-    private static final String IDLE_LINE = "Ну же, выбирайте. У меня нет вечности, а у вас — монстров полно.";
+    private static final String IDLE_LINE = DukeLines.IDLE;
 
     public ShopScreen() {
         this(ShopModel.createNewSession());
@@ -413,8 +411,7 @@ public class ShopScreen {
                 ShopCatalogEntry row = catalogEntries.get(hoveredRowIndex);
                 Rectangle panel = layout.detailListPanelSlot(assets.detailPanelW, assets.detailPanelH);
                 ensureRowVisible(panel.y, selectedRowIndex);
-                currentDialog = "Глядите, " + row.name + " — за " + row.priceLabel()
-                    + (row.priceLabel().equals("···") ? "" : " крон. Берите, не стыдно.");
+                currentDialog = DukeLines.rowInspect(row.name, row.price);
             } else if (cat.listInteractive && categoryCardContains(cat, mouseX, mouseY)) {
                 cardFlipTarget = cardFlipTarget == 0 ? 1 : 0;
                 cardFlipIdleTicks = 0;
@@ -676,6 +673,8 @@ public class ShopScreen {
         g.drawString(wallet, textX, walletY);
         g.setColor(new Color(200, 180, 120));
         g.drawString(suffix, textX + fm.stringWidth(wallet), walletY);
+        drawInventoryBagIcon(g, layout.hudX + layout.hudW - assets.dukeSealSize - 14,
+            hudY + (layout.hudH - assets.dukeSealSize) / 2, alpha);
         g.setComposite(prev);
     }
 
@@ -722,7 +721,20 @@ public class ShopScreen {
         g.drawString(wallet, textX, walletY);
         g.setColor(new Color(200, 180, 120));
         g.drawString(suffix, textX + fm.stringWidth(wallet), walletY);
+        drawInventoryBagIcon(g, blockX - assets.dukeSealSize - 6,
+            blockY + (blockH - assets.dukeSealSize) / 2, alpha);
 
+        g.setComposite(prev);
+    }
+
+    private void drawInventoryBagIcon(Graphics2D g, int x, int y, float alpha) {
+        if (assets.inventoryBagIcon == null || alpha <= 0.01f) {
+            return;
+        }
+        int size = assets.dukeSealSize;
+        Composite prev = g.getComposite();
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
+        drawCrispIcon(g, assets.inventoryBagIcon, x, y, size);
         g.setComposite(prev);
     }
 
