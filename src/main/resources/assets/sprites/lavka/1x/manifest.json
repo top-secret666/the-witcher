@@ -18,14 +18,6 @@
       "bytes": 52430
     },
     {
-      "output": "1x/ui/shop_sign_title.png",
-      "size": [
-        200,
-        36
-      ],
-      "bytes": 12310
-    },
-    {
       "output": "1x/ui/shop_catalog_panel.png",
       "size": [
         380,
@@ -151,7 +143,15 @@
         32,
         32
       ],
-      "bytes": 149
+      "bytes": 1392
+    },
+    {
+      "output": "1x/icons/icon_armor_set.png",
+      "size": [
+        32,
+        32
+      ],
+      "bytes": 2121
     },
     {
       "output": "1x/geralt_portrait_shop.png",

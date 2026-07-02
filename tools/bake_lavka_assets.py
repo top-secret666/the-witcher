@@ -177,6 +177,7 @@ def main() -> None:
         ("icons/icon_armor_boots.png", CARD_ART, CARD_ART, {"crop": True, "icon": True}),
         ("icons/icon_potion.png", CARD_ART, CARD_ART, {"crop": True, "icon": True}),
         ("icons/icon_weapon.png", CARD_ART, CARD_ART, {"crop": True, "icon": True}),
+        ("icons/icon_armor_set.png", CARD_ART, CARD_ART, {"crop": True, "icon": True}),
     ]
 
     for rel, w, h, opts in jobs:
