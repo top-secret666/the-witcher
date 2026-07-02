@@ -61,7 +61,8 @@ final class ShopAssetCache {
     final BufferedImage cardBackScaled;
     final BufferedImage cardHoverScaled;
     final BufferedImage cardSelectedScaled;
-    final BufferedImage btnBuyScaled;
+    final BufferedImage btnBuyNormal;
+    final BufferedImage btnBuyDisabled;
     final BufferedImage crownIconScaled;
     final BufferedImage crownIconSmall;
     /** Печать герцога вместо текста «Лавка Герцога» в шапке. */
@@ -77,6 +78,9 @@ final class ShopAssetCache {
     final BufferedImage weaponIcon;
     final BufferedImage setsIcon;
     final BufferedImage inventoryBagIcon;
+    final BufferedImage inventoryBagClosed;
+    final BufferedImage inventoryBagOpen;
+    final BufferedImage inventoryBagHover;
     final BufferedImage statVialEmpty;
     final BufferedImage statVialOverlay;
     final BufferedImage statVialEndCap;
@@ -99,7 +103,9 @@ final class ShopAssetCache {
             BASE + "ui/shop_card_hover.png", false);
         cardSelectedScaled = loadSized(UI + "shop_card_selected.png", cardW, cardH,
             BASE + "ui/shop_card_selected.png", false);
-        btnBuyScaled = loadSized(UI + "shop_btn_buy_disabled.png", btnW, btnH,
+        btnBuyNormal = loadSized(UI + "shop_btn_buy_normal.png", btnW, btnH,
+            BASE + "ui/shop_btn_buy_normal.png", false);
+        btnBuyDisabled = loadSized(UI + "shop_btn_buy_disabled.png", btnW, btnH,
             BASE + "ui/shop_btn_buy_disabled.png", false);
 
         crownIconScaled = loadSized(ICONS + "icon_crown.png", 18, 18,
@@ -129,8 +135,15 @@ final class ShopAssetCache {
             BASE + "icons/icon_weapon.png", true);
         setsIcon = loadSized(ICONS + "icon_armor_set.png", cardArtSize, cardArtSize,
             BASE + "icons/icon_armor_set.png", true);
-        inventoryBagIcon = loadSized(ICONS + "icon_inventory_bag.png", dukeSealSize, dukeSealSize,
+        int bagSize = 40;
+        inventoryBagIcon = loadSized(ICONS + "icon_inventory_bag.png", bagSize, bagSize,
             BASE + "icons/icon_inventory_bag.png", true);
+        inventoryBagClosed = loadFirst(BAKED + "ui/inventory_bag_closed.png",
+            BASE + "ui/inventory_bag_closed.png");
+        inventoryBagOpen = loadFirst(BAKED + "ui/inventory_bag_open.png",
+            BASE + "ui/inventory_bag_open.png");
+        inventoryBagHover = loadFirst(BAKED + "ui/inventory_bag_hover.png",
+            BASE + "ui/inventory_bag_hover.png");
         statVialEmpty = loadFirst(BASE + "ui/stat_vial_empty.png");
         statVialOverlay = loadFirst(BASE + "ui/stat_vial_glass_overlay.png");
         statVialEndCap = loadFirst(BAKED + "ui/stat_vial_end_cap.png", BASE + "ui/stat_vial_end_cap.png");
