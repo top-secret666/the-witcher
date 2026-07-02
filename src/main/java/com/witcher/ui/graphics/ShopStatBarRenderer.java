@@ -39,7 +39,9 @@ final class ShopStatBarRenderer {
             drawOutlinedText(g, labels[i], x + 8, ry + fm.getAscent(), new Color(200, 185, 150));
             int barY = ry + fm.getHeight() + 2;
             int barH = Math.max(5, Math.min(8, rowH / 4));
-            drawSkyrimBar(g, x + 8, barY, barW, barH, colors[i], row.value(), row.max());
+            int baseValue = row.value() - row.delta();
+            drawComparisonBar(g, x + 8, barY, barW, barH, colors[i],
+                baseValue, row.value(), row.max());
             String delta = formatDelta(row.delta());
             Color deltaColor = row.delta() > 0 ? new Color(120, 220, 120)
                 : row.delta() < 0 ? new Color(220, 100, 100) : new Color(160, 150, 130);
@@ -49,8 +51,12 @@ final class ShopStatBarRenderer {
         }
     }
 
-    private static void drawSkyrimBar(Graphics2D g, int x, int y, int w, int h,
-                                      Color fill, int value, int max) {
+    private static final Color GAIN_OVERLAY = new Color(130, 220, 130);
+    private static final Color LOSS_OVERLAY = new Color(200, 75, 75);
+
+    /** Основной цвет — текущий стат; поверх — прибавка (зелёный) или потеря (красный). */
+    private static void drawComparisonBar(Graphics2D g, int x, int y, int w, int h,
+                                          Color main, int baseValue, int newValue, int max) {
         int tip = Math.max(2, h / 2);
         int[] xs = {x + tip, x + w - tip, x + w, x + w - tip, x + tip, x, x + tip};
         int[] ys = {y, y, y + h / 2, y + h, y + h, y + h / 2, y};
@@ -59,17 +65,37 @@ final class ShopStatBarRenderer {
         g.setColor(new Color(60, 48, 30));
         g.drawPolygon(xs, ys, xs.length);
 
-        float ratio = max <= 0 ? 0f : Math.min(1f, value / (float) max);
-        int innerW = Math.max(0, Math.round((w - tip * 2 - 4) * ratio));
-        if (innerW > 0) {
-            int ix = x + tip + 2;
-            int iy = y + 1;
-            int ih = h - 2;
-            g.setColor(fill.darker());
-            g.fillRect(ix, iy, innerW, ih);
-            g.setColor(fill);
-            g.fillRect(ix, iy, Math.max(1, innerW - 1), Math.max(1, ih - 1));
+        int ix = x + tip + 2;
+        int iy = y + 1;
+        int ih = h - 2;
+        int trackW = w - tip * 2 - 4;
+        if (trackW <= 0 || max <= 0) {
+            return;
         }
+
+        int baseW = Math.round(trackW * Math.min(1f, Math.max(0, baseValue) / (float) max));
+        int newW = Math.round(trackW * Math.min(1f, Math.max(0, newValue) / (float) max));
+        int delta = newValue - baseValue;
+
+        if (baseW > 0) {
+            fillBarSegment(g, ix, iy, ih, main.darker(), baseW);
+            fillBarSegment(g, ix, iy, ih, main, Math.max(1, baseW - 1));
+        }
+        if (delta > 0 && newW > baseW) {
+            fillBarSegment(g, ix + baseW, iy, ih, GAIN_OVERLAY.darker(), newW - baseW);
+            fillBarSegment(g, ix + baseW, iy, ih, GAIN_OVERLAY, Math.max(1, newW - baseW - 1));
+        } else if (delta < 0 && baseW > newW) {
+            fillBarSegment(g, ix + newW, iy, ih, LOSS_OVERLAY.darker(), baseW - newW);
+            fillBarSegment(g, ix + newW, iy, ih, LOSS_OVERLAY, Math.max(1, baseW - newW - 1));
+        }
+    }
+
+    private static void fillBarSegment(Graphics2D g, int x, int y, int h, Color color, int width) {
+        if (width <= 0) {
+            return;
+        }
+        g.setColor(color);
+        g.fillRect(x, y, width, Math.max(1, h));
     }
 
     private static String formatDelta(int delta) {
