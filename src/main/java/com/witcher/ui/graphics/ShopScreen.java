@@ -3,6 +3,8 @@ package main.java.com.witcher.ui.graphics;
 import main.java.com.witcher.ui.shop.DukeLines;
 import main.java.com.witcher.ui.shop.ShopCatalogEntry;
 import main.java.com.witcher.ui.shop.ShopCategory;
+import main.java.com.witcher.model.armour.Armour;
+import main.java.com.witcher.ui.shop.ShopEquipSlot;
 import main.java.com.witcher.ui.shop.ShopModel;
 
 import java.awt.*;
@@ -53,6 +55,8 @@ public class ShopScreen {
     private static final int INVENTORY_PANEL_H = 238;
     private static final int INVENTORY_POUCH_ICON = 32;
     private static final int INVENTORY_POUCH_LARGE = 96;
+    private static final int EQUIP_PANEL_W = 440;
+    private static final int EQUIP_PANEL_H = 292;
     /** ~1 мин при 30 FPS — оборот сам возвращается на лицо, если игрок AFK. */
     private static final int CARD_FLIP_IDLE_TICKS = 30 * 60;
 
@@ -226,12 +230,20 @@ public class ShopScreen {
     private BufferedImage purchaseRevealIcon;
     private int purchaseRevealKeepRow = -1;
     private boolean inventoryOpen = false;
+    private boolean equipmentOpen = false;
     private boolean inventoryPouchFocused = true;
     private boolean inventoryBagHovered = false;
     private boolean inventoryPouchIconHovered = false;
     private final Rectangle inventoryBagBounds = new Rectangle();
     private final Rectangle inventoryPanelBounds = new Rectangle();
     private final Rectangle inventoryPouchIconBounds = new Rectangle();
+    private final Rectangle inventoryEquipButtonBounds = new Rectangle();
+    private final Rectangle equipmentPanelBounds = new Rectangle();
+    private final Rectangle equipmentBackButtonBounds = new Rectangle();
+    private final Rectangle[] equipmentSlotBounds = new Rectangle[ShopEquipSlot.values().length];
+    private final List<Rectangle> equipmentRowBounds = new ArrayList<>();
+    private int equipmentHoveredRow = -1;
+    private int equipmentHoveredSlot = -1;
     private boolean categoryBuyHovered = false;
     private int catalogScrollOffset = 0;
     private float cardFlipT = 0f;
@@ -353,6 +365,11 @@ public class ShopScreen {
         tick++;
 
         if (escPressed) {
+            if (equipmentOpen) {
+                equipmentOpen = false;
+                inventoryOpen = true;
+                return;
+            }
             if (inventoryOpen) {
                 inventoryOpen = false;
                 inventoryPouchFocused = true;
@@ -444,6 +461,10 @@ public class ShopScreen {
             return;
         }
 
+        if (equipmentOpen && clicked) {
+            return;
+        }
+
         hoveredIndex = -1;
         hoveredRowIndex = -1;
         categoryBuyHovered = false;
@@ -515,10 +536,19 @@ public class ShopScreen {
 
     private void updateInventoryInput(int mouseX, int mouseY, boolean clicked) {
         inventoryBagSlot();
+        if (equipmentOpen) {
+            updateEquipmentInput(mouseX, mouseY, clicked);
+            return;
+        }
         if (inventoryOpen) {
             inventoryPouchIconHovered = inventoryPouchIconBounds.contains(mouseX, mouseY);
             if (clicked) {
-                if (inventoryPouchIconBounds.contains(mouseX, mouseY)) {
+                if (inventoryEquipButtonBounds.contains(mouseX, mouseY)) {
+                    equipmentOpen = true;
+                    inventoryOpen = false;
+                    equipmentHoveredRow = -1;
+                    equipmentHoveredSlot = -1;
+                } else if (inventoryPouchIconBounds.contains(mouseX, mouseY)) {
                     inventoryPouchFocused = true;
                 } else if (!inventoryPanelBounds.contains(mouseX, mouseY)) {
                     inventoryOpen = false;
@@ -531,11 +561,50 @@ public class ShopScreen {
         }
     }
 
+    private void updateEquipmentInput(int mouseX, int mouseY, boolean clicked) {
+        equipmentHoveredRow = -1;
+        equipmentHoveredSlot = -1;
+        for (int i = 0; i < equipmentRowBounds.size(); i++) {
+            if (equipmentRowBounds.get(i).contains(mouseX, mouseY)) {
+                equipmentHoveredRow = i;
+                break;
+            }
+        }
+        for (int i = 0; i < equipmentSlotBounds.length; i++) {
+            if (equipmentSlotBounds[i] != null && equipmentSlotBounds[i].contains(mouseX, mouseY)) {
+                equipmentHoveredSlot = i;
+                break;
+            }
+        }
+        if (!clicked) {
+            return;
+        }
+        if (equipmentBackButtonBounds.contains(mouseX, mouseY)) {
+            equipmentOpen = false;
+            inventoryOpen = true;
+            return;
+        }
+        if (equipmentHoveredRow >= 0) {
+            List<Armour> owned = model.ownedArmour();
+            if (equipmentHoveredRow < owned.size()) {
+                model.equipArmour(owned.get(equipmentHoveredRow));
+            }
+            return;
+        }
+        if (equipmentHoveredSlot >= 0) {
+            ShopEquipSlot slot = ShopEquipSlot.values()[equipmentHoveredSlot];
+            if (model.getEquipped(slot) != null) {
+                model.unequip(slot);
+            }
+        }
+    }
+
     private void beginWalletReveal() {
         walletRevealFromCategory = state == ShopState.CATEGORY;
         state = ShopState.WALLET_REVEAL;
         walletRevealTicks = 0;
         inventoryOpen = false;
+        equipmentOpen = false;
         currentDialog = DukeLines.walletReveal();
     }
 
@@ -616,6 +685,7 @@ public class ShopScreen {
         }
         purchaseRevealTicks = 0;
         inventoryOpen = false;
+        equipmentOpen = false;
         state = ShopState.PURCHASE_REVEAL;
     }
 
@@ -760,7 +830,9 @@ public class ShopScreen {
             drawInventoryBag(g, 1f);
         }
 
-        if (inventoryOpen) {
+        if (equipmentOpen) {
+            drawEquipmentOverlay(g, sw, sh);
+        } else if (inventoryOpen) {
             drawInventoryOverlay(g, sw, sh);
         }
 
@@ -1186,6 +1258,157 @@ public class ShopScreen {
         g.setFont(new Font("Serif", Font.ITALIC, 9));
         g.setColor(new Color(140, 120, 80));
         g.drawString("Esc — закрыть", px + 12, py + INVENTORY_PANEL_H - 8);
+
+        int equipBtnW = 108;
+        int equipBtnH = 22;
+        int equipBtnX = px + INVENTORY_PANEL_W - equipBtnW - 10;
+        int equipBtnY = py + INVENTORY_PANEL_H - equipBtnH - 8;
+        inventoryEquipButtonBounds.setBounds(equipBtnX, equipBtnY, equipBtnW, equipBtnH);
+        g.setFont(new Font("Serif", Font.BOLD, 10));
+        g.setColor(new Color(28, 18, 8, 220));
+        g.fillRoundRect(equipBtnX, equipBtnY, equipBtnW, equipBtnH, 5, 5);
+        g.setColor(new Color(170, 125, 55));
+        g.drawRoundRect(equipBtnX, equipBtnY, equipBtnW, equipBtnH, 5, 5);
+        g.setColor(new Color(255, 225, 150));
+        String equipLabel = "Экипировка";
+        FontMetrics efm = g.getFontMetrics();
+        g.drawString(equipLabel, equipBtnX + (equipBtnW - efm.stringWidth(equipLabel)) / 2,
+            equipBtnY + 15);
+
+        g.setComposite(prev);
+    }
+
+    private void drawEquipmentOverlay(Graphics2D g, int sw, int sh) {
+        Composite prev = g.getComposite();
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.55f));
+        g.setColor(Color.BLACK);
+        g.fillRect(0, 0, sw, sh);
+
+        int px = (sw - EQUIP_PANEL_W) / 2;
+        int py = (sh - EQUIP_PANEL_H) / 2 - 12;
+        equipmentPanelBounds.setBounds(px, py, EQUIP_PANEL_W, EQUIP_PANEL_H);
+        equipmentRowBounds.clear();
+
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.97f));
+        g.setColor(new Color(14, 10, 6, 248));
+        g.fillRoundRect(px, py, EQUIP_PANEL_W, EQUIP_PANEL_H, 8, 8);
+        g.setColor(new Color(155, 115, 50));
+        g.drawRoundRect(px, py, EQUIP_PANEL_W, EQUIP_PANEL_H, 8, 8);
+
+        drawCrispText(g);
+        g.setFont(new Font("Serif", Font.BOLD, 14));
+        g.setColor(new Color(255, 220, 140));
+        g.drawString("Экипировка", px + 14, py + 22);
+
+        int listX = px + 12;
+        int listY = py + 34;
+        int listW = 148;
+        int listH = EQUIP_PANEL_H - 78;
+        g.setColor(new Color(8, 6, 4, 180));
+        g.fillRoundRect(listX, listY, listW, listH, 4, 4);
+        g.setColor(new Color(100, 75, 40));
+        g.drawRoundRect(listX, listY, listW, listH, 4, 4);
+
+        g.setFont(new Font("Serif", Font.BOLD, 10));
+        g.setColor(new Color(180, 140, 80));
+        g.drawString("Куплено", listX + 8, listY + 14);
+
+        List<Armour> owned = model.ownedArmour();
+        g.setFont(new Font("Serif", Font.PLAIN, 10));
+        int rowY = listY + 24;
+        int rowH = 16;
+        for (int i = 0; i < owned.size(); i++) {
+            if (rowY + rowH > listY + listH - 4) {
+                break;
+            }
+            Armour armour = owned.get(i);
+            Rectangle row = new Rectangle(listX + 4, rowY - 11, listW - 8, rowH);
+            equipmentRowBounds.add(row);
+            boolean hovered = i == equipmentHoveredRow;
+            boolean equipped = model.isEquipped(armour);
+            if (hovered || equipped) {
+                g.setColor(equipped ? new Color(70, 52, 24, 200) : new Color(50, 38, 18, 170));
+                g.fillRoundRect(row.x, row.y, row.width, row.height, 3, 3);
+            }
+            g.setColor(equipped ? new Color(255, 230, 150) : new Color(200, 180, 130));
+            String line = truncateToWidth(armour.getName(), g.getFontMetrics(), listW - 20);
+            g.drawString(line, listX + 8, rowY);
+            rowY += rowH;
+        }
+        if (owned.isEmpty()) {
+            g.setColor(new Color(150, 130, 90));
+            g.drawString("Пока нет брони…", listX + 8, rowY);
+        }
+
+        int portraitX = px + 172;
+        int portraitY = py + 30;
+        int portraitW = 128;
+        int portraitH = 210;
+        g.setColor(new Color(6, 4, 2, 160));
+        g.fillRoundRect(portraitX - 4, portraitY - 4, portraitW + 8, portraitH + 8, 6, 6);
+        if (assets.geraltScaled != null) {
+            drawScaledSprite(g, assets.geraltScaled, portraitX, portraitY, portraitW, portraitH, true);
+        }
+
+        int slotX = px + 318;
+        int slotY = py + 38;
+        int slotSize = 44;
+        int slotGap = 8;
+        ShopEquipSlot[] slots = ShopEquipSlot.values();
+        for (int i = 0; i < slots.length; i++) {
+            ShopEquipSlot slot = slots[i];
+            int sy = slotY + i * (slotSize + slotGap);
+            equipmentSlotBounds[i] = new Rectangle(slotX, sy, slotSize, slotSize);
+            boolean hovered = equipmentHoveredSlot == i;
+            Armour equipped = model.getEquipped(slot);
+            g.setColor(new Color(22, 14, 8, 220));
+            g.fillRoundRect(slotX, sy, slotSize, slotSize, 4, 4);
+            g.setColor(hovered ? new Color(200, 160, 70) : new Color(120, 90, 45));
+            g.drawRoundRect(slotX, sy, slotSize, slotSize, 4, 4);
+            BufferedImage icon = slot.iconIndex >= 0 && slot.iconIndex < assets.itemIcons.length
+                ? assets.itemIcons[slot.iconIndex] : null;
+            if (equipped != null && icon != null) {
+                int iconSz = 28;
+                g.drawImage(icon, slotX + (slotSize - iconSz) / 2, sy + 6, iconSz, iconSz, null);
+            } else if (icon != null) {
+                g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.35f));
+                int iconSz = 24;
+                g.drawImage(icon, slotX + (slotSize - iconSz) / 2, sy + 8, iconSz, iconSz, null);
+                g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.97f));
+            }
+            g.setFont(new Font("Serif", Font.PLAIN, 7));
+            g.setColor(new Color(170, 140, 90));
+            String slotLabel = slot.label;
+            FontMetrics sfm = g.getFontMetrics();
+            g.drawString(slotLabel, slotX + (slotSize - sfm.stringWidth(slotLabel)) / 2, sy + slotSize - 3);
+        }
+
+        int statsX = portraitX;
+        int statsY = py + EQUIP_PANEL_H - 72;
+        int statsW = EQUIP_PANEL_W - (statsX - px) - 12;
+        int statsH = 58;
+        g.setColor(new Color(10, 7, 4, 200));
+        g.fillRoundRect(statsX, statsY, statsW, statsH, 4, 4);
+        ShopStatBarRenderer.draw(g, statsX, statsY, statsW, statsH, model.equippedStatPreview(),
+            assets.statVialEmpty, assets.statVialOverlay, assets.statVialEndCap);
+
+        int backW = 72;
+        int backH = 22;
+        int backX = px + 12;
+        int backY = py + EQUIP_PANEL_H - backH - 10;
+        equipmentBackButtonBounds.setBounds(backX, backY, backW, backH);
+        g.setFont(new Font("Serif", Font.BOLD, 10));
+        g.setColor(new Color(28, 18, 8, 220));
+        g.fillRoundRect(backX, backY, backW, backH, 5, 5);
+        g.setColor(new Color(150, 110, 50));
+        g.drawRoundRect(backX, backY, backW, backH, 5, 5);
+        g.setColor(new Color(230, 200, 140));
+        g.drawString("Назад", backX + 18, backY + 15);
+
+        g.setFont(new Font("Serif", Font.ITALIC, 9));
+        g.setColor(new Color(140, 120, 80));
+        g.drawString("Esc — назад", backX + backW + 10, backY + 15);
+
         g.setComposite(prev);
     }
 

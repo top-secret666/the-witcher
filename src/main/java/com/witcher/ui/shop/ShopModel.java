@@ -13,8 +13,10 @@ import main.java.com.witcher.validation.InputValidator;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.EnumMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -40,6 +42,7 @@ public final class ShopModel {
     private final Set<ArmourSet> soldSets = new HashSet<>();
     private final List<Armour> playerInventory = new ArrayList<>();
     private final List<String> purchasedLabels = new ArrayList<>();
+    private final Map<ShopEquipSlot, Armour> equipped = new EnumMap<>(ShopEquipSlot.class);
 
     private int wallet;
     private boolean hideWalletAmount;
@@ -200,6 +203,50 @@ public final class ShopModel {
 
     public int inventoryItemCount() {
         return purchasedLabels.size();
+    }
+
+    public List<Armour> ownedArmour() {
+        return List.copyOf(playerInventory);
+    }
+
+    public Armour getEquipped(ShopEquipSlot slot) {
+        return equipped.get(slot);
+    }
+
+    public boolean isEquipped(Armour armour) {
+        return equipped.containsValue(armour);
+    }
+
+    public void equipArmour(Armour armour) {
+        if (armour == null || !playerInventory.contains(armour)) {
+            return;
+        }
+        ShopEquipSlot slot = ShopEquipSlot.forArmour(armour);
+        if (slot != null) {
+            equipped.put(slot, armour);
+        }
+    }
+
+    public void unequip(ShopEquipSlot slot) {
+        equipped.remove(slot);
+    }
+
+    public ShopGearStats equippedGearStats() {
+        ShopGearStats stats = baseGearStats();
+        for (Armour armour : equipped.values()) {
+            stats = stats.plus(ShopGearRules.bonusFromArmour(armour));
+        }
+        return stats.clamped();
+    }
+
+    public StatPreview equippedStatPreview() {
+        ShopGearStats base = baseGearStats();
+        ShopGearStats with = equippedGearStats();
+        return new StatPreview(new StatRow[]{
+            new StatRow(with.protection(), with.protection() - base.protection(), STAT_BAR_MAX),
+            new StatRow(with.stamina(), with.stamina() - base.stamina(), STAT_BAR_MAX),
+            new StatRow(with.signs(), with.signs() - base.signs(), STAT_BAR_MAX)
+        });
     }
 
     private void recordPurchase(String label) {
