@@ -113,6 +113,83 @@ public final class ShopModel {
         };
     }
 
+    public record StatRow(int value, int delta, int max) {
+    }
+
+    public record StatPreview(StatRow[] rows) {
+    }
+
+    private static final int STAT_BAR_MAX = 60;
+
+    /** Базовые статы Геральта без выбранной экипировки в слоте. */
+    public ShopGearStats baseGearStats() {
+        return ShopGearStats.geraltBase();
+    }
+
+    /** Статы после «примерки» позиции из каталога. */
+    public ShopGearStats gearStatsWith(ShopCatalogEntry entry) {
+        if (entry == null) {
+            return baseGearStats();
+        }
+        ShopGearStats bonus = bonusFromEntry(entry);
+        return baseGearStats().plus(bonus).clamped();
+    }
+
+    public StatPreview statPreview(ShopCatalogEntry entry) {
+        ShopGearStats base = baseGearStats();
+        ShopGearStats with = gearStatsWith(entry);
+        return new StatPreview(new StatRow[]{
+            new StatRow(with.protection(), with.protection() - base.protection(), STAT_BAR_MAX),
+            new StatRow(with.stamina(), with.stamina() - base.stamina(), STAT_BAR_MAX),
+            new StatRow(with.signs(), with.signs() - base.signs(), STAT_BAR_MAX)
+        });
+    }
+
+    private ShopGearStats bonusFromEntry(ShopCatalogEntry entry) {
+        if (entry.armour != null) {
+            return bonusFromArmour(entry.armour);
+        }
+        if (entry.armourSet != null) {
+            ShopGearStats sum = new ShopGearStats(0, 0, 0);
+            for (Armour piece : entry.armourSet.getArmorPieces()) {
+                sum = sum.plus(bonusFromArmour(piece));
+            }
+            return sum;
+        }
+        return placeholderBonus(entry.name);
+    }
+
+    private ShopGearStats bonusFromArmour(Armour armour) {
+        int prot = Math.round((float) armour.calculateProtection());
+        int weightPenalty = Math.round((float) armour.getWeight() * 3f);
+        int stamina = -weightPenalty;
+        int signs = -Math.round((float) armour.getWeight() * 1.2f);
+
+        if (armour instanceof Boots boots) {
+            stamina += boots.getSpeedBonus() + boots.getBalanceBonus();
+        } else if (armour instanceof Gloves gloves) {
+            stamina += gloves.getDexterityBonus() / 2;
+            signs += 2;
+        } else if (armour instanceof Trousers trousers) {
+            stamina += trousers.getMovementBonus() / 2;
+        } else if (armour instanceof Chestpiece) {
+            signs -= 2;
+        }
+        return new ShopGearStats(prot, stamina, signs);
+    }
+
+    private ShopGearStats placeholderBonus(String name) {
+        String lower = name.toLowerCase();
+        if (lower.contains("меч") || lower.contains("кинжал") || lower.contains("клеймор")
+            || lower.contains("арбалет")) {
+            return new ShopGearStats(0, -3, 0);
+        }
+        if (lower.contains("зелье") || lower.contains("эликсир") || lower.contains("отвар")) {
+            return new ShopGearStats(0, 0, 6);
+        }
+        return new ShopGearStats(0, 0, 0);
+    }
+
     public String priceLabelForCategory(ShopCategory category) {
         var min = getCatalog(category).stream()
             .mapToInt(e -> e.price)
