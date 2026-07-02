@@ -77,6 +77,8 @@ final class ShopAssetCache {
     final BufferedImage weaponIcon;
     final BufferedImage setsIcon;
     final BufferedImage inventoryBagIcon;
+    final BufferedImage statVialEmpty;
+    final BufferedImage statVialOverlay;
 
     private ShopAssetCache() {
         long t0 = System.currentTimeMillis();
@@ -127,6 +129,8 @@ final class ShopAssetCache {
             BASE + "icons/icon_armor_set.png", true);
         inventoryBagIcon = loadSized(ICONS + "icon_inventory_bag.png", dukeSealSize, dukeSealSize,
             BASE + "icons/icon_inventory_bag.png", true);
+        statVialEmpty = loadFirst(BASE + "ui/stat_vial_empty.png");
+        statVialOverlay = loadFirst(BASE + "ui/stat_vial_glass_overlay.png");
 
         int headerH = panelHeaderH;
         int panelY = hudY + hudH + 6;
