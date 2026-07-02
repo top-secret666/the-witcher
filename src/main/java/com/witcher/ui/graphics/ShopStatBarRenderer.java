@@ -120,7 +120,7 @@ final class ShopStatBarRenderer {
             drawCroppedSprite(g, vialOverlay, cropOf(vialOverlay, false), x, y, w, h);
         }
         applyWarmGlassTint(g, x, y, w, h);
-        drawVialRim(g, x, y, w, h);
+        drawGothicVialTrim(g, x, y, w, h);
 
         if (interp != null) {
             g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, interp);
@@ -151,6 +151,129 @@ final class ShopStatBarRenderer {
         g.fillRoundRect(x + 1, y + 1, w - 2, Math.max(2, h - 2), arc - 2, arc - 2);
 
         g.setComposite(saved);
+    }
+
+    /** Готическая латунная окантовка: зубцы сверху, угловые скобы, заклёпки по краям. */
+    private static void drawGothicVialTrim(Graphics2D g, int x, int y, int w, int h) {
+        if (w < 14 || h < 6) {
+            drawVialRim(g, x, y, w, h);
+            return;
+        }
+
+        int arc = Math.max(4, h);
+        Color shadow = new Color(24, 14, 8);
+        Color darkBrass = new Color(58, 38, 16);
+        Color midBrass = new Color(118, 84, 34);
+        Color brightBrass = new Color(188, 142, 52);
+        Color highlight = new Color(232, 200, 118);
+
+        Composite saved = g.getComposite();
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
+
+        // Базовый ободок колбы
+        g.setColor(shadow);
+        g.drawRoundRect(x, y, w - 1, h - 1, arc, arc);
+        g.setColor(darkBrass);
+        g.drawRoundRect(x + 1, y + 1, w - 3, h - 3, arc - 2, arc - 2);
+        g.setColor(midBrass);
+        g.drawRoundRect(x + 2, y + 2, w - 5, h - 5, arc - 3, arc - 3);
+        g.setColor(brightBrass);
+        g.drawRoundRect(x + 3, y + 3, w - 7, h - 7, arc - 4, arc - 4);
+
+        int crestH = Math.min(4, Math.max(2, h / 3));
+        int innerL = x + 5;
+        int innerR = x + w - 6;
+        int toothW = Math.max(3, Math.min(5, w / 9));
+        int gap = Math.max(1, toothW / 3);
+
+        // Готические зубцы сверху (мерлоны)
+        for (int cx = innerL; cx <= innerR - toothW; cx += toothW + gap) {
+            int bw = Math.min(toothW, innerR - cx);
+            if (bw < 2) {
+                break;
+            }
+            int ty = y - crestH + 1;
+            g.setColor(shadow);
+            g.fillRect(cx, ty, bw, crestH);
+            g.setColor(darkBrass);
+            g.fillRect(cx, ty + 1, bw, crestH - 1);
+            g.setColor(highlight);
+            g.fillRect(cx, ty, bw, 1);
+            g.setColor(brightBrass);
+            g.fillRect(cx + 1, ty + 1, Math.max(1, bw - 2), 1);
+        }
+
+        // Угловые скобы сверху
+        drawGothicCornerBracket(g, x + 1, y, crestH, true, shadow, darkBrass, brightBrass, highlight);
+        drawGothicCornerBracket(g, x + w - 2, y, crestH, false, shadow, darkBrass, brightBrass, highlight);
+
+        // Нижний пояс — лёгкие зубчики поменьше
+        int baseH = Math.max(1, crestH - 1);
+        for (int cx = innerL + 2; cx <= innerR - toothW; cx += toothW + gap + 1) {
+            int bw = Math.min(toothW - 1, innerR - cx);
+            if (bw < 2) {
+                break;
+            }
+            int by = y + h - 1;
+            g.setColor(darkBrass);
+            g.fillRect(cx, by, bw, baseH);
+            g.setColor(new Color(72, 48, 22, 180));
+            g.fillRect(cx, by, bw, 1);
+        }
+
+        // Заклёпки на торцах
+        int rivetY = y + h / 2;
+        drawEndRivet(g, x + 3, rivetY, h, shadow, midBrass, highlight);
+        drawEndRivet(g, x + w - 4, rivetY, h, shadow, midBrass, highlight);
+
+        // Тёплый блик по верхней кромке стекла
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.82f));
+        g.setColor(highlight);
+        g.drawLine(x + 6, y + 2, x + w - 7, y + 2);
+        g.setColor(new Color(220, 185, 110, 150));
+        g.drawLine(x + 7, y + 3, x + w - 8, y + 3);
+
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.5f));
+        g.setColor(new Color(40, 26, 12));
+        g.drawLine(x + 6, y + h - 2, x + w - 7, y + h - 2);
+
+        g.setComposite(saved);
+    }
+
+    private static void drawGothicCornerBracket(Graphics2D g, int cx, int cy, int rise, boolean left,
+                                              Color shadow, Color dark, Color bright, Color highlight) {
+        int top = cy - rise + 1;
+        if (left) {
+            g.setColor(shadow);
+            g.fillRect(cx, top, 3, rise);
+            g.fillRect(cx, top, 4, 2);
+            g.setColor(dark);
+            g.fillRect(cx, top + 1, 2, rise - 1);
+            g.setColor(bright);
+            g.fillRect(cx + 1, top + 1, 1, Math.max(1, rise - 2));
+            g.setColor(highlight);
+            g.fillRect(cx, top, 2, 1);
+        } else {
+            g.setColor(shadow);
+            g.fillRect(cx - 2, top, 3, rise);
+            g.fillRect(cx - 3, top, 4, 2);
+            g.setColor(dark);
+            g.fillRect(cx - 2, top + 1, 2, rise - 1);
+            g.setColor(bright);
+            g.fillRect(cx - 1, top + 1, 1, Math.max(1, rise - 2));
+            g.setColor(highlight);
+            g.fillRect(cx - 1, top, 2, 1);
+        }
+    }
+
+    private static void drawEndRivet(Graphics2D g, int cx, int cy, int h, Color shadow, Color mid, Color hi) {
+        int r = Math.max(2, Math.min(3, h / 4));
+        g.setColor(shadow);
+        g.fillOval(cx - r, cy - r, r * 2, r * 2);
+        g.setColor(mid);
+        g.fillOval(cx - r + 1, cy - r + 1, r * 2 - 2, r * 2 - 2);
+        g.setColor(hi);
+        g.fillRect(cx - 1, cy - r, 2, 1);
     }
 
     /** Ободок в палитре лавки: тёмная кожа/дерево + латунь + тёплый блик. */
