@@ -29,7 +29,7 @@ public class ShopScreen {
 
     /** ~4 с при 30 FPS — заметное появление витрины. */
     private static final int REVEAL_DURATION_TICKS = 120;
-    private static final int CATEGORY_OPEN_DURATION_TICKS = 54;
+    private static final int CATEGORY_OPEN_DURATION_TICKS = 72;
 
     private static final int GRID_COLS = 5;
     private static final int TOP_ROW_COLS = 5;
@@ -195,6 +195,7 @@ public class ShopScreen {
     private boolean categoryClosing = false;
     private Rectangle categoryFromRect = new Rectangle();
     private Rectangle categoryBuyBounds = new Rectangle();
+    private int catalogScrollOffset = 0;
     private boolean exitRequested = false;
 
     private static final String WELCOME_LINE = """
@@ -255,8 +256,48 @@ public class ShopScreen {
     private void buildCatalogRows(ShopItem category) {
         catalogEntries.clear();
         hoveredRowIndex = -1;
+        catalogScrollOffset = 0;
         catalogEntries.addAll(model.getCatalog(category.category));
         selectedRowIndex = catalogEntries.isEmpty() ? -1 : 0;
+    }
+
+    private int catalogRowStep() {
+        return assets.rowH + 4;
+    }
+
+    private int catalogListTop(int panelY) {
+        return panelY + 12;
+    }
+
+    private int catalogListBottom(int panelY) {
+        return panelY + assets.detailPanelH - assets.btnH - 10;
+    }
+
+    private int maxCatalogScroll(int panelY) {
+        int visible = catalogListBottom(panelY) - catalogListTop(panelY);
+        int content = catalogEntries.size() * catalogRowStep() - 4;
+        return Math.max(0, content - visible);
+    }
+
+    private void scrollCatalogBy(int panelY, int wheelNotches) {
+        catalogScrollOffset += wheelNotches * catalogRowStep();
+        catalogScrollOffset = Math.max(0, Math.min(maxCatalogScroll(panelY), catalogScrollOffset));
+    }
+
+    private void ensureRowVisible(int panelY, int rowIndex) {
+        if (rowIndex < 0) {
+            return;
+        }
+        int listTop = catalogListTop(panelY);
+        int listBottom = catalogListBottom(panelY);
+        int rowY = listTop + rowIndex * catalogRowStep() - catalogScrollOffset;
+        int rowBottom = rowY + assets.rowH;
+        if (rowY < listTop) {
+            catalogScrollOffset -= listTop - rowY;
+        } else if (rowBottom > listBottom) {
+            catalogScrollOffset += rowBottom - listBottom;
+        }
+        catalogScrollOffset = Math.max(0, Math.min(maxCatalogScroll(panelY), catalogScrollOffset));
     }
 
     static Rectangle computeContentBoundsPublic(BufferedImage img) {
@@ -264,6 +305,10 @@ public class ShopScreen {
     }
 
     public void update(int mouseX, int mouseY, boolean clicked, boolean escPressed) {
+        update(mouseX, mouseY, clicked, escPressed, 0);
+    }
+
+    public void update(int mouseX, int mouseY, boolean clicked, boolean escPressed, int wheelNotches) {
         tick++;
 
         if (escPressed) {
@@ -321,6 +366,10 @@ public class ShopScreen {
         if (state == ShopState.CATEGORY || state == ShopState.CATEGORY_OPENING
             || state == ShopState.CATEGORY_CLOSING) {
             ShopCategoryAnimator catAnim = categoryAnimator(layout);
+            if (wheelNotches != 0 && catAnim.listInteractive) {
+                Rectangle panel = layout.detailListPanelSlot(assets.detailPanelW, assets.detailPanelH);
+                scrollCatalogBy(panel.y, wheelNotches);
+            }
             if (catAnim.listInteractive) {
                 for (int i = 0; i < catalogEntries.size(); i++) {
                     if (catalogEntries.get(i).bounds.contains(mouseX, mouseY)) {
@@ -349,6 +398,8 @@ public class ShopScreen {
             } else if (hoveredRowIndex >= 0) {
                 selectedRowIndex = hoveredRowIndex;
                 ShopCatalogEntry row = catalogEntries.get(hoveredRowIndex);
+                Rectangle panel = layout.detailListPanelSlot(assets.detailPanelW, assets.detailPanelH);
+                ensureRowVisible(panel.y, selectedRowIndex);
                 currentDialog = "Глядите, " + row.name + " — за " + row.priceLabel()
                     + (row.priceLabel().equals("···") ? "" : " крон. Берите, не стыдно.");
             }
@@ -385,6 +436,7 @@ public class ShopScreen {
         selectedIndex = -1;
         selectedRowIndex = -1;
         catalogEntries.clear();
+        catalogScrollOffset = 0;
         state = ShopState.IDLE;
         currentDialog = IDLE_LINE;
     }
@@ -692,8 +744,9 @@ public class ShopScreen {
         }
 
         item.bounds.setBounds(cat.cardX, cat.cardY, cat.cardW, cat.cardH);
+        boolean cardGrowing = state == ShopState.CATEGORY_OPENING || state == ShopState.CATEGORY_CLOSING;
         drawItemCard(g, item, cat.cardX, cat.cardY, cat.cardW, cat.cardH,
-            selectedIndex, true, false, 1f, selectedCatalogPrice());
+            selectedIndex, true, false, 1f, selectedCatalogPrice(), cardGrowing);
 
         if (cat.detailPanelAlpha > 0.02f) {
             Rectangle panel = layout.detailListPanelSlot(assets.detailPanelW, assets.detailPanelH);
@@ -749,14 +802,28 @@ public class ShopScreen {
 
     private void drawCatalogRows(Graphics2D g, int panelX, int panelY, boolean interactive) {
         int rowGap = 4;
-        int startY = panelY + 12;
+        int rowStep = assets.rowH + rowGap;
+        int listTop = catalogListTop(panelY);
+        int listBottom = catalogListBottom(panelY);
+        int clipX = panelX + 6;
+        int clipW = assets.detailPanelW - 12;
+        int clipH = listBottom - listTop;
         int x = panelX + 8;
+
+        Shape prevClip = g.getClip();
+        g.clipRect(clipX, listTop, clipW, clipH);
+
         drawCardText(g);
         g.setFont(cardFont(8));
 
         for (int i = 0; i < catalogEntries.size(); i++) {
             ShopCatalogEntry row = catalogEntries.get(i);
-            int y = startY + i * (assets.rowH + rowGap);
+            int y = listTop + i * rowStep - catalogScrollOffset;
+            if (y + assets.rowH < listTop || y > listBottom) {
+                row.bounds.setBounds(0, 0, 0, 0);
+                continue;
+            }
+
             boolean hovered = interactive && i == hoveredRowIndex;
             boolean selected = i == selectedRowIndex;
 
@@ -789,6 +856,24 @@ public class ShopScreen {
             }
             drawOutlinedText(g, price, priceX, textY, new Color(255, 220, 100));
         }
+
+        g.setClip(prevClip);
+
+        if (interactive && maxCatalogScroll(panelY) > 0) {
+            drawCatalogScrollHint(g, clipX + clipW - 5, listTop, clipH - 8, panelY);
+        }
+    }
+
+    private void drawCatalogScrollHint(Graphics2D g, int x, int trackTop, int trackH, int panelY) {
+        Composite prev = g.getComposite();
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.45f));
+        g.setColor(new Color(200, 170, 90));
+        int thumbH = Math.max(12, trackH / 4);
+        int max = maxCatalogScroll(panelY);
+        float t = max > 0 ? catalogScrollOffset / (float) max : 0f;
+        int thumbY = trackTop + Math.round((trackH - thumbH) * t);
+        g.fillRoundRect(x, thumbY, 3, thumbH, 2, 2);
+        g.setComposite(prev);
     }
 
     private static void drawScaledCentered(Graphics2D g, BufferedImage img,
@@ -807,6 +892,12 @@ public class ShopScreen {
 
     private void drawItemCard(Graphics2D g, ShopItem item, int x, int y, int w, int h, int index,
                               boolean selected, boolean hovered, float revealAlpha, String priceOverride) {
+        drawItemCard(g, item, x, y, w, h, index, selected, hovered, revealAlpha, priceOverride, false);
+    }
+
+    private void drawItemCard(Graphics2D g, ShopItem item, int x, int y, int w, int h, int index,
+                              boolean selected, boolean hovered, float revealAlpha, String priceOverride,
+                              boolean smoothIconGrowth) {
         Composite savedComposite = g.getComposite();
         g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, revealAlpha));
 
@@ -825,7 +916,7 @@ public class ShopScreen {
             drawFallbackCard(g, x, y, w, h, false);
             cardRect = new Rectangle(x, y, w, h);
         }
-        drawCardFrontContent(g, item, cardRect, w, h, priceOverride);
+        drawCardFrontContent(g, item, cardRect, w, h, priceOverride, smoothIconGrowth);
 
         g.setComposite(savedComposite);
     }
@@ -838,7 +929,7 @@ public class ShopScreen {
     }
 
     private void drawCardFrontContent(Graphics2D g, ShopItem item, Rectangle card, int w, int h,
-                                    String priceOverride) {
+                                    String priceOverride, boolean smoothIconGrowth) {
         int x = card.x;
         int y = card.y;
 
@@ -857,7 +948,7 @@ public class ShopScreen {
             int slotBottom = nameY - Math.round(h * 0.10f);
             int slotH = Math.max(1, slotBottom - slotTop);
             Rectangle crop = computeContentBounds(art);
-            int maxArt = iconCapForCard(w, h, slotW, slotH);
+            int maxArt = iconCapForCard(slotW, slotH, smoothIconGrowth);
             drawAspectFitCroppedSprite(g, art, crop, slotX, slotTop, slotW, slotH, true, maxArt);
         }
 
@@ -888,14 +979,17 @@ public class ShopScreen {
         drawOutlinedText(g, priceLabel, priceX, priceRowY, new Color(255, 220, 90));
     }
 
-    /** На сетке — 32 px; на крупном превью категории — целочисленный апскейл (64, 96…). */
-    private int iconCapForCard(int cardW, int cardH, int slotW, int slotH) {
-        if (cardH <= assets.cardH + 6) {
-            return assets.cardArtSize;
-        }
+    /** Иконка растёт вместе с слотом; при анимации — без скачка 32→96. */
+    private int iconCapForCard(int slotW, int slotH, boolean smoothGrowth) {
         int base = assets.cardArtSize;
         int slotMax = Math.min(slotW, slotH);
         int target = Math.round(slotMax * 0.72f);
+        if (smoothGrowth) {
+            return Math.max(base, Math.min(slotMax, target));
+        }
+        if (slotMax <= base + 2) {
+            return base;
+        }
         int mult = Math.max(1, target / base);
         int cap = mult * base;
         if (cap > slotMax) {

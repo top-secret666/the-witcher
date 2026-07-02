@@ -37,6 +37,7 @@ public class GameWindow {
     private int mouseVX = 0;
     private int mouseVY = 0;
     private boolean mouseClickPending = false;
+    private int shopWheelPending = 0;
     private int menuNavDir = 0;
     private boolean menuActivate = false;
     private boolean menuExitRequested = false;
@@ -122,6 +123,8 @@ public class GameWindow {
                 mouseClickPending = true;
             }
         });
+
+        renderer.addMouseWheelListener(e -> shopWheelPending += e.getWheelRotation());
 
         renderer.addKeyListener(new KeyAdapter() {
             @Override
@@ -583,11 +586,12 @@ public class GameWindow {
                     useHiddenCursor();
                 }
             } else if (shopActive) {
-                shopScreen.update(mouseVX, mouseVY, mouseClickPending, shopExitRequested);
+                shopScreen.update(mouseVX, mouseVY, mouseClickPending, shopExitRequested, shopWheelPending);
                 shopScreen.render(renderer.screen, mouseVX, mouseVY);
                 renderer.present();
 
                 mouseClickPending = false;
+                shopWheelPending = 0;
                 shopExitRequested = false;
 
                 if (shopScreen.isExitRequested()) {
