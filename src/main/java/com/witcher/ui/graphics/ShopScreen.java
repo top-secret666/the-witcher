@@ -43,9 +43,9 @@ public class ShopScreen {
     private static final int INVENTORY_BAG_SIZE = 40;
     private static final int INVENTORY_BAG_MARGIN = 8;
     private static final int INVENTORY_PANEL_W = 280;
-    private static final int INVENTORY_PANEL_H = 210;
+    private static final int INVENTORY_PANEL_H = 238;
     private static final int INVENTORY_POUCH_ICON = 32;
-    private static final int INVENTORY_POUCH_LARGE = 72;
+    private static final int INVENTORY_POUCH_LARGE = 96;
     /** ~1 мин при 30 FPS — оборот сам возвращается на лицо, если игрок AFK. */
     private static final int CARD_FLIP_IDLE_TICKS = 30 * 60;
 
@@ -879,17 +879,20 @@ public class ShopScreen {
             inventoryPouchFocused, inventoryPouchIconHovered);
 
         int detailX = px + 56;
-        int detailY = py + 30;
+        int detailY = py + 28;
         int detailW = INVENTORY_PANEL_W - 68;
+        int detailBottom = iconY + INVENTORY_POUCH_ICON;
         if (inventoryPouchFocused) {
-            drawInventoryPouchDetail(g, detailX, detailY, detailW);
+            detailBottom = drawInventoryPouchDetail(g, detailX, detailY, detailW);
         }
 
-        int listY = py + 118;
+        int listY = detailBottom + 12;
+        g.setColor(new Color(100, 75, 40, 140));
+        g.drawLine(px + 10, listY - 4, px + INVENTORY_PANEL_W - 10, listY - 4);
         g.setFont(new Font("Serif", Font.BOLD, 10));
         g.setColor(new Color(180, 140, 80));
-        g.drawString("Куплено:", px + 12, listY);
-        listY += 14;
+        g.drawString("Куплено:", px + 12, listY + 10);
+        listY += 24;
 
         g.setFont(new Font("Serif", Font.PLAIN, 11));
         g.setColor(new Color(200, 180, 130));
@@ -930,13 +933,16 @@ public class ShopScreen {
         g.setComposite(prev);
     }
 
-    private void drawInventoryPouchDetail(Graphics2D g, int x, int y, int maxW) {
+    private int drawInventoryPouchDetail(Graphics2D g, int x, int y, int maxW) {
         if (assets.walletPouch == null) {
-            return;
+            return y + INVENTORY_POUCH_ICON;
         }
         int large = INVENTORY_POUCH_LARGE;
         int pouchX = x + (maxW - large) / 2;
         int pouchY = y;
+        Shape prevClip = g.getClip();
+        g.clipRect(x, y, maxW, large + 40);
+
         Rectangle crop = computeContentBounds(assets.walletPouch);
         if (crop.width > 0 && crop.height > 0) {
             g.drawImage(assets.walletPouch, pouchX, pouchY, pouchX + large, pouchY + large,
@@ -952,11 +958,18 @@ public class ShopScreen {
         };
         g.setFont(new Font("Serif", Font.PLAIN, 10));
         g.setColor(new Color(220, 195, 130));
-        int textY = pouchY + large + 14;
+        int textY = pouchY + large + 12;
         for (String line : lines) {
             g.drawString(truncateToWidth(line, g.getFontMetrics(), maxW), x, textY);
             textY += 13;
         }
+        g.setClip(prevClip);
+        return textY;
+    }
+
+    private static float smoothstep(float t) {
+        t = Math.max(0f, Math.min(1f, t));
+        return t * t * (3f - 2f * t);
     }
 
     private void drawDarkOverlay(Graphics2D g, int sw, int sh, ShopLayout layout, float alpha) {
@@ -1061,48 +1074,68 @@ public class ShopScreen {
         int appearEnd = WALLET_APPEAR_TICKS;
         int flyEnd = appearEnd + WALLET_FLY_TICKS;
         int closeEnd = flyEnd + WALLET_BAG_CLOSE_TICKS;
-        float appearT = Math.min(1f, walletRevealTicks / (float) appearEnd);
-        appearT = appearT * appearT * (3f - 2f * appearT);
-        float flyT = walletRevealTicks <= appearEnd ? 0f
-            : Math.min(1f, (walletRevealTicks - appearEnd) / (float) WALLET_FLY_TICKS);
-        flyT = flyT * flyT * (3f - 2f * flyT);
 
-        int baseSize = 72;
-        float scale = 0.3f + appearT * 0.7f;
-        int pw = Math.round(baseSize * scale);
-        int ph = pw;
+        if (walletRevealTicks > closeEnd) {
+            return;
+        }
+
+        float appearT = smoothstep(walletRevealTicks / (float) appearEnd);
+        float maxSize = 80f;
+        float minSize = 13f;
 
         int centerX = VIRTUAL_W / 2;
         int centerY = layout.dialogTop / 2 + 6;
-        int startX = centerX - pw / 2;
-        int startY = centerY - ph / 2;
-
         Point bagSlot = inventoryBagSlot();
-        int targetX = bagSlot.x + INVENTORY_BAG_SIZE / 2 - pw / 2;
-        int targetY = bagSlot.y + INVENTORY_BAG_SIZE / 2 - ph / 2;
-        int px = Math.round(startX + (targetX - startX) * flyT);
-        int py = Math.round(startY + (targetY - startY) * flyT);
+        float bagCenterX = bagSlot.x + INVENTORY_BAG_SIZE / 2f;
+        float bagCenterY = bagSlot.y + INVENTORY_BAG_SIZE / 2f;
 
-        float alpha = Math.min(1f, appearT * 1.15f);
-        if (walletRevealTicks > closeEnd) {
-            float settle = Math.min(1f, (walletRevealTicks - closeEnd) / 6f);
-            px = targetX;
-            py = targetY;
-            pw = Math.max(18, Math.round(pw * (1f - settle * 0.35f)));
-            ph = pw;
-            alpha = Math.max(0.55f, 1f - settle * 0.15f);
+        float px;
+        float py;
+        float pw;
+        float alpha;
+
+        if (walletRevealTicks <= appearEnd) {
+            pw = maxSize * (0.32f + appearT * 0.68f);
+            px = centerX - pw / 2f;
+            py = centerY - pw / 2f;
+            alpha = Math.min(1f, appearT * 1.15f);
+        } else {
+            int travelTicks = WALLET_FLY_TICKS + WALLET_BAG_CLOSE_TICKS;
+            float travelT = smoothstep((walletRevealTicks - appearEnd) / (float) travelTicks);
+            float posT = smoothstep((walletRevealTicks - appearEnd) / (float) WALLET_FLY_TICKS);
+            float sizeT = travelT * travelT * (3f - 2f * travelT);
+
+            pw = maxSize + (minSize - maxSize) * sizeT;
+            float cx = centerX + (bagCenterX - centerX) * posT;
+            float cy = centerY + (bagCenterY - centerY) * posT;
+            px = cx - pw / 2f;
+            py = cy - pw / 2f;
+            alpha = 1f;
+            if (walletRevealTicks > flyEnd) {
+                float tuckT = (walletRevealTicks - flyEnd) / (float) WALLET_BAG_CLOSE_TICKS;
+                tuckT = smoothstep(tuckT);
+                alpha = 1f - tuckT * 0.35f;
+            }
         }
 
-        drawPouchGlow(g, px, py, pw, ph, alpha, appearT, flyT);
+        int ipw = Math.round(pw);
+        int iph = ipw;
+        int ipx = Math.round(px);
+        int ipy = Math.round(py);
+
+        float glowAppearT = walletRevealTicks <= appearEnd ? appearT : 1f;
+        float glowFlyT = walletRevealTicks <= appearEnd ? 0f
+            : Math.min(1f, (walletRevealTicks - appearEnd) / (float) WALLET_FLY_TICKS);
+        drawPouchGlow(g, ipx, ipy, ipw, iph, alpha, glowAppearT, glowFlyT);
 
         Rectangle crop = computeContentBounds(assets.walletPouch);
         Composite prev = g.getComposite();
         g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
         if (crop.width > 0 && crop.height > 0) {
-            g.drawImage(assets.walletPouch, px, py, px + pw, py + ph,
+            g.drawImage(assets.walletPouch, ipx, ipy, ipx + ipw, ipy + iph,
                 crop.x, crop.y, crop.x + crop.width, crop.y + crop.height, null);
         } else {
-            g.drawImage(assets.walletPouch, px, py, pw, ph, null);
+            g.drawImage(assets.walletPouch, ipx, ipy, ipw, iph, null);
         }
         g.setComposite(prev);
     }
