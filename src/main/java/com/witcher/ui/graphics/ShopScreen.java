@@ -747,6 +747,7 @@ public class ShopScreen {
 
         if (categoryMode && selectedIndex >= 0) {
             drawCategoryView(g, layout, reveal, categoryAnimator(layout), mouseX, mouseY);
+            drawCornerWallet(g, 1f);
         } else {
             drawCards(g, layout, reveal);
         }
@@ -1021,6 +1022,53 @@ public class ShopScreen {
         g.fillRoundRect(tx - 4, ty - fm.getAscent(), textW + 8, fm.getHeight() + 2, 4, 4);
         g.setColor(new Color(255, 230, 150));
         g.drawString(wallet, tx, ty);
+        g.setComposite(prev);
+    }
+
+    /** Кошелёк в правом верхнем углу — экран списка товаров. */
+    private void drawCornerWallet(Graphics2D g, float alpha) {
+        if (alpha <= 0.01f) {
+            return;
+        }
+        Composite prev = g.getComposite();
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
+
+        String wallet = walletHudAmountText();
+        String suffix = model.walletSuffix();
+        int crownSize = 16;
+        int crownGap = 4;
+        int margin = 8;
+        int padX = 7;
+        int padY = 4;
+
+        drawCrispText(g);
+        g.setFont(new Font("Serif", Font.BOLD, 12));
+        FontMetrics fm = g.getFontMetrics();
+        int blockW = fm.stringWidth(wallet) + fm.stringWidth(suffix);
+        if (assets.crownIconScaled != null) {
+            blockW += crownSize + crownGap;
+        }
+        int blockH = Math.max(crownSize, fm.getHeight()) + padY * 2;
+        int blockX = VIRTUAL_W - margin - blockW - padX * 2;
+        int blockY = INVENTORY_BAG_MARGIN;
+
+        g.setColor(new Color(10, 7, 3, 185));
+        g.fillRoundRect(blockX, blockY, blockW + padX * 2, blockH, 6, 6);
+        g.setColor(new Color(140, 105, 45, 160));
+        g.drawRoundRect(blockX, blockY, blockW + padX * 2, blockH, 6, 6);
+
+        int textX = blockX + padX;
+        if (assets.crownIconScaled != null) {
+            int crownY = blockY + (blockH - crownSize) / 2;
+            g.drawImage(assets.crownIconScaled, textX, crownY, crownSize, crownSize, null);
+            textX += crownSize + crownGap;
+        }
+        g.setColor(new Color(255, 230, 150));
+        int walletY = blockY + (blockH + fm.getAscent()) / 2 - 2;
+        g.drawString(wallet, textX, walletY);
+        g.setColor(new Color(200, 180, 120));
+        g.drawString(suffix, textX + fm.stringWidth(wallet), walletY);
+
         g.setComposite(prev);
     }
 
