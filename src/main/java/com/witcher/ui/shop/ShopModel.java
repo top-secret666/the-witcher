@@ -41,7 +41,7 @@ public final class ShopModel {
     private final List<Armour> playerInventory = new ArrayList<>();
 
     private int wallet;
-    private final boolean hideWalletAmount;
+    private boolean hideWalletAmount;
 
     private ShopModel(ArmourRepository armourRepository, SetService setService,
                         ArmorCalculationService calculationService, int wallet, boolean hideWalletAmount) {
@@ -81,6 +81,16 @@ public final class ShopModel {
 
     public int getWallet() {
         return wallet;
+    }
+
+    /** Кошелёк ещё скрыт (???), сцена с мешком не проиграна. */
+    public boolean needsWalletReveal() {
+        return hideWalletAmount;
+    }
+
+    /** После анимации мешка — показываем реальную сумму. */
+    public void revealWallet() {
+        hideWalletAmount = false;
     }
 
     public String dukeLineForCategory(ShopCategory category) {

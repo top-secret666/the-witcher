@@ -23,6 +23,7 @@ public class ShopScreen {
     private enum ShopState {
         REVEAL,
         IDLE,
+        WALLET_REVEAL,
         CATEGORY_OPENING,
         CATEGORY,
         CATEGORY_CLOSING
@@ -32,6 +33,12 @@ public class ShopScreen {
     private static final int REVEAL_DURATION_TICKS = 84;
     private static final int CATEGORY_OPEN_DURATION_TICKS = 50;
     private static final int CARD_FLIP_TICKS = 12;
+    /** Сцена кошелька: появление → полёт → счётчик. */
+    private static final int WALLET_APPEAR_TICKS = 26;
+    private static final int WALLET_FLY_TICKS = 44;
+    private static final int WALLET_COUNT_TICKS = 30;
+    private static final int WALLET_REVEAL_TOTAL =
+        WALLET_APPEAR_TICKS + WALLET_FLY_TICKS + WALLET_COUNT_TICKS;
     /** ~1 мин при 30 FPS — оборот сам возвращается на лицо, если игрок AFK. */
     private static final int CARD_FLIP_IDLE_TICKS = 30 * 60;
 
@@ -199,6 +206,8 @@ public class ShopScreen {
     private boolean categoryClosing = false;
     private Rectangle categoryFromRect = new Rectangle();
     private Rectangle categoryBuyBounds = new Rectangle();
+    private Rectangle showcaseBuyBounds = new Rectangle();
+    private int walletRevealTicks = 0;
     private int catalogScrollOffset = 0;
     private float cardFlipT = 0f;
     private int cardFlipTarget = 0;
@@ -338,6 +347,16 @@ public class ShopScreen {
             }
         }
 
+        if (state == ShopState.WALLET_REVEAL) {
+            walletRevealTicks++;
+            if (walletRevealTicks >= WALLET_REVEAL_TOTAL) {
+                model.revealWallet();
+                state = ShopState.IDLE;
+                walletRevealTicks = 0;
+                currentDialog = IDLE_LINE;
+            }
+        }
+
         if (state == ShopState.CATEGORY_OPENING || state == ShopState.CATEGORY_CLOSING) {
             categoryTicks++;
             if (categoryClosing) {
@@ -358,6 +377,26 @@ public class ShopScreen {
         ShopLayout layout = new ShopLayout(VIRTUAL_W, VIRTUAL_H, items.size(),
             assets.hudX, assets.hudW, assets.hudH, assets.panelW,
             assets.panelHeaderH, assets.topRowCols, assets.bottomRowCols);
+
+        if (showcaseInteractive && reveal.btnAlpha > 0.45f) {
+            int btnY = layout.btnY + Math.round(reveal.btnSlideY);
+            showcaseBuyBounds.setBounds(layout.btnX, btnY, layout.btnW, layout.btnH);
+        } else {
+            showcaseBuyBounds.setBounds(0, 0, 0, 0);
+        }
+
+        if (showcaseInteractive && clicked && showcaseBuyBounds.contains(mouseX, mouseY)
+            && model.needsWalletReveal()) {
+            state = ShopState.WALLET_REVEAL;
+            walletRevealTicks = 0;
+            currentDialog = DukeLines.walletReveal();
+            return;
+        }
+
+        if (state == ShopState.WALLET_REVEAL && clicked) {
+            walletRevealTicks = WALLET_REVEAL_TOTAL - 1;
+            return;
+        }
 
         hoveredIndex = -1;
         hoveredRowIndex = -1;
@@ -514,6 +553,7 @@ public class ShopScreen {
         return switch (state) {
             case REVEAL -> ShopRevealAnimator.forProgress(
                 revealTicks / (float) REVEAL_DURATION_TICKS, items.size(), true);
+            case WALLET_REVEAL -> ShopRevealAnimator.complete(items.size());
             default -> ShopRevealAnimator.complete(items.size());
         };
     }
@@ -537,6 +577,7 @@ public class ShopScreen {
 
         boolean categoryMode = state == ShopState.CATEGORY_OPENING
             || state == ShopState.CATEGORY || state == ShopState.CATEGORY_CLOSING;
+        boolean walletScene = state == ShopState.WALLET_REVEAL;
 
         if (!categoryMode) {
             drawDarkOverlay(g, sw, sh, layout, brighten * Math.max(0.25f, reveal.panelAlpha * 0.85f));
@@ -545,13 +586,19 @@ public class ShopScreen {
         }
 
         if (!categoryMode) {
+            float portraitAlpha = walletScene ? 1f : brighten;
             BufferedImage dukeDraw = assets.dukeScaled;
-            drawCharacter(g, sw, sh, assets.geraltScaled, true, layout.dialogTop, brighten);
-            drawCharacter(g, sw, sh, dukeDraw, false, layout.dialogTop, brighten);
+            drawCharacter(g, sw, sh, assets.geraltScaled, true, layout.dialogTop, portraitAlpha);
+            drawCharacter(g, sw, sh, dukeDraw, false, layout.dialogTop, portraitAlpha);
+            if (walletScene) {
+                drawWalletRevealPouch(g, layout);
+            }
         }
 
         if (!categoryMode) {
-            drawHud(g, layout, reveal.hudAlpha, reveal.hudSlideY);
+            float hudAlpha = walletScene ? 1f : reveal.hudAlpha;
+            float hudSlide = walletScene ? 0f : reveal.hudSlideY;
+            drawHud(g, layout, hudAlpha, hudSlide);
         }
 
         if (categoryMode && selectedIndex >= 0) {
@@ -559,7 +606,9 @@ public class ShopScreen {
             drawCornerWallet(g, 1f);
         } else {
             drawCards(g, layout, reveal);
-            drawBuyButton(g, layout, reveal.btnAlpha, reveal.btnSlideY);
+            if (!walletScene) {
+                drawBuyButton(g, layout, reveal.btnAlpha, reveal.btnSlideY);
+            }
         }
 
         if (reveal.panelAlpha > 0.45f) {
@@ -650,7 +699,7 @@ public class ShopScreen {
             drawCrispIcon(g, assets.dukeSealIconScaled, sealX, sealY, seal);
         }
 
-        String wallet = model.walletAmountText();
+        String wallet = walletHudAmountText();
         String suffix = model.walletSuffix();
         int crownSize = 18;
         int crownGap = 4;
@@ -676,6 +725,75 @@ public class ShopScreen {
         g.setComposite(prev);
     }
 
+    private String walletHudAmountText() {
+        if (state != ShopState.WALLET_REVEAL) {
+            return model.walletAmountText();
+        }
+        int countStart = WALLET_APPEAR_TICKS + WALLET_FLY_TICKS;
+        if (walletRevealTicks < countStart) {
+            return "???";
+        }
+        float t = Math.min(1f, (walletRevealTicks - countStart) / (float) WALLET_COUNT_TICKS);
+        t = t * t * (3f - 2f * t);
+        return String.valueOf(Math.round(model.getWallet() * t));
+    }
+
+    private void drawWalletRevealPouch(Graphics2D g, ShopLayout layout) {
+        if (assets.walletPouch == null) {
+            return;
+        }
+
+        int appearEnd = WALLET_APPEAR_TICKS;
+        int flyEnd = appearEnd + WALLET_FLY_TICKS;
+        float appearT = Math.min(1f, walletRevealTicks / (float) appearEnd);
+        float flyT = walletRevealTicks <= appearEnd ? 0f
+            : Math.min(1f, (walletRevealTicks - appearEnd) / (float) WALLET_FLY_TICKS);
+        flyT = flyT * flyT * (3f - 2f * flyT);
+
+        int baseSize = 64;
+        float scale = 0.35f + appearT * 0.65f - flyT * 0.22f;
+        int pw = Math.round(baseSize * scale);
+        int ph = pw;
+
+        int startX = VIRTUAL_W / 2 - pw / 2;
+        int startY = layout.dialogTop / 2 - ph / 2 + 8;
+        Point target = hudPouchTarget(layout, pw, ph);
+        int px = Math.round(startX + (target.x - startX) * flyT);
+        int py = Math.round(startY + (target.y - startY) * flyT);
+
+        float alpha = Math.min(1f, appearT * 1.1f);
+        if (walletRevealTicks > flyEnd) {
+            alpha = Math.max(0f, 1f - (walletRevealTicks - flyEnd) / (float) WALLET_COUNT_TICKS);
+        }
+
+        Rectangle crop = computeContentBounds(assets.walletPouch);
+        Composite prev = g.getComposite();
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
+        if (crop.width > 0 && crop.height > 0) {
+            g.drawImage(assets.walletPouch, px, py, px + pw, py + ph,
+                crop.x, crop.y, crop.x + crop.width, crop.y + crop.height, null);
+        } else {
+            g.drawImage(assets.walletPouch, px, py, pw, ph, null);
+        }
+
+        if (flyT > 0.05f && flyT < 0.98f) {
+            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha * 0.35f * (1f - flyT)));
+            g.setColor(new Color(255, 215, 100));
+            int trailX = Math.round(startX + (target.x - startX) * flyT * 0.85f);
+            int trailY = Math.round(startY + (target.y - startY) * flyT * 0.85f);
+            g.fillOval(trailX + pw / 2 - 3, trailY + ph / 2 - 3, 6, 6);
+        }
+        g.setComposite(prev);
+    }
+
+    private Point hudPouchTarget(ShopLayout layout, int pw, int ph) {
+        int hudY = layout.hudY;
+        int blockX = layout.hudX + (layout.hudW - 80) / 2;
+        int tx = blockX + 9 - pw / 2;
+        int ty = hudY + (layout.hudH - ph) / 2 - 2;
+        return new Point(tx, ty);
+    }
+
     /** Кошелёк в правом верхнем углу — экран списка категории. */
     private void drawCornerWallet(Graphics2D g, float alpha) {
         if (alpha <= 0.01f) {
@@ -684,7 +802,7 @@ public class ShopScreen {
         Composite prev = g.getComposite();
         g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
 
-        String wallet = model.walletAmountText();
+        String wallet = walletHudAmountText();
         String suffix = model.walletSuffix();
         int crownSize = 16;
         int crownGap = 4;

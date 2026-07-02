@@ -80,6 +80,7 @@ final class ShopAssetCache {
     final BufferedImage statVialEmpty;
     final BufferedImage statVialOverlay;
     final BufferedImage statVialEndCap;
+    final BufferedImage walletPouch;
 
     private ShopAssetCache() {
         long t0 = System.currentTimeMillis();
@@ -133,6 +134,7 @@ final class ShopAssetCache {
         statVialEmpty = loadFirst(BASE + "ui/stat_vial_empty.png");
         statVialOverlay = loadFirst(BASE + "ui/stat_vial_glass_overlay.png");
         statVialEndCap = loadFirst(BAKED + "ui/stat_vial_end_cap.png", BASE + "ui/stat_vial_end_cap.png");
+        walletPouch = loadFirst(BASE + "wallet_pouch_gold.png");
 
         int headerH = panelHeaderH;
         int panelY = hudY + hudH + 6;
