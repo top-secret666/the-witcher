@@ -10,6 +10,13 @@
   ],
   "assets": [
     {
+      "output": "1x/ui/stat_vial_end_cap.png",
+      "size": [
+        14,
+        16
+      ]
+    },
+    {
       "output": "1x/ui/shop_hud_bar.png",
       "size": [
         380,

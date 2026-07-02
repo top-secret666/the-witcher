@@ -181,6 +181,21 @@ def main() -> None:
         ("icons/icon_inventory_bag.png", 32, 32, {"crop": True, "icon": True}),
     ]
 
+    cap_path = SRC / "ui/stat_vial_end_cap.png"
+    if cap_path.is_file():
+        img = Image.open(cap_path)
+        box = content_bounds(img)
+        img = crop_region(img, box)
+        cap_w = max(1, int(img.width * 0.24))
+        left_cap = img.crop((0, 0, cap_w, img.height))
+        out = crisp_resize(left_cap, 14, 16)
+        rel = "ui/stat_vial_end_cap.png"
+        out_path = DST / rel
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        out.save(out_path, optimize=True)
+        manifest.append({"output": f"1x/{rel}", "size": [14, 16]})
+        print(f"  OK {rel} (left end cap): -> 14x16")
+
     for rel, w, h, opts in jobs:
         src_rel = opts.get("src", rel)
         src_path = SRC / src_rel

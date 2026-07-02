@@ -79,6 +79,7 @@ final class ShopAssetCache {
     final BufferedImage inventoryBagIcon;
     final BufferedImage statVialEmpty;
     final BufferedImage statVialOverlay;
+    final BufferedImage statVialEndCap;
 
     private ShopAssetCache() {
         long t0 = System.currentTimeMillis();
@@ -131,6 +132,7 @@ final class ShopAssetCache {
             BASE + "icons/icon_inventory_bag.png", true);
         statVialEmpty = loadFirst(BASE + "ui/stat_vial_empty.png");
         statVialOverlay = loadFirst(BASE + "ui/stat_vial_glass_overlay.png");
+        statVialEndCap = loadFirst(BAKED + "ui/stat_vial_end_cap.png", BASE + "ui/stat_vial_end_cap.png");
 
         int headerH = panelHeaderH;
         int panelY = hudY + hudH + 6;

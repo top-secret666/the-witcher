@@ -11,12 +11,13 @@ final class ShopStatBarRenderer {
     private static final Color DELTA_YELLOW = new Color(175, 135, 28);
     private static Rectangle cachedEmptyCrop;
     private static Rectangle cachedOverlayCrop;
+    private static Rectangle cachedEndCapCrop;
 
     private ShopStatBarRenderer() {
     }
 
     static void draw(Graphics2D g, int x, int y, int w, int h, ShopModel.StatPreview preview,
-                     BufferedImage vialEmpty, BufferedImage vialOverlay) {
+                     BufferedImage vialEmpty, BufferedImage vialOverlay, BufferedImage vialEndCap) {
         drawCardText(g);
         int fontSize = w < 90 ? 7 : (h > 200 ? 10 : 8);
         g.setFont(new Font(Font.SANS_SERIF, Font.BOLD, fontSize));
@@ -49,7 +50,7 @@ final class ShopStatBarRenderer {
             int barY = ry + fm.getHeight() + 2;
             int baseValue = row.value() - row.delta();
             if (useVials) {
-                drawVialComparison(g, x + 8, barY, barW, vialH, vialEmpty, vialOverlay,
+                drawVialComparison(g, x + 8, barY, barW, vialH, vialEmpty, vialOverlay, vialEndCap,
                     colors[i], baseValue, row.value(), row.max());
             } else {
                 drawComparisonBar(g, x + 8, barY, barW, Math.max(5, Math.min(8, rowH / 4)),
@@ -95,6 +96,7 @@ final class ShopStatBarRenderer {
 
     private static void drawVialComparison(Graphics2D g, int x, int y, int w, int h,
                                            BufferedImage vialEmpty, BufferedImage vialOverlay,
+                                           BufferedImage vialEndCap,
                                            Color main, int baseValue, int newValue, int max) {
         Object interp = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
         g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
@@ -120,7 +122,11 @@ final class ShopStatBarRenderer {
             drawCroppedSprite(g, vialOverlay, cropOf(vialOverlay, false), x, y, w, h);
         }
         applyWarmGlassTint(g, x, y, w, h);
-        drawGothicVialTrim(g, x, y, w, h);
+        if (vialEndCap != null) {
+            drawVialEndCaps(g, x, y, w, h, vialEndCap);
+        } else {
+            drawGothicVialTrim(g, x, y, w, h);
+        }
 
         if (interp != null) {
             g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, interp);
@@ -153,7 +159,51 @@ final class ShopStatBarRenderer {
         g.setComposite(saved);
     }
 
-    /** Готическая обмотка только на торцах колбы — как узор на катушке. */
+    private static Rectangle endCapCropOf(BufferedImage img) {
+        if (img == null) {
+            return new Rectangle(0, 0, 0, 0);
+        }
+        if (cachedEndCapCrop != null) {
+            return cachedEndCapCrop;
+        }
+        Rectangle full = ShopScreen.computeContentBoundsPublic(img);
+        int bakedCap = img.getWidth();
+        int bakedH = img.getHeight();
+        // Уже нарезанный bake (узкий торец) — берём целиком
+        if (bakedCap <= 24 && bakedH <= 24 && bakedCap < bakedH * 2) {
+            cachedEndCapCrop = new Rectangle(0, 0, bakedCap, bakedH);
+            return cachedEndCapCrop;
+        }
+        int capW = Math.max(1, Math.round(full.width * 0.24f));
+        cachedEndCapCrop = new Rectangle(full.x, full.y, capW, full.height);
+        return cachedEndCapCrop;
+    }
+
+    private static void drawVialEndCaps(Graphics2D g, int x, int y, int w, int h, BufferedImage vialEndCap) {
+        Rectangle crop = endCapCropOf(vialEndCap);
+        if (crop.width <= 0 || crop.height <= 0) {
+            drawGothicVialTrim(g, x, y, w, h);
+            return;
+        }
+
+        Object interp = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
+        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+
+        int capW = Math.round(h * (crop.width / (float) crop.height));
+        capW = Math.max(8, Math.min(capW, w / 3));
+
+        drawCroppedSprite(g, vialEndCap, crop, x, y, capW, h);
+        int rx = x + w - capW;
+        int sx0 = crop.x;
+        int sx1 = crop.x + crop.width;
+        g.drawImage(vialEndCap, rx, y, rx + capW, y + h, sx1, crop.y, sx0, crop.y + crop.height, null);
+
+        if (interp != null) {
+            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, interp);
+        }
+    }
+
+    /** Готическая обмотка только на торцах колбы — fallback без PNG. */
     private static void drawGothicVialTrim(Graphics2D g, int x, int y, int w, int h) {
         if (w < 14 || h < 6) {
             drawVialRim(g, x, y, w, h);

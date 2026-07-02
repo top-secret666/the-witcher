@@ -1029,7 +1029,7 @@ public class ShopScreen {
 
         if (statEntry != null && w >= 70 && h >= 100) {
             ShopStatBarRenderer.draw(g, x, y, w, h, model.statPreview(statEntry),
-                assets.statVialEmpty, assets.statVialOverlay);
+                assets.statVialEmpty, assets.statVialOverlay, assets.statVialEndCap);
         }
 
         g.setComposite(saved);
