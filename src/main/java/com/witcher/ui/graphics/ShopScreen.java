@@ -42,6 +42,10 @@ public class ShopScreen {
         WALLET_APPEAR_TICKS + WALLET_FLY_TICKS + WALLET_BAG_CLOSE_TICKS + WALLET_COUNT_TICKS;
     private static final int INVENTORY_BAG_SIZE = 40;
     private static final int INVENTORY_BAG_MARGIN = 8;
+    private static final int INVENTORY_PANEL_W = 280;
+    private static final int INVENTORY_PANEL_H = 210;
+    private static final int INVENTORY_POUCH_ICON = 32;
+    private static final int INVENTORY_POUCH_LARGE = 72;
     /** ~1 мин при 30 FPS — оборот сам возвращается на лицо, если игрок AFK. */
     private static final int CARD_FLIP_IDLE_TICKS = 30 * 60;
 
@@ -212,9 +216,13 @@ public class ShopScreen {
     private int walletRevealTicks = 0;
     private boolean walletRevealFromCategory = false;
     private boolean inventoryOpen = false;
+    private boolean inventoryPouchFocused = true;
     private boolean inventoryBagHovered = false;
-    private boolean categoryBuyHovered = false;
+    private boolean inventoryPouchIconHovered = false;
     private final Rectangle inventoryBagBounds = new Rectangle();
+    private final Rectangle inventoryPanelBounds = new Rectangle();
+    private final Rectangle inventoryPouchIconBounds = new Rectangle();
+    private boolean categoryBuyHovered = false;
     private int catalogScrollOffset = 0;
     private float cardFlipT = 0f;
     private int cardFlipTarget = 0;
@@ -337,6 +345,7 @@ public class ShopScreen {
         if (escPressed) {
             if (inventoryOpen) {
                 inventoryOpen = false;
+                inventoryPouchFocused = true;
                 return;
             }
             if (state == ShopState.WALLET_REVEAL) {
@@ -395,6 +404,18 @@ public class ShopScreen {
             return;
         }
 
+        boolean bagUnlocked = !model.needsWalletReveal() && state != ShopState.WALLET_REVEAL;
+        if (bagUnlocked) {
+            updateInventoryInput(mouseX, mouseY, clicked);
+        } else {
+            inventoryBagBounds.setBounds(0, 0, 0, 0);
+            inventoryBagHovered = false;
+        }
+
+        if (inventoryOpen && clicked) {
+            return;
+        }
+
         hoveredIndex = -1;
         hoveredRowIndex = -1;
         categoryBuyHovered = false;
@@ -440,13 +461,7 @@ public class ShopScreen {
 
         if (state == ShopState.CATEGORY && clicked) {
             ShopCategoryAnimator cat = categoryAnimator(layout);
-            if (inventoryOpen) {
-                if (!inventoryPanelContains(mouseX, mouseY)) {
-                    inventoryOpen = false;
-                }
-            } else if (!model.needsWalletReveal() && inventoryBagBounds.contains(mouseX, mouseY)) {
-                inventoryOpen = true;
-            } else if (categoryBuyBounds.contains(mouseX, mouseY) && isBuyButtonEnabled()) {
+            if (categoryBuyBounds.contains(mouseX, mouseY) && isBuyButtonEnabled()) {
                 tryPurchaseSelected();
             } else if (hoveredRowIndex >= 0) {
                 selectedRowIndex = hoveredRowIndex;
@@ -462,11 +477,28 @@ public class ShopScreen {
             }
         }
 
-        if (state == ShopState.CATEGORY && !inventoryOpen && !model.needsWalletReveal()) {
-            inventoryBagHovered = inventoryBagBounds.contains(mouseX, mouseY);
-            if (categoryBuyBounds.width > 0) {
-                categoryBuyHovered = categoryBuyBounds.contains(mouseX, mouseY);
+        if (state == ShopState.CATEGORY && categoryBuyBounds.width > 0) {
+            categoryBuyHovered = categoryBuyBounds.contains(mouseX, mouseY);
+        }
+    }
+
+    private void updateInventoryInput(int mouseX, int mouseY, boolean clicked) {
+        inventoryBagSlot();
+        inventoryBagHovered = !inventoryOpen && inventoryBagBounds.contains(mouseX, mouseY);
+
+        if (inventoryOpen) {
+            inventoryPouchIconHovered = inventoryPouchIconBounds.contains(mouseX, mouseY);
+            if (clicked) {
+                if (inventoryPouchIconBounds.contains(mouseX, mouseY)) {
+                    inventoryPouchFocused = true;
+                } else if (!inventoryPanelBounds.contains(mouseX, mouseY)) {
+                    inventoryOpen = false;
+                    inventoryPouchFocused = true;
+                }
             }
+        } else if (clicked && inventoryBagBounds.contains(mouseX, mouseY)) {
+            inventoryOpen = true;
+            inventoryPouchFocused = true;
         }
     }
 
@@ -494,11 +526,7 @@ public class ShopScreen {
     }
 
     private boolean inventoryPanelContains(int mx, int my) {
-        int pw = 220;
-        int ph = 180;
-        int px = (VIRTUAL_W - pw) / 2;
-        int py = (VIRTUAL_H - ph) / 2 - 20;
-        return mx >= px && my >= py && mx < px + pw && my < py + ph;
+        return inventoryPanelBounds.contains(mx, my);
     }
 
     private boolean categoryCardContains(ShopCategoryAnimator cat, int mx, int my) {
@@ -665,6 +693,10 @@ public class ShopScreen {
         DialogBoxRenderer.drawCompactFramedSpeakerText(g, sw, sh, "Герцог", currentDialog,
             DialogBoxRenderer.DUKE_COLOR, 1f);
 
+        if (!model.needsWalletReveal()) {
+            drawInventoryBag(g, 1f);
+        }
+
         if (inventoryOpen) {
             drawInventoryOverlay(g, sw, sh);
         }
@@ -713,7 +745,7 @@ public class ShopScreen {
     }
 
     private Point inventoryBagSlot() {
-        int bagX = VIRTUAL_W - INVENTORY_BAG_MARGIN - INVENTORY_BAG_SIZE;
+        int bagX = INVENTORY_BAG_MARGIN;
         int bagY = INVENTORY_BAG_MARGIN;
         inventoryBagBounds.setBounds(bagX, bagY, INVENTORY_BAG_SIZE, INVENTORY_BAG_SIZE);
         return new Point(bagX, bagY);
@@ -754,9 +786,6 @@ public class ShopScreen {
         boolean bagOpen = inventoryOpen;
         float openT = bagOpen ? 1f : 0f;
         drawInventoryBagSprite(g, slot.x, slot.y, INVENTORY_BAG_SIZE, openT, inventoryBagHovered, alpha);
-        if (!model.needsWalletReveal()) {
-            drawBagWalletAmount(g, slot.x, slot.y, INVENTORY_BAG_SIZE, alpha);
-        }
     }
 
     private void drawInventoryBagSprite(Graphics2D g, int x, int y, int size, float openT,
@@ -828,54 +857,106 @@ public class ShopScreen {
         g.setColor(Color.BLACK);
         g.fillRect(0, 0, sw, sh);
 
-        int pw = 220;
-        int ph = 180;
-        int px = (sw - pw) / 2;
-        int py = (sh - ph) / 2 - 20;
+        int px = (sw - INVENTORY_PANEL_W) / 2;
+        int py = (sh - INVENTORY_PANEL_H) / 2 - 16;
+        inventoryPanelBounds.setBounds(px, py, INVENTORY_PANEL_W, INVENTORY_PANEL_H);
 
-        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.95f));
-        g.setColor(new Color(18, 12, 8, 240));
-        g.fillRoundRect(px, py, pw, ph, 8, 8);
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.96f));
+        g.setColor(new Color(18, 12, 8, 245));
+        g.fillRoundRect(px, py, INVENTORY_PANEL_W, INVENTORY_PANEL_H, 8, 8);
         g.setColor(new Color(150, 110, 50));
-        g.drawRoundRect(px, py, pw, ph, 8, 8);
+        g.drawRoundRect(px, py, INVENTORY_PANEL_W, INVENTORY_PANEL_H, 8, 8);
 
         drawCrispText(g);
         g.setFont(new Font("Serif", Font.BOLD, 13));
         g.setColor(new Color(255, 220, 140));
         g.drawString("Инвентарь", px + 12, py + 20);
 
-        int itemY = py + 36;
-        g.setFont(new Font("Serif", Font.PLAIN, 11));
-        g.setColor(new Color(255, 215, 120));
-        String pouchLine = "Мешок — " + model.walletAmountText() + model.walletSuffix();
-        g.drawString(truncateToWidth(pouchLine, g.getFontMetrics(), pw - 24), px + 12, itemY);
-        itemY += 18;
+        int iconX = px + 12;
+        int iconY = py + 34;
+        inventoryPouchIconBounds.setBounds(iconX, iconY, INVENTORY_POUCH_ICON, INVENTORY_POUCH_ICON);
+        drawInventoryPouchIcon(g, iconX, iconY, INVENTORY_POUCH_ICON,
+            inventoryPouchFocused, inventoryPouchIconHovered);
 
-        if (assets.walletPouch != null) {
-            int pouchSize = 22;
-            g.drawImage(assets.walletPouch, px + 12, itemY, pouchSize, pouchSize, null);
-            itemY += pouchSize + 6;
+        int detailX = px + 56;
+        int detailY = py + 30;
+        int detailW = INVENTORY_PANEL_W - 68;
+        if (inventoryPouchFocused) {
+            drawInventoryPouchDetail(g, detailX, detailY, detailW);
         }
 
+        int listY = py + 118;
+        g.setFont(new Font("Serif", Font.BOLD, 10));
+        g.setColor(new Color(180, 140, 80));
+        g.drawString("Куплено:", px + 12, listY);
+        listY += 14;
+
+        g.setFont(new Font("Serif", Font.PLAIN, 11));
         g.setColor(new Color(200, 180, 130));
         List<String> items = model.inventoryItemNames();
         if (items.isEmpty()) {
-            g.drawString("Пока пусто…", px + 12, itemY);
+            g.drawString("Пока пусто…", px + 12, listY);
         } else {
             for (String name : items) {
-                if (itemY > py + ph - 16) {
-                    g.drawString("…", px + 12, itemY);
+                if (listY > py + INVENTORY_PANEL_H - 20) {
+                    g.drawString("…", px + 12, listY);
                     break;
                 }
-                g.drawString(truncateToWidth(name, g.getFontMetrics(), pw - 24), px + 12, itemY);
-                itemY += 14;
+                g.drawString("• " + truncateToWidth(name, g.getFontMetrics(), INVENTORY_PANEL_W - 24),
+                    px + 12, listY);
+                listY += 14;
             }
         }
 
         g.setFont(new Font("Serif", Font.ITALIC, 9));
         g.setColor(new Color(140, 120, 80));
-        g.drawString("Esc — закрыть", px + 12, py + ph - 8);
+        g.drawString("Esc — закрыть", px + 12, py + INVENTORY_PANEL_H - 8);
         g.setComposite(prev);
+    }
+
+    private void drawInventoryPouchIcon(Graphics2D g, int x, int y, int size,
+                                        boolean selected, boolean hovered) {
+        if (assets.walletPouch == null) {
+            return;
+        }
+        Composite prev = g.getComposite();
+        if (selected || hovered) {
+            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.9f));
+            g.setColor(selected ? new Color(120, 90, 40) : new Color(80, 60, 30));
+            g.fillRoundRect(x - 2, y - 2, size + 4, size + 4, 4, 4);
+        }
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
+        g.drawImage(assets.walletPouch, x, y, size, size, null);
+        g.setComposite(prev);
+    }
+
+    private void drawInventoryPouchDetail(Graphics2D g, int x, int y, int maxW) {
+        if (assets.walletPouch == null) {
+            return;
+        }
+        int large = INVENTORY_POUCH_LARGE;
+        int pouchX = x + (maxW - large) / 2;
+        int pouchY = y;
+        Rectangle crop = computeContentBounds(assets.walletPouch);
+        if (crop.width > 0 && crop.height > 0) {
+            g.drawImage(assets.walletPouch, pouchX, pouchY, pouchX + large, pouchY + large,
+                crop.x, crop.y, crop.x + crop.width, crop.y + crop.height, null);
+        } else {
+            g.drawImage(assets.walletPouch, pouchX, pouchY, large, large, null);
+        }
+
+        String amount = model.walletAmountText() + model.walletSuffix();
+        String[] lines = {
+            "Золотой мешок с гонораром.",
+            amount + " — плата за Арнскрон."
+        };
+        g.setFont(new Font("Serif", Font.PLAIN, 10));
+        g.setColor(new Color(220, 195, 130));
+        int textY = pouchY + large + 14;
+        for (String line : lines) {
+            g.drawString(truncateToWidth(line, g.getFontMetrics(), maxW), x, textY);
+            textY += 13;
+        }
     }
 
     private void drawDarkOverlay(Graphics2D g, int sw, int sh, ShopLayout layout, float alpha) {
@@ -1137,12 +1218,6 @@ public class ShopScreen {
             }
             drawCatalogRows(g, px, py, cat.listInteractive);
             drawCategoryBuyButton(g, px, py, cat.detailPanelAlpha, cat.listInteractive);
-        }
-
-        if (!model.needsWalletReveal()) {
-            drawInventoryBag(g, 1f);
-        } else {
-            inventoryBagBounds.setBounds(0, 0, 0, 0);
         }
 
         g.setComposite(layer);
