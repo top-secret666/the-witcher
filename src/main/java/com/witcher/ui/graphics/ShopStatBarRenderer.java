@@ -18,8 +18,10 @@ final class ShopStatBarRenderer {
 
         int topInset = Math.max(18, Math.round(h * 0.16f));
         int headerY = y + topInset + fm.getAscent();
+        String header = "ХАРАКТЕРИСТИКИ";
+        int headerX = x + (w - fm.stringWidth(header)) / 2;
         g.setColor(new Color(220, 200, 140));
-        g.drawString("ХАРАКТЕРИСТИКИ", x + 6, headerY);
+        g.drawString(header, headerX, headerY);
 
         int barW = w - 16;
         int rowH = Math.max(28, Math.round(h * 0.20f));
