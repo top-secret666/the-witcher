@@ -177,6 +177,34 @@ public final class ShopModel {
         };
     }
 
+    public boolean canPurchase(ShopCatalogEntry entry) {
+        if (entry == null) {
+            return false;
+        }
+        if (hideWalletAmount) {
+            return true;
+        }
+        if (entry.armour != null && soldArmor.contains(entry.armour)) {
+            return false;
+        }
+        if (entry.armourSet != null && soldSets.contains(entry.armourSet)) {
+            return false;
+        }
+        return wallet >= entry.price;
+    }
+
+    public List<String> inventoryItemNames() {
+        List<String> names = new ArrayList<>();
+        for (Armour armour : playerInventory) {
+            names.add(armour.getName());
+        }
+        return names;
+    }
+
+    public int inventoryItemCount() {
+        return playerInventory.size();
+    }
+
     public PurchaseResult purchase(ShopCatalogEntry entry) {
         if (entry == null) {
             return PurchaseResult.fail(DukeLines.purchaseFailGeneric());
