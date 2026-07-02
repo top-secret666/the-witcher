@@ -8,7 +8,7 @@ import java.awt.image.BufferedImage;
 /** Колбочки с жидкостью на обороте shop_card_back. */
 final class ShopStatBarRenderer {
 
-    private static final Color DELTA_YELLOW = new Color(230, 195, 55);
+    private static final Color DELTA_YELLOW = new Color(175, 135, 28);
     private static Rectangle cachedEmptyCrop;
     private static Rectangle cachedOverlayCrop;
 
@@ -34,9 +34,9 @@ final class ShopStatBarRenderer {
         int startY = headerY + 10;
         String[] labels = {"Защита", "Выносл.", "Знаки"};
         Color[] colors = {
-            new Color(190, 45, 45),
-            new Color(55, 150, 85),
-            new Color(55, 110, 190)
+            new Color(140, 28, 32),
+            new Color(28, 110, 62),
+            new Color(32, 72, 145)
         };
 
         boolean useVials = vialEmpty != null;
@@ -119,6 +119,7 @@ final class ShopStatBarRenderer {
         if (vialOverlay != null) {
             drawCroppedSprite(g, vialOverlay, cropOf(vialOverlay, false), x, y, w, h);
         }
+        drawVialRim(g, x, y, w, h);
 
         if (interp != null) {
             g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, interp);
@@ -133,6 +134,36 @@ final class ShopStatBarRenderer {
         } else {
             g.drawImage(img, dx, dy, dw, dh, null);
         }
+    }
+
+    /** Доп. ободок поверх stat_vial_empty — тёмная кромка + латунный и холодный блик стекла. */
+    private static void drawVialRim(Graphics2D g, int x, int y, int w, int h) {
+        int arc = Math.max(4, h);
+        Composite saved = g.getComposite();
+
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.85f));
+        g.setColor(new Color(28, 20, 12));
+        g.drawRoundRect(x, y, w - 1, h - 1, arc, arc);
+
+        g.setColor(new Color(95, 72, 38, 200));
+        g.drawRoundRect(x + 1, y + 1, w - 3, h - 3, arc - 2, arc - 2);
+
+        g.setColor(new Color(175, 145, 75, 140));
+        g.drawRoundRect(x + 2, y + 2, w - 5, h - 5, arc - 3, arc - 3);
+
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.55f));
+        g.setColor(new Color(210, 230, 255));
+        g.drawLine(x + 4, y + 2, x + w - 5, y + 2);
+        if (h > 6) {
+            g.setColor(new Color(210, 230, 255, 120));
+            g.drawLine(x + 5, y + 3, x + w - 6, y + 3);
+        }
+
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.35f));
+        g.setColor(new Color(255, 200, 90));
+        g.drawLine(x + 5, y + h - 2, x + w - 6, y + h - 2);
+
+        g.setComposite(saved);
     }
 
     private static void drawLiquidComparison(Graphics2D g, int x, int y, int w, int h,
@@ -168,26 +199,62 @@ final class ShopStatBarRenderer {
             return;
         }
         int r = Math.max(1, height / 2);
-        Color top = brighten(base, 0.42f);
-        Color mid = base;
-        Color bottom = darken(base, 0.28f);
-        Paint paint = new LinearGradientPaint(
-            x, y, x, y + height,
-            new float[]{0f, 0.38f, 1f},
-            new Color[]{top, mid, bottom});
-        Paint saved = g.getPaint();
-        g.setPaint(paint);
-        g.fillRoundRect(x, y, width, height, r, r);
-        g.setPaint(saved);
 
-        g.setColor(new Color(255, 255, 255, 45));
-        g.fillRoundRect(x + 1, y + 1, Math.max(1, width - 2), Math.max(1, height / 3), r, r);
-        if (width > 2) {
-            g.setColor(brighten(base, 0.5f));
-            g.fillRect(x + width - 1, y + 1, 1, Math.max(1, height - 2));
+        Color deep = darken(base, 0.62f);
+        Color mid = darken(base, 0.22f);
+        Color body = darken(base, 0.05f);
+        Color glow = brighten(base, 0.18f);
+        Color core = brighten(base, 0.38f);
+
+        Paint vert = new LinearGradientPaint(
+            x, y, x, y + height,
+            new float[]{0f, 0.22f, 0.55f, 0.82f, 1f},
+            new Color[]{deep, mid, body, glow, core});
+        Paint saved = g.getPaint();
+        g.setPaint(vert);
+        g.fillRoundRect(x, y, width, height, r, r);
+
+        if (width > 4) {
+            Color edgeDark = darken(base, 0.45f);
+            Color edgeLight = brighten(base, 0.12f);
+            g.setPaint(new LinearGradientPaint(
+                x, y, x + width, y,
+                new float[]{0f, 0.15f, 0.5f, 0.85f, 1f},
+                new Color[]{edgeDark, body, glow, body, edgeDark}));
+            g.fillRoundRect(x + 1, y + 1, Math.max(1, width - 2), Math.max(1, height - 2), r - 1, r - 1);
         }
-        g.setColor(new Color(0, 0, 0, 50));
+
+        g.setPaint(saved);
+        drawLiquidShimmers(g, x, y, width, height, brighten(base, 0.55f));
+        drawLiquidMeniscus(g, x, y, width, height, core);
+    }
+
+    /** Мелкие блики внутри жидкости — как искры в зелье. */
+    private static void drawLiquidShimmers(Graphics2D g, int x, int y, int w, int h, Color spark) {
+        int sparks = Math.max(2, w / 6);
+        for (int i = 0; i < sparks; i++) {
+            int seed = x * 31 + y * 17 + w * 13 + i * 23;
+            int sx = x + 2 + Math.floorMod(seed, Math.max(1, w - 3));
+            int sy = y + 1 + Math.floorMod(seed / 7, Math.max(1, h - 2));
+            int alpha = 70 + Math.floorMod(seed / 11, 110);
+            g.setColor(new Color(spark.getRed(), spark.getGreen(), spark.getBlue(), alpha));
+            g.fillRect(sx, sy, 1, 1);
+            if (w > 10 && i % 3 == 0) {
+                g.setColor(new Color(255, 255, 255, alpha / 2));
+                g.fillRect(sx + 1, sy, 1, 1);
+            }
+        }
+    }
+
+    private static void drawLiquidMeniscus(Graphics2D g, int x, int y, int width, int height, Color edge) {
+        g.setColor(new Color(0, 0, 0, 65));
         g.fillRect(x, y + height - 1, width, 1);
+        if (width > 2) {
+            g.setColor(new Color(edge.getRed(), edge.getGreen(), edge.getBlue(), 160));
+            g.fillRect(x + width - 1, y + 1, 1, Math.max(1, height - 2));
+            g.setColor(new Color(255, 255, 255, 35));
+            g.fillRect(x + 1, y + 1, Math.max(1, width / 3), 1);
+        }
     }
 
     private static void drawComparisonBar(Graphics2D g, int x, int y, int w, int h,
