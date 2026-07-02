@@ -720,9 +720,6 @@ public class ShopScreen {
             drawPurchaseRevealScene(g, sw, sh, layout);
             DialogBoxRenderer.drawCompactFramedSpeakerText(g, sw, sh, "Герцог", currentDialog,
                 DialogBoxRenderer.DUKE_COLOR, 1f);
-            if (!model.needsWalletReveal()) {
-                drawInventoryBag(g, 1f);
-            }
             drawCursor(g, mouseX, mouseY);
             g.dispose();
             return;
@@ -1017,7 +1014,7 @@ public class ShopScreen {
             g.drawRoundRect(x - 1, y - 1, size + 2, size + 2, 6, 6);
         }
 
-        if (!model.needsWalletReveal() && openT < 0.05f && assets.walletPouch != null) {
+        if (shouldShowPouchOnBag(openT) && assets.walletPouch != null) {
             int pouchSize = Math.max(12, size / 3);
             int pouchX = x + (size - pouchSize) / 2;
             int pouchY = y + size / 2 - pouchSize / 2 - 2;
@@ -1027,13 +1024,27 @@ public class ShopScreen {
         g.setComposite(prev);
     }
 
+    private boolean shouldShowPouchOnBag(float openT) {
+        if (model.needsWalletReveal()) {
+            return false;
+        }
+        if (state == ShopState.PURCHASE_REVEAL || state == ShopState.WALLET_REVEAL) {
+            return false;
+        }
+        return openT < 0.001f;
+    }
+
     private BufferedImage pickBagSprite(float openT, boolean hovered) {
         BufferedImage[] frames = assets.inventoryBagOpenFrames;
-        if (openT > 0.001f && frames != null && frames.length > 0) {
-            int frame = Math.min(frames.length - 1,
-                Math.max(0, Math.round(openT * (frames.length - 1))));
-            if (frames[frame] != null) {
-                return frames[frame];
+        if (frames != null && frames.length > 0) {
+            if (openT > 0.001f) {
+                int frame = Math.min(frames.length - 1,
+                    Math.max(0, Math.round(openT * (frames.length - 1))));
+                if (frames[frame] != null) {
+                    return frames[frame];
+                }
+            } else if (state == ShopState.PURCHASE_REVEAL || state == ShopState.WALLET_REVEAL) {
+                return frames[0];
             }
         }
         if (hovered && openT < 0.05f && assets.inventoryBagHover != null) {
