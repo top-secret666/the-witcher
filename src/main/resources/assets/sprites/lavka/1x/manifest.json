@@ -154,6 +154,14 @@
       "bytes": 3116
     },
     {
+      "output": "1x/icons/icon_inventory_bag.png",
+      "size": [
+        32,
+        32
+      ],
+      "bytes": 2720
+    },
+    {
       "output": "1x/geralt_portrait_shop.png",
       "size": [
         124,
