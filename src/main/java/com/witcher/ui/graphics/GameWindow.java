@@ -31,6 +31,7 @@ public class GameWindow {
     private boolean introActive = false;
     private boolean shopActive = false;
     private boolean introAdvancePending = false;
+    private int introWheelPending = 0;
     private boolean shopExitRequested = false;
 
     // Ввод для меню в координатах виртуального экрана
@@ -124,7 +125,13 @@ public class GameWindow {
             }
         });
 
-        renderer.addMouseWheelListener(e -> shopWheelPending += e.getWheelRotation());
+        renderer.addMouseWheelListener(e -> {
+            if (introActive) {
+                introWheelPending += e.getWheelRotation();
+            } else {
+                shopWheelPending += e.getWheelRotation();
+            }
+        });
 
         renderer.addKeyListener(new KeyAdapter() {
             @Override
@@ -571,13 +578,13 @@ public class GameWindow {
                 menuActivate = false;
                 menuExitRequested = false;
             } else if (introActive) {
-                boolean advance = introAdvancePending || mouseClickPending;
-                introScreen.update(advance);
+                introScreen.update(introAdvancePending, mouseVX, mouseVY, mouseClickPending, introWheelPending);
                 introScreen.render(renderer.screen, mouseVX, mouseVY);
                 renderer.present();
 
                 introAdvancePending = false;
                 mouseClickPending = false;
+                introWheelPending = 0;
 
                 if (introScreen.isFinished()) {
                     introActive = false;

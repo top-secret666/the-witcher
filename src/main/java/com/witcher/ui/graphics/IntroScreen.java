@@ -22,6 +22,8 @@ import java.util.Random;
 public class IntroScreen {
 
     private static final int SHOP_ANIMATION_ENTRY_INDEX = 5;
+    /** Длительность смены stranger → duke в стиле VN (~1.4 с при 30 FPS). */
+    private static final int VN_RIGHT_MORPH_TICKS = 42;
 
     // ─── Состояния ───
     private boolean finished = false;
@@ -67,8 +69,11 @@ public class IntroScreen {
     private String prevRightCharacter = "none"; // для отслеживания смены
     private Rectangle rightCharacterBounds = null; // для эффекта смены
 
-    // Вспышка при смене персонажа (0..1, затухает)
+    // Вспышка при смене персонажа (0..1, затухает) — не используется для stranger→duke
     private float switchFlash = 0f;
+    /** Кроссфейд stranger → duke (визуальная новелла). */
+    private boolean rightMorphActive = false;
+    private float rightMorphT = 0f;
     // Частицы-искры при смене персонажа
     private final List<float[]> switchParticles = new ArrayList<>(); // [x,y,vx,vy,life,maxLife,r,g,b]
     // Подсилка для эффекта нового правого персонажа
@@ -102,6 +107,14 @@ public class IntroScreen {
     private int typeTickCounter = 0;
     private static final int TICKS_PER_CHAR = 2;
     private boolean waitingForAdvance = false;
+
+    // ─── VN UI: история и назад ───
+    private boolean historyOpen = false;
+    private int historyScroll = 0;
+    private Rectangle backButtonBounds = new Rectangle();
+    private Rectangle historyButtonBounds = new Rectangle();
+    private Rectangle historyPanelBounds = new Rectangle();
+    private int shopAnimStartedForEntry = -1;
 
     // ─── Частицы (огненные искры от факелов) ───
     private final List<float[]> sparks = new ArrayList<>();
@@ -218,7 +231,7 @@ public class IntroScreen {
     }
 
     // ─── Обновление ───
-    public void update(boolean advancePressed) {
+    public void update(boolean advanceKey, int mouseX, int mouseY, boolean mouseClicked, int wheelNotches) {
         tick++;
 
         if (fadeAlpha < 1f) fadeAlpha = Math.min(1f, fadeAlpha + 0.025f);
@@ -226,6 +239,38 @@ public class IntroScreen {
         if (currentEntry >= entries.size()) {
             finished = true;
             return;
+        }
+
+        int sw = 480;
+        int sh = 360;
+        layoutVnButtons(sw, sh);
+
+        if (historyOpen) {
+            if (wheelNotches != 0) {
+                historyScroll = Math.max(0, historyScroll + wheelNotches * 18);
+            }
+            if (mouseClicked) {
+                if (!historyPanelBounds.contains(mouseX, mouseY)) {
+                    historyOpen = false;
+                }
+            }
+            return;
+        }
+
+        boolean advance = advanceKey;
+        if (mouseClicked) {
+            if (historyButtonBounds.contains(mouseX, mouseY)) {
+                historyOpen = true;
+                historyScroll = 0;
+                return;
+            }
+            if (backButtonBounds.contains(mouseX, mouseY)) {
+                if (currentEntry > 0) {
+                    goToPreviousEntry();
+                }
+                return;
+            }
+            advance = true;
         }
 
         DialogEntry entry = entries.get(currentEntry);
@@ -251,11 +296,17 @@ public class IntroScreen {
             rightEmotion = dukeSprite;
         }
 
-        // Детектим смену правого персонажа (stranger → duke)
-        if (!newRight.equals(prevRightCharacter) && !"none".equals(newRight) && !"none".equals(prevRightCharacter)
-                && !newRight.equals(prevRightCharacter)) {
+        // Смена правого персонажа: stranger → duke — мягкий VN-кроссфейд вместо вспышек
+        if (!newRight.equals(prevRightCharacter) && isStrangerToDukeReveal(prevRightCharacter, newRight)) {
+            rightMorphActive = true;
+            rightMorphT = 0f;
+            strangerSlide = 1f;
+            dukeSlide = 1f;
+            switchFlash = 0f;
+            switchParticles.clear();
+            rightSwitchParticles.clear();
+        } else if (!newRight.equals(prevRightCharacter) && !"none".equals(newRight) && !"none".equals(prevRightCharacter)) {
             switchFlash = 1.0f;
-            // Генерируем частицы-искры при переключении
             for (int i = 0; i < 30; i++) {
                 float px = 0.75f * 480 + (rng.nextFloat() - 0.5f) * 90;
                 float py = 0.35f * 360 + (rng.nextFloat() - 0.5f) * 90;
@@ -266,7 +317,6 @@ public class IntroScreen {
                 float cb = 30 + rng.nextInt(50);
                 switchParticles.add(new float[]{px, py, vx, vy, 0, 28 + rng.nextInt(26), cr, cg, cb});
             }
-            // Сетка шипящих частиц вокруг герцога
             rightSwitchParticles.clear();
             if (rightCharacterBounds != null) {
                 for (int i = 0; i < 28; i++) {
@@ -283,14 +333,25 @@ public class IntroScreen {
         prevRightCharacter = newRight;
         rightCharacter = newRight;
 
+        if (rightMorphActive) {
+            rightMorphT = Math.min(1f, rightMorphT + 1f / VN_RIGHT_MORPH_TICKS);
+            if (rightMorphT >= 1f) {
+                rightMorphActive = false;
+                strangerSlide = 0f;
+                dukeSlide = 1f;
+            }
+        }
+
         // Slide анимации (отдельные для stranger и duke)
         float slideSpeed = 0.04f;
         geraltSlide = geraltVisible ? Math.min(1f, geraltSlide + slideSpeed) : Math.max(0f, geraltSlide - slideSpeed);
 
         boolean strangerWanted = "stranger".equals(rightCharacter);
         boolean dukeWanted = "duke".equals(rightCharacter);
-        strangerSlide = strangerWanted ? Math.min(1f, strangerSlide + slideSpeed) : Math.max(0f, strangerSlide - slideSpeed * 1.5f);
-        dukeSlide = dukeWanted ? Math.min(1f, dukeSlide + slideSpeed) : Math.max(0f, dukeSlide - slideSpeed * 1.5f);
+        if (!rightMorphActive) {
+            strangerSlide = strangerWanted ? Math.min(1f, strangerSlide + slideSpeed) : Math.max(0f, strangerSlide - slideSpeed * 1.5f);
+            dukeSlide = dukeWanted ? Math.min(1f, dukeSlide + slideSpeed) : Math.max(0f, dukeSlide - slideSpeed * 1.5f);
+        }
 
         // Анимация активации (плавное нарастание/затухание)
         boolean leftActive = "left".equals(entry.activeSide);
@@ -325,10 +386,18 @@ public class IntroScreen {
 
         boolean shopSceneReached = currentEntry >= SHOP_ANIMATION_ENTRY_INDEX;
         boolean finalShopScene = currentEntry == SHOP_ANIMATION_ENTRY_INDEX;
-        boolean finalDialogueFinished = finalShopScene && charIndex >= totalChars;
-        float revealTarget = shopSceneReached && (currentEntry > SHOP_ANIMATION_ENTRY_INDEX || finalDialogueFinished) ? 1f : 0f;
+
+        if (currentEntry == SHOP_ANIMATION_ENTRY_INDEX && shopAnimStartedForEntry < SHOP_ANIMATION_ENTRY_INDEX) {
+            shopFrameIndex = 0;
+            shopLastFrameTime = System.currentTimeMillis();
+            shopAnimStartedForEntry = SHOP_ANIMATION_ENTRY_INDEX;
+        } else if (currentEntry < SHOP_ANIMATION_ENTRY_INDEX) {
+            shopAnimStartedForEntry = -1;
+        }
+
+        float revealTarget = shopSceneReached ? 1f : 0f;
         if (shopReveal < revealTarget) {
-            shopReveal = Math.min(revealTarget, shopReveal + 0.02f);
+            shopReveal = Math.min(revealTarget, shopReveal + 0.05f);
         } else {
             shopReveal = Math.max(revealTarget, shopReveal - 0.05f);
         }
@@ -366,14 +435,14 @@ public class IntroScreen {
         }
 
         if (waitingForAdvance) {
-            if (advancePressed) {
+            if (advance) {
                 currentEntry++;
                 charIndex = 0;
                 typeTickCounter = 0;
                 waitingForAdvance = false;
             }
         } else {
-            if (advancePressed && charIndex < totalChars) {
+            if (advance && charIndex < totalChars) {
                 charIndex = totalChars;
                 waitingForAdvance = true;
             } else {
@@ -478,22 +547,37 @@ public class IntroScreen {
                 BufferedImage geraltEmotionBase = usingShopSprites && geraltEmotionShopSprite != null ? geraltEmotionShopSprite : geraltEmotionSprite;
                 BufferedImage leftSpriteToShow = ("left".equals(activeSide) && geraltEmotionBase != null) ? geraltEmotionBase : geraltBase;
                         drawCharacterEnhanced(g, sw, sh, leftSpriteToShow, geraltSlide, true,
-                            "left".equals(activeSide), leftActiveAnim, leftForceOpaque, false, false);
+                            "left".equals(activeSide), leftActiveAnim, leftForceOpaque, false, false, 1f);
 
-            // Рисуем правых персонажей с кроссфейдом (stranger уходит, duke появляется)
-            if (strangerSlide > 0.001f) {
-                drawCharacterEnhanced(g, sw, sh, strangerSprite, strangerSlide, false,
-                    "right".equals(activeSide) && "stranger".equals(rightCharacter), rightActiveAnim, false, false, false);
-            }
-            if (dukeSlide > 0.001f) {
-                // Для герцога используем эмоциональный спрайт (смех), если он активен и говорит
-                BufferedImage dukeBase = usingShopSprites && dukeShopSprite != null ? dukeShopSprite : dukeSprite;
-                BufferedImage dukeEmotionBase = usingShopSprites && dukeLaughShopSprite != null ? dukeLaughShopSprite : dukeLaughSprite;
-                BufferedImage rightSpriteToShow = ("right".equals(activeSide) && dukeEmotionBase != null) ? dukeEmotionBase : dukeBase;
-                boolean liftDuke = usingShopSprites && rightSpriteToShow == dukeLaughShopSprite;
-                boolean raiseDuke = usingShopSprites && rightSpriteToShow == dukeLaughShopSprite;
-                drawCharacterEnhanced(g, sw, sh, rightSpriteToShow, dukeSlide, false,
-                    "right".equals(activeSide) && "duke".equals(rightCharacter), rightActiveAnim, rightForceOpaque, liftDuke, raiseDuke);
+            // Правый персонаж: VN-кроссфейд stranger → duke или обычный slide
+            if (rightMorphActive) {
+                float t = easeInOutCubic(rightMorphT);
+                float strangerA = 1f - t;
+                float dukeA = t;
+                if (strangerA > 0.01f && strangerSprite != null) {
+                    drawCharacterEnhanced(g, sw, sh, strangerSprite, 1f, false,
+                        false, 0f, false, false, false, strangerA);
+                }
+                if (dukeA > 0.01f) {
+                    BufferedImage dukeBase = usingShopSprites && dukeShopSprite != null ? dukeShopSprite : dukeSprite;
+                    drawCharacterEnhanced(g, sw, sh, dukeBase, 1f, false,
+                        "right".equals(activeSide), rightActiveAnim * dukeA, rightForceOpaque, false, false, dukeA);
+                }
+                drawVnMorphDarken(g, sw, sh, t);
+            } else {
+                if (strangerSlide > 0.001f) {
+                    drawCharacterEnhanced(g, sw, sh, strangerSprite, strangerSlide, false,
+                        "right".equals(activeSide) && "stranger".equals(rightCharacter), rightActiveAnim, false, false, false, 1f);
+                }
+                if (dukeSlide > 0.001f) {
+                    BufferedImage dukeBase = usingShopSprites && dukeShopSprite != null ? dukeShopSprite : dukeSprite;
+                    BufferedImage dukeEmotionBase = usingShopSprites && dukeLaughShopSprite != null ? dukeLaughShopSprite : dukeLaughSprite;
+                    BufferedImage rightSpriteToShow = ("right".equals(activeSide) && dukeEmotionBase != null) ? dukeEmotionBase : dukeBase;
+                    boolean liftDuke = usingShopSprites && rightSpriteToShow == dukeLaughShopSprite;
+                    boolean raiseDuke = usingShopSprites && rightSpriteToShow == dukeLaughShopSprite;
+                    drawCharacterEnhanced(g, sw, sh, rightSpriteToShow, dukeSlide, false,
+                        "right".equals(activeSide) && "duke".equals(rightCharacter), rightActiveAnim, rightForceOpaque, liftDuke, raiseDuke, 1f);
+                }
             }
 
             // ── Частицы смены персонажа ── (пропускаем, если показываем непрозрачную эмоцию)
@@ -512,7 +596,7 @@ public class IntroScreen {
         }
 
         // ── Красивая анимация появления герцога (золотые молнии + энергетические волны) ──
-        if (!hideCharactersForShopScene && switchFlash > 0.01f && rightCharacterBounds != null && !rightForceOpaque) {
+        if (!hideCharactersForShopScene && !rightMorphActive && switchFlash > 0.01f && rightCharacterBounds != null && !rightForceOpaque) {
             Composite prevF = g.getComposite();
             int cx = rightCharacterBounds.x + rightCharacterBounds.width / 2;
             int cy = rightCharacterBounds.y + rightCharacterBounds.height / 2;
@@ -607,14 +691,23 @@ public class IntroScreen {
             drawDialogBox(g, sw, sh);
         }
 
+        if (fadeAlpha > 0.2f && !finished) {
+            drawVnButtons(g, sw, sh, mouseX, mouseY);
+        }
+
+        if (historyOpen) {
+            drawHistoryOverlay(g, sw, sh);
+        }
+
         g.dispose();
     }
 
     private void drawCharacterEnhanced(Graphics2D g, int sw, int sh,
                                       BufferedImage sprite, float slide,
                                       boolean isLeft, boolean isActive, float activeAnim,
-                                      boolean forceOpaque, boolean liftForShop, boolean raiseAboveOthers) {
-        if (sprite == null || slide <= 0.001f) return;
+                                      boolean forceOpaque, boolean liftForShop, boolean raiseAboveOthers,
+                                      float alphaMul) {
+        if (sprite == null || slide <= 0.001f || alphaMul <= 0.001f) return;
 
         // Размер персонажа — примерно 85% высоты экрана
         float baseCharScale = (sh * 0.85f) / sprite.getHeight();
@@ -677,10 +770,10 @@ public class IntroScreen {
         // Используем более высокое качество интерполяции для лучшего вида спрайтов
         g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
         g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-        float characterAlpha = fadeAlpha * Math.min(1f, 0.2f + slide * 0.9f);
+        float characterAlpha = fadeAlpha * Math.min(1f, 0.2f + slide * 0.9f) * alphaMul;
         // If requested (emotion sprite while active), draw fully opaque for clear face
         if (forceOpaque && isActive) {
-            characterAlpha = fadeAlpha;
+            characterAlpha = fadeAlpha * alphaMul;
         }
         g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, characterAlpha));
         g.drawImage(sprite, cx, cy, cw, ch, null);
@@ -819,6 +912,208 @@ public class IntroScreen {
     }
 
     // ─── Утилиты ───
+
+    private static boolean isStrangerToDukeReveal(String from, String to) {
+        return "stranger".equals(from) && "duke".equals(to);
+    }
+
+    /** Тёмная вуаль в середине кроссфейда — классический приём VN. */
+    private void drawVnMorphDarken(Graphics2D g, int sw, int sh, float morphT) {
+        float peak = (float) Math.sin(morphT * Math.PI);
+        float alpha = peak * 0.78f * fadeAlpha;
+        if (alpha <= 0.01f) {
+            return;
+        }
+        Composite prev = g.getComposite();
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
+        g.setColor(new Color(6, 4, 10));
+        g.fillRect(0, 0, sw, sh);
+        g.setComposite(prev);
+    }
+
+    private void layoutVnButtons(int sw, int sh) {
+        int btnH = Math.max(18, (int) (sh * 0.058f));
+        int btnPad = Math.max(6, (int) (sw * 0.018f));
+        int backW = Math.max(58, (int) (sw * 0.13f));
+        int histW = Math.max(72, (int) (sw * 0.16f));
+        int y = Math.max(4, (int) (sh * 0.018f));
+        backButtonBounds.setBounds(btnPad, y, backW, btnH);
+        historyButtonBounds.setBounds(sw - btnPad - histW, y, histW, btnH);
+
+        int panelW = Math.max(280, (int) (sw * 0.82f));
+        int panelH = Math.max(200, (int) (sh * 0.72f));
+        historyPanelBounds.setBounds((sw - panelW) / 2, (sh - panelH) / 2, panelW, panelH);
+    }
+
+    private void drawVnButtons(Graphics2D g, int sw, int sh, int mouseX, int mouseY) {
+        layoutVnButtons(sw, sh);
+        boolean backEnabled = currentEntry > 0;
+        drawVnButton(g, backButtonBounds, "Назад", backEnabled,
+            backEnabled && backButtonBounds.contains(mouseX, mouseY));
+        drawVnButton(g, historyButtonBounds, "История", true,
+            historyButtonBounds.contains(mouseX, mouseY));
+    }
+
+    private void drawVnButton(Graphics2D g, Rectangle r, String label, boolean enabled, boolean hover) {
+        int alpha255 = Math.max(0, Math.min(255, (int) (fadeAlpha * (enabled ? 230 : 120))));
+        Color fill = enabled
+            ? (hover ? new Color(48, 36, 18, alpha255) : new Color(28, 20, 10, alpha255))
+            : new Color(18, 14, 8, alpha255);
+        Color border = enabled
+            ? (hover ? new Color(255, 215, 90, alpha255) : new Color(180, 130, 45, alpha255))
+            : new Color(80, 60, 30, alpha255);
+        Color text = enabled
+            ? (hover ? new Color(255, 235, 170) : new Color(210, 185, 120))
+            : new Color(100, 85, 60);
+
+        g.setColor(fill);
+        g.fillRect(r.x, r.y, r.width, r.height);
+        g.setColor(border);
+        g.drawRect(r.x, r.y, r.width, r.height);
+        if (hover && enabled) {
+            g.setColor(new Color(255, 215, 0, Math.max(0, Math.min(255, (int) (fadeAlpha * 80)))));
+            g.drawRect(r.x + 1, r.y + 1, r.width - 2, r.height - 2);
+        }
+
+        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+        int fontSize = Math.max(11, r.height - 6);
+        g.setFont(new Font("Serif", Font.BOLD, fontSize));
+        FontMetrics fm = g.getFontMetrics();
+        int tx = r.x + (r.width - fm.stringWidth(label)) / 2;
+        int ty = r.y + (r.height + fm.getAscent() - fm.getDescent()) / 2;
+        g.setColor(new Color(0, 0, 0, Math.max(0, Math.min(255, (int) (fadeAlpha * 140)))));
+        g.drawString(label, tx + 1, ty + 1);
+        g.setColor(new Color(text.getRed(), text.getGreen(), text.getBlue(),
+            Math.max(0, Math.min(255, (int) (fadeAlpha * 255)))));
+        g.drawString(label, tx, ty);
+        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
+    }
+
+    private void drawHistoryOverlay(Graphics2D g, int sw, int sh) {
+        layoutVnButtons(sw, sh);
+
+        Composite prev = g.getComposite();
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, fadeAlpha * 0.62f));
+        g.setColor(Color.BLACK);
+        g.fillRect(0, 0, sw, sh);
+        g.setComposite(prev);
+
+        Rectangle panel = historyPanelBounds;
+        DialogBoxRenderer.drawBox(g, panel.x, panel.y, panel.width, panel.height, fadeAlpha);
+
+        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+        int fontSize = Math.max(11, (int) (sh * 0.034f));
+        int lineH = fontSize + 3;
+        int pad = Math.max(10, (int) (sw * 0.022f));
+        int textX = panel.x + pad;
+        int textMaxW = panel.width - pad * 2;
+        int contentTop = panel.y + pad + fontSize;
+        int contentBottom = panel.y + panel.height - pad;
+
+        g.setFont(new Font("Serif", Font.BOLD, fontSize + 1));
+        g.setColor(new Color(218, 165, 32, Math.max(0, Math.min(255, (int) (fadeAlpha * 255)))));
+        g.drawString("История", textX, panel.y + pad + g.getFontMetrics().getAscent());
+
+        g.setFont(new Font("Serif", Font.PLAIN, fontSize));
+        FontMetrics fm = g.getFontMetrics();
+        List<String> logLines = buildHistoryLogLines();
+        int totalHeight = logLines.size() * lineH;
+        int maxScroll = Math.max(0, totalHeight - (contentBottom - contentTop));
+        historyScroll = Math.min(historyScroll, maxScroll);
+
+        int y = contentTop + fontSize - historyScroll;
+        for (String line : logLines) {
+            if (y > contentBottom) {
+                break;
+            }
+            boolean isSpeaker = line.startsWith("[") && line.endsWith("]");
+            g.setColor(isSpeaker
+                ? new Color(180, 150, 90, Math.max(0, Math.min(255, (int) (fadeAlpha * 255))))
+                : new Color(210, 195, 155, Math.max(0, Math.min(255, (int) (fadeAlpha * 255)))));
+            List<String> wrapped = line.isEmpty()
+                ? List.of("")
+                : DialogBoxRenderer.wrapLine(line, fm, textMaxW);
+            for (String wl : wrapped) {
+                if (y > contentBottom) {
+                    break;
+                }
+                if (y >= contentTop - lineH) {
+                    g.drawString(wl, textX, y);
+                }
+                y += lineH;
+            }
+        }
+
+        g.setFont(new Font("Serif", Font.ITALIC, Math.max(10, fontSize - 1)));
+        g.setColor(new Color(150, 130, 95, Math.max(0, Math.min(255, (int) (fadeAlpha * 200)))));
+        String hint = "Колёсико — прокрутка  ·  клик снаружи — закрыть";
+        g.drawString(hint, textX, panel.y + panel.height - pad);
+
+        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
+    }
+
+    private List<String> buildHistoryLogLines() {
+        List<String> lines = new ArrayList<>();
+        for (int i = 0; i <= currentEntry && i < entries.size(); i++) {
+            DialogEntry e = entries.get(i);
+            String speakerLabel = e.speaker != null ? e.speaker : "Повествование";
+            lines.add("[" + speakerLabel + "]");
+            String text = i < currentEntry ? e.text : e.text.substring(0, Math.min(charIndex, e.text.length()));
+            for (String part : text.split("\n", -1)) {
+                lines.add(part);
+            }
+            if (i < currentEntry) {
+                lines.add("");
+            }
+        }
+        return lines;
+    }
+
+    private void goToPreviousEntry() {
+        if (currentEntry <= 0) {
+            return;
+        }
+        currentEntry--;
+        charIndex = 0;
+        typeTickCounter = 0;
+        waitingForAdvance = false;
+        historyOpen = false;
+        historyScroll = 0;
+
+        if (currentEntry < SHOP_ANIMATION_ENTRY_INDEX) {
+            shopReveal = 0f;
+            shopFrameIndex = 0;
+            shopAnimStartedForEntry = -1;
+        }
+
+        DialogEntry entry = entries.get(currentEntry);
+        geraltVisible = "geralt".equals(entry.leftChar);
+        rightCharacter = entry.rightChar;
+        prevRightCharacter = entry.rightChar;
+        geraltSlide = geraltVisible ? 1f : 0f;
+        strangerSlide = "stranger".equals(entry.rightChar) ? 1f : 0f;
+        dukeSlide = "duke".equals(entry.rightChar) ? 1f : 0f;
+        rightMorphActive = false;
+        rightMorphT = 0f;
+        switchFlash = 0f;
+        switchParticles.clear();
+        rightSwitchParticles.clear();
+        leftEmotion = null;
+        rightEmotion = null;
+    }
+
+    private float easeInOutCubic(float t) {
+        if (t >= 1f) {
+            return 1f;
+        }
+        if (t <= 0f) {
+            return 0f;
+        }
+        if (t < 0.5f) {
+            return 4f * t * t * t;
+        }
+        return 1f - (float) Math.pow(-2f * t + 2f, 3) / 2f;
+    }
 
     private float easeOut(float t) {
         return 1f - (1f - t) * (1f - t);
