@@ -119,6 +119,7 @@ final class ShopStatBarRenderer {
         if (vialOverlay != null) {
             drawCroppedSprite(g, vialOverlay, cropOf(vialOverlay, false), x, y, w, h);
         }
+        applyWarmGlassTint(g, x, y, w, h);
         drawVialRim(g, x, y, w, h);
 
         if (interp != null) {
@@ -136,31 +137,51 @@ final class ShopStatBarRenderer {
         }
     }
 
-    /** Доп. ободок поверх stat_vial_empty — тёмная кромка + латунный и холодный блик стекла. */
+    /** Тёплый тон поверх PNG — гасит холодное сине-белое свечение, ближе к золотой рамке лавки. */
+    private static void applyWarmGlassTint(Graphics2D g, int x, int y, int w, int h) {
+        int arc = Math.max(4, h);
+        Composite saved = g.getComposite();
+
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.34f));
+        g.setColor(new Color(58, 38, 18));
+        g.fillRoundRect(x, y, w, h, arc, arc);
+
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.16f));
+        g.setColor(new Color(175, 130, 55));
+        g.fillRoundRect(x + 1, y + 1, w - 2, Math.max(2, h - 2), arc - 2, arc - 2);
+
+        g.setComposite(saved);
+    }
+
+    /** Ободок в палитре лавки: тёмная кожа/дерево + латунь + тёплый блик. */
     private static void drawVialRim(Graphics2D g, int x, int y, int w, int h) {
         int arc = Math.max(4, h);
         Composite saved = g.getComposite();
 
-        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.85f));
-        g.setColor(new Color(28, 20, 12));
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
+        g.setColor(new Color(32, 22, 12));
         g.drawRoundRect(x, y, w - 1, h - 1, arc, arc);
+        g.drawRoundRect(x + 1, y, w - 1, h - 1, arc, arc);
 
-        g.setColor(new Color(95, 72, 38, 200));
+        g.setColor(new Color(108, 78, 36));
         g.drawRoundRect(x + 1, y + 1, w - 3, h - 3, arc - 2, arc - 2);
 
-        g.setColor(new Color(175, 145, 75, 140));
+        g.setColor(new Color(168, 128, 52));
         g.drawRoundRect(x + 2, y + 2, w - 5, h - 5, arc - 3, arc - 3);
 
-        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.55f));
-        g.setColor(new Color(210, 230, 255));
-        g.drawLine(x + 4, y + 2, x + w - 5, y + 2);
-        if (h > 6) {
-            g.setColor(new Color(210, 230, 255, 120));
-            g.drawLine(x + 5, y + 3, x + w - 6, y + 3);
+        g.setColor(new Color(212, 175, 88));
+        g.drawRoundRect(x + 3, y + 3, w - 7, h - 7, arc - 4, arc - 4);
+
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.75f));
+        g.setColor(new Color(238, 208, 138));
+        g.drawLine(x + 5, y + 2, x + w - 6, y + 2);
+        if (h > 7) {
+            g.setColor(new Color(220, 185, 110, 180));
+            g.drawLine(x + 6, y + 3, x + w - 7, y + 3);
         }
 
-        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.35f));
-        g.setColor(new Color(255, 200, 90));
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.45f));
+        g.setColor(new Color(92, 58, 24));
         g.drawLine(x + 5, y + h - 2, x + w - 6, y + h - 2);
 
         g.setComposite(saved);
