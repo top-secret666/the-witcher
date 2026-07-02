@@ -81,6 +81,7 @@ final class ShopAssetCache {
     final BufferedImage inventoryBagClosed;
     final BufferedImage inventoryBagOpen;
     final BufferedImage inventoryBagHover;
+    final BufferedImage[] inventoryBagOpenFrames;
     final BufferedImage statVialEmpty;
     final BufferedImage statVialOverlay;
     final BufferedImage statVialEndCap;
@@ -144,6 +145,7 @@ final class ShopAssetCache {
             BASE + "ui/inventory_bag_open.png", true);
         inventoryBagHover = loadSized(UI + "inventory_bag_hover.png", bagSize, bagSize,
             BASE + "ui/inventory_bag_hover.png", true);
+        inventoryBagOpenFrames = loadBagOpenFrames(bagSize);
         statVialEmpty = loadFirst(BASE + "ui/stat_vial_empty.png");
         statVialOverlay = loadFirst(BASE + "ui/stat_vial_glass_overlay.png");
         statVialEndCap = loadFirst(BAKED + "ui/stat_vial_end_cap.png", BASE + "ui/stat_vial_end_cap.png");
@@ -181,6 +183,48 @@ final class ShopAssetCache {
 
     private static boolean probeBaked() {
         return Sprite.loadOptional(BAKED + "ui/shop_hud_bar.png") != null;
+    }
+
+    private BufferedImage[] loadBagOpenFrames(int size) {
+        BufferedImage[] frames = new BufferedImage[10];
+        int loaded = 0;
+        for (int i = 0; i < frames.length; i++) {
+            String name = String.format("inventory_bag_open_%02d.png", i);
+            BufferedImage frame = loadSized(UI + name, size, size, BASE + "ui/" + name, true);
+            if (frame != null) {
+                frames[i] = frame;
+                loaded++;
+            }
+        }
+        if (loaded == frames.length) {
+            return frames;
+        }
+        return splitBagOpenSheet(size);
+    }
+
+    private BufferedImage[] splitBagOpenSheet(int size) {
+        BufferedImage sheet = loadFirst(
+            BASE + "ui/inventory_bag_open_sheet.png",
+            BAKED + "ui/inventory_bag_open_sheet.png");
+        if (sheet == null) {
+            return new BufferedImage[0];
+        }
+        int cols = 5;
+        int rows = 2;
+        int fw = sheet.getWidth() / cols;
+        int fh = sheet.getHeight() / rows;
+        BufferedImage[] frames = new BufferedImage[10];
+        int idx = 0;
+        for (int row = 0; row < rows; row++) {
+            for (int col = 0; col < cols; col++) {
+                int x = col * fw;
+                int y = row * fh;
+                BufferedImage cell = sheet.getSubimage(x, y, fw, fh);
+                Rectangle box = ShopScreen.computeContentBoundsPublic(cell);
+                frames[idx++] = PixelScaler.crispScaleRegion(cell, box, size, size);
+            }
+        }
+        return frames;
     }
 
     private BufferedImage loadSized(String bakedPath, int w, int h, String fallbackPath, boolean crop) {

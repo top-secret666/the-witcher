@@ -822,9 +822,36 @@ public class ShopScreen {
         drawCharacter(g, sw, sh, assets.geraltScaled, true, layout.dialogTop, 1f);
         drawCharacter(g, sw, sh, assets.dukeScaled, false, layout.dialogTop, 1f);
 
-        drawInventoryBagSprite(g, inventoryBagSlot().x, inventoryBagSlot().y,
-            INVENTORY_BAG_SIZE, 0f, false, 1f);
+        drawPurchaseRevealBag(g, layout);
         drawPurchaseRevealItem(g, layout);
+    }
+
+    private void drawPurchaseRevealBag(Graphics2D g, ShopLayout layout) {
+        Point slot = inventoryBagSlot();
+        float openT = bagOpenProgress(
+            purchaseRevealTicks,
+            PURCHASE_APPEAR_TICKS,
+            PURCHASE_FLY_TICKS,
+            PURCHASE_TUCK_TICKS);
+        drawInventoryBagSprite(g, slot.x, slot.y, INVENTORY_BAG_SIZE, openT, false, 1f);
+    }
+
+    /** Прогресс открытия сумки: 0 закрыта → 1 открыта → 0 при укладке предмета. */
+    private float bagOpenProgress(int ticks, int appearTicks, int flyTicks, int tuckTicks) {
+        int bagShow = Math.max(0, appearTicks - 4);
+        int flyEnd = appearTicks + flyTicks;
+        int tuckEnd = flyEnd + tuckTicks;
+        if (ticks < bagShow) {
+            return 0f;
+        }
+        if (ticks < flyEnd) {
+            return smoothstep((ticks - bagShow) / (float) Math.max(1, flyEnd - bagShow));
+        }
+        if (ticks < tuckEnd) {
+            float closeT = (ticks - flyEnd) / (float) Math.max(1, tuckTicks);
+            return smoothstep(1f - closeT);
+        }
+        return 0f;
     }
 
     private void drawPurchaseRevealItem(Graphics2D g, ShopLayout layout) {
@@ -935,17 +962,16 @@ public class ShopScreen {
         int flyEnd = appearEnd + WALLET_FLY_TICKS;
         int closeEnd = flyEnd + WALLET_BAG_CLOSE_TICKS;
         boolean bagVisible = walletRevealTicks >= appearEnd - 4;
-        boolean bagOpen = walletRevealTicks >= appearEnd && walletRevealTicks < closeEnd;
-        float openT = bagOpen ? 1f : 0f;
-        if (walletRevealTicks >= flyEnd && walletRevealTicks < closeEnd) {
-            float closeT = (walletRevealTicks - flyEnd) / (float) WALLET_BAG_CLOSE_TICKS;
-            openT = 1f - closeT * closeT;
-        }
 
         if (!bagVisible) {
             return;
         }
 
+        float openT = bagOpenProgress(
+            walletRevealTicks,
+            WALLET_APPEAR_TICKS,
+            WALLET_FLY_TICKS,
+            WALLET_BAG_CLOSE_TICKS);
         float alpha = Math.min(1f, (walletRevealTicks - (appearEnd - 4)) / 8f);
         drawInventoryBagSprite(g, bagX, bagY, bagSize, openT, false, alpha);
 
@@ -957,8 +983,11 @@ public class ShopScreen {
 
     private void drawInventoryBag(Graphics2D g, float alpha) {
         Point slot = inventoryBagSlot();
-        boolean bagOpen = inventoryOpen;
-        float openT = bagOpen ? 1f : 0f;
+        float openT = 0f;
+        if (inventoryOpen && assets.inventoryBagOpenFrames != null
+            && assets.inventoryBagOpenFrames.length > 0) {
+            openT = 1f;
+        }
         drawInventoryBagSprite(g, slot.x, slot.y, INVENTORY_BAG_SIZE, openT, inventoryBagHovered, alpha);
     }
 
@@ -967,14 +996,7 @@ public class ShopScreen {
         Composite prev = g.getComposite();
         g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
 
-        BufferedImage sprite = assets.inventoryBagClosed;
-        if (openT > 0.35f && assets.inventoryBagOpen != null) {
-            sprite = assets.inventoryBagOpen;
-        } else if (hovered && assets.inventoryBagHover != null) {
-            sprite = assets.inventoryBagHover;
-        } else if (sprite == null) {
-            sprite = assets.inventoryBagIcon;
-        }
+        BufferedImage sprite = pickBagSprite(openT, hovered);
 
         if (sprite != null) {
             drawScaledSprite(g, sprite, x, y, size, size, true);
@@ -989,13 +1011,13 @@ public class ShopScreen {
             }
         }
 
-        if (hovered && assets.inventoryBagHover == null) {
+        if (hovered && assets.inventoryBagHover == null && openT < 0.05f) {
             g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha * 0.35f));
             g.setColor(new Color(255, 220, 120));
             g.drawRoundRect(x - 1, y - 1, size + 2, size + 2, 6, 6);
         }
 
-        if (!model.needsWalletReveal() && openT < 0.2f && assets.walletPouch != null) {
+        if (!model.needsWalletReveal() && openT < 0.05f && assets.walletPouch != null) {
             int pouchSize = Math.max(12, size / 3);
             int pouchX = x + (size - pouchSize) / 2;
             int pouchY = y + size / 2 - pouchSize / 2 - 2;
@@ -1003,6 +1025,24 @@ public class ShopScreen {
             g.drawImage(assets.walletPouch, pouchX, pouchY, pouchSize, pouchSize, null);
         }
         g.setComposite(prev);
+    }
+
+    private BufferedImage pickBagSprite(float openT, boolean hovered) {
+        BufferedImage[] frames = assets.inventoryBagOpenFrames;
+        if (openT > 0.001f && frames != null && frames.length > 0) {
+            int frame = Math.min(frames.length - 1,
+                Math.max(0, Math.round(openT * (frames.length - 1))));
+            if (frames[frame] != null) {
+                return frames[frame];
+            }
+        }
+        if (hovered && openT < 0.05f && assets.inventoryBagHover != null) {
+            return assets.inventoryBagHover;
+        }
+        if (assets.inventoryBagClosed != null) {
+            return assets.inventoryBagClosed;
+        }
+        return assets.inventoryBagIcon;
     }
 
     private void drawBagWalletAmount(Graphics2D g, int bagX, int bagY, int bagSize, float alpha) {

@@ -199,6 +199,25 @@ def main() -> None:
         manifest.append({"output": f"1x/{rel}", "size": [14, 16]})
         print(f"  OK {rel} (left end cap): -> 14x16")
 
+    sheet_path = SRC / "ui/inventory_bag_open_sheet.png"
+    if sheet_path.is_file():
+        sheet = Image.open(sheet_path)
+        cols, rows = 5, 2
+        fw, fh = sheet.width // cols, sheet.height // rows
+        idx = 0
+        for row in range(rows):
+            for col in range(cols):
+                cell = sheet.crop((col * fw, row * fh, (col + 1) * fw, (row + 1) * fh))
+                cell = crop_region(cell, content_bounds(cell))
+                out = crisp_resize_icon(cell, 40, 40)
+                rel = f"ui/inventory_bag_open_{idx:02d}.png"
+                out_path = DST / rel
+                out_path.parent.mkdir(parents=True, exist_ok=True)
+                out.save(out_path, optimize=True)
+                manifest.append({"output": f"1x/{rel}", "size": [40, 40]})
+                print(f"  OK {rel}: sheet frame {idx + 1}/10 -> 40x40")
+                idx += 1
+
     for rel, w, h, opts in jobs:
         src_rel = opts.get("src", rel)
         src_path = SRC / src_rel

@@ -17,6 +17,76 @@
       ]
     },
     {
+      "output": "1x/ui/inventory_bag_open_00.png",
+      "size": [
+        40,
+        40
+      ]
+    },
+    {
+      "output": "1x/ui/inventory_bag_open_01.png",
+      "size": [
+        40,
+        40
+      ]
+    },
+    {
+      "output": "1x/ui/inventory_bag_open_02.png",
+      "size": [
+        40,
+        40
+      ]
+    },
+    {
+      "output": "1x/ui/inventory_bag_open_03.png",
+      "size": [
+        40,
+        40
+      ]
+    },
+    {
+      "output": "1x/ui/inventory_bag_open_04.png",
+      "size": [
+        40,
+        40
+      ]
+    },
+    {
+      "output": "1x/ui/inventory_bag_open_05.png",
+      "size": [
+        40,
+        40
+      ]
+    },
+    {
+      "output": "1x/ui/inventory_bag_open_06.png",
+      "size": [
+        40,
+        40
+      ]
+    },
+    {
+      "output": "1x/ui/inventory_bag_open_07.png",
+      "size": [
+        40,
+        40
+      ]
+    },
+    {
+      "output": "1x/ui/inventory_bag_open_08.png",
+      "size": [
+        40,
+        40
+      ]
+    },
+    {
+      "output": "1x/ui/inventory_bag_open_09.png",
+      "size": [
+        40,
+        40
+      ]
+    },
+    {
       "output": "1x/ui/shop_hud_bar.png",
       "size": [
         380,
