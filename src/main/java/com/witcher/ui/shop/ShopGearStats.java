@@ -4,7 +4,7 @@ package main.java.com.witcher.ui.shop;
 public record ShopGearStats(int protection, int stamina, int signs) {
 
     public static ShopGearStats geraltBase() {
-        return new ShopGearStats(18, 32, 24);
+        return new ShopGearStats(20, 28, 22);
     }
 
     public ShopGearStats plus(ShopGearStats other) {

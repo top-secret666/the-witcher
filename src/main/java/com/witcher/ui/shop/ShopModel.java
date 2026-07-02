@@ -84,15 +84,7 @@ public final class ShopModel {
     }
 
     public String dukeLineForCategory(ShopCategory category) {
-        return switch (category) {
-            case CHEST -> "Отличный выбор! Волчья сталь — как раз для таких, как вы.";
-            case LEGS -> "Штаны крепкие. Ноги целее — монстров больше.";
-            case GLOVES -> "Рукам тепло, клинку — верно. Берите, не пожалеете.";
-            case BOOTS -> "В этих сапогах и по болоту пройдёте, и от удара отскочите.";
-            case POTION -> "Хм... Зелье? Ну что ж, ваш выбор, Белый Волк...";
-            case SETS -> "Ах, охотник на целые комплекты! Волчья, Кошачья, Грифонья — выбирайте.";
-            case WEAPON -> "Сталь режет, серебро жжёт. Выбирайте клинок по вкусу.";
-        };
+        return DukeLines.forCategory(category);
     }
 
     public String[] statLinesForCategory(ShopCategory category) {
@@ -107,8 +99,8 @@ public final class ShopModel {
         }
         return switch (category) {
             case SETS -> new String[]{"Школьные", "Легендар.", "4 части"};
-            case POTION -> new String[]{"Яд", "0.5 кг", "Осторожно"};
-            case WEAPON -> new String[]{"Урон 48", "Вес 9", "Сталь"};
+            case POTION -> new String[]{"Токсин", "0.5 кг", "Осторожно"};
+            case WEAPON -> new String[]{"Урон 42", "Вес 8", "Сталь"};
             default -> new String[]{"—", "—", category.label};
         };
     }
@@ -119,7 +111,7 @@ public final class ShopModel {
     public record StatPreview(StatRow[] rows) {
     }
 
-    private static final int STAT_BAR_MAX = 60;
+    private static final int STAT_BAR_MAX = ShopGearRules.STAT_BAR_MAX;
 
     /** Базовые статы Геральта без выбранной экипировки в слоте. */
     public ShopGearStats baseGearStats() {
@@ -147,47 +139,12 @@ public final class ShopModel {
 
     private ShopGearStats bonusFromEntry(ShopCatalogEntry entry) {
         if (entry.armour != null) {
-            return bonusFromArmour(entry.armour);
+            return ShopGearRules.bonusFromArmour(entry.armour);
         }
         if (entry.armourSet != null) {
-            ShopGearStats sum = new ShopGearStats(0, 0, 0);
-            for (Armour piece : entry.armourSet.getArmorPieces()) {
-                sum = sum.plus(bonusFromArmour(piece));
-            }
-            return sum;
+            return ShopGearRules.bonusFromSet(entry.armourSet);
         }
-        return placeholderBonus(entry.name);
-    }
-
-    private ShopGearStats bonusFromArmour(Armour armour) {
-        int prot = Math.round((float) armour.calculateProtection());
-        int weightPenalty = Math.round((float) armour.getWeight() * 3f);
-        int stamina = -weightPenalty;
-        int signs = -Math.round((float) armour.getWeight() * 1.2f);
-
-        if (armour instanceof Boots boots) {
-            stamina += boots.getSpeedBonus() + boots.getBalanceBonus();
-        } else if (armour instanceof Gloves gloves) {
-            stamina += gloves.getDexterityBonus() / 2;
-            signs += 2;
-        } else if (armour instanceof Trousers trousers) {
-            stamina += trousers.getMovementBonus() / 2;
-        } else if (armour instanceof Chestpiece) {
-            signs -= 2;
-        }
-        return new ShopGearStats(prot, stamina, signs);
-    }
-
-    private ShopGearStats placeholderBonus(String name) {
-        String lower = name.toLowerCase();
-        if (lower.contains("меч") || lower.contains("кинжал") || lower.contains("клеймор")
-            || lower.contains("арбалет")) {
-            return new ShopGearStats(0, -3, 0);
-        }
-        if (lower.contains("зелье") || lower.contains("эликсир") || lower.contains("отвар")) {
-            return new ShopGearStats(0, 0, 6);
-        }
-        return new ShopGearStats(0, 0, 0);
+        return ShopGearRules.placeholderBonus(entry.name);
     }
 
     public String priceLabelForCategory(ShopCategory category) {
@@ -212,13 +169,13 @@ public final class ShopModel {
 
     public PurchaseResult purchase(ShopCatalogEntry entry) {
         if (entry == null) {
-            return PurchaseResult.fail("Что-что? Не расслышал...");
+            return PurchaseResult.fail(DukeLines.purchaseFailGeneric());
         }
         if (entry.armourSet != null) {
             return purchaseSet(entry);
         }
         if (entry.armour != null) {
-            return purchaseArmor(entry.armour);
+            return purchaseArmor(entry);
         }
         if (entry.placeholder) {
             return purchasePlaceholder(entry);
@@ -226,41 +183,42 @@ public final class ShopModel {
         return PurchaseResult.fail("Этого у меня уже нет на полке.");
     }
 
-    private PurchaseResult purchaseArmor(Armour armour) {
+    private PurchaseResult purchaseArmor(ShopCatalogEntry entry) {
+        Armour armour = entry.armour;
         if (soldArmor.contains(armour)) {
-            return PurchaseResult.fail("Уже продано. Вы опоздали, Белый Волк.");
+            return PurchaseResult.fail(DukeLines.purchaseFailSold());
         }
-        int price = armour.getPrice();
+        int price = entry.price;
         if (wallet < price) {
-            return PurchaseResult.fail("Кошелёк пустеет быстрее, чем вы думаете. Не хватает крон.");
+            return PurchaseResult.fail(DukeLines.purchaseFailMoney());
         }
         wallet -= price;
         soldArmor.add(armour);
         playerInventory.add(armour);
-        return PurchaseResult.ok("Берите " + armour.getName() + " — " + price + " крон. Не пожалеете.");
+        return PurchaseResult.ok(DukeLines.purchaseOk(armour.getName(), price));
     }
 
     private PurchaseResult purchaseSet(ShopCatalogEntry entry) {
         ArmourSet set = entry.armourSet;
         if (soldSets.contains(set)) {
-            return PurchaseResult.fail("Комплект уже ушёл с прилавка.");
+            return PurchaseResult.fail(DukeLines.purchaseFailSold());
         }
         int price = entry.price;
         if (wallet < price) {
-            return PurchaseResult.fail("За такой комплект нужно больше крон.");
+            return PurchaseResult.fail(DukeLines.purchaseFailMoney());
         }
         wallet -= price;
         soldSets.add(set);
         playerInventory.addAll(set.getArmorPieces());
-        return PurchaseResult.ok(set.getName() + " — отличный выбор. Охотник оценит.");
+        return PurchaseResult.ok(DukeLines.purchaseOk(set.getName(), price));
     }
 
     private PurchaseResult purchasePlaceholder(ShopCatalogEntry entry) {
         if (wallet < entry.price) {
-            return PurchaseResult.fail("Не хватает крон.");
+            return PurchaseResult.fail(DukeLines.purchaseFailMoney());
         }
         wallet -= entry.price;
-        return PurchaseResult.ok(entry.name + " — ваш выбор. Только не разлейте по дороге.");
+        return PurchaseResult.ok(DukeLines.purchaseOk(entry.name, entry.price));
     }
 
     private List<ShopCatalogEntry> armorByType(Class<? extends Armour> type) {
@@ -281,7 +239,7 @@ public final class ShopModel {
             if (soldSets.contains(set)) {
                 continue;
             }
-            int price = setService.calculateSetPrice(set);
+            int price = ShopPricing.setPrice(set);
             out.add(ShopCatalogEntry.fromSet(set, price));
         }
         out.sort(Comparator.comparingInt(e -> e.price));
@@ -290,18 +248,18 @@ public final class ShopModel {
 
     private static List<ShopCatalogEntry> staticPotionOffers() {
         return List.of(
-            ShopCatalogEntry.placeholder("Зелье «Чёрный гриф»", 15),
-            ShopCatalogEntry.placeholder("Эликсир кошки", 22),
-            ShopCatalogEntry.placeholder("Отвар грифона", 28)
+            ShopCatalogEntry.placeholder("Зелье «Чёрный гриф»", 18),
+            ShopCatalogEntry.placeholder("Эликсир кошки", 26),
+            ShopCatalogEntry.placeholder("Отвар грифона", 34)
         );
     }
 
     private static List<ShopCatalogEntry> staticWeaponOffers() {
         return List.of(
-            ShopCatalogEntry.placeholder("Стальной меч", 95),
-            ShopCatalogEntry.placeholder("Серебряный кинжал", 72),
-            ShopCatalogEntry.placeholder("Двуручный клеймор", 140),
-            ShopCatalogEntry.placeholder("Арбалет охотника", 88)
+            ShopCatalogEntry.placeholder("Стальной меч", 118),
+            ShopCatalogEntry.placeholder("Серебряный кинжал", 88),
+            ShopCatalogEntry.placeholder("Двуручный клеймор", 165),
+            ShopCatalogEntry.placeholder("Арбалет охотника", 102)
         );
     }
 
