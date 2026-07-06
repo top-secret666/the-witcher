@@ -238,6 +238,8 @@ public class ShopScreen {
     private final Rectangle inventoryPanelBounds = new Rectangle();
     private final Rectangle inventoryPouchIconBounds = new Rectangle();
     private final Rectangle inventoryEquipButtonBounds = new Rectangle();
+    private final Rectangle inventoryCloseBounds = new Rectangle();
+    private boolean inventoryCloseHovered = false;
     private final Rectangle equipmentPanelBounds = new Rectangle();
     private final Rectangle equipmentBackButtonBounds = new Rectangle();
     private final Rectangle[] equipmentSlotBounds = new Rectangle[ShopEquipSlot.values().length];
@@ -321,7 +323,7 @@ public class ShopScreen {
     }
 
     private int catalogListTop(int panelY) {
-        return panelY + 22;
+        return panelY + 12;
     }
 
     private int catalogListBottom(int panelY) {
@@ -550,8 +552,12 @@ public class ShopScreen {
         }
         if (inventoryOpen) {
             inventoryPouchIconHovered = inventoryPouchIconBounds.contains(mouseX, mouseY);
+            inventoryCloseHovered = inventoryCloseBounds.contains(mouseX, mouseY);
             if (clicked) {
-                if (inventoryEquipButtonBounds.contains(mouseX, mouseY)) {
+                if (inventoryCloseBounds.contains(mouseX, mouseY)) {
+                    inventoryOpen = false;
+                    inventoryPouchFocused = true;
+                } else if (inventoryEquipButtonBounds.contains(mouseX, mouseY)) {
                     equipmentOpen = true;
                     inventoryOpen = false;
                     equipmentHoveredRow = -1;
@@ -1224,6 +1230,9 @@ public class ShopScreen {
         g.setColor(new Color(255, 220, 140));
         g.drawString("Инвентарь", px + 12, py + 20);
 
+        inventoryCloseBounds.setBounds(UiChrome.closeButtonRect(px, py, INVENTORY_PANEL_W));
+        UiChrome.drawCloseButton(g, inventoryCloseBounds, inventoryCloseHovered, 1f);
+
         int iconX = px + 12;
         int iconY = py + 34;
         inventoryPouchIconBounds.setBounds(iconX, iconY, INVENTORY_POUCH_ICON, INVENTORY_POUCH_ICON);
@@ -1779,7 +1788,7 @@ public class ShopScreen {
                 g.drawImage(assets.catalogDetailPanel, px, py, null);
             }
             drawCatalogRows(g, px, py, cat.listInteractive);
-            drawCategoryBackButton(g, px, py, cat.detailPanelAlpha, cat.listInteractive);
+            drawCategoryBackButton(g, px, cat.detailPanelAlpha, cat.listInteractive);
             drawCategoryBuyButton(g, px, py, cat.detailPanelAlpha, cat.listInteractive);
         }
 
@@ -1803,37 +1812,20 @@ public class ShopScreen {
         return "···";
     }
 
-    private void drawCategoryBackButton(Graphics2D g, int panelX, int panelY, float alpha, boolean interactive) {
+    private void drawCategoryBackButton(Graphics2D g, int panelX, float alpha, boolean interactive) {
         if (alpha <= 0.01f) {
             categoryBackBounds.setBounds(0, 0, 0, 0);
             return;
         }
-        int backW = 54;
-        int backH = 16;
-        int backX = panelX + 6;
-        int backY = panelY + 4;
+        int size = UiChrome.BTN_SIZE;
+        int backX = panelX + 4;
+        int backY = INVENTORY_BAG_MARGIN;
         if (interactive) {
-            categoryBackBounds.setBounds(backX, backY, backW, backH);
+            categoryBackBounds.setBounds(backX, backY, size, size);
         } else {
             categoryBackBounds.setBounds(0, 0, 0, 0);
         }
-
-        Composite prev = g.getComposite();
-        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
-        Color fill = categoryBackHovered ? new Color(48, 32, 14, 235) : new Color(24, 16, 8, 220);
-        g.setColor(fill);
-        g.fillRoundRect(backX, backY, backW, backH, 4, 4);
-        g.setColor(categoryBackHovered ? new Color(210, 165, 70) : new Color(140, 100, 45));
-        g.drawRoundRect(backX, backY, backW, backH, 4, 4);
-
-        drawCrispText(g);
-        g.setFont(cardFont(8));
-        String label = "Назад";
-        FontMetrics fm = g.getFontMetrics();
-        int tx = backX + (backW - fm.stringWidth(label)) / 2;
-        Color textColor = categoryBackHovered ? new Color(255, 235, 170) : new Color(220, 195, 140);
-        drawOutlinedText(g, label, tx, backY + 12, textColor);
-        g.setComposite(prev);
+        UiChrome.drawArrowBackButton(g, categoryBackBounds, categoryBackHovered, alpha);
     }
 
     private void drawCategoryBuyButton(Graphics2D g, int panelX, int panelY, float alpha, boolean interactive) {

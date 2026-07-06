@@ -123,6 +123,8 @@ public class IntroScreen {
     private Rectangle backButtonBounds = new Rectangle();
     private Rectangle historyButtonBounds = new Rectangle();
     private Rectangle autoButtonBounds = new Rectangle();
+    private Rectangle historyCloseBounds = new Rectangle();
+    private boolean historyCloseHovered = false;
     private Rectangle historyPanelBounds = new Rectangle();
     private int shopAnimStartedForEntry = -1;
 
@@ -261,11 +263,14 @@ public class IntroScreen {
             if (isShopMaterializePlaying()) {
                 historyOpen = false;
             } else {
+                historyCloseHovered = historyCloseBounds.contains(mouseX, mouseY);
                 if (wheelNotches != 0) {
                     historyScroll = Math.max(0, historyScroll + wheelNotches * 18);
                 }
                 if (mouseClicked) {
-                    if (!historyPanelBounds.contains(mouseX, mouseY)) {
+                    if (historyCloseBounds.contains(mouseX, mouseY)) {
+                        historyOpen = false;
+                    } else if (!historyPanelBounds.contains(mouseX, mouseY)) {
                         historyOpen = false;
                     }
                 }
@@ -1481,6 +1486,9 @@ public class IntroScreen {
         Rectangle panel = historyPanelBounds;
         DialogBoxRenderer.drawBox(g, panel.x, panel.y, panel.width, panel.height, fadeAlpha);
 
+        historyCloseBounds.setBounds(UiChrome.closeButtonRect(panel.x, panel.y, panel.width));
+        UiChrome.drawCloseButton(g, historyCloseBounds, historyCloseHovered, fadeAlpha);
+
         g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
         int fontSize = Math.max(11, (int) (sh * 0.034f));
         int lineH = fontSize + 4;
@@ -1544,7 +1552,7 @@ public class IntroScreen {
 
         g.setFont(hintFont);
         g.setColor(new Color(150, 130, 95, Math.max(0, Math.min(255, (int) (fadeAlpha * 200)))));
-        g.drawString("Колёсико — прокрутка  ·  клик снаружи — закрыть", textX, hintBaseline);
+        g.drawString("Колёсико — прокрутка  ·  Esc — закрыть", textX, hintBaseline);
 
         g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
     }
