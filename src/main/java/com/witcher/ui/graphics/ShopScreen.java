@@ -56,7 +56,7 @@ public class ShopScreen {
     private static final int INVENTORY_POUCH_ICON = 32;
     private static final int INVENTORY_POUCH_LARGE = 96;
     private static final int EQUIP_PANEL_W = 440;
-    private static final int EQUIP_PANEL_H = 304;
+    private static final int EQUIP_PANEL_H = 292;
     /** ~1 мин при 30 FPS — оборот сам возвращается на лицо, если игрок AFK. */
     private static final int CARD_FLIP_IDLE_TICKS = 30 * 60;
 
@@ -1307,37 +1307,32 @@ public class ShopScreen {
         equipmentRowBounds.clear();
 
         g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.97f));
-        g.setColor(new Color(10, 7, 4, 250));
+        g.setColor(new Color(14, 10, 6, 248));
         g.fillRoundRect(px, py, EQUIP_PANEL_W, EQUIP_PANEL_H, 8, 8);
-        g.setColor(new Color(175, 130, 55));
+        g.setColor(new Color(155, 115, 50));
         g.drawRoundRect(px, py, EQUIP_PANEL_W, EQUIP_PANEL_H, 8, 8);
-        g.setColor(new Color(90, 65, 28, 140));
-        g.drawRoundRect(px + 2, py + 2, EQUIP_PANEL_W - 4, EQUIP_PANEL_H - 4, 6, 6);
 
         drawCrispText(g);
-        g.setFont(GameFonts.get().uiBold(13));
+        g.setFont(GameFonts.get().uiBold(14));
         g.setColor(new Color(255, 220, 140));
-        g.drawString("ЭКИПИРОВКА", px + 14, py + 20);
-        g.setFont(GameFonts.get().uiPlain(8));
-        g.setColor(new Color(140, 115, 75));
-        g.drawString("клик по предмету — надеть  ·  клик по слоту — снять", px + 14, py + 32);
+        g.drawString("Экипировка", px + 14, py + 22);
 
         int listX = px + 12;
-        int listY = py + 40;
-        int listW = 138;
-        int listH = EQUIP_PANEL_H - 152;
-        g.setColor(new Color(6, 4, 2, 200));
+        int listY = py + 34;
+        int listW = 148;
+        int listH = EQUIP_PANEL_H - 78;
+        g.setColor(new Color(8, 6, 4, 180));
         g.fillRoundRect(listX, listY, listW, listH, 4, 4);
-        g.setColor(new Color(110, 82, 38));
+        g.setColor(new Color(100, 75, 40));
         g.drawRoundRect(listX, listY, listW, listH, 4, 4);
 
         g.setFont(GameFonts.get().uiBold(10));
-        g.setColor(new Color(190, 150, 90));
-        g.drawString("РЮКЗАК", listX + 8, listY + 14);
+        g.setColor(new Color(180, 140, 80));
+        g.drawString("Куплено", listX + 8, listY + 14);
 
         List<Armour> owned = model.ownedArmour();
         g.setFont(GameFonts.get().uiPlain(10));
-        int rowY = listY + 26;
+        int rowY = listY + 24;
         int rowH = 16;
         for (int i = 0; i < owned.size(); i++) {
             if (rowY + rowH > listY + listH - 4) {
@@ -1349,7 +1344,7 @@ public class ShopScreen {
             boolean hovered = i == equipmentHoveredRow;
             boolean equipped = model.isEquipped(armour);
             if (hovered || equipped) {
-                g.setColor(equipped ? new Color(80, 58, 22, 220) : new Color(50, 38, 18, 170));
+                g.setColor(equipped ? new Color(70, 52, 24, 200) : new Color(50, 38, 18, 170));
                 g.fillRoundRect(row.x, row.y, row.width, row.height, 3, 3);
             }
             g.setColor(equipped ? new Color(255, 230, 150) : new Color(200, 180, 130));
@@ -1362,41 +1357,56 @@ public class ShopScreen {
             g.drawString("Пока нет брони…", listX + 8, rowY);
         }
 
-        int portraitX = px + 158;
-        int portraitY = py + 38;
-        int portraitW = 118;
-        int portraitH = 188;
-        int slotSize = 42;
-
-        drawEquipmentPortraitFrame(g, portraitX, portraitY, portraitW, portraitH);
-
+        int portraitX = px + 172;
+        int portraitY = py + 30;
+        int portraitW = 128;
+        int portraitH = 210;
+        g.setColor(new Color(6, 4, 2, 160));
+        g.fillRoundRect(portraitX - 4, portraitY - 4, portraitW + 8, portraitH + 8, 6, 6);
         if (assets.geraltScaled != null) {
-            float breathe = (float) Math.sin(tick * 0.035) * 1.2f;
-            drawScaledSprite(g, assets.geraltScaled, portraitX, portraitY + Math.round(breathe),
-                portraitW, portraitH, true);
+            drawScaledSprite(g, assets.geraltScaled, portraitX, portraitY, portraitW, portraitH, true);
         }
 
+        int slotX = px + 318;
+        int slotY = py + 38;
+        int slotSize = 44;
+        int slotGap = 8;
         ShopEquipSlot[] slots = ShopEquipSlot.values();
-        int[][] slotPos = {
-            {portraitX - slotSize - 8, portraitY + 10},
-            {portraitX - slotSize - 8, portraitY + 112},
-            {portraitX + portraitW + 8, portraitY + 16},
-            {portraitX + portraitW + 8, portraitY + 112}
-        };
         for (int i = 0; i < slots.length; i++) {
-            drawEquipmentSlot(g, slots[i], slotPos[i][0], slotPos[i][1], slotSize, i);
+            ShopEquipSlot slot = slots[i];
+            int sy = slotY + i * (slotSize + slotGap);
+            equipmentSlotBounds[i] = new Rectangle(slotX, sy, slotSize, slotSize);
+            boolean hovered = equipmentHoveredSlot == i;
+            Armour equipped = model.getEquipped(slot);
+            g.setColor(new Color(22, 14, 8, 220));
+            g.fillRoundRect(slotX, sy, slotSize, slotSize, 4, 4);
+            g.setColor(hovered ? new Color(200, 160, 70) : new Color(120, 90, 45));
+            g.drawRoundRect(slotX, sy, slotSize, slotSize, 4, 4);
+            BufferedImage icon = slot.iconIndex >= 0 && slot.iconIndex < assets.itemIcons.length
+                ? assets.itemIcons[slot.iconIndex] : null;
+            if (equipped != null && icon != null) {
+                int iconSz = 28;
+                g.drawImage(icon, slotX + (slotSize - iconSz) / 2, sy + 6, iconSz, iconSz, null);
+            } else if (icon != null) {
+                g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.35f));
+                int iconSz = 24;
+                g.drawImage(icon, slotX + (slotSize - iconSz) / 2, sy + 8, iconSz, iconSz, null);
+                g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.97f));
+            }
+            g.setFont(GameFonts.get().uiPlain(7));
+            g.setColor(new Color(170, 140, 90));
+            String slotLabel = slot.label;
+            FontMetrics sfm = g.getFontMetrics();
+            g.drawString(slotLabel, slotX + (slotSize - sfm.stringWidth(slotLabel)) / 2, sy + slotSize - 3);
         }
 
-        int statsX = portraitX - slotSize - 10;
-        int statsY = py + EQUIP_PANEL_H - 118;
-        int statsW = portraitW + slotSize * 2 + 28;
-        int statsH = 100;
-        g.setColor(new Color(8, 5, 3, 215));
-        g.fillRoundRect(statsX, statsY, statsW, statsH, 5, 5);
-        g.setColor(new Color(120, 88, 40));
-        g.drawRoundRect(statsX, statsY, statsW, statsH, 5, 5);
-        ShopStatBarRenderer.draw(g, statsX, statsY, statsW, statsH, model.equippedStatPreview(),
-            assets.statVialEmpty, assets.statVialOverlay, assets.statVialEndCap, tick);
+        int statsX = portraitX;
+        int statsY = py + EQUIP_PANEL_H - 68;
+        int statsW = EQUIP_PANEL_W - (statsX - px) - 12;
+        int statsH = 52;
+        g.setColor(new Color(10, 7, 4, 200));
+        g.fillRoundRect(statsX, statsY, statsW, statsH, 4, 4);
+        drawEquipmentStats(g, statsX, statsY, statsW, statsH, model.equippedStatPreview());
 
         int backW = 72;
         int backH = 22;
@@ -1418,49 +1428,30 @@ public class ShopScreen {
         g.setComposite(prev);
     }
 
-    private void drawEquipmentPortraitFrame(Graphics2D g, int x, int y, int w, int h) {
-        g.setColor(new Color(4, 2, 1, 200));
-        g.fillRoundRect(x - 6, y - 6, w + 12, h + 12, 6, 6);
-        g.setColor(new Color(150, 110, 45));
-        g.drawRoundRect(x - 6, y - 6, w + 12, h + 12, 6, 6);
-        g.setColor(new Color(210, 170, 70, 120));
-        g.drawRoundRect(x - 4, y - 4, w + 8, h + 8, 5, 5);
-        g.setColor(new Color(6, 4, 2, 180));
-        g.fillRoundRect(x, y, w, h, 4, 4);
-    }
-
-    private void drawEquipmentSlot(Graphics2D g, ShopEquipSlot slot, int slotX, int slotY,
-                                   int slotSize, int slotIndex) {
-        equipmentSlotBounds[slotIndex] = new Rectangle(slotX, slotY, slotSize, slotSize);
-        boolean hovered = equipmentHoveredSlot == slotIndex;
-        Armour equipped = model.getEquipped(slot);
-
-        g.setColor(new Color(16, 10, 6, 230));
-        g.fillRoundRect(slotX, slotY, slotSize, slotSize, 4, 4);
-        g.setColor(hovered ? new Color(220, 175, 75) : new Color(130, 95, 42));
-        g.drawRoundRect(slotX, slotY, slotSize, slotSize, 4, 4);
-        if (equipped != null) {
-            g.setColor(new Color(255, 210, 90, 45));
-            g.fillRoundRect(slotX + 2, slotY + 2, slotSize - 4, slotSize - 4, 3, 3);
-        }
-
-        BufferedImage icon = slot.iconIndex >= 0 && slot.iconIndex < assets.itemIcons.length
-            ? assets.itemIcons[slot.iconIndex] : null;
-        if (icon != null) {
-            int iconSz = equipped != null ? 28 : 22;
-            float alpha = equipped != null ? 1f : 0.4f;
-            Composite saved = g.getComposite();
-            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
-            g.drawImage(icon, slotX + (slotSize - iconSz) / 2, slotY + 5, iconSz, iconSz, null);
-            g.setComposite(saved);
-        }
-
+    private void drawEquipmentStats(Graphics2D g, int x, int y, int w, int h, ShopModel.StatPreview preview) {
         drawCrispText(g);
-        g.setFont(GameFonts.get().uiPlain(7));
-        g.setColor(new Color(175, 145, 95));
-        FontMetrics sfm = g.getFontMetrics();
-        String slotLabel = slot.label;
-        g.drawString(slotLabel, slotX + (slotSize - sfm.stringWidth(slotLabel)) / 2, slotY + slotSize - 3);
+        g.setFont(GameFonts.get().uiBold(10));
+        g.setColor(new Color(220, 200, 140));
+        String header = "ХАРАКТЕРИСТИКИ";
+        FontMetrics hfm = g.getFontMetrics();
+        g.drawString(header, x + (w - hfm.stringWidth(header)) / 2, y + 14);
+
+        String[] labels = {"Защита", "Выносл.", "Знаки"};
+        g.setFont(GameFonts.get().uiPlain(10));
+        int lineY = y + 30;
+        ShopModel.StatRow[] rows = preview.rows();
+        for (int i = 0; i < labels.length && i < rows.length; i++) {
+            ShopModel.StatRow row = rows[i];
+            String delta = "";
+            if (row.delta() > 0) {
+                delta = " (+" + row.delta() + ")";
+            } else if (row.delta() < 0) {
+                delta = " (" + row.delta() + ")";
+            }
+            g.setColor(new Color(200, 180, 130));
+            g.drawString(labels[i] + ": " + row.value() + delta, x + 12, lineY);
+            lineY += 14;
+        }
     }
 
     private void drawInventoryPouchIcon(Graphics2D g, int x, int y, int size,

@@ -8,7 +8,7 @@ import java.awt.image.BufferedImage;
 /** Колбочки с жидкостью на обороте shop_card_back. */
 final class ShopStatBarRenderer {
 
-    private static final Color DELTA_YELLOW = new Color(175, 135, 28);
+    private static final Color DELTA_YELLOW = new Color(255, 215, 48);
     private static Rectangle cachedEmptyCrop;
     private static Rectangle cachedOverlayCrop;
     private static Rectangle cachedEndCapCrop;
@@ -41,9 +41,9 @@ final class ShopStatBarRenderer {
         int startY = headerY + 10;
         String[] labels = {"Защита", "Выносл.", "Знаки"};
         Color[] colors = {
-            new Color(140, 28, 32),
-            new Color(28, 110, 62),
-            new Color(32, 72, 145)
+            new Color(210, 52, 58),
+            new Color(48, 195, 108),
+            new Color(62, 138, 235)
         };
 
         boolean useVials = vialEmpty != null;
@@ -156,12 +156,12 @@ final class ShopStatBarRenderer {
         int arc = Math.max(4, h);
         Composite saved = g.getComposite();
 
-        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.34f));
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.12f));
         g.setColor(new Color(58, 38, 18));
         g.fillRoundRect(x, y, w, h, arc, arc);
 
-        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.16f));
-        g.setColor(new Color(175, 130, 55));
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.08f));
+        g.setColor(new Color(200, 155, 70));
         g.fillRoundRect(x + 1, y + 1, w - 2, Math.max(2, h - 2), arc - 2, arc - 2);
 
         g.setComposite(saved);
@@ -382,11 +382,11 @@ final class ShopStatBarRenderer {
         }
         int r = Math.max(1, height / 2);
 
-        Color deep = darken(base, 0.62f);
-        Color mid = darken(base, 0.22f);
-        Color body = darken(base, 0.05f);
-        Color glow = brighten(base, 0.18f);
-        Color core = brighten(base, 0.38f);
+        Color deep = darken(base, 0.48f);
+        Color mid = darken(base, 0.12f);
+        Color body = brighten(base, 0.08f);
+        Color glow = brighten(base, 0.32f);
+        Color core = brighten(base, 0.52f);
 
         Paint vert = new LinearGradientPaint(
             x, y, x, y + height,
