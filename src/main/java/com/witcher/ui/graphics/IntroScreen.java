@@ -258,18 +258,27 @@ public class IntroScreen {
         layoutVnButtons(sw, sh);
 
         if (historyOpen) {
-            if (wheelNotches != 0) {
-                historyScroll = Math.max(0, historyScroll + wheelNotches * 18);
-            }
-            if (mouseClicked) {
-                if (!historyPanelBounds.contains(mouseX, mouseY)) {
-                    historyOpen = false;
+            if (isShopMaterializePlaying()) {
+                historyOpen = false;
+            } else {
+                if (wheelNotches != 0) {
+                    historyScroll = Math.max(0, historyScroll + wheelNotches * 18);
                 }
+                if (mouseClicked) {
+                    if (!historyPanelBounds.contains(mouseX, mouseY)) {
+                        historyOpen = false;
+                    }
+                }
+                return;
             }
-            return;
         }
 
         boolean advance = advanceKey;
+        if (mouseClicked && isShopMaterializePlaying()) {
+            if (isVnButtonRowClick(mouseX, mouseY)) {
+                return;
+            }
+        }
         if (mouseClicked) {
             if (historyButtonBounds.contains(mouseX, mouseY)) {
                 historyOpen = true;
@@ -711,7 +720,7 @@ public class IntroScreen {
             drawDialogBox(g, sw, sh);
         }
 
-        if (fadeAlpha > 0.2f && !finished) {
+        if (fadeAlpha > 0.2f && !finished && !isShopMaterializePlaying()) {
             drawVnButtons(g, sw, sh, mouseX, mouseY);
         }
 
@@ -1333,6 +1342,23 @@ public class IntroScreen {
     private static float smoothstep(float edge0, float edge1, float x) {
         float t = Math.max(0f, Math.min(1f, (x - edge0) / (edge1 - edge0)));
         return t * t * (3f - 2f * t);
+    }
+
+    private boolean isShopAnimationComplete() {
+        boolean shopSceneReached = currentEntry >= SHOP_ANIMATION_ENTRY_INDEX;
+        return shopSceneReached
+            && (currentEntry > SHOP_ANIMATION_ENTRY_INDEX
+            || (shopReveal >= 0.995f
+            && (shopMaterializeFrames == null
+            || shopMaterializeFrames.length == 0
+            || shopFrameIndex >= shopMaterializeFrames.length - 1)));
+    }
+
+    /** GIF/видео появления лавки — без UI поверх. */
+    private boolean isShopMaterializePlaying() {
+        return currentEntry == SHOP_ANIMATION_ENTRY_INDEX
+            && shopReveal > 0.03f
+            && !isShopAnimationComplete();
     }
 
     private void layoutVnButtons(int sw, int sh) {
