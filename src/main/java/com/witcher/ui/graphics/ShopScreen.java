@@ -2068,9 +2068,10 @@ public class ShopScreen {
         }
         g.setFont(categoryGrid ? GameFonts.get().uiPlain(fontSize) : cardFont(fontSize));
         FontMetrics nameFm = g.getFontMetrics();
-        String name = truncateToWidth(item.displayName(), nameFm, w - 8);
+        String name = categoryGrid ? item.displayName() : truncateToWidth(item.displayName(), nameFm, w - 8);
+        boolean categoryTwoLines = categoryGrid && nameFm.stringWidth(name) > w - 4;
         int nameY = categoryGrid
-            ? y + h - 6
+            ? y + h - (categoryTwoLines ? 4 : 6)
             : priceOverride != null
                 ? y + h - Math.max(18, Math.round(h * 0.22f))
                 : y + h - 10;
@@ -2080,7 +2081,10 @@ public class ShopScreen {
             int slotX = x + 4;
             int slotW = w - 8;
             int slotTop = y + Math.round(h * 0.12f);
-            int slotBottom = nameY - Math.round(h * 0.10f);
+            int labelReserve = categoryGrid
+                ? (categoryTwoLines ? nameFm.getHeight() * 2 + 2 : nameFm.getHeight() + 6)
+                : Math.round(h * 0.10f);
+            int slotBottom = nameY - labelReserve;
             int slotH = Math.max(1, slotBottom - slotTop);
             Rectangle crop = computeContentBounds(art);
             int maxArt = iconCapForCard(slotW, slotH, smoothIconGrowth);
@@ -2089,10 +2093,10 @@ public class ShopScreen {
 
         Color nameColor = item.kind == ItemKind.SET_CATALOG
             ? new Color(255, 210, 100) : new Color(245, 230, 190);
-        int nameX = x + (w - nameFm.stringWidth(name)) / 2;
         if (categoryGrid) {
-            drawCategoryLabel(g, name, nameX, nameY, nameColor);
+            drawCategoryGridLabel(g, name, x, y, w, h, nameColor, nameFm);
         } else {
+            int nameX = x + (w - nameFm.stringWidth(name)) / 2;
             drawOutlinedText(g, name, nameX, nameY, nameColor);
         }
 
@@ -2149,6 +2153,36 @@ public class ShopScreen {
     private static void drawCardText(Graphics2D g) {
         g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+    }
+
+    /** Подпись на сетке категорий — в две строки, если длинное слово. */
+    private static void drawCategoryGridLabel(Graphics2D g, String name, int x, int y, int w, int h,
+                                              Color color, FontMetrics fm) {
+        int maxW = w - 4;
+        if (fm.stringWidth(name) <= maxW) {
+            int nameY = y + h - 6;
+            int nameX = x + (w - fm.stringWidth(name)) / 2;
+            drawCategoryLabel(g, name, nameX, nameY, color);
+            return;
+        }
+        int split = splitCategoryLabel(name, fm, maxW);
+        String line1 = name.substring(0, split);
+        String line2 = name.substring(split);
+        int lineH = fm.getHeight();
+        int y2 = y + h - 4;
+        int y1 = y2 - lineH + 2;
+        drawCategoryLabel(g, line1, x + (w - fm.stringWidth(line1)) / 2, y1, color);
+        drawCategoryLabel(g, line2, x + (w - fm.stringWidth(line2)) / 2, y2, color);
+    }
+
+    private static int splitCategoryLabel(String name, FontMetrics fm, int maxW) {
+        for (int i = name.length() - 1; i >= 2; i--) {
+            if (fm.stringWidth(name.substring(0, i)) <= maxW
+                && fm.stringWidth(name.substring(i)) <= maxW) {
+                return i;
+            }
+        }
+        return (name.length() + 1) / 2;
     }
 
     /** Подпись на сетке категорий — крупнее и строго по пиксельной сетке. */
