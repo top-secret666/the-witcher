@@ -219,9 +219,10 @@ public class SplashScreen {
         // === ВЕДЬМАК ЗА БАРОМ (по центру, крупный) ===
         if (witcherBar != null && alpha > 0.1f) {
             float wbScale = (sw * 0.22f) / WITCHER_BAR_REF_W;
-            int wbW = Math.round(witcherBar.getFrameWidth() * wbScale);
-            int wbH = Math.round(witcherBar.getFrameHeight() * wbScale);
+            int wbW = Math.round(WITCHER_BAR_REF_W * wbScale);
+            int wbH = Math.round(WITCHER_BAR_REF_H * wbScale);
             int wbX = (sw - wbW) / 2;
+            // 31% высоты ячейки уходит за низ — ведьмак «за стойкой» на фоне
             int wbY = sh - wbH + Math.round(wbH * 0.31f);
             witcherBar.draw(g, wbX, wbY, wbW, wbH, alpha * 0.95f);
         }
