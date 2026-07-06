@@ -68,12 +68,14 @@ public final class GameFonts {
         g.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_OFF);
     }
 
-    /** @deprecated use applyGameHints */
+    /** @deprecated use {@link #applyGameHints(Graphics2D)} */
+    @Deprecated
     public static void applyDialogHints(Graphics2D g) {
         applyGameHints(g);
     }
 
-    /** @deprecated use applyGameHints */
+    /** @deprecated use {@link #applyGameHints(Graphics2D)} */
+    @Deprecated
     public static void applyPixelHints(Graphics2D g) {
         applyGameHints(g);
     }

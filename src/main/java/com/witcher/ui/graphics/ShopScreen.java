@@ -245,6 +245,8 @@ public class ShopScreen {
     private int equipmentHoveredRow = -1;
     private int equipmentHoveredSlot = -1;
     private boolean categoryBuyHovered = false;
+    private final Rectangle categoryBackBounds = new Rectangle();
+    private boolean categoryBackHovered = false;
     private int catalogScrollOffset = 0;
     private float cardFlipT = 0f;
     private int cardFlipTarget = 0;
@@ -319,7 +321,7 @@ public class ShopScreen {
     }
 
     private int catalogListTop(int panelY) {
-        return panelY + 12;
+        return panelY + 22;
     }
 
     private int catalogListBottom(int panelY) {
@@ -468,6 +470,7 @@ public class ShopScreen {
         hoveredIndex = -1;
         hoveredRowIndex = -1;
         categoryBuyHovered = false;
+        categoryBackHovered = false;
 
         if (showcaseInteractive) {
             for (int i = 0; i < items.size(); i++) {
@@ -509,7 +512,9 @@ public class ShopScreen {
 
         if (state == ShopState.CATEGORY && clicked) {
             ShopCategoryAnimator cat = categoryAnimator(layout);
-            if (categoryBuyBounds.contains(mouseX, mouseY) && isBuyButtonEnabled()) {
+            if (categoryBackBounds.contains(mouseX, mouseY) && cat.listInteractive) {
+                beginCategoryClose();
+            } else if (categoryBuyBounds.contains(mouseX, mouseY) && isBuyButtonEnabled()) {
                 tryPurchaseSelected();
             } else if (hoveredRowIndex >= 0) {
                 selectedRowIndex = hoveredRowIndex;
@@ -527,6 +532,9 @@ public class ShopScreen {
 
         if (state == ShopState.CATEGORY && categoryBuyBounds.width > 0) {
             categoryBuyHovered = categoryBuyBounds.contains(mouseX, mouseY);
+        }
+        if (state == ShopState.CATEGORY && categoryBackBounds.width > 0) {
+            categoryBackHovered = categoryBackBounds.contains(mouseX, mouseY);
         }
 
         if (bagUnlocked) {
@@ -1771,6 +1779,7 @@ public class ShopScreen {
                 g.drawImage(assets.catalogDetailPanel, px, py, null);
             }
             drawCatalogRows(g, px, py, cat.listInteractive);
+            drawCategoryBackButton(g, px, py, cat.detailPanelAlpha, cat.listInteractive);
             drawCategoryBuyButton(g, px, py, cat.detailPanelAlpha, cat.listInteractive);
         }
 
@@ -1792,6 +1801,39 @@ public class ShopScreen {
             return items.get(selectedIndex).priceLabel;
         }
         return "···";
+    }
+
+    private void drawCategoryBackButton(Graphics2D g, int panelX, int panelY, float alpha, boolean interactive) {
+        if (alpha <= 0.01f) {
+            categoryBackBounds.setBounds(0, 0, 0, 0);
+            return;
+        }
+        int backW = 54;
+        int backH = 16;
+        int backX = panelX + 6;
+        int backY = panelY + 4;
+        if (interactive) {
+            categoryBackBounds.setBounds(backX, backY, backW, backH);
+        } else {
+            categoryBackBounds.setBounds(0, 0, 0, 0);
+        }
+
+        Composite prev = g.getComposite();
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
+        Color fill = categoryBackHovered ? new Color(48, 32, 14, 235) : new Color(24, 16, 8, 220);
+        g.setColor(fill);
+        g.fillRoundRect(backX, backY, backW, backH, 4, 4);
+        g.setColor(categoryBackHovered ? new Color(210, 165, 70) : new Color(140, 100, 45));
+        g.drawRoundRect(backX, backY, backW, backH, 4, 4);
+
+        drawCrispText(g);
+        g.setFont(cardFont(8));
+        String label = "Назад";
+        FontMetrics fm = g.getFontMetrics();
+        int tx = backX + (backW - fm.stringWidth(label)) / 2;
+        Color textColor = categoryBackHovered ? new Color(255, 235, 170) : new Color(220, 195, 140);
+        drawOutlinedText(g, label, tx, backY + 12, textColor);
+        g.setComposite(prev);
     }
 
     private void drawCategoryBuyButton(Graphics2D g, int panelX, int panelY, float alpha, boolean interactive) {
