@@ -460,11 +460,12 @@ public class ShopScreen {
             inventoryBagHovered = false;
         }
 
-        if (inventoryOpen && clicked) {
-            return;
-        }
-
-        if (equipmentOpen && clicked) {
+        if (inventoryOpen || equipmentOpen) {
+            hoveredIndex = -1;
+            hoveredRowIndex = -1;
+            categoryBuyHovered = false;
+            categoryBackHovered = false;
+            inventoryBagHovered = false;
             return;
         }
 
