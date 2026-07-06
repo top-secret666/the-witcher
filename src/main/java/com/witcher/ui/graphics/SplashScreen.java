@@ -8,6 +8,9 @@ import java.util.List;
 import java.util.Random;
 
 public class SplashScreen {
+    private static final int VIRTUAL_W = 480;
+    private static final int VIRTUAL_H = 360;
+
     private final SpriteSheet logoAnim;     // анимированный логотип (6 кадров, мерцание искр)
     private final Sprite background;
 
@@ -94,14 +97,14 @@ public class SplashScreen {
         particles.removeIf(p -> !p.alive);
         for (Particle p : particles) p.update();
 
-        // Дым
-        if (tick % 8 == 0 && alpha > 0.25f) {
-            float px = 35 + rng.nextFloat() * 410;
-            float py = 60 + rng.nextFloat() * 120;
-            float vx = (rng.nextFloat() - 0.5f) * 0.18f;
-            float vy = -0.12f - rng.nextFloat() * 0.22f;
-            int life = 120 + rng.nextInt(120);
-            int r = 10 + rng.nextInt(18);
+        // Дым — только в центре под логотипом, без кругов на монстрах
+        if (tick % 12 == 0 && alpha > 0.25f) {
+            float px = VIRTUAL_W * 0.38f + rng.nextFloat() * VIRTUAL_W * 0.24f;
+            float py = VIRTUAL_H * 0.14f + rng.nextFloat() * VIRTUAL_H * 0.12f;
+            float vx = (rng.nextFloat() - 0.5f) * 0.12f;
+            float vy = -0.08f - rng.nextFloat() * 0.14f;
+            int life = 70 + rng.nextInt(50);
+            int r = 6 + rng.nextInt(6);
             smokePuffs.add(new SmokePuff(px, py, vx, vy, life, r));
         }
         smokePuffs.removeIf(p -> !p.alive);
@@ -212,15 +215,16 @@ public class SplashScreen {
             griffinAnim.draw(g, gpX, gpY, gpW, gpH, alpha * 0.92f);
         }
 
-        // === ВЕДЬМАК ЗА БАРОМ (по центру, ноги у полосы загрузки) ===
+        // === ВЕДЬМАК ЗА БАРОМ (по центру, за прилавком) ===
         if (witcherBar != null && alpha > 0.1f) {
             int barZoneH = 28;
-            float wbScale = (sh * 0.44f) / witcherBar.getFrameHeight();
+            float wbScale = (sh * 0.30f) / witcherBar.getFrameHeight();
             int wbW = Math.round(witcherBar.getFrameWidth() * wbScale);
             int wbH = Math.round(witcherBar.getFrameHeight() * wbScale);
             int wbX = (sw - wbW) / 2;
-            int wbY = sh - barZoneH - wbH - 10;
-            witcherBar.draw(g, wbX, wbY, wbW, wbH, alpha * 0.95f);
+            int wbY = sh - barZoneH - wbH - 6;
+            float wbAlpha = Math.min(1f, alpha);
+            witcherBar.draw(g, wbX, wbY, wbW, wbH, wbAlpha);
         }
 
         // === ЧАСТИЦЫ ===
@@ -370,14 +374,17 @@ public class SplashScreen {
         void update() {
             x += vx;
             y += vy;
-            r += 0.03f;
+            r += 0.015f;
+            if (r > 18f) {
+                r = 18f;
+            }
             life--;
             if (life <= 0) alive = false;
         }
 
         void draw(Graphics2D g) {
             float t = 1f - (life / (float) maxLife);
-            float a = (float) (Math.sin(t * Math.PI) * 0.22f); // максимум в середине жизни
+            float a = (float) (Math.sin(t * Math.PI) * 0.12f);
             if (a <= 0f) return;
 
             Composite prev = g.getComposite();
@@ -388,11 +395,7 @@ public class SplashScreen {
             int cy = (int) y;
             int rr = (int) r;
 
-            // "мягкость" без blur: несколько овалов
             g.fillOval(cx - rr, cy - rr, rr * 2, rr * 2);
-            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, a * 0.55f));
-            g.fillOval(cx - rr - 4, cy - rr + 2, rr * 2, rr * 2);
-            g.fillOval(cx - rr + 6, cy - rr - 1, rr * 2, rr * 2);
             g.setComposite(prev);
         }
     }

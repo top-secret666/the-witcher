@@ -80,10 +80,13 @@ public class SpriteSheet {
         for (int y = 0; y < h; y++) {
             for (int x = 0; x < w; x++) {
                 int rgb = src.getRGB(x, y);
+                int a = (rgb >> 24) & 0xFF;
                 int r = (rgb >> 16) & 0xFF;
                 int g = (rgb >> 8) & 0xFF;
                 int b = rgb & 0xFF;
-                if (r < 30 && g < 30 && b < 30) {
+                if (r < 45 && g < 45 && b < 45) {
+                    out.setRGB(x, y, 0x00000000);
+                } else if (a < 200 && r < 80 && g < 80 && b < 80) {
                     out.setRGB(x, y, 0x00000000);
                 } else {
                     out.setRGB(x, y, (0xFF << 24) | (r << 16) | (g << 8) | b);
@@ -108,7 +111,7 @@ public class SpriteSheet {
                 int r = (argb >>> 16) & 0xff;
                 int g = (argb >>> 8) & 0xff;
                 int b = argb & 0xff;
-                boolean visible = a > 20 && !(r < 30 && g < 30 && b < 30);
+                boolean visible = a > 20 && !(r < 45 && g < 45 && b < 45);
                 if (!visible) {
                     continue;
                 }
