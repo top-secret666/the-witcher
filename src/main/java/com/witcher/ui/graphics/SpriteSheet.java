@@ -137,7 +137,7 @@ public class SpriteSheet {
             out[i] = new BufferedImage(maxW, maxH, BufferedImage.TYPE_INT_ARGB);
             Graphics2D g = out[i].createGraphics();
             int dx = (maxW - raw[i].getWidth()) / 2;
-            int dy = (maxH - raw[i].getHeight()) / 2;
+            int dy = maxH - raw[i].getHeight();
             g.drawImage(raw[i], dx, dy, null);
             g.dispose();
         }
