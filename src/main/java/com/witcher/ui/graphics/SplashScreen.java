@@ -22,7 +22,6 @@ public class SplashScreen {
 
     private float alpha = 0.05f;
     private volatile int loadProgress = 0;
-    private volatile String loadStatus = "\u0417\u0430\u0433\u0440\u0443\u0437\u043a\u0430...";
     private volatile boolean loadingComplete = false;
     private boolean finished = false;
     private int holdTimer = 0;
@@ -267,7 +266,7 @@ public class SplashScreen {
 
         g.setFont(GameFonts.get().bold(11));
         g.setColor(GOLD);
-        String loadText = loadStatus != null ? loadStatus : ("\u0417\u0430\u0433\u0440\u0443\u0437\u043a\u0430... " + progress + "%");
+        String loadText = "\u0417\u0430\u0433\u0440\u0443\u0437\u043a\u0430... " + progress + "%";
         int textW = g.getFontMetrics().stringWidth(loadText);
         g.drawString(loadText, (sw - textW) / 2, barY - 5);
 
@@ -314,11 +313,8 @@ public class SplashScreen {
         return finished;
     }
 
-    void setLoadProgress(int percent, String status) {
+    void setLoadProgress(int percent) {
         loadProgress = Math.max(0, Math.min(100, percent));
-        if (status != null && !status.isEmpty()) {
-            loadStatus = status;
-        }
     }
 
     void markLoadingComplete() {

@@ -41,20 +41,20 @@ final class GameAssetLoader {
 
     private void run() {
         try {
-            report(5, "\u0417\u0430\u0433\u0440\u0443\u0437\u043a\u0430... \u0448\u0440\u0438\u0444\u0442\u044b");
+            report(5);
             GameFonts.get();
 
-            report(20, "\u0417\u0430\u0433\u0440\u0443\u0437\u043a\u0430... \u043c\u0435\u043d\u044e");
+            report(20);
             MainMenuScreen menu = new MainMenuScreen();
 
-            report(55, "\u0417\u0430\u0433\u0440\u0443\u0437\u043a\u0430... \u0437\u0430\u0441\u0442\u0430\u0432\u043a\u0430");
+            report(55);
             IntroScreen intro = new IntroScreen();
 
-            report(85, "\u0417\u0430\u0433\u0440\u0443\u0437\u043a\u0430... \u043b\u0430\u0432\u043a\u0430");
+            report(85);
             ShopAssetCache.get();
             UiChrome.warmup();
 
-            report(100, "\u0413\u043e\u0442\u043e\u0432\u043e");
+            report(100);
             splash.markLoadingComplete();
             onComplete.accept(new Bundle(menu, intro));
         } catch (Throwable error) {
@@ -65,7 +65,7 @@ final class GameAssetLoader {
         }
     }
 
-    private void report(int percent, String label) {
-        splash.setLoadProgress(percent, label);
+    private void report(int percent) {
+        splash.setLoadProgress(percent);
     }
 }
