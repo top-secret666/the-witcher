@@ -20,7 +20,7 @@ final class ShopStatBarRenderer {
                      BufferedImage vialEmpty, BufferedImage vialOverlay, BufferedImage vialEndCap) {
         drawCardText(g);
         int fontSize = w < 90 ? 7 : (h > 200 ? 10 : 8);
-        g.setFont(GameFonts.get().bold(fontSize));
+        g.setFont(GameFonts.get().uiBold(fontSize));
         FontMetrics fm = g.getFontMetrics();
 
         int topInset = Math.max(18, Math.round(h * 0.16f));

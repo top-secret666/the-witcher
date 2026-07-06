@@ -42,10 +42,10 @@ public final class DialogBoxRenderer {
             boxX = (sw - boxW) / 2;
             boxY = sh - boxH - (int) (sh * 0.02f);
             if (heightRatio <= 0.11f) {
-                fontSize = Math.max(13, (int) (sh * 0.042f));
+                fontSize = Math.max(13, (int) (sh * 0.040f));
                 pad = Math.max(6, (int) (sw * 0.018f));
             } else {
-                fontSize = Math.max(11, (int) (sh * 0.038f));
+                fontSize = Math.max(12, (int) (sh * 0.040f));
                 pad = (int) (sw * 0.02f);
             }
             textX = boxX + pad;
@@ -145,7 +145,7 @@ public final class DialogBoxRenderer {
         g.setColor(BOX_BORDER);
         g.drawRect(nameBoxX, nameBoxY, nameBoxW, nameBoxH);
         g.setColor(speakerColor);
-        g.drawString(speaker, nameBoxX + 6, nameBoxY + nfm.getAscent() + 2);
+        GameFonts.drawOutlined(g, speaker, nameBoxX + 6, nameBoxY + nfm.getAscent() + 2, speakerColor);
     }
 
     public static int drawSpeakerText(Graphics2D g, String speaker, String text, Color speakerColor,
@@ -166,10 +166,7 @@ public final class DialogBoxRenderer {
             for (String wl : wrapLine(rawLine, fm, layout.textMaxW)) {
                 lineY += lineH;
                 if (lineY > layout.boxY + layout.boxH - layout.pad) break;
-                g.setColor(new Color(0, 0, 0, 160));
-                g.drawString(wl, layout.textX + 1, lineY + 1);
-                g.setColor(textColor);
-                g.drawString(wl, layout.textX, lineY);
+                GameFonts.drawShadowed(g, wl, layout.textX, lineY, textColor);
             }
         }
 
@@ -195,10 +192,7 @@ public final class DialogBoxRenderer {
             for (String wl : wrapLine(rawLine, fm, layout.textMaxW)) {
                 lineY += lineH;
                 if (lineY > layout.boxY + layout.boxH - layout.pad) break;
-                g.setColor(new Color(0, 0, 0, 160));
-                g.drawString(wl, layout.textX + 1, lineY + 1);
-                g.setColor(textColor);
-                g.drawString(wl, layout.textX, lineY);
+                GameFonts.drawShadowed(g, wl, layout.textX, lineY, textColor);
             }
         }
 
@@ -207,7 +201,7 @@ public final class DialogBoxRenderer {
     }
 
     /**
-     * Компактная рамка внизу экрана — чёткий текст без сглаживания (лавка и т.п.).
+     * Компактная рамка внизу экрана — чёткий текст (лавка).
      */
     public static void drawCompactFramedSpeakerText(Graphics2D g, int sw, int sh, String speaker, String text,
                                                     Color speakerColor, float alpha) {
@@ -215,7 +209,7 @@ public final class DialogBoxRenderer {
         Composite prev = g.getComposite();
         g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
 
-        int fontSize = Math.max(12, (int) (sh * 0.036f));
+        int fontSize = Math.max(12, (int) (sh * 0.038f));
         int boxMarginX = 10;
         int boxMarginBottom = 5;
         int pad = 8;
@@ -261,22 +255,19 @@ public final class DialogBoxRenderer {
 
         if (!speakerLabel.isEmpty()) {
             g.setFont(GameFonts.get().bold(fontSize));
-            g.setColor(speakerColor);
-            g.drawString(speakerLabel, textX, startY);
+            GameFonts.drawOutlined(g, speakerLabel, textX, startY, speakerColor);
             if (!lines.isEmpty()) {
                 String first = lines.get(0);
                 g.setFont(textFont);
-                g.setColor(SPEECH_COLOR);
-                g.drawString(first, textX + speakerW, startY);
+                GameFonts.drawShadowed(g, first, textX + speakerW, startY, SPEECH_COLOR);
                 for (int i = 1; i < lines.size(); i++) {
                     int y = startY + lineH * i;
-                    g.drawString(lines.get(i), textX, y);
+                    GameFonts.drawShadowed(g, lines.get(i), textX, y, SPEECH_COLOR);
                 }
             }
         } else {
             for (int i = 0; i < lines.size(); i++) {
-                g.setColor(SPEECH_COLOR);
-                g.drawString(lines.get(i), textX, startY + lineH * i);
+                GameFonts.drawShadowed(g, lines.get(i), textX, startY + lineH * i, SPEECH_COLOR);
             }
         }
 

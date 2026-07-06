@@ -1,5 +1,6 @@
 package main.java.com.witcher.ui.graphics;
 
+import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.GraphicsEnvironment;
@@ -9,29 +10,25 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Единый игровой шрифт для Swing UI (кириллица + латиница).
- * Приоритет: game.ttf → PixelifySans.ttf → системный SansSerif.
+ * Шрифты Swing UI: диалоги (Serif) и HUD/лавка (SansSerif).
+ * Опционально: положи свой game.ttf в assets/fonts/.
  */
 public final class GameFonts {
 
     private static final GameFonts INSTANCE = new GameFonts();
 
-    private final Font base;
-    private final boolean custom;
+    private final Font dialogBase;
+    private final Font uiBase;
     private final Map<String, Font> cache = new HashMap<>();
 
     private GameFonts() {
-        Font loaded = tryLoad("/assets/fonts/game.ttf");
-        if (loaded == null) {
-            loaded = tryLoad("/assets/fonts/PixelifySans.ttf");
-        }
-        if (loaded != null) {
-            base = loaded;
-            custom = true;
+        Font custom = tryLoad("/assets/fonts/game.ttf");
+        if (custom != null) {
+            dialogBase = custom;
+            uiBase = custom;
         } else {
-            base = new Font(Font.SANS_SERIF, Font.PLAIN, 12);
-            custom = false;
-            System.err.println("[GameFonts] Ispolzuetsya zapasnoj shrift SansSerif");
+            dialogBase = new Font("Serif", Font.PLAIN, 12);
+            uiBase = new Font(Font.SANS_SERIF, Font.PLAIN, 12);
         }
     }
 
@@ -39,39 +36,70 @@ public final class GameFonts {
         return INSTANCE;
     }
 
-    public boolean isCustomLoaded() {
-        return custom;
-    }
-
+    /** Диалоги, интро, VN. */
     public Font plain(int size) {
-        return derive(size, Font.PLAIN);
+        return derive(dialogBase, size, Font.PLAIN);
     }
 
     public Font bold(int size) {
-        return derive(size, Font.BOLD);
+        return derive(dialogBase, size, Font.BOLD);
     }
 
     public Font italic(int size) {
-        return derive(size, Font.ITALIC);
+        return derive(dialogBase, size, Font.ITALIC);
     }
 
-    /** Диалоги и длинный текст — чуть мягче. */
-    public static void applyDialogHints(Graphics2D g) {
-        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
+    /** Лавка, карточки, HUD. */
+    public Font uiPlain(int size) {
+        return derive(uiBase, size, Font.PLAIN);
     }
 
-    /** Карточки, HUD, мелкий UI — чётче. */
-    public static void applyPixelHints(Graphics2D g) {
+    public Font uiBold(int size) {
+        return derive(uiBase, size, Font.BOLD);
+    }
+
+    public Font uiItalic(int size) {
+        return derive(uiBase, size, Font.ITALIC);
+    }
+
+    public static void applyGameHints(Graphics2D g) {
         g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
         g.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_OFF);
     }
 
-    private Font derive(int size, int style) {
+    /** @deprecated use applyGameHints */
+    public static void applyDialogHints(Graphics2D g) {
+        applyGameHints(g);
+    }
+
+    /** @deprecated use applyGameHints */
+    public static void applyPixelHints(Graphics2D g) {
+        applyGameHints(g);
+    }
+
+    /** Тёмная обводка — текст читается на любом фоне. */
+    public static void drawOutlined(Graphics2D g, String text, int x, int y, Color fill) {
+        g.setColor(new Color(12, 8, 4, 200));
+        g.drawString(text, x + 1, y);
+        g.drawString(text, x - 1, y);
+        g.drawString(text, x, y + 1);
+        g.drawString(text, x, y - 1);
+        g.setColor(fill);
+        g.drawString(text, x, y);
+    }
+
+    /** Мягкая тень для длинных диалогов. */
+    public static void drawShadowed(Graphics2D g, String text, int x, int y, Color fill) {
+        g.setColor(new Color(0, 0, 0, 140));
+        g.drawString(text, x + 1, y + 1);
+        g.setColor(fill);
+        g.drawString(text, x, y);
+    }
+
+    private Font derive(Font base, int size, int style) {
         int safeSize = Math.max(6, size);
-        String key = safeSize + ":" + style;
+        String key = base.getFamily() + ":" + safeSize + ":" + style;
         return cache.computeIfAbsent(key, k -> base.deriveFont(style, (float) safeSize));
     }
 
