@@ -1431,7 +1431,7 @@ public class ShopScreen {
         int backW = 72;
         int backH = 22;
         int backX = px + 12;
-        int backY = statsY + (statsH - backH) / 2;
+        int backY = listY + listH - backH;
         equipmentBackButtonBounds.setBounds(backX, backY, backW, backH);
         g.setColor(new Color(28, 18, 8, 220));
         g.fillRoundRect(backX, backY, backW, backH, 5, 5);
