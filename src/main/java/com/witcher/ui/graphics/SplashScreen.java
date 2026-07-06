@@ -53,8 +53,8 @@ public class SplashScreen {
         logoAnim = (la != null) ? la.setPingPong(true) : null;
 
         // Ведьмак за баром — 5 кадров в ряд, прозрачный фон
-        SpriteSheet wb = SpriteSheet.load("/assets/sprites/witcher_bar.png", 5, 1, 15);
-        witcherBar = (wb != null) ? wb.setPingPong(true) : null;
+        SpriteSheet wb = SpriteSheet.loadPacked("/assets/sprites/witcher_bar.png", 5, 1, 12, true, 5);
+        witcherBar = (wb != null) ? wb.setPingPong(true).setCrossfade(true) : null;
 
         // Грифон — 3×2 сетка (6 кадров), чёрный фон удаляется
         SpriteSheet gp = SpriteSheet.load("/assets/sprites/griffin_peek.png", 3, 2, 7, true);
