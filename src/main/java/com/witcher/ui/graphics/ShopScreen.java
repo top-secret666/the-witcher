@@ -1415,10 +1415,10 @@ public class ShopScreen {
                 g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.97f));
             }
             String slotLabel = slot.label;
-            Font slotFont = GameFonts.get().uiPlain(8);
+            Font slotFont = GameFonts.get().uiPlain(9);
             FontMetrics sfm = g.getFontMetrics(slotFont);
             drawEquipText(g, slotFont, slotLabel,
-                slotX + (slotSize - sfm.stringWidth(slotLabel)) / 2, sy + slotSize - 4,
+                slotX + (slotSize - sfm.stringWidth(slotLabel)) / 2, sy + slotSize - 5,
                 new Color(170, 140, 90));
         }
 
@@ -2356,10 +2356,11 @@ public class ShopScreen {
     }
 
     private static void drawEquipText(Graphics2D g, Font font, String text, int x, int y, Color color) {
-        GameFonts.applyGameHints(g);
+        drawCardText(g);
         g.setFont(font);
-        g.setColor(color);
-        g.drawString(text, x, y);
+        int tx = (x + 1) & ~1;
+        int ty = (y + 1) & ~1;
+        GameFonts.drawOutlined(g, text, tx, ty, color);
     }
 
     private void drawCharacter(Graphics2D g, int sw, int sh, BufferedImage sprite,
