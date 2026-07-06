@@ -83,11 +83,6 @@ public class GameWindow {
 
         frame.add(renderer, BorderLayout.CENTER);
 
-        Dimension gameSize = new Dimension(renderer.getDisplayWidth(), renderer.getDisplayHeight());
-        renderer.setPreferredSize(gameSize);
-        renderer.setMinimumSize(gameSize);
-        renderer.setMaximumSize(gameSize);
-
         // Тонкая рамка вокруг окна (раз уж системную убрали)
         frame.getRootPane().setOpaque(true);
         frame.getRootPane().setBackground(Color.BLACK);
@@ -177,25 +172,8 @@ public class GameWindow {
     private void updateVirtualMouse(MouseEvent e) {
         int pw = Math.max(1, renderer.getWidth());
         int ph = Math.max(1, renderer.getHeight());
-        int fw = Math.max(1, renderer.getDisplayWidth());
-        int fh = Math.max(1, renderer.getDisplayHeight());
-
-        int scale = Math.max(1, Math.min(pw / fw, ph / fh));
-        int dw = fw * scale;
-        int dh = fh * scale;
-        int ox = (pw - dw) / 2;
-        int oy = (ph - dh) / 2;
-
-        int lx = e.getX() - ox;
-        int ly = e.getY() - oy;
-        if (lx < 0 || ly < 0 || lx >= dw || ly >= dh) {
-            return;
-        }
-
-        mouseVX = Math.min(renderer.getVirtualW() - 1,
-            Math.max(0, lx * renderer.getVirtualW() / dw));
-        mouseVY = Math.min(renderer.getVirtualH() - 1,
-            Math.max(0, ly * renderer.getVirtualH() / dh));
+        mouseVX = Math.min(renderer.getVirtualW() - 1, Math.max(0, e.getX() * renderer.getVirtualW() / pw));
+        mouseVY = Math.min(renderer.getVirtualH() - 1, Math.max(0, e.getY() * renderer.getVirtualH() / ph));
     }
 
     private void enterMainMenuMode() {

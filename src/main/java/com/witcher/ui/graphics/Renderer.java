@@ -5,7 +5,7 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 
 /**
- * Виртуальный кадр 480×360 → displayFrame (×2) → панель (целочисленный масштаб, без растяжки).
+ * Виртуальный кадр 480×360 → displayFrame (×2) → растягивается на всю панель (Nearest).
  */
 public class Renderer extends JPanel {
 
@@ -78,18 +78,15 @@ public class Renderer extends JPanel {
     }
 
     public void present() {
-        if (pixelScale == 1) {
-            Graphics2D g = displayFrame.createGraphics();
-            try {
-                PixelDraw.applyNearest(g);
-                g.setColor(Color.BLACK);
-                g.fillRect(0, 0, getDisplayWidth(), getDisplayHeight());
-                g.drawImage(screen, 0, 0, null);
-            } finally {
-                g.dispose();
-            }
-        } else {
-            PixelDraw.blitIntegerScale(screen, displayFrame, pixelScale);
+        Graphics2D g = displayFrame.createGraphics();
+        try {
+            PixelDraw.applyNearest(g);
+            g.setColor(Color.BLACK);
+            g.fillRect(0, 0, getDisplayWidth(), getDisplayHeight());
+            g.drawImage(screen, 0, 0, getDisplayWidth(), getDisplayHeight(),
+                0, 0, virtualW, virtualH, null);
+        } finally {
+            g.dispose();
         }
         repaint();
     }
@@ -106,29 +103,7 @@ public class Renderer extends JPanel {
             PixelDraw.applyNearest(g2);
             g2.setColor(Color.BLACK);
             g2.fillRect(0, 0, pw, ph);
-
-            int fw = displayFrame.getWidth();
-            int fh = displayFrame.getHeight();
-            if (fw <= 0 || fh <= 0) {
-                return;
-            }
-
-            if (pw == fw && ph == fh) {
-                g2.drawImage(displayFrame, 0, 0, null);
-            } else {
-                int scale = Math.max(1, Math.min(pw / fw, ph / fh));
-                int dw = fw * scale;
-                int dh = fh * scale;
-                int ox = (pw - dw) / 2;
-                int oy = (ph - dh) / 2;
-                if (scale == 1) {
-                    g2.drawImage(displayFrame, ox, oy, null);
-                } else {
-                    BufferedImage up = new BufferedImage(dw, dh, BufferedImage.TYPE_INT_RGB);
-                    PixelDraw.blitIntegerScale(displayFrame, up, scale);
-                    g2.drawImage(up, ox, oy, null);
-                }
-            }
+            g2.drawImage(displayFrame, 0, 0, pw, ph, null);
         } finally {
             g2.dispose();
         }
