@@ -56,7 +56,7 @@ public class ShopScreen {
     private static final int INVENTORY_POUCH_ICON = 32;
     private static final int INVENTORY_POUCH_LARGE = 96;
     private static final int EQUIP_PANEL_W = 440;
-    private static final int EQUIP_PANEL_H = 308;
+    private static final int EQUIP_PANEL_H = 324;
     /** ~1 мин при 30 FPS — оборот сам возвращается на лицо, если игрок AFK. */
     private static final int CARD_FLIP_IDLE_TICKS = 30 * 60;
 
@@ -1302,7 +1302,7 @@ public class ShopScreen {
         g.fillRect(0, 0, sw, sh);
 
         int px = (sw - EQUIP_PANEL_W) / 2;
-        int py = (sh - EQUIP_PANEL_H) / 2 - 12;
+        int py = (sh - EQUIP_PANEL_H) / 2 - 2;
         equipmentPanelBounds.setBounds(px, py, EQUIP_PANEL_W, EQUIP_PANEL_H);
         equipmentRowBounds.clear();
 
@@ -1320,7 +1320,7 @@ public class ShopScreen {
         int listX = px + 12;
         int listY = py + 34;
         int listW = 148;
-        int listH = EQUIP_PANEL_H - 86;
+        int listH = EQUIP_PANEL_H - 90;
         g.setColor(new Color(8, 6, 4, 180));
         g.fillRoundRect(listX, listY, listW, listH, 4, 4);
         g.setColor(new Color(100, 75, 40));
@@ -1401,11 +1401,13 @@ public class ShopScreen {
         }
 
         int statsX = portraitX;
-        int statsY = py + 250;
+        int statsY = py + 256;
         int statsW = EQUIP_PANEL_W - (statsX - px) - 12;
-        int statsH = 58;
+        int statsH = 64;
         g.setColor(new Color(10, 7, 4, 200));
         g.fillRoundRect(statsX, statsY, statsW, statsH, 4, 4);
+        g.setColor(new Color(100, 75, 40));
+        g.drawRoundRect(statsX, statsY, statsW, statsH, 4, 4);
         drawEquipmentStats(g, statsX, statsY, statsW, statsH, model.equippedStatPreview());
 
         int backW = 72;
