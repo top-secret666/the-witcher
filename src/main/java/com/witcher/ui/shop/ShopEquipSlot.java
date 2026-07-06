@@ -8,9 +8,9 @@ import main.java.com.witcher.model.armour.Trousers;
 
 /** Слоты экипировки Геральта в лавке. */
 public enum ShopEquipSlot {
-    CHEST(0, "Нагрудник"),
+    CHEST(0, "Кираса"),
     LEGS(1, "Штаны"),
-    GLOVES(2, "Перчатки"),
+    GLOVES(2, "Руки"),
     BOOTS(3, "Сапоги");
 
     public final int iconIndex;
