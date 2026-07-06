@@ -263,6 +263,102 @@
       "bytes": 2720
     },
     {
+      "output": "1x/icons/items/chest_ban_ard.png",
+      "size": [
+        32,
+        32
+      ],
+      "bytes": 3028
+    },
+    {
+      "output": "1x/icons/items/chest_belhaven.png",
+      "size": [
+        32,
+        32
+      ],
+      "bytes": 2797
+    },
+    {
+      "output": "1x/icons/items/chest_bokler.png",
+      "size": [
+        32,
+        32
+      ],
+      "bytes": 3071
+    },
+    {
+      "output": "1x/icons/items/chest_geralt_rivia.png",
+      "size": [
+        32,
+        32
+      ],
+      "bytes": 2993
+    },
+    {
+      "output": "1x/icons/items/chest_hindarsfjall.png",
+      "size": [
+        32,
+        32
+      ],
+      "bytes": 2859
+    },
+    {
+      "output": "1x/icons/items/chest_kaedwen.png",
+      "size": [
+        32,
+        32
+      ],
+      "bytes": 3033
+    },
+    {
+      "output": "1x/icons/items/chest_kaer_morhen.png",
+      "size": [
+        32,
+        32
+      ],
+      "bytes": 2809
+    },
+    {
+      "output": "1x/icons/items/chest_nilfgaard.png",
+      "size": [
+        32,
+        32
+      ],
+      "bytes": 2776
+    },
+    {
+      "output": "1x/icons/items/chest_ofir.png",
+      "size": [
+        32,
+        32
+      ],
+      "bytes": 2743
+    },
+    {
+      "output": "1x/icons/items/chest_salmia.png",
+      "size": [
+        32,
+        32
+      ],
+      "bytes": 3028
+    },
+    {
+      "output": "1x/icons/items/chest_temeria.png",
+      "size": [
+        32,
+        32
+      ],
+      "bytes": 2852
+    },
+    {
+      "output": "1x/icons/items/chest_traitor.png",
+      "size": [
+        32,
+        32
+      ],
+      "bytes": 2784
+    },
+    {
       "output": "1x/geralt_portrait_shop.png",
       "size": [
         124,

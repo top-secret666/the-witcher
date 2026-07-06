@@ -1,6 +1,7 @@
 package main.java.com.witcher.ui.graphics;
 
 import main.java.com.witcher.ui.shop.DukeLines;
+import main.java.com.witcher.ui.shop.ChestIconRegistry;
 import main.java.com.witcher.ui.shop.ShopCatalogEntry;
 import main.java.com.witcher.ui.shop.ShopCategory;
 import main.java.com.witcher.model.armour.Armour;
@@ -209,6 +210,7 @@ public class ShopScreen {
 
     private final ShopModel model;
     private final ShopAssetCache assets = ShopAssetCache.get();
+    private final ChestIconRegistry chestIcons;
 
     private final List<ShopItem> items = new ArrayList<>();
     private final List<ShopCatalogEntry> catalogEntries = new ArrayList<>();
@@ -268,6 +270,7 @@ public class ShopScreen {
 
     public ShopScreen(ShopModel model) {
         this.model = model;
+        this.chestIcons = ChestIconRegistry.get(assets.cardArtSize);
         initShowcaseFromModel();
         currentDialog = WELCOME_LINE;
     }
@@ -360,7 +363,7 @@ public class ShopScreen {
         catalogScrollOffset = Math.max(0, Math.min(maxCatalogScroll(panelY), catalogScrollOffset));
     }
 
-    static Rectangle computeContentBoundsPublic(BufferedImage img) {
+    public static Rectangle computeContentBoundsPublic(BufferedImage img) {
         return computeContentBounds(img);
     }
 
@@ -697,7 +700,10 @@ public class ShopScreen {
         purchaseRevealKeepRow = selectedRowIndex;
         if (selectedIndex >= 0 && selectedIndex < items.size()) {
             ShopItem cat = items.get(selectedIndex);
-            purchaseRevealIcon = cat.cardArt != null ? cat.cardArt : cat.icon;
+            purchaseRevealIcon = chestIcons.iconForEntry(entry);
+            if (purchaseRevealIcon == null) {
+                purchaseRevealIcon = cat.cardArt != null ? cat.cardArt : cat.icon;
+            }
         } else {
             purchaseRevealIcon = null;
         }
@@ -1801,8 +1807,9 @@ public class ShopScreen {
         boolean cardGrowing = state == ShopState.CATEGORY_OPENING || state == ShopState.CATEGORY_CLOSING;
         String priceForCard = state == ShopState.CATEGORY ? selectedCatalogPrice() : null;
         ShopCatalogEntry statEntry = selectedCatalogEntry();
+        BufferedImage cardArt = chestArtForEntry(statEntry, item);
         drawFlippableItemCard(g, item, cat.cardX, cat.cardY, cat.cardW, cat.cardH,
-            true, false, 1f, priceForCard, cardGrowing, cardFlipT, statEntry);
+            true, false, 1f, priceForCard, cardGrowing, cardFlipT, statEntry, cardArt);
 
         if (cat.detailPanelAlpha > 0.02f) {
             Rectangle panel = layout.detailListPanelSlot(assets.detailPanelW, assets.detailPanelH);
@@ -1818,6 +1825,23 @@ public class ShopScreen {
         }
 
         g.setComposite(layer);
+    }
+
+    private BufferedImage chestArtForEntry(ShopCatalogEntry entry, ShopItem categoryItem) {
+        if (categoryItem == null || categoryItem.category != ShopCategory.CHEST) {
+            return null;
+        }
+        BufferedImage icon = chestIcons.iconForEntry(entry);
+        if (icon != null) {
+            return icon;
+        }
+        return categoryItem.cardArt != null ? categoryItem.cardArt : categoryItem.icon;
+    }
+
+    private boolean isChestCategoryOpen() {
+        return selectedIndex >= 0
+            && selectedIndex < items.size()
+            && items.get(selectedIndex).category == ShopCategory.CHEST;
     }
 
     private ShopCatalogEntry selectedCatalogEntry() {
@@ -1927,10 +1951,21 @@ public class ShopScreen {
 
             row.bounds.setBounds(interactive ? x : 0, interactive ? y : 0, assets.rowW, assets.rowH);
 
+            int textX = x + 12;
+            if (isChestCategoryOpen()) {
+                BufferedImage rowIcon = chestIcons.iconForEntry(row);
+                if (rowIcon != null) {
+                    int iconSz = 18;
+                    int iconY = y + (assets.rowH - iconSz) / 2;
+                    g.drawImage(rowIcon, x + 4, iconY, iconSz, iconSz, null);
+                    textX = x + 4 + iconSz + 4;
+                }
+            }
+
             FontMetrics fm = g.getFontMetrics();
-            String label = truncateToWidth(row.name, fm, assets.rowW - 58);
+            String label = truncateToWidth(row.name, fm, assets.rowW - (textX - x) - 46);
             int textY = y + (assets.rowH + fm.getAscent()) / 2 - 1;
-            drawOutlinedText(g, label, x + 12, textY, new Color(235, 215, 155));
+            drawOutlinedText(g, label, textX, textY, new Color(235, 215, 155));
 
             String price = row.priceLabel();
             int priceW = fm.stringWidth(price);
@@ -1986,6 +2021,13 @@ public class ShopScreen {
     private void drawItemCard(Graphics2D g, ShopItem item, int x, int y, int w, int h, int index,
                               boolean selected, boolean hovered, float revealAlpha, String priceOverride,
                               boolean smoothIconGrowth) {
+        drawItemCard(g, item, x, y, w, h, index, selected, hovered,
+            revealAlpha, priceOverride, smoothIconGrowth, null);
+    }
+
+    private void drawItemCard(Graphics2D g, ShopItem item, int x, int y, int w, int h, int index,
+                              boolean selected, boolean hovered, float revealAlpha, String priceOverride,
+                              boolean smoothIconGrowth, BufferedImage cardArtOverride) {
         Composite savedComposite = g.getComposite();
         g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, revealAlpha));
 
@@ -2010,7 +2052,7 @@ public class ShopScreen {
             drawFallbackCard(g, x, y, w, h, false);
             cardRect = new Rectangle(x, y, w, h);
         }
-        drawCardFrontContent(g, item, cardRect, w, h, priceOverride, smoothIconGrowth);
+        drawCardFrontContent(g, item, cardRect, w, h, priceOverride, smoothIconGrowth, cardArtOverride);
 
         g.setComposite(savedComposite);
     }
@@ -2018,13 +2060,14 @@ public class ShopScreen {
     private void drawFlippableItemCard(Graphics2D g, ShopItem item, int x, int y, int w, int h,
                                        boolean selected, boolean hovered, float revealAlpha,
                                        String priceOverride, boolean smoothIconGrowth,
-                                       float flipT, ShopCatalogEntry statEntry) {
+                                       float flipT, ShopCatalogEntry statEntry,
+                                       BufferedImage cardArtOverride) {
         Shape savedClip = g.getClip();
         g.clipRect(x, y, w, h);
         try {
             if (flipT <= 0.001f) {
                 drawItemCard(g, item, x, y, w, h, selectedIndex, selected, hovered,
-                    revealAlpha, priceOverride, smoothIconGrowth);
+                    revealAlpha, priceOverride, smoothIconGrowth, cardArtOverride);
                 return;
             }
             if (flipT >= 0.999f) {
@@ -2037,7 +2080,7 @@ public class ShopScreen {
             int sx = x + (w - sw) / 2;
             if (flipT < 0.5f) {
                 drawItemCard(g, item, sx, y, sw, h, selectedIndex, selected, hovered,
-                    revealAlpha, priceOverride, smoothIconGrowth);
+                    revealAlpha, priceOverride, smoothIconGrowth, cardArtOverride);
             } else {
                 drawItemCardBack(g, sx, y, sw, h, revealAlpha, statEntry);
             }
@@ -2079,7 +2122,8 @@ public class ShopScreen {
     }
 
     private void drawCardFrontContent(Graphics2D g, ShopItem item, Rectangle card, int w, int h,
-                                    String priceOverride, boolean smoothIconGrowth) {
+                                    String priceOverride, boolean smoothIconGrowth,
+                                    BufferedImage cardArtOverride) {
         int x = card.x;
         int y = card.y;
         boolean categoryGrid = priceOverride == null;
@@ -2106,7 +2150,9 @@ public class ShopScreen {
                 ? y + h - Math.max(18, Math.round(h * 0.22f))
                 : y + h - 10;
 
-        BufferedImage art = item.cardArt != null ? item.cardArt : item.icon;
+        BufferedImage art = cardArtOverride != null
+            ? cardArtOverride
+            : item.cardArt != null ? item.cardArt : item.icon;
         if (art != null) {
             int slotX = x + 4;
             int slotW = w - 8;
