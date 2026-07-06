@@ -23,6 +23,7 @@ public class GameWindow {
     private JComponent titleBar;
     private Sprite sprite;
     private SplashScreen splashScreen;
+    private GameAssetLoader.Bundle loadBundle;
     private MainMenuScreen mainMenu;
     private IntroScreen introScreen;
     private ShopScreen shopScreen;
@@ -100,6 +101,7 @@ public class GameWindow {
 
         frame.setLocationRelativeTo(null);
         splashScreen = new SplashScreen();
+        GameAssetLoader.start(splashScreen, bundle -> loadBundle = bundle);
 
         setupInput();
     }
@@ -177,7 +179,7 @@ public class GameWindow {
     private void enterMainMenuMode() {
         splashActive = false;
         menuActive = true;
-        mainMenu = new MainMenuScreen();
+        mainMenu = loadBundle != null ? loadBundle.mainMenu : new MainMenuScreen();
 
         // Меню должно быть как игровая сцена: без шапки и рамки окна.
         if (titleBar != null) {
@@ -568,7 +570,7 @@ public class GameWindow {
                     // Запуск пиксельной заставки-интро
                     menuActive = false;
                     introActive = true;
-                    introScreen = new IntroScreen();
+                    introScreen = loadBundle != null ? loadBundle.intro : new IntroScreen();
                 } else if (action == MainMenuScreen.Action.SETTINGS) {
                     System.out.println("[MENU] Settings pressed (scene not implemented yet)");
                 }

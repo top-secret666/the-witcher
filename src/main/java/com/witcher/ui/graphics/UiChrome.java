@@ -43,6 +43,11 @@ public final class UiChrome {
     drawVectorCloseButton(g, r, hovered, alpha);
   }
 
+  /** Прогрев спрайтов кнопок на экране загрузки. */
+  public static void warmup() {
+    ensureAssets();
+  }
+
   public static void drawArrowBackButton(Graphics2D g, Rectangle r, boolean hovered, float alpha) {
     if (alpha <= 0.01f || r.width <= 0) {
       return;

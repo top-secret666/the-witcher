@@ -21,9 +21,11 @@ public class SplashScreen {
     private int bgScaledForW, bgScaledForH;
 
     private float alpha = 0.05f;
-    private int progress = 0;
+    private volatile int loadProgress = 0;
+    private volatile String loadStatus = "\u0417\u0430\u0433\u0440\u0443\u0437\u043a\u0430...";
+    private volatile boolean loadingComplete = false;
     private boolean finished = false;
-    private int timer = 0;
+    private int holdTimer = 0;
     private int tick = 0;
 
     // Атмосфера
@@ -75,11 +77,9 @@ public class SplashScreen {
         if (alpha < 1f) {
             alpha += 0.06f;
             if (alpha > 1f) alpha = 1f;
-        } else if (progress < 100) {
-            progress += 1;
-        } else {
-            timer++;
-            if (timer > 80) finished = true;
+        } else if (loadingComplete && loadProgress >= 100) {
+            holdTimer++;
+            if (holdTimer > 50) finished = true;
         }
 
         // Частицы (золотые искры)
@@ -250,6 +250,7 @@ public class SplashScreen {
         g.setColor(BAR_BG);
         g.fillRect(barX, barY, barW, barH);
 
+        int progress = Math.max(0, Math.min(100, loadProgress));
         int fillW = (int) Math.round(barW * (progress / 100.0));
         if (fillW > 0) {
             GradientPaint barGrad = new GradientPaint(barX, barY, GOLD_DARK, barX + barW, barY, GOLD);
@@ -266,7 +267,7 @@ public class SplashScreen {
 
         g.setFont(GameFonts.get().bold(11));
         g.setColor(GOLD);
-        String loadText = "\u0417\u0430\u0433\u0440\u0443\u0437\u043a\u0430... " + progress + "%";
+        String loadText = loadStatus != null ? loadStatus : ("\u0417\u0430\u0433\u0440\u0443\u0437\u043a\u0430... " + progress + "%");
         int textW = g.getFontMetrics().stringWidth(loadText);
         g.drawString(loadText, (sw - textW) / 2, barY - 5);
 
@@ -311,6 +312,18 @@ public class SplashScreen {
 
     public boolean isFinished() {
         return finished;
+    }
+
+    void setLoadProgress(int percent, String status) {
+        loadProgress = Math.max(0, Math.min(100, percent));
+        if (status != null && !status.isEmpty()) {
+            loadStatus = status;
+        }
+    }
+
+    void markLoadingComplete() {
+        loadingComplete = true;
+        loadProgress = 100;
     }
 
     private static float clamp(float v, float min, float max) {
