@@ -1552,7 +1552,7 @@ public class IntroScreen {
 
         g.setFont(hintFont);
         g.setColor(new Color(150, 130, 95, Math.max(0, Math.min(255, (int) (fadeAlpha * 200)))));
-        g.drawString("Колёсико — прокрутка  ·  Esc — закрыть", textX, hintBaseline);
+        g.drawString("Колёсико — прокрутка", textX, hintBaseline);
 
         g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
     }
