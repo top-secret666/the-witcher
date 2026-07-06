@@ -18,6 +18,12 @@ final class ShopStatBarRenderer {
 
     static void draw(Graphics2D g, int x, int y, int w, int h, ShopModel.StatPreview preview,
                      BufferedImage vialEmpty, BufferedImage vialOverlay, BufferedImage vialEndCap) {
+        draw(g, x, y, w, h, preview, vialEmpty, vialOverlay, vialEndCap, 0);
+    }
+
+    static void draw(Graphics2D g, int x, int y, int w, int h, ShopModel.StatPreview preview,
+                     BufferedImage vialEmpty, BufferedImage vialOverlay, BufferedImage vialEndCap,
+                     int animTick) {
         drawCardText(g);
         int fontSize = w < 90 ? 7 : (h > 200 ? 10 : 8);
         g.setFont(GameFonts.get().uiBold(fontSize));
@@ -51,7 +57,7 @@ final class ShopStatBarRenderer {
             int baseValue = row.value() - row.delta();
             if (useVials) {
                 drawVialComparison(g, x + 8, barY, barW, vialH, vialEmpty, vialOverlay, vialEndCap,
-                    colors[i], baseValue, row.value(), row.max());
+                    colors[i], baseValue, row.value(), row.max(), animTick, i);
             } else {
                 drawComparisonBar(g, x + 8, barY, barW, Math.max(5, Math.min(8, rowH / 4)),
                     colors[i], baseValue, row.value(), row.max());
@@ -97,7 +103,8 @@ final class ShopStatBarRenderer {
     private static void drawVialComparison(Graphics2D g, int x, int y, int w, int h,
                                            BufferedImage vialEmpty, BufferedImage vialOverlay,
                                            BufferedImage vialEndCap,
-                                           Color main, int baseValue, int newValue, int max) {
+                                           Color main, int baseValue, int newValue, int max,
+                                           int animTick, int rowIndex) {
         Object interp = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
         g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
 
@@ -114,7 +121,8 @@ final class ShopStatBarRenderer {
 
         Shape savedClip = g.getClip();
         g.clipRect(cavityX, cavityY, cavityW, cavityH);
-        drawLiquidComparison(g, cavityX, cavityY, cavityW, cavityH, main, baseValue, newValue, max);
+        drawLiquidComparison(g, cavityX, cavityY, cavityW, cavityH, main, baseValue, newValue, max,
+            animTick, rowIndex);
         g.setClip(savedClip);
 
         drawCroppedSprite(g, vialEmpty, emptyCrop, x, y, w, h);
@@ -339,7 +347,8 @@ final class ShopStatBarRenderer {
     }
 
     private static void drawLiquidComparison(Graphics2D g, int x, int y, int w, int h,
-                                             Color main, int baseValue, int newValue, int max) {
+                                             Color main, int baseValue, int newValue, int max,
+                                             int animTick, int rowIndex) {
         if (w <= 0 || h <= 0 || max <= 0) {
             return;
         }
@@ -350,23 +359,24 @@ final class ShopStatBarRenderer {
 
         if (delta >= 0) {
             if (baseW > 0) {
-                fillLiquid(g, x, y, baseW, h, main);
+                fillLiquid(g, x, y, baseW, h, main, animTick, rowIndex);
             }
             if (delta > 0 && newW > baseW) {
-                fillLiquid(g, x + baseW, y, newW - baseW, h, DELTA_YELLOW);
+                fillLiquid(g, x + baseW, y, newW - baseW, h, DELTA_YELLOW, animTick + 7, rowIndex + 3);
             }
         } else {
             if (newW > 0) {
-                fillLiquid(g, x, y, newW, h, main);
+                fillLiquid(g, x, y, newW, h, main, animTick, rowIndex);
             }
             if (baseW > newW) {
                 Color lossBlend = blendColors(main, DELTA_YELLOW, 0.55f);
-                fillLiquid(g, x + newW, y, baseW - newW, h, lossBlend);
+                fillLiquid(g, x + newW, y, baseW - newW, h, lossBlend, animTick + 4, rowIndex + 1);
             }
         }
     }
 
-    private static void fillLiquid(Graphics2D g, int x, int y, int width, int height, Color base) {
+    private static void fillLiquid(Graphics2D g, int x, int y, int width, int height, Color base,
+                                   int animTick, int rowIndex) {
         if (width <= 0 || height <= 0) {
             return;
         }
@@ -397,17 +407,20 @@ final class ShopStatBarRenderer {
         }
 
         g.setPaint(saved);
-        drawLiquidShimmers(g, x, y, width, height, brighten(base, 0.55f));
-        drawLiquidMeniscus(g, x, y, width, height, core);
+        drawLiquidShimmers(g, x, y, width, height, brighten(base, 0.55f), animTick, rowIndex);
+        drawLiquidBubbles(g, x, y, width, height, brighten(base, 0.35f), animTick, rowIndex);
+        drawLiquidMeniscus(g, x, y, width, height, core, animTick);
     }
 
-    /** Мелкие блики внутри жидкости — как искры в зелье. */
-    private static void drawLiquidShimmers(Graphics2D g, int x, int y, int w, int h, Color spark) {
+    /** Мелкие блики внутри жидкости — двигаются со временем. */
+    private static void drawLiquidShimmers(Graphics2D g, int x, int y, int w, int h, Color spark,
+                                           int animTick, int rowIndex) {
         int sparks = Math.max(2, w / 6);
         for (int i = 0; i < sparks; i++) {
-            int seed = x * 31 + y * 17 + w * 13 + i * 23;
-            int sx = x + 2 + Math.floorMod(seed, Math.max(1, w - 3));
-            int sy = y + 1 + Math.floorMod(seed / 7, Math.max(1, h - 2));
+            int seed = x * 31 + y * 17 + w * 13 + i * 23 + rowIndex * 41;
+            int drift = animTick / 3 + i * 5;
+            int sx = x + 2 + Math.floorMod(seed + drift, Math.max(1, w - 3));
+            int sy = y + 1 + Math.floorMod(seed / 7 + animTick / 5, Math.max(1, h - 2));
             int alpha = 70 + Math.floorMod(seed / 11, 110);
             g.setColor(new Color(spark.getRed(), spark.getGreen(), spark.getBlue(), alpha));
             g.fillRect(sx, sy, 1, 1);
@@ -418,14 +431,46 @@ final class ShopStatBarRenderer {
         }
     }
 
-    private static void drawLiquidMeniscus(Graphics2D g, int x, int y, int width, int height, Color edge) {
+    /** Пузырьки внутри колбы — поднимаются вверх. */
+    private static void drawLiquidBubbles(Graphics2D g, int x, int y, int w, int h, Color tint,
+                                          int animTick, int rowIndex) {
+        if (w < 8 || h < 6) {
+            return;
+        }
+        for (int b = 0; b < 2; b++) {
+            int period = 42 + b * 19 + rowIndex * 13;
+            int phaseTick = Math.floorMod(animTick + b * 24 + rowIndex * 17, period);
+            float phase = phaseTick / (float) period;
+            if (phase > 0.92f) {
+                continue;
+            }
+            int bx = x + 3 + Math.floorMod(animTick * 2 + b * 11 + rowIndex * 9, Math.max(1, w - 6));
+            int by = y + h - 2 - Math.round(phase * (h - 3));
+            int alpha = 90 + Math.round((1f - phase) * 100);
+            int size = phase < 0.15f ? 2 : 1;
+            g.setColor(new Color(255, 255, 255, alpha));
+            g.fillOval(bx, by, size, size);
+            g.setColor(new Color(tint.getRed(), tint.getGreen(), tint.getBlue(), alpha / 2));
+            g.fillOval(bx, by + 1, size, size);
+        }
+    }
+
+    private static void drawLiquidMeniscus(Graphics2D g, int x, int y, int width, int height, Color edge,
+                                           int animTick) {
         g.setColor(new Color(0, 0, 0, 65));
         g.fillRect(x, y + height - 1, width, 1);
         if (width > 2) {
             g.setColor(new Color(edge.getRed(), edge.getGreen(), edge.getBlue(), 160));
             g.fillRect(x + width - 1, y + 1, 1, Math.max(1, height - 2));
-            g.setColor(new Color(255, 255, 255, 35));
-            g.fillRect(x + 1, y + 1, Math.max(1, width / 3), 1);
+            int surfaceY = y + 1;
+            for (int i = 0; i < width; i++) {
+                int wave = (int) (Math.sin((i + animTick * 0.22) * 0.42) * 1.1);
+                int alpha = 55 + (i % 3) * 12;
+                g.setColor(new Color(255, 255, 255, alpha));
+                g.fillRect(x + i, surfaceY + wave, 1, 1);
+            }
+            g.setColor(new Color(edge.getRed(), edge.getGreen(), edge.getBlue(), 120));
+            g.fillRect(x + 1, surfaceY, Math.max(1, width / 4), 1);
         }
     }
 
@@ -433,7 +478,7 @@ final class ShopStatBarRenderer {
                                           Color main, int baseValue, int newValue, int max) {
         Shape savedClip = g.getClip();
         g.clipRect(x, y, w, h);
-        drawLiquidComparison(g, x, y, w, h, main, baseValue, newValue, max);
+        drawLiquidComparison(g, x, y, w, h, main, baseValue, newValue, max, 0, 0);
         g.setClip(savedClip);
     }
 
