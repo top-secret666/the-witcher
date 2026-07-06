@@ -45,10 +45,6 @@ public class SplashScreen {
     private static final Color WARM_LIGHT = new Color(255, 170, 85);
     private static final Color SMOKE = new Color(190, 180, 165);
 
-    /** Исходный размер ячейки witcher_bar.png — якорь для позиции за стойкой. */
-    private static final float WITCHER_BAR_REF_W = 205f;
-    private static final float WITCHER_BAR_REF_H = 1024f;
-
     public SplashScreen() {
         background = Sprite.load("/assets/sprites/splash_bg.png");
 
@@ -57,8 +53,8 @@ public class SplashScreen {
         logoAnim = (la != null) ? la.setPingPong(true) : null;
 
         // Ведьмак за баром — 5 кадров в ряд, прозрачный фон
-        SpriteSheet wb = SpriteSheet.loadPacked("/assets/sprites/witcher_bar.png", 5, 1, 12, true, 5);
-        witcherBar = (wb != null) ? wb.setPingPong(true).setCrossfade(true) : null;
+        SpriteSheet wb = SpriteSheet.load("/assets/sprites/witcher_bar.png", 5, 1, 15);
+        witcherBar = (wb != null) ? wb.setPingPong(true) : null;
 
         // Грифон — 3×2 сетка (6 кадров), чёрный фон удаляется
         SpriteSheet gp = SpriteSheet.load("/assets/sprites/griffin_peek.png", 3, 2, 7, true);
@@ -218,12 +214,11 @@ public class SplashScreen {
 
         // === ВЕДЬМАК ЗА БАРОМ (по центру, крупный) ===
         if (witcherBar != null && alpha > 0.1f) {
-            float wbScale = (sw * 0.22f) / WITCHER_BAR_REF_W;
-            int wbW = Math.round(WITCHER_BAR_REF_W * wbScale);
-            int wbH = Math.round(WITCHER_BAR_REF_H * wbScale);
+            float wbScale = (sw * 0.22f) / witcherBar.getFrameWidth();
+            int wbW = Math.round(witcherBar.getFrameWidth() * wbScale);
+            int wbH = Math.round(witcherBar.getFrameHeight() * wbScale);
             int wbX = (sw - wbW) / 2;
-            // 31% высоты ячейки уходит за низ — ведьмак «за стойкой» на фоне
-            int wbY = sh - wbH + Math.round(wbH * 0.31f);
+            int wbY = sh - wbH + (int) (wbH * 0.31f);
             witcherBar.draw(g, wbX, wbY, wbW, wbH, alpha * 0.95f);
         }
 
