@@ -264,7 +264,7 @@ public class SplashScreen {
         g.setStroke(new BasicStroke(1f));
         g.drawRect(barX, barY, barW, barH);
 
-        g.setFont(new Font("Monospaced", Font.BOLD, 11));
+        g.setFont(GameFonts.get().bold(11));
         g.setColor(GOLD);
         String loadText = "\u0417\u0430\u0433\u0440\u0443\u0437\u043a\u0430... " + progress + "%";
         int textW = g.getFontMetrics().stringWidth(loadText);

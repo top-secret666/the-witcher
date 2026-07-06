@@ -299,7 +299,7 @@ public class GameWindow {
             }
 
             // заголовок
-            g2.setFont(new Font("Monospaced", Font.BOLD, 12));
+            g2.setFont(GameFonts.get().bold(12));
             g2.setColor(TITLE_FG);
             // Лёгкая подстройка по пикселям — так визуально ровнее
             int ty = (h + g2.getFontMetrics().getAscent() - g2.getFontMetrics().getDescent()) / 2 + 1;
@@ -421,7 +421,7 @@ public class GameWindow {
                 g2.setColor(TITLE_BG);
                 if (barH > 2) g2.fillRect(bx + 1, by + 1, barW - 2, barH - 2);
             } else {
-                g2.setFont(new Font("Monospaced", Font.BOLD, 12));
+                g2.setFont(GameFonts.get().bold(12));
                 g2.setColor(pressed ? TITLE_BG : TITLE_FG);
                 FontMetrics fm = g2.getFontMetrics();
                 int tx = (w - fm.stringWidth(label)) / 2;

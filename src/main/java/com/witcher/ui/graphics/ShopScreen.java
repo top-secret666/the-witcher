@@ -1134,7 +1134,7 @@ public class ShopScreen {
         }
         String wallet = walletHudAmountText();
         drawCrispText(g);
-        g.setFont(new Font("Serif", Font.BOLD, 11));
+        g.setFont(GameFonts.get().bold( 11));
         FontMetrics fm = g.getFontMetrics();
         int textW = fm.stringWidth(wallet);
         int tx = bagX + (bagSize - textW) / 2;
@@ -1165,7 +1165,7 @@ public class ShopScreen {
         int padY = 4;
 
         drawCrispText(g);
-        g.setFont(new Font("Serif", Font.BOLD, 12));
+        g.setFont(GameFonts.get().bold( 12));
         FontMetrics fm = g.getFontMetrics();
         int blockW = fm.stringWidth(wallet) + fm.stringWidth(suffix);
         if (assets.crownIconScaled != null) {
@@ -1212,7 +1212,7 @@ public class ShopScreen {
         g.drawRoundRect(px, py, INVENTORY_PANEL_W, INVENTORY_PANEL_H, 8, 8);
 
         drawCrispText(g);
-        g.setFont(new Font("Serif", Font.BOLD, 13));
+        g.setFont(GameFonts.get().bold( 13));
         g.setColor(new Color(255, 220, 140));
         g.drawString("Инвентарь", px + 12, py + 20);
 
@@ -1233,12 +1233,12 @@ public class ShopScreen {
         int listY = detailBottom + 12;
         g.setColor(new Color(100, 75, 40, 140));
         g.drawLine(px + 10, listY - 4, px + INVENTORY_PANEL_W - 10, listY - 4);
-        g.setFont(new Font("Serif", Font.BOLD, 10));
+        g.setFont(GameFonts.get().bold( 10));
         g.setColor(new Color(180, 140, 80));
         g.drawString("Куплено:", px + 12, listY + 10);
         listY += 24;
 
-        g.setFont(new Font("Serif", Font.PLAIN, 11));
+        g.setFont(GameFonts.get().plain( 11));
         g.setColor(new Color(200, 180, 130));
         List<String> items = model.inventoryItemNames();
         if (items.isEmpty()) {
@@ -1255,7 +1255,7 @@ public class ShopScreen {
             }
         }
 
-        g.setFont(new Font("Serif", Font.ITALIC, 9));
+        g.setFont(GameFonts.get().italic( 9));
         g.setColor(new Color(140, 120, 80));
         g.drawString("Esc — закрыть", px + 12, py + INVENTORY_PANEL_H - 8);
 
@@ -1264,7 +1264,7 @@ public class ShopScreen {
         int equipBtnX = px + INVENTORY_PANEL_W - equipBtnW - 10;
         int equipBtnY = py + INVENTORY_PANEL_H - equipBtnH - 8;
         inventoryEquipButtonBounds.setBounds(equipBtnX, equipBtnY, equipBtnW, equipBtnH);
-        g.setFont(new Font("Serif", Font.BOLD, 10));
+        g.setFont(GameFonts.get().bold( 10));
         g.setColor(new Color(28, 18, 8, 220));
         g.fillRoundRect(equipBtnX, equipBtnY, equipBtnW, equipBtnH, 5, 5);
         g.setColor(new Color(170, 125, 55));
@@ -1296,7 +1296,7 @@ public class ShopScreen {
         g.drawRoundRect(px, py, EQUIP_PANEL_W, EQUIP_PANEL_H, 8, 8);
 
         drawCrispText(g);
-        g.setFont(new Font("Serif", Font.BOLD, 14));
+        g.setFont(GameFonts.get().bold( 14));
         g.setColor(new Color(255, 220, 140));
         g.drawString("Экипировка", px + 14, py + 22);
 
@@ -1309,12 +1309,12 @@ public class ShopScreen {
         g.setColor(new Color(100, 75, 40));
         g.drawRoundRect(listX, listY, listW, listH, 4, 4);
 
-        g.setFont(new Font("Serif", Font.BOLD, 10));
+        g.setFont(GameFonts.get().bold( 10));
         g.setColor(new Color(180, 140, 80));
         g.drawString("Куплено", listX + 8, listY + 14);
 
         List<Armour> owned = model.ownedArmour();
-        g.setFont(new Font("Serif", Font.PLAIN, 10));
+        g.setFont(GameFonts.get().plain( 10));
         int rowY = listY + 24;
         int rowH = 16;
         for (int i = 0; i < owned.size(); i++) {
@@ -1376,7 +1376,7 @@ public class ShopScreen {
                 g.drawImage(icon, slotX + (slotSize - iconSz) / 2, sy + 8, iconSz, iconSz, null);
                 g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.97f));
             }
-            g.setFont(new Font("Serif", Font.PLAIN, 7));
+            g.setFont(GameFonts.get().plain( 7));
             g.setColor(new Color(170, 140, 90));
             String slotLabel = slot.label;
             FontMetrics sfm = g.getFontMetrics();
@@ -1396,7 +1396,7 @@ public class ShopScreen {
         int backX = px + 12;
         int backY = py + EQUIP_PANEL_H - backH - 10;
         equipmentBackButtonBounds.setBounds(backX, backY, backW, backH);
-        g.setFont(new Font("Serif", Font.BOLD, 10));
+        g.setFont(GameFonts.get().bold( 10));
         g.setColor(new Color(28, 18, 8, 220));
         g.fillRoundRect(backX, backY, backW, backH, 5, 5);
         g.setColor(new Color(150, 110, 50));
@@ -1404,7 +1404,7 @@ public class ShopScreen {
         g.setColor(new Color(230, 200, 140));
         g.drawString("Назад", backX + 18, backY + 15);
 
-        g.setFont(new Font("Serif", Font.ITALIC, 9));
+        g.setFont(GameFonts.get().italic( 9));
         g.setColor(new Color(140, 120, 80));
         g.drawString("Esc — назад", backX + backW + 10, backY + 15);
 
@@ -1413,14 +1413,14 @@ public class ShopScreen {
 
     private void drawEquipmentStats(Graphics2D g, int x, int y, int w, int h, ShopModel.StatPreview preview) {
         drawCrispText(g);
-        g.setFont(new Font("Serif", Font.BOLD, 10));
+        g.setFont(GameFonts.get().bold( 10));
         g.setColor(new Color(220, 200, 140));
         String header = "ХАРАКТЕРИСТИКИ";
         FontMetrics hfm = g.getFontMetrics();
         g.drawString(header, x + (w - hfm.stringWidth(header)) / 2, y + 14);
 
         String[] labels = {"Защита", "Выносл.", "Знаки"};
-        g.setFont(new Font("Serif", Font.PLAIN, 10));
+        g.setFont(GameFonts.get().plain( 10));
         int lineY = y + 30;
         ShopModel.StatRow[] rows = preview.rows();
         for (int i = 0; i < labels.length && i < rows.length; i++) {
@@ -1476,7 +1476,7 @@ public class ShopScreen {
             "Золотой мешок с гонораром.",
             amount + " — плата за Арнскрон."
         };
-        g.setFont(new Font("Serif", Font.PLAIN, 10));
+        g.setFont(GameFonts.get().plain( 10));
         g.setColor(new Color(220, 195, 130));
         int textY = pouchY + large + 12;
         for (String line : lines) {
@@ -1552,7 +1552,7 @@ public class ShopScreen {
         int crownSize = 18;
         int crownGap = 4;
         drawCrispText(g);
-        g.setFont(new Font("Serif", Font.BOLD, 13));
+        g.setFont(GameFonts.get().bold( 13));
         FontMetrics fm = g.getFontMetrics();
         int blockW = fm.stringWidth(wallet) + fm.stringWidth(suffix);
         if (assets.crownIconScaled != null) {
@@ -2090,7 +2090,7 @@ public class ShopScreen {
     }
 
     private static Font cardFont(int size) {
-        return new Font(Font.SANS_SERIF, Font.BOLD, size);
+        return GameFonts.get().bold(size);
     }
 
     private static void drawCardText(Graphics2D g) {

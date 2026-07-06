@@ -171,7 +171,7 @@ public class MainMenuScreen {
         drawTransition(g, sw, sh);
 
         // Small menu hint for keyboard navigation.
-        g.setFont(new Font("Monospaced", Font.BOLD, 10));
+        g.setFont(GameFonts.get().plain(10));
         g.setColor(new Color(230, 195, 120));
         String help = "W/S or arrows - Enter - Esc";
         int hw = g.getFontMetrics().stringWidth(help);
@@ -294,7 +294,7 @@ public class MainMenuScreen {
             return;
         }
 
-        g.setFont(new Font("Serif", Font.BOLD, 26));
+        g.setFont(GameFonts.get().bold(26));
         g.setColor(new Color(230, 194, 92));
         String title = "WITCHER";
         int tw = g.getFontMetrics().stringWidth(title);
@@ -321,9 +321,9 @@ public class MainMenuScreen {
             String label = buttonLabels.length > i ? buttonLabels[i] : "";
             if (!label.isEmpty()) {
                 int fontSize = Math.max(16, (int) (r.height * 0.36f));
-                Font font = new Font("Serif", Font.BOLD, fontSize);
+                Font font = GameFonts.get().bold(fontSize);
                 g.setFont(font);
-                g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+                GameFonts.applyDialogHints(g);
                 FontMetrics fm = g.getFontMetrics(font);
                 Rectangle2D bounds = fm.getStringBounds(label, g);
 

@@ -926,7 +926,7 @@ public class IntroScreen {
 
         if (!waitingForAdvance && (tick / 8) % 2 == 0) {
             g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-            Font textFont = new Font("Serif", Font.PLAIN, layout.fontSize);
+            Font textFont = GameFonts.get().plain(layout.fontSize);
             g.setFont(textFont);
             FontMetrics fm = g.getFontMetrics();
             int cursorX = layout.textX + fm.stringWidth(
@@ -1367,7 +1367,7 @@ public class IntroScreen {
         int btnH = fontSize + 8;
         int gap = Math.max(28, (int) (sw * 0.09f));
 
-        Font measureFont = new Font("Serif", Font.PLAIN, fontSize);
+        Font measureFont = GameFonts.get().plain(fontSize);
         FontMetrics fm = Toolkit.getDefaultToolkit().getFontMetrics(measureFont);
         int backW = fm.stringWidth("Назад") + 10;
         int histW = fm.stringWidth("История") + 10;
@@ -1428,7 +1428,9 @@ public class IntroScreen {
         g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
         int fontSize = Math.max(10, r.height - 8);
         int style = active ? Font.BOLD : Font.PLAIN;
-        g.setFont(new Font("Serif", style, fontSize));
+        g.setFont(style == Font.BOLD ? GameFonts.get().bold(fontSize)
+            : style == Font.ITALIC ? GameFonts.get().italic(fontSize)
+            : GameFonts.get().plain(fontSize));
         FontMetrics fm = g.getFontMetrics();
         int tx = r.x + (r.width - fm.stringWidth(label)) / 2;
         int ty = r.y + (r.height + fm.getAscent() - fm.getDescent()) / 2;
@@ -1487,14 +1489,14 @@ public class IntroScreen {
         int textMaxW = panel.width - pad * 2;
 
         int titleSize = fontSize + 1;
-        Font titleFont = new Font("Serif", Font.BOLD, titleSize);
+        Font titleFont = GameFonts.get().bold(titleSize);
         g.setFont(titleFont);
         FontMetrics titleFm = g.getFontMetrics();
         int titleBaseline = panel.y + pad + titleFm.getAscent();
         int headerBottom = titleBaseline + titleFm.getDescent() + 8;
 
         int hintSize = Math.max(10, fontSize - 1);
-        Font hintFont = new Font("Serif", Font.ITALIC, hintSize);
+        Font hintFont = GameFonts.get().italic(hintSize);
         g.setFont(hintFont);
         FontMetrics hintFm = g.getFontMetrics();
         int hintBaseline = panel.y + panel.height - pad;
@@ -1504,7 +1506,7 @@ public class IntroScreen {
         int contentBottom = footerTop;
         int contentH = Math.max(0, contentBottom - contentTop);
 
-        Font bodyFont = new Font("Serif", Font.PLAIN, fontSize);
+        Font bodyFont = GameFonts.get().plain(fontSize);
         g.setFont(bodyFont);
         FontMetrics fm = g.getFontMetrics();
         List<String> renderedLines = buildHistoryRenderedLines(fm, textMaxW);
