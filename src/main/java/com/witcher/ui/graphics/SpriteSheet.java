@@ -31,15 +31,21 @@ public class SpriteSheet {
      * @param removeBlackBg если true, пиксели близкие к чёрному станут прозрачными
      */
     public static SpriteSheet load(String resourcePath, int cols, int rows, int frameDelay, boolean removeBlackBg) {
-        return loadInternal(resourcePath, cols, rows, frameDelay, removeBlackBg, true);
+        return loadInternal(resourcePath, cols, rows, frameDelay, removeBlackBg, false, true);
+    }
+
+    /** @param trimToContent обрезает пустые поля вокруг спрайта в каждом кадре */
+    public static SpriteSheet load(String resourcePath, int cols, int rows, int frameDelay,
+                                   boolean removeBlackBg, boolean trimToContent) {
+        return loadInternal(resourcePath, cols, rows, frameDelay, removeBlackBg, trimToContent, true);
     }
 
     public static SpriteSheet loadOptional(String resourcePath, int cols, int rows, int frameDelay, boolean removeBlackBg) {
-        return loadInternal(resourcePath, cols, rows, frameDelay, removeBlackBg, false);
+        return loadInternal(resourcePath, cols, rows, frameDelay, removeBlackBg, false, false);
     }
 
     private static SpriteSheet loadInternal(String resourcePath, int cols, int rows, int frameDelay,
-                                            boolean removeBlackBg, boolean logMissing) {
+                                            boolean removeBlackBg, boolean trimToContent, boolean logMissing) {
         Sprite sheet = logMissing ? Sprite.load(resourcePath) : Sprite.loadOptional(resourcePath);
         if (sheet == null) {
             return null;
@@ -56,6 +62,9 @@ public class SpriteSheet {
                 BufferedImage frame = src.getSubimage(c * fw, r * fh, fw, fh);
                 if (removeBlackBg) {
                     frame = removeBlack(frame);
+                }
+                if (trimToContent) {
+                    frame = trimToContent(frame);
                 }
                 frames[r * cols + c] = frame;
             }
@@ -82,6 +91,37 @@ public class SpriteSheet {
             }
         }
         return out;
+    }
+
+    /** Обрезает прозрачные/чёрные поля — для кадров внизу большого листа. */
+    private static BufferedImage trimToContent(BufferedImage src) {
+        int w = src.getWidth();
+        int h = src.getHeight();
+        int minX = w;
+        int minY = h;
+        int maxX = 0;
+        int maxY = 0;
+        for (int y = 0; y < h; y++) {
+            for (int x = 0; x < w; x++) {
+                int argb = src.getRGB(x, y);
+                int a = (argb >>> 24) & 0xff;
+                int r = (argb >>> 16) & 0xff;
+                int g = (argb >>> 8) & 0xff;
+                int b = argb & 0xff;
+                boolean visible = a > 20 && !(r < 30 && g < 30 && b < 30);
+                if (!visible) {
+                    continue;
+                }
+                minX = Math.min(minX, x);
+                minY = Math.min(minY, y);
+                maxX = Math.max(maxX, x);
+                maxY = Math.max(maxY, y);
+            }
+        }
+        if (maxX < minX || maxY < minY) {
+            return src;
+        }
+        return src.getSubimage(minX, minY, maxX - minX + 1, maxY - minY + 1);
     }
 
     /** Включить/выключить режим пинг-понг (вперёд-назад). */

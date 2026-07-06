@@ -52,8 +52,8 @@ public class SplashScreen {
         SpriteSheet la = SpriteSheet.load("/assets/sprites/witcher_logo_new.png", 2, 3, 8);
         logoAnim = (la != null) ? la.setPingPong(true) : null;
 
-        // Ведьмак за баром — 5 кадров в ряд, прозрачный фон
-        SpriteSheet wb = SpriteSheet.load("/assets/sprites/witcher_bar.png", 5, 1, 15);
+        // Ведьмак за баром — 5 кадров в ряд внизу листа, прозрачный фон
+        SpriteSheet wb = SpriteSheet.load("/assets/sprites/witcher_bar.png", 5, 1, 15, true, true);
         witcherBar = (wb != null) ? wb.setPingPong(true) : null;
 
         // Грифон — 3×2 сетка (6 кадров), чёрный фон удаляется
@@ -212,13 +212,14 @@ public class SplashScreen {
             griffinAnim.draw(g, gpX, gpY, gpW, gpH, alpha * 0.92f);
         }
 
-        // === ВЕДЬМАК ЗА БАРОМ (по центру, крупный) ===
+        // === ВЕДЬМАК ЗА БАРОМ (по центру, ноги у полосы загрузки) ===
         if (witcherBar != null && alpha > 0.1f) {
-            float wbScale = (sw * 0.22f) / witcherBar.getFrameWidth();
+            int barZoneH = 28;
+            float wbScale = (sh * 0.44f) / witcherBar.getFrameHeight();
             int wbW = Math.round(witcherBar.getFrameWidth() * wbScale);
             int wbH = Math.round(witcherBar.getFrameHeight() * wbScale);
             int wbX = (sw - wbW) / 2;
-            int wbY = sh - wbH + (int) (wbH * 0.31f);
+            int wbY = sh - barZoneH - wbH - 10;
             witcherBar.draw(g, wbX, wbY, wbW, wbH, alpha * 0.95f);
         }
 
