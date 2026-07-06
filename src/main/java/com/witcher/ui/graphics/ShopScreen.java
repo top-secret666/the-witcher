@@ -1290,10 +1290,6 @@ public class ShopScreen {
             }
         }
 
-        g.setFont(GameFonts.get().uiItalic(9));
-        g.setColor(new Color(140, 120, 80));
-        g.drawString("Esc — закрыть", px + 12, py + INVENTORY_PANEL_H - 8);
-
         int equipBtnW = 108;
         int equipBtnH = 22;
         int equipBtnX = px + INVENTORY_PANEL_W - equipBtnW - 10;
@@ -1435,16 +1431,18 @@ public class ShopScreen {
         int backW = 72;
         int backH = 22;
         int backX = px + 12;
-        int backY = py + panelH - backH - 8;
+        int backY = statsY + (statsH - backH) / 2;
         equipmentBackButtonBounds.setBounds(backX, backY, backW, backH);
         g.setColor(new Color(28, 18, 8, 220));
         g.fillRoundRect(backX, backY, backW, backH, 5, 5);
         g.setColor(new Color(150, 110, 50));
         g.drawRoundRect(backX, backY, backW, backH, 5, 5);
-        drawEquipText(g, GameFonts.get().uiBold(11), "Назад", backX + 18, backY + 15,
-            new Color(230, 200, 140));
-        drawEquipText(g, GameFonts.get().uiItalic(10), "Esc — назад", backX + backW + 10, backY + 15,
-            new Color(140, 120, 80));
+        Font backFont = GameFonts.get().uiBold(11);
+        FontMetrics bfm = g.getFontMetrics(backFont);
+        String backLabel = "Назад";
+        int labelX = backX + (backW - bfm.stringWidth(backLabel)) / 2;
+        int labelY = backY + (backH + bfm.getAscent() - bfm.getDescent()) / 2;
+        drawEquipText(g, backFont, backLabel, labelX, labelY, new Color(230, 200, 140));
 
         g.setComposite(prev);
     }
