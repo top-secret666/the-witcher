@@ -889,8 +889,8 @@ public class ShopScreen {
         drawCharacter(g, sw, sh, assets.geraltScaled, true, layout.dialogTop, 1f);
         drawCharacter(g, sw, sh, assets.dukeScaled, false, layout.dialogTop, 1f);
 
-        drawWalletRevealBag(g, layout);
         drawWalletRevealPouch(g, layout);
+        drawWalletRevealBag(g, layout);
     }
 
     private void drawPurchaseRevealScene(Graphics2D g, int sw, int sh, ShopLayout layout) {
@@ -905,8 +905,8 @@ public class ShopScreen {
         drawCharacter(g, sw, sh, assets.geraltScaled, true, layout.dialogTop, 1f);
         drawCharacter(g, sw, sh, assets.dukeScaled, false, layout.dialogTop, 1f);
 
-        drawPurchaseRevealBag(g, layout);
         drawPurchaseRevealItem(g, layout);
+        drawPurchaseRevealBag(g, layout);
     }
 
     private void drawPurchaseRevealBag(Graphics2D g, ShopLayout layout) {
@@ -971,10 +971,8 @@ public class ShopScreen {
             py = centerY - pw / 2f;
             alpha = Math.min(1f, appearT * 1.1f);
         } else {
-            int travelTicks = PURCHASE_FLY_TICKS + PURCHASE_TUCK_TICKS;
-            float travelT = smoothstep((purchaseRevealTicks - appearEnd) / (float) travelTicks);
             float posT = smoothstep((purchaseRevealTicks - appearEnd) / (float) PURCHASE_FLY_TICKS);
-            float sizeT = travelT * travelT * (3f - 2f * travelT);
+            float sizeT = posT * posT * (3f - 2f * posT);
 
             pw = maxSize + (minSize - maxSize) * sizeT;
             float cx = centerX + (bagCenterX - centerX) * posT;
@@ -984,8 +982,15 @@ public class ShopScreen {
             alpha = 1f;
             if (purchaseRevealTicks > flyEnd) {
                 float tuckT = smoothstep((purchaseRevealTicks - flyEnd) / (float) PURCHASE_TUCK_TICKS);
-                alpha = 1f - tuckT * 0.4f;
+                pw = minSize * (1f - tuckT * 0.85f);
+                px = bagCenterX - pw / 2f;
+                py = bagCenterY - pw / 2f;
+                alpha = Math.max(0f, 1f - tuckT);
             }
+        }
+
+        if (alpha <= 0.02f) {
+            return;
         }
 
         int ipw = Math.round(pw);
@@ -995,7 +1000,9 @@ public class ShopScreen {
         float glowAppearT = purchaseRevealTicks <= appearEnd ? appearT : 1f;
         float glowFlyT = purchaseRevealTicks <= appearEnd ? 0f
             : Math.min(1f, (purchaseRevealTicks - appearEnd) / (float) PURCHASE_FLY_TICKS);
-        drawItemRevealGlow(g, ipx, ipy, ipw, alpha, glowAppearT, glowFlyT);
+        float glowTuckT = purchaseRevealTicks > flyEnd
+            ? smoothstep((purchaseRevealTicks - flyEnd) / (float) PURCHASE_TUCK_TICKS) : 0f;
+        drawItemRevealGlow(g, ipx, ipy, ipw, alpha, glowAppearT, glowFlyT, glowTuckT);
 
         Rectangle crop = computeContentBounds(purchaseRevealIcon);
         Composite comp = g.getComposite();
@@ -1010,11 +1017,11 @@ public class ShopScreen {
     }
 
     private void drawItemRevealGlow(Graphics2D g, int px, int py, int pw,
-                                    float alpha, float appearT, float flyT) {
+                                    float alpha, float appearT, float flyT, float tuckT) {
         Composite prev = g.getComposite();
         int cx = px + pw / 2;
         int cy = py + pw / 2;
-        float glow = alpha * (0.4f + appearT * 0.5f) * (1f - flyT * 0.2f);
+        float glow = alpha * (0.4f + appearT * 0.5f) * (1f - flyT * 0.2f) * (1f - tuckT);
 
         g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, glow * 0.2f));
         g.setColor(new Color(255, 210, 80));
@@ -1639,10 +1646,8 @@ public class ShopScreen {
             py = centerY - pw / 2f;
             alpha = Math.min(1f, appearT * 1.15f);
         } else {
-            int travelTicks = WALLET_FLY_TICKS + WALLET_BAG_CLOSE_TICKS;
-            float travelT = smoothstep((walletRevealTicks - appearEnd) / (float) travelTicks);
             float posT = smoothstep((walletRevealTicks - appearEnd) / (float) WALLET_FLY_TICKS);
-            float sizeT = travelT * travelT * (3f - 2f * travelT);
+            float sizeT = posT * posT * (3f - 2f * posT);
 
             pw = maxSize + (minSize - maxSize) * sizeT;
             float cx = centerX + (bagCenterX - centerX) * posT;
@@ -1651,10 +1656,16 @@ public class ShopScreen {
             py = cy - pw / 2f;
             alpha = 1f;
             if (walletRevealTicks > flyEnd) {
-                float tuckT = (walletRevealTicks - flyEnd) / (float) WALLET_BAG_CLOSE_TICKS;
-                tuckT = smoothstep(tuckT);
-                alpha = 1f - tuckT * 0.35f;
+                float tuckT = smoothstep((walletRevealTicks - flyEnd) / (float) WALLET_BAG_CLOSE_TICKS);
+                pw = minSize * (1f - tuckT * 0.85f);
+                px = bagCenterX - pw / 2f;
+                py = bagCenterY - pw / 2f;
+                alpha = Math.max(0f, 1f - tuckT);
             }
+        }
+
+        if (alpha <= 0.02f) {
+            return;
         }
 
         int ipw = Math.round(pw);
@@ -1665,7 +1676,9 @@ public class ShopScreen {
         float glowAppearT = walletRevealTicks <= appearEnd ? appearT : 1f;
         float glowFlyT = walletRevealTicks <= appearEnd ? 0f
             : Math.min(1f, (walletRevealTicks - appearEnd) / (float) WALLET_FLY_TICKS);
-        drawPouchGlow(g, ipx, ipy, ipw, iph, alpha, glowAppearT, glowFlyT);
+        float glowTuckT = walletRevealTicks > flyEnd
+            ? smoothstep((walletRevealTicks - flyEnd) / (float) WALLET_BAG_CLOSE_TICKS) : 0f;
+        drawPouchGlow(g, ipx, ipy, ipw, iph, alpha, glowAppearT, glowFlyT, glowTuckT);
 
         Rectangle crop = computeContentBounds(assets.walletPouch);
         Composite prev = g.getComposite();
@@ -1680,11 +1693,11 @@ public class ShopScreen {
     }
 
     private void drawPouchGlow(Graphics2D g, int px, int py, int pw, int ph,
-                               float alpha, float appearT, float flyT) {
+                               float alpha, float appearT, float flyT, float tuckT) {
         Composite prev = g.getComposite();
         int cx = px + pw / 2;
         int cy = py + ph / 2;
-        float glow = alpha * (0.45f + appearT * 0.55f) * (1f - flyT * 0.25f);
+        float glow = alpha * (0.45f + appearT * 0.55f) * (1f - flyT * 0.25f) * (1f - tuckT);
 
         g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, glow * 0.22f));
         g.setColor(new Color(255, 200, 60));
