@@ -1904,7 +1904,7 @@ public class ShopScreen {
         g.clipRect(clipX, listTop, clipW, clipH);
 
         drawCardText(g);
-        g.setFont(cardFont(8));
+        g.setFont(GameFonts.get().uiPlain(9));
 
         for (int i = 0; i < catalogEntries.size(); i++) {
             ShopCatalogEntry row = catalogEntries.get(i);
@@ -1930,9 +1930,9 @@ public class ShopScreen {
             row.bounds.setBounds(interactive ? x : 0, interactive ? y : 0, assets.rowW, assets.rowH);
 
             FontMetrics fm = g.getFontMetrics();
-            String label = truncateToWidth(row.name, fm, assets.rowW - 54);
-            int textY = y + (assets.rowH + fm.getAscent()) / 2 - 2;
-            drawOutlinedText(g, label, x + 8, textY, new Color(235, 215, 155));
+            String label = truncateToWidth(row.name, fm, assets.rowW - 58);
+            int textY = y + (assets.rowH + fm.getAscent()) / 2 - 1;
+            drawOutlinedText(g, label, x + 12, textY, new Color(235, 215, 155));
 
             String price = row.priceLabel();
             int priceW = fm.stringWidth(price);
@@ -2094,11 +2094,16 @@ public class ShopScreen {
             fontSize = w < 60 ? 8 : (h > 200 ? 12 : (w < 90 ? 9 : 10));
         }
         g.setFont(categoryGrid ? GameFonts.get().uiPlain(fontSize) : cardFont(fontSize));
+        String name = categoryGrid ? item.displayName() : item.displayName();
+        if (categoryGrid) {
+            g.setFont(fitUiFontToWidth(g, name, w - 4, fontSize, 7));
+        } else {
+            FontMetrics nameFm = g.getFontMetrics();
+            name = truncateToWidth(name, nameFm, w - 8);
+        }
         FontMetrics nameFm = g.getFontMetrics();
-        String name = categoryGrid ? item.displayName() : truncateToWidth(item.displayName(), nameFm, w - 8);
-        boolean categoryTwoLines = categoryGrid && nameFm.stringWidth(name) > w - 4;
         int nameY = categoryGrid
-            ? y + h - (categoryTwoLines ? 4 : 6)
+            ? y + h - 6
             : priceOverride != null
                 ? y + h - Math.max(18, Math.round(h * 0.22f))
                 : y + h - 10;
@@ -2109,7 +2114,7 @@ public class ShopScreen {
             int slotW = w - 8;
             int slotTop = y + Math.round(h * 0.12f);
             int labelReserve = categoryGrid
-                ? (categoryTwoLines ? nameFm.getHeight() * 2 + 2 : nameFm.getHeight() + 6)
+                ? nameFm.getHeight() + 6
                 : Math.round(h * 0.10f);
             int slotBottom = nameY - labelReserve;
             int slotH = Math.max(1, slotBottom - slotTop);
@@ -2182,34 +2187,25 @@ public class ShopScreen {
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
     }
 
-    /** Подпись на сетке категорий — в две строки, если длинное слово. */
+    /** Подпись на витрине — одна строка, шрифт уже подогнан под ширину карточки. */
     private static void drawCategoryGridLabel(Graphics2D g, String name, int x, int y, int w, int h,
                                               Color color, FontMetrics fm) {
-        int maxW = w - 4;
-        if (fm.stringWidth(name) <= maxW) {
-            int nameY = y + h - 6;
-            int nameX = x + (w - fm.stringWidth(name)) / 2;
-            drawCategoryLabel(g, name, nameX, nameY, color);
-            return;
-        }
-        int split = splitCategoryLabel(name, fm, maxW);
-        String line1 = name.substring(0, split);
-        String line2 = name.substring(split);
-        int lineH = fm.getHeight();
-        int y2 = y + h - 4;
-        int y1 = y2 - lineH + 2;
-        drawCategoryLabel(g, line1, x + (w - fm.stringWidth(line1)) / 2, y1, color);
-        drawCategoryLabel(g, line2, x + (w - fm.stringWidth(line2)) / 2, y2, color);
+        int nameY = y + h - 6;
+        int nameX = x + (w - fm.stringWidth(name)) / 2;
+        drawCategoryLabel(g, name, nameX, nameY, color);
     }
 
-    private static int splitCategoryLabel(String name, FontMetrics fm, int maxW) {
-        for (int i = name.length() - 1; i >= 2; i--) {
-            if (fm.stringWidth(name.substring(0, i)) <= maxW
-                && fm.stringWidth(name.substring(i)) <= maxW) {
-                return i;
+    private static Font fitUiFontToWidth(Graphics2D g, String text, int maxWidth, int startSize, int minSize) {
+        for (int size = startSize; size >= minSize; size--) {
+            Font font = GameFonts.get().uiPlain(size);
+            g.setFont(font);
+            if (g.getFontMetrics().stringWidth(text) <= maxWidth) {
+                return font;
             }
         }
-        return (name.length() + 1) / 2;
+        Font font = GameFonts.get().uiPlain(minSize);
+        g.setFont(font);
+        return font;
     }
 
     /** Подпись на сетке категорий — крупнее и строго по пиксельной сетке. */
