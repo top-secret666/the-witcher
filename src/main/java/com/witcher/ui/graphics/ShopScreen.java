@@ -1939,7 +1939,13 @@ public class ShopScreen {
 
         Rectangle cardRect;
         if (frame != null) {
+            Object prevInterp = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
+            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+                RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
             g.drawImage(frame, x, y, w, h, null);
+            if (prevInterp != null) {
+                g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, prevInterp);
+            }
             cardRect = new Rectangle(x, y, w, h);
         } else {
             drawFallbackCard(g, x, y, w, h, false);
@@ -2017,15 +2023,23 @@ public class ShopScreen {
                                     String priceOverride, boolean smoothIconGrowth) {
         int x = card.x;
         int y = card.y;
+        boolean categoryGrid = priceOverride == null;
 
         drawCardText(g);
-        int fontSize = w < 60 ? 7 : (h > 200 ? 12 : (w < 90 ? 8 : 10));
-        g.setFont(cardFont(fontSize));
+        int fontSize;
+        if (categoryGrid) {
+            fontSize = w >= 50 ? 10 : Math.max(8, Math.round(10f * w / 54f));
+        } else {
+            fontSize = w < 60 ? 8 : (h > 200 ? 12 : (w < 90 ? 9 : 10));
+        }
+        g.setFont(categoryGrid ? GameFonts.get().uiPlain(fontSize) : cardFont(fontSize));
         FontMetrics nameFm = g.getFontMetrics();
         String name = truncateToWidth(item.displayName(), nameFm, w - 8);
-        int nameY = priceOverride != null
-            ? y + h - Math.max(18, Math.round(h * 0.22f))
-            : y + h - 10;
+        int nameY = categoryGrid
+            ? y + h - 6
+            : priceOverride != null
+                ? y + h - Math.max(18, Math.round(h * 0.22f))
+                : y + h - 10;
 
         BufferedImage art = item.cardArt != null ? item.cardArt : item.icon;
         if (art != null) {
@@ -2041,7 +2055,12 @@ public class ShopScreen {
 
         Color nameColor = item.kind == ItemKind.SET_CATALOG
             ? new Color(255, 210, 100) : new Color(245, 230, 190);
-        drawOutlinedText(g, name, x + (w - nameFm.stringWidth(name)) / 2, nameY, nameColor);
+        int nameX = x + (w - nameFm.stringWidth(name)) / 2;
+        if (categoryGrid) {
+            drawCategoryLabel(g, name, nameX, nameY, nameColor);
+        } else {
+            drawOutlinedText(g, name, nameX, nameY, nameColor);
+        }
 
         if (priceOverride == null) {
             return;
@@ -2098,8 +2117,22 @@ public class ShopScreen {
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
     }
 
+    /** Подпись на сетке категорий — крупнее и строго по пиксельной сетке. */
+    private static void drawCategoryLabel(Graphics2D g, String text, int tx, int ty, Color fill) {
+        tx = (tx + 1) & ~1;
+        ty = (ty + 1) & ~1;
+        g.setColor(new Color(8, 4, 2, 240));
+        g.drawString(text, tx + 1, ty);
+        g.drawString(text, tx - 1, ty);
+        g.drawString(text, tx, ty + 1);
+        g.setColor(fill);
+        g.drawString(text, tx, ty);
+    }
+
     /** Тёмная обводка — текст читается на золотой рамке карточки. */
     private static void drawOutlinedText(Graphics2D g, String text, int tx, int ty, Color fill) {
+        tx = Math.round(tx);
+        ty = Math.round(ty);
         g.setColor(new Color(20, 12, 4, 220));
         for (int dx = -1; dx <= 1; dx++) {
             for (int dy = -1; dy <= 1; dy++) {
