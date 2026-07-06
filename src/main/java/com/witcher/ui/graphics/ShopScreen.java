@@ -39,14 +39,18 @@ public class ShopScreen {
     /** Сцена кошелька: появление → полёт в сумку → закрытие → счётчик. */
     private static final int WALLET_APPEAR_TICKS = 30;
     private static final int WALLET_FLY_TICKS = 40;
-    private static final int WALLET_BAG_CLOSE_TICKS = 18;
+    private static final int WALLET_FADE_TICKS = 10;
+    private static final int WALLET_CLOSE_TICKS = 8;
+    private static final int WALLET_BAG_CLOSE_TICKS = WALLET_FADE_TICKS + WALLET_CLOSE_TICKS;
     private static final int WALLET_COUNT_TICKS = 28;
     private static final int WALLET_REVEAL_TOTAL =
         WALLET_APPEAR_TICKS + WALLET_FLY_TICKS + WALLET_BAG_CLOSE_TICKS + WALLET_COUNT_TICKS;
     /** Сцена покупки: иконка товара → сумка. */
     private static final int PURCHASE_APPEAR_TICKS = 24;
     private static final int PURCHASE_FLY_TICKS = 34;
-    private static final int PURCHASE_TUCK_TICKS = 16;
+    private static final int PURCHASE_FADE_TICKS = 10;
+    private static final int PURCHASE_CLOSE_TICKS = 10;
+    private static final int PURCHASE_TUCK_TICKS = PURCHASE_FADE_TICKS + PURCHASE_CLOSE_TICKS;
     private static final int PURCHASE_REVEAL_TOTAL =
         PURCHASE_APPEAR_TICKS + PURCHASE_FLY_TICKS + PURCHASE_TUCK_TICKS;
     private static final int INVENTORY_BAG_SIZE = 40;
@@ -889,8 +893,8 @@ public class ShopScreen {
         drawCharacter(g, sw, sh, assets.geraltScaled, true, layout.dialogTop, 1f);
         drawCharacter(g, sw, sh, assets.dukeScaled, false, layout.dialogTop, 1f);
 
-        drawWalletRevealPouch(g, layout);
         drawWalletRevealBag(g, layout);
+        drawWalletRevealPouch(g, layout);
     }
 
     private void drawPurchaseRevealScene(Graphics2D g, int sw, int sh, ShopLayout layout) {
@@ -905,8 +909,8 @@ public class ShopScreen {
         drawCharacter(g, sw, sh, assets.geraltScaled, true, layout.dialogTop, 1f);
         drawCharacter(g, sw, sh, assets.dukeScaled, false, layout.dialogTop, 1f);
 
-        drawPurchaseRevealItem(g, layout);
         drawPurchaseRevealBag(g, layout);
+        drawPurchaseRevealItem(g, layout);
     }
 
     private void drawPurchaseRevealBag(Graphics2D g, ShopLayout layout) {
@@ -915,23 +919,28 @@ public class ShopScreen {
             purchaseRevealTicks,
             PURCHASE_APPEAR_TICKS,
             PURCHASE_FLY_TICKS,
-            PURCHASE_TUCK_TICKS);
+            PURCHASE_FADE_TICKS,
+            PURCHASE_CLOSE_TICKS);
         drawInventoryBagSprite(g, slot.x, slot.y, INVENTORY_BAG_SIZE, openT, false, 1f);
     }
 
-    /** Прогресс открытия сумки: 0 закрыта → 1 открыта → 0 при укладке предмета. */
-    private float bagOpenProgress(int ticks, int appearTicks, int flyTicks, int tuckTicks) {
+    /** Прогресс открытия сумки: закрыта → открыта на полёте → держится открытой → закрывается. */
+    private float bagOpenProgress(int ticks, int appearTicks, int flyTicks, int fadeTicks, int closeTicks) {
         int bagShow = Math.max(0, appearTicks - 4);
         int flyEnd = appearTicks + flyTicks;
-        int tuckEnd = flyEnd + tuckTicks;
+        int fadeEnd = flyEnd + fadeTicks;
+        int closeEnd = fadeEnd + closeTicks;
         if (ticks < bagShow) {
             return 0f;
         }
         if (ticks < flyEnd) {
             return smoothstep((ticks - bagShow) / (float) Math.max(1, flyEnd - bagShow));
         }
-        if (ticks < tuckEnd) {
-            float closeT = (ticks - flyEnd) / (float) Math.max(1, tuckTicks);
+        if (ticks < fadeEnd) {
+            return 1f;
+        }
+        if (ticks < closeEnd) {
+            float closeT = (ticks - fadeEnd) / (float) Math.max(1, closeTicks);
             return smoothstep(1f - closeT);
         }
         return 0f;
@@ -944,9 +953,10 @@ public class ShopScreen {
 
         int appearEnd = PURCHASE_APPEAR_TICKS;
         int flyEnd = appearEnd + PURCHASE_FLY_TICKS;
-        int tuckEnd = flyEnd + PURCHASE_TUCK_TICKS;
+        int fadeEnd = flyEnd + PURCHASE_FADE_TICKS;
+        int tuckEnd = fadeEnd + PURCHASE_CLOSE_TICKS;
 
-        if (purchaseRevealTicks > tuckEnd) {
+        if (purchaseRevealTicks > fadeEnd) {
             return;
         }
 
@@ -981,11 +991,11 @@ public class ShopScreen {
             py = cy - pw / 2f;
             alpha = 1f;
             if (purchaseRevealTicks > flyEnd) {
-                float tuckT = smoothstep((purchaseRevealTicks - flyEnd) / (float) PURCHASE_TUCK_TICKS);
-                pw = minSize * (1f - tuckT * 0.85f);
+                float fadeT = smoothstep((purchaseRevealTicks - flyEnd) / (float) PURCHASE_FADE_TICKS);
+                pw = minSize;
                 px = bagCenterX - pw / 2f;
                 py = bagCenterY - pw / 2f;
-                alpha = Math.max(0f, 1f - tuckT);
+                alpha = Math.max(0f, 1f - fadeT);
             }
         }
 
@@ -1001,7 +1011,7 @@ public class ShopScreen {
         float glowFlyT = purchaseRevealTicks <= appearEnd ? 0f
             : Math.min(1f, (purchaseRevealTicks - appearEnd) / (float) PURCHASE_FLY_TICKS);
         float glowTuckT = purchaseRevealTicks > flyEnd
-            ? smoothstep((purchaseRevealTicks - flyEnd) / (float) PURCHASE_TUCK_TICKS) : 0f;
+            ? smoothstep((purchaseRevealTicks - flyEnd) / (float) PURCHASE_FADE_TICKS) : 0f;
         drawItemRevealGlow(g, ipx, ipy, ipw, alpha, glowAppearT, glowFlyT, glowTuckT);
 
         Rectangle crop = computeContentBounds(purchaseRevealIcon);
@@ -1061,7 +1071,8 @@ public class ShopScreen {
             walletRevealTicks,
             WALLET_APPEAR_TICKS,
             WALLET_FLY_TICKS,
-            WALLET_BAG_CLOSE_TICKS);
+            WALLET_FADE_TICKS,
+            WALLET_CLOSE_TICKS);
         float alpha = Math.min(1f, (walletRevealTicks - (appearEnd - 4)) / 8f);
         drawInventoryBagSprite(g, bagX, bagY, bagSize, openT, false, alpha);
 
@@ -1619,9 +1630,10 @@ public class ShopScreen {
 
         int appearEnd = WALLET_APPEAR_TICKS;
         int flyEnd = appearEnd + WALLET_FLY_TICKS;
-        int closeEnd = flyEnd + WALLET_BAG_CLOSE_TICKS;
+        int fadeEnd = flyEnd + WALLET_FADE_TICKS;
+        int closeEnd = fadeEnd + WALLET_CLOSE_TICKS;
 
-        if (walletRevealTicks > closeEnd) {
+        if (walletRevealTicks > fadeEnd) {
             return;
         }
 
@@ -1656,11 +1668,11 @@ public class ShopScreen {
             py = cy - pw / 2f;
             alpha = 1f;
             if (walletRevealTicks > flyEnd) {
-                float tuckT = smoothstep((walletRevealTicks - flyEnd) / (float) WALLET_BAG_CLOSE_TICKS);
-                pw = minSize * (1f - tuckT * 0.85f);
+                float fadeT = smoothstep((walletRevealTicks - flyEnd) / (float) WALLET_FADE_TICKS);
+                pw = minSize;
                 px = bagCenterX - pw / 2f;
                 py = bagCenterY - pw / 2f;
-                alpha = Math.max(0f, 1f - tuckT);
+                alpha = Math.max(0f, 1f - fadeT);
             }
         }
 
@@ -1677,7 +1689,7 @@ public class ShopScreen {
         float glowFlyT = walletRevealTicks <= appearEnd ? 0f
             : Math.min(1f, (walletRevealTicks - appearEnd) / (float) WALLET_FLY_TICKS);
         float glowTuckT = walletRevealTicks > flyEnd
-            ? smoothstep((walletRevealTicks - flyEnd) / (float) WALLET_BAG_CLOSE_TICKS) : 0f;
+            ? smoothstep((walletRevealTicks - flyEnd) / (float) WALLET_FADE_TICKS) : 0f;
         drawPouchGlow(g, ipx, ipy, ipw, iph, alpha, glowAppearT, glowFlyT, glowTuckT);
 
         Rectangle crop = computeContentBounds(assets.walletPouch);
