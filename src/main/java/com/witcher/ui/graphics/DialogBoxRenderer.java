@@ -42,10 +42,10 @@ public final class DialogBoxRenderer {
             boxX = (sw - boxW) / 2;
             boxY = sh - boxH - (int) (sh * 0.02f);
             if (heightRatio <= 0.11f) {
-                fontSize = Math.max(13, (int) (sh * 0.042f));
+                fontSize = Math.max(13, (int) (sh * 0.040f));
                 pad = Math.max(6, (int) (sw * 0.018f));
             } else {
-                fontSize = Math.max(11, (int) (sh * 0.038f));
+                fontSize = Math.max(12, (int) (sh * 0.040f));
                 pad = (int) (sw * 0.02f);
             }
             textX = boxX + pad;
@@ -126,7 +126,7 @@ public final class DialogBoxRenderer {
                                        int boxX, int boxY, int pad, int fontSize, float alpha) {
         if (speaker == null || speaker.isEmpty()) return;
 
-        Font nameFont = new Font("Serif", Font.BOLD, fontSize);
+        Font nameFont = GameFonts.get().bold(fontSize);
         g.setFont(nameFont);
         FontMetrics nfm = g.getFontMetrics();
         int nameW = nfm.stringWidth(speaker);
@@ -145,7 +145,7 @@ public final class DialogBoxRenderer {
         g.setColor(BOX_BORDER);
         g.drawRect(nameBoxX, nameBoxY, nameBoxW, nameBoxH);
         g.setColor(speakerColor);
-        g.drawString(speaker, nameBoxX + 6, nameBoxY + nfm.getAscent() + 2);
+        GameFonts.drawOutlined(g, speaker, nameBoxX + 6, nameBoxY + nfm.getAscent() + 2, speakerColor);
     }
 
     public static int drawSpeakerText(Graphics2D g, String speaker, String text, Color speakerColor,
@@ -154,7 +154,7 @@ public final class DialogBoxRenderer {
         drawBox(g, layout.boxX, layout.boxY, layout.boxW, layout.boxH, alpha);
         drawSpeakerName(g, speaker, speakerColor, layout.boxX, layout.boxY, layout.pad, layout.fontSize, alpha);
 
-        Font textFont = new Font("Serif", Font.PLAIN, layout.fontSize);
+        Font textFont = GameFonts.get().plain(layout.fontSize);
         g.setFont(textFont);
         FontMetrics fm = g.getFontMetrics();
         int lineH = fm.getHeight();
@@ -166,10 +166,7 @@ public final class DialogBoxRenderer {
             for (String wl : wrapLine(rawLine, fm, layout.textMaxW)) {
                 lineY += lineH;
                 if (lineY > layout.boxY + layout.boxH - layout.pad) break;
-                g.setColor(new Color(0, 0, 0, 160));
-                g.drawString(wl, layout.textX + 1, lineY + 1);
-                g.setColor(textColor);
-                g.drawString(wl, layout.textX, lineY);
+                GameFonts.drawShadowed(g, wl, layout.textX, lineY, textColor);
             }
         }
 
@@ -183,7 +180,7 @@ public final class DialogBoxRenderer {
         drawBox(g, layout.boxX, layout.boxY, layout.boxW, layout.boxH, alpha);
         drawSpeakerName(g, speaker, speakerColor, layout.boxX, layout.boxY, layout.pad, layout.fontSize, alpha);
 
-        Font textFont = new Font("Serif", Font.PLAIN, layout.fontSize);
+        Font textFont = GameFonts.get().plain(layout.fontSize);
         g.setFont(textFont);
         FontMetrics fm = g.getFontMetrics();
         int lineH = fm.getHeight();
@@ -195,10 +192,7 @@ public final class DialogBoxRenderer {
             for (String wl : wrapLine(rawLine, fm, layout.textMaxW)) {
                 lineY += lineH;
                 if (lineY > layout.boxY + layout.boxH - layout.pad) break;
-                g.setColor(new Color(0, 0, 0, 160));
-                g.drawString(wl, layout.textX + 1, lineY + 1);
-                g.setColor(textColor);
-                g.drawString(wl, layout.textX, lineY);
+                GameFonts.drawShadowed(g, wl, layout.textX, lineY, textColor);
             }
         }
 
@@ -207,7 +201,7 @@ public final class DialogBoxRenderer {
     }
 
     /**
-     * Компактная рамка внизу экрана — чёткий текст без сглаживания (лавка и т.п.).
+     * Компактная рамка внизу экрана — чёткий текст (лавка).
      */
     public static void drawCompactFramedSpeakerText(Graphics2D g, int sw, int sh, String speaker, String text,
                                                     Color speakerColor, float alpha) {
@@ -215,7 +209,7 @@ public final class DialogBoxRenderer {
         Composite prev = g.getComposite();
         g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
 
-        int fontSize = Math.max(12, (int) (sh * 0.036f));
+        int fontSize = Math.max(12, (int) (sh * 0.038f));
         int boxMarginX = 10;
         int boxMarginBottom = 5;
         int pad = 8;
@@ -224,13 +218,13 @@ public final class DialogBoxRenderer {
         int lineH = fontSize + 3;
         int maxLines = 2;
 
-        Font textFont = new Font("Serif", Font.PLAIN, fontSize);
+        Font textFont = GameFonts.get().plain(fontSize);
         g.setFont(textFont);
         FontMetrics fm = g.getFontMetrics();
 
         String speakerLabel = (speaker != null && !speaker.isEmpty()) ? speaker + ": " : "";
         int speakerW = speakerLabel.isEmpty() ? 0 : g.getFontMetrics(
-            new Font("Serif", Font.BOLD, fontSize)).stringWidth(speakerLabel);
+            GameFonts.get().bold(fontSize)).stringWidth(speakerLabel);
 
         List<String> lines = new ArrayList<>();
         for (String rawLine : text.split("\n", -1)) {
@@ -260,23 +254,20 @@ public final class DialogBoxRenderer {
         int startY = boxY + pad + fm.getAscent();
 
         if (!speakerLabel.isEmpty()) {
-            g.setFont(new Font("Serif", Font.BOLD, fontSize));
-            g.setColor(speakerColor);
-            g.drawString(speakerLabel, textX, startY);
+            g.setFont(GameFonts.get().bold(fontSize));
+            GameFonts.drawOutlined(g, speakerLabel, textX, startY, speakerColor);
             if (!lines.isEmpty()) {
                 String first = lines.get(0);
                 g.setFont(textFont);
-                g.setColor(SPEECH_COLOR);
-                g.drawString(first, textX + speakerW, startY);
+                GameFonts.drawShadowed(g, first, textX + speakerW, startY, SPEECH_COLOR);
                 for (int i = 1; i < lines.size(); i++) {
                     int y = startY + lineH * i;
-                    g.drawString(lines.get(i), textX, y);
+                    GameFonts.drawShadowed(g, lines.get(i), textX, y, SPEECH_COLOR);
                 }
             }
         } else {
             for (int i = 0; i < lines.size(); i++) {
-                g.setColor(SPEECH_COLOR);
-                g.drawString(lines.get(i), textX, startY + lineH * i);
+                GameFonts.drawShadowed(g, lines.get(i), textX, startY + lineH * i, SPEECH_COLOR);
             }
         }
 
@@ -296,7 +287,7 @@ public final class DialogBoxRenderer {
         int maxLines = 2;
         int bottomPad = 10;
 
-        Font textFont = new Font("Serif", Font.PLAIN, fontSize);
+        Font textFont = GameFonts.get().plain(fontSize);
         g.setFont(textFont);
         FontMetrics fm = g.getFontMetrics();
 
@@ -312,7 +303,7 @@ public final class DialogBoxRenderer {
         int startY = sh - bottomPad - blockH + fm.getAscent();
 
         if (speaker != null && !speaker.isEmpty()) {
-            g.setFont(new Font("Serif", Font.BOLD, fontSize));
+            g.setFont(GameFonts.get().bold(fontSize));
             g.setColor(speakerColor);
             String label = speaker + ": ";
             g.drawString(label, marginX, startY);
@@ -348,7 +339,7 @@ public final class DialogBoxRenderer {
 
     public static void drawHint(Graphics2D g, String hint, Layout layout, int fontSize, float alpha) {
         enableTextSmoothing(g);
-        g.setFont(new Font("Serif", Font.BOLD, Math.max(10, fontSize - 2)));
+        g.setFont(GameFonts.get().bold(Math.max(10, fontSize - 2)));
         g.setColor(HINT_COLOR);
         int hw = g.getFontMetrics().stringWidth(hint);
         g.drawString(hint, layout.boxX + layout.boxW - layout.pad - hw, layout.boxY + layout.boxH - layout.pad + 2);
@@ -381,14 +372,10 @@ public final class DialogBoxRenderer {
     }
 
     private static void enableTextSmoothing(Graphics2D g) {
-        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
+        GameFonts.applyDialogHints(g);
     }
 
     private static void disableTextSmoothing(Graphics2D g) {
-        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
-        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
-        g.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_DEFAULT);
+        GameFonts.applyPixelHints(g);
     }
 }

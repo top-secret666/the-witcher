@@ -33,7 +33,8 @@ public final class DisplayMetrics {
         sb.append("\n=== Display [").append(tag).append("] #").append(logCount).append(" ===\n");
 
         sb.append("ozhidaetsya (WitcherGame): ")
-            .append(WitcherGame.WINDOW_W).append('x').append(WitcherGame.WINDOW_H)
+            .append(WitcherGame.FRAME_W).append('x').append(WitcherGame.FRAME_H)
+            .append(" kadr=").append(WitcherGame.WINDOW_W).append('x').append(WitcherGame.WINDOW_H)
             .append(" virtual=").append((int) WitcherGame.VIRTUAL_W)
             .append('x').append((int) WitcherGame.VIRTUAL_H)
             .append(" scale=").append(WitcherGame.PIXEL_SCALE).append('\n');
@@ -163,8 +164,8 @@ public final class DisplayMetrics {
     private static void appendDiagnosis(StringBuilder sb) {
         int gw = Gdx.graphics.getWidth();
         int gh = Gdx.graphics.getHeight();
-        int ew = WitcherGame.WINDOW_W;
-        int eh = WitcherGame.WINDOW_H;
+        int ew = WitcherGame.FRAME_W;
+        int eh = WitcherGame.FRAME_H;
 
         if (gw == ew && gh == eh) {
             sb.append("Diag: backbuffer sovpadaet s celom (").append(ew).append('x').append(eh).append(").\n");
@@ -193,14 +194,9 @@ public final class DisplayMetrics {
                     sb.append("Diag: fizicheskij klient ~").append(physW).append('x').append(physH)
                         .append(" — OK (cel ").append(ew).append('x').append(eh).append(").\n");
                 } else if (physW != fbW[0] || physH != fbH[0]) {
-                    sb.append("Diag: framebuffer ").append(fbW[0]).append('x').append(fbH[0])
-                        .append(", fizicheskij klient ~").append(physW).append('x').append(physH)
-                        .append(" (scale ").append(sx[0]).append(").\n");
-                    if (physW > fbW[0] + 2) {
-                        sb.append("      OK esli glfw=").append(Math.round(ew / sx[0])).append('x')
-                            .append(Math.round(eh / sy[0]))
-                            .append(" — OS rastyanet do ").append(ew).append('x').append(eh).append(".\n");
-                    }
+                    sb.append("Diag: fizicheskij klient ~").append(physW).append('x').append(physH)
+                        .append(", framebuffer ").append(fbW[0]).append('x').append(fbH[0])
+                        .append(" — OS rastyanet fb na okno (pri scale>1 eto normalno).\n");
                 }
                 if (winW[0] > fbW[0] + 4 || winH[0] > fbH[0] + 4) {
                     sb.append("Diag: okno krupnee framebuffer — masshtab Windows / HiDPI.\n");

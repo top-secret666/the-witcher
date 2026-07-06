@@ -1,5 +1,12 @@
 package main.java.com.witcher.ui.graphics;
 
+import main.java.com.witcher.ui.shop.DukeLines;
+import main.java.com.witcher.ui.shop.ShopCatalogEntry;
+import main.java.com.witcher.ui.shop.ShopCategory;
+import main.java.com.witcher.model.armour.Armour;
+import main.java.com.witcher.ui.shop.ShopEquipSlot;
+import main.java.com.witcher.ui.shop.ShopModel;
+
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
@@ -18,16 +25,54 @@ public class ShopScreen {
     private enum ShopState {
         REVEAL,
         IDLE,
+        WALLET_REVEAL,
+        PURCHASE_REVEAL,
         CATEGORY_OPENING,
         CATEGORY,
         CATEGORY_CLOSING
     }
 
-    /** ~4 с при 30 FPS — заметное появление витрины. */
-    private static final int REVEAL_DURATION_TICKS = 120;
-    private static final int CATEGORY_OPEN_DURATION_TICKS = 54;
+    /** ~3 с при 30 FPS — появление витрины. */
+    private static final int REVEAL_DURATION_TICKS = 84;
+    private static final int CATEGORY_OPEN_DURATION_TICKS = 50;
+    private static final int CARD_FLIP_TICKS = 12;
+    /** Сцена кошелька: появление → полёт в сумку → закрытие → счётчик. */
+    private static final int WALLET_APPEAR_TICKS = 30;
+    private static final int WALLET_FLY_TICKS = 40;
+    private static final int WALLET_FADE_TICKS = 10;
+    private static final int WALLET_CLOSE_TICKS = 8;
+    private static final int WALLET_BAG_CLOSE_TICKS = WALLET_FADE_TICKS + WALLET_CLOSE_TICKS;
+    private static final int WALLET_COUNT_TICKS = 28;
+    private static final int WALLET_REVEAL_TOTAL =
+        WALLET_APPEAR_TICKS + WALLET_FLY_TICKS + WALLET_BAG_CLOSE_TICKS + WALLET_COUNT_TICKS;
+    /** Сцена покупки: иконка товара → сумка. */
+    private static final int PURCHASE_APPEAR_TICKS = 24;
+    private static final int PURCHASE_FLY_TICKS = 34;
+    private static final int PURCHASE_FADE_TICKS = 10;
+    private static final int PURCHASE_CLOSE_TICKS = 10;
+    private static final int PURCHASE_TUCK_TICKS = PURCHASE_FADE_TICKS + PURCHASE_CLOSE_TICKS;
+    private static final int PURCHASE_REVEAL_TOTAL =
+        PURCHASE_APPEAR_TICKS + PURCHASE_FLY_TICKS + PURCHASE_TUCK_TICKS;
+    private static final int INVENTORY_BAG_SIZE = 40;
+    private static final int INVENTORY_BAG_MARGIN = 8;
+    private static final int INVENTORY_PANEL_W = 280;
+    private static final int INVENTORY_PANEL_H = 238;
+    private static final int INVENTORY_POUCH_ICON = 32;
+    private static final int INVENTORY_POUCH_LARGE = 96;
+    private static final int EQUIP_MARGIN = 4;
+    /** ~1 мин при 30 FPS — оборот сам возвращается на лицо, если игрок AFK. */
+    private static final int CARD_FLIP_IDLE_TICKS = 30 * 60;
 
     private static final int GRID_COLS = 5;
+    private static final int TOP_ROW_COLS = 5;
+    private static final int BOTTOM_ROW_COLS = 2;
+
+    private static final BufferedImage MENU_CURSOR = loadMenuCursor();
+
+    private static BufferedImage loadMenuCursor() {
+        Sprite s = Sprite.loadOptional("/assets/sprites/menu/menu_cursor.png");
+        return s != null ? s.getImage() : null;
+    }
 
     private static final class ShopLayout {
         final int hudY;
@@ -51,8 +96,10 @@ public class ShopScreen {
         final int gridCols;
         final int gridRows;
         final int dialogTop;
+        final int cardsStartXBottom;
 
-        ShopLayout(int sw, int sh, int itemCount, int hudX, int hudW, int hudH, int fixedPanelW) {
+        ShopLayout(int sw, int sh, int itemCount, int hudX, int hudW, int hudH, int fixedPanelW,
+                   int panelHeaderH, int topRowCols, int bottomRowCols) {
             this.hudX = hudX;
             this.hudW = hudW;
             hudY = 4;
@@ -60,32 +107,41 @@ public class ShopScreen {
             dialogTop = sh - DIALOG_TEXT_ZONE;
             btnH = 30;
             btnW = 100;
-            headerH = 22;
+            headerH = panelHeaderH;
             cardW = 54;
             cardH = 81;
             cardGap = 6;
             gridCols = GRID_COLS;
-            gridRows = Math.max(1, (itemCount + gridCols - 1) / gridCols);
+            gridRows = itemCount > topRowCols ? 2 : 1;
 
-            int rowW = gridCols * cardW + (gridCols - 1) * cardGap;
+            int rowW = topRowCols * cardW + (topRowCols - 1) * cardGap;
             panelW = fixedPanelW;
             panelX = (sw - panelW) / 2;
             panelY = hudY + hudH + 6;
             cardsStartX = panelX + (panelW - rowW) / 2;
-            cardsY = panelY + headerH + 6;
+
+            int bottomCount = Math.min(bottomRowCols, Math.max(0, itemCount - topRowCols));
+            int bottomRowW = bottomCount * cardW + Math.max(0, bottomCount - 1) * cardGap;
+            cardsStartXBottom = panelX + (panelW - bottomRowW) / 2;
+
+            cardsY = panelY + headerH + 4;
             int contentBottom = cardsY + gridRows * cardH + (gridRows - 1) * cardGap;
-            // Высота панели = до низа кнопки; совпадает с bake_lavka_assets.py PANEL_H
-            panelH = contentBottom + 6 + btnH + 4 - panelY;
+            panelH = contentBottom - panelY + 8;
 
             btnX = panelX + (panelW - btnW) / 2;
             btnY = contentBottom + 6;
         }
 
         Point cardSlot(int index) {
-            int col = index % gridCols;
-            int row = index / gridCols;
-            int x = cardsStartX + col * (cardW + cardGap);
-            int y = cardsY + row * (cardH + cardGap);
+            if (index < TOP_ROW_COLS) {
+                int col = index;
+                int x = cardsStartX + col * (cardW + cardGap);
+                int y = cardsY;
+                return new Point(x, y);
+            }
+            int bottomIndex = index - TOP_ROW_COLS;
+            int x = cardsStartXBottom + bottomIndex * (cardW + cardGap);
+            int y = cardsY + cardH + cardGap;
             return new Point(x, y);
         }
 
@@ -120,48 +176,42 @@ public class ShopScreen {
         }
     }
 
-    private static final class CatalogRow {
-        final String name;
-        final String price;
-        Rectangle bounds = new Rectangle();
-
-        CatalogRow(String name, String price) {
-            this.name = name;
-            this.price = price;
-        }
-    }
-
-    private enum ItemKind {
-        PIECE,
-        SET_CATALOG
-    }
+    private static final ShopCategory[] GRID_CATEGORIES = {
+        ShopCategory.CHEST, ShopCategory.LEGS, ShopCategory.GLOVES,
+        ShopCategory.BOOTS, ShopCategory.POTION, ShopCategory.SETS, ShopCategory.WEAPON
+    };
 
     private static final class ShopItem {
         final ItemKind kind;
-        final String name;
-        final String priceLabel;
+        final ShopCategory category;
+        String priceLabel;
         final String dukeLine;
         final String[] statLines;
         final BufferedImage icon;
         final BufferedImage cardArt;
         Rectangle bounds = new Rectangle();
 
-        ShopItem(ItemKind kind, String name, String priceLabel, String dukeLine, String[] statLines,
-                 BufferedImage icon, BufferedImage cardArt) {
+        ShopItem(ItemKind kind, ShopCategory category, String priceLabel, String dukeLine,
+                 String[] statLines, BufferedImage icon, BufferedImage cardArt) {
             this.kind = kind;
-            this.name = name;
+            this.category = category;
             this.priceLabel = priceLabel;
             this.dukeLine = dukeLine;
             this.statLines = statLines;
             this.icon = icon;
             this.cardArt = cardArt;
         }
+
+        String displayName() {
+            return category.label;
+        }
     }
 
+    private final ShopModel model;
     private final ShopAssetCache assets = ShopAssetCache.get();
 
     private final List<ShopItem> items = new ArrayList<>();
-    private final List<CatalogRow> catalogRows = new ArrayList<>();
+    private final List<ShopCatalogEntry> catalogEntries = new ArrayList<>();
     private final List<float[]> ashParticles = new ArrayList<>();
     private final Random rng = new Random();
 
@@ -176,83 +226,138 @@ public class ShopScreen {
     private int categoryTicks = 0;
     private boolean categoryClosing = false;
     private Rectangle categoryFromRect = new Rectangle();
+    private Rectangle categoryBuyBounds = new Rectangle();
+    private int walletRevealTicks = 0;
+    private boolean walletRevealFromCategory = false;
+    private int purchaseRevealTicks = 0;
+    private BufferedImage purchaseRevealIcon;
+    private int purchaseRevealKeepRow = -1;
+    private boolean inventoryOpen = false;
+    private boolean equipmentOpen = false;
+    private boolean inventoryPouchFocused = true;
+    private boolean inventoryBagHovered = false;
+    private boolean inventoryPouchIconHovered = false;
+    private final Rectangle inventoryBagBounds = new Rectangle();
+    private final Rectangle inventoryPanelBounds = new Rectangle();
+    private final Rectangle inventoryPouchIconBounds = new Rectangle();
+    private final Rectangle inventoryEquipButtonBounds = new Rectangle();
+    private final Rectangle inventoryCloseBounds = new Rectangle();
+    private boolean inventoryCloseHovered = false;
+    private final Rectangle equipmentPanelBounds = new Rectangle();
+    private final Rectangle equipmentBackButtonBounds = new Rectangle();
+    private final Rectangle[] equipmentSlotBounds = new Rectangle[ShopEquipSlot.values().length];
+    private final List<Rectangle> equipmentRowBounds = new ArrayList<>();
+    private int equipmentHoveredRow = -1;
+    private int equipmentHoveredSlot = -1;
+    private boolean categoryBuyHovered = false;
+    private final Rectangle categoryBackBounds = new Rectangle();
+    private boolean categoryBackHovered = false;
+    private int catalogScrollOffset = 0;
+    private float cardFlipT = 0f;
+    private int cardFlipTarget = 0;
+    private int cardFlipIdleTicks = 0;
     private boolean exitRequested = false;
 
-    private static final String WELCOME_LINE = """
-            ХО-ХО-ХО-ХА... Приступим к делу, Белый Волк.
-            Броня, кирасы, шлемы, наколенники — всё, что душе угодно.
-            Только не забудьте кошелёк...""";
+    private static final String WELCOME_LINE = DukeLines.WELCOME;
 
-    private static final String IDLE_LINE = "Ну же, выбирайте. У меня нет вечности, а у вас — монстров полно.";
+    private static final String IDLE_LINE = DukeLines.IDLE;
 
     public ShopScreen() {
-        items.add(new ShopItem(ItemKind.PIECE, "Кираса", "120",
-            "Отличный выбор! Волчья сталь — как раз для таких, как вы.",
-            new String[]{"Защ. 45", "Вес 12", "Кираса"},
-            assets.itemIcons[0], assets.itemArts[0]));
-        items.add(new ShopItem(ItemKind.PIECE, "Штаны", "45",
-            "Штаны крепкие. Ноги целее — монстров больше.",
-            new String[]{"Защ. 20", "Вес 8", "Поножи"},
-            assets.itemIcons[1], assets.itemArts[1]));
-        items.add(new ShopItem(ItemKind.PIECE, "Перчатки", "30",
-            "Рукам тепло, клинку — верно. Берите, не пожалеете.",
-            new String[]{"Защ. 12", "Вес 3", "Руки"},
-            assets.itemIcons[2], assets.itemArts[2]));
-        items.add(new ShopItem(ItemKind.PIECE, "Сапоги", "55",
-            "В этих сапогах и по болоту пройдёте, и от удара отскочите.",
-            new String[]{"Защ. 18", "Вес 6", "Сапоги"},
-            assets.itemIcons[3], assets.itemArts[3]));
-        items.add(new ShopItem(ItemKind.PIECE, "Зелье", "15",
-            "Хм... Зелье? Ну что ж, ваш выбор, Белый Волк...",
-            new String[]{"Яд", "0.5 кг", "Осторожно"},
-            assets.itemIcons[4], assets.itemArts[4]));
-        items.add(new ShopItem(ItemKind.SET_CATALOG, "Комплекты", "···",
-            "Ах, охотник на целые комплекты! Волчья, Кошачья, Грифонья — выбирайте.",
-            new String[]{"Школьные", "Легендар.", "4 части"},
-            assets.setCatalogIcon, assets.setCatalogIcon));
+        this(ShopModel.createNewSession());
+    }
 
+    public ShopScreen(ShopModel model) {
+        this.model = model;
+        initShowcaseFromModel();
         currentDialog = WELCOME_LINE;
     }
 
-    private void buildCatalogRows(ShopItem category) {
-        catalogRows.clear();
-        selectedRowIndex = 0;
-        hoveredRowIndex = -1;
-        switch (category.name) {
-            case "Кираса" -> {
-                catalogRows.add(new CatalogRow("Кираса волчьей школы", "120"));
-                catalogRows.add(new CatalogRow("Укреплённая кираса", "85"));
-                catalogRows.add(new CatalogRow("Кираса стражника", "65"));
-                catalogRows.add(new CatalogRow("Нагрудник охотника", "48"));
-            }
-            case "Штаны" -> {
-                catalogRows.add(new CatalogRow("Укреплённые штаны", "45"));
-                catalogRows.add(new CatalogRow("Поножи наёмника", "38"));
-                catalogRows.add(new CatalogRow("Штаны ведьмака", "52"));
-            }
-            case "Перчатки" -> {
-                catalogRows.add(new CatalogRow("Перчатки наездника", "30"));
-                catalogRows.add(new CatalogRow("Рукавицы стражи", "24"));
-                catalogRows.add(new CatalogRow("Перчатки школы Волка", "55"));
-            }
-            case "Сапоги" -> {
-                catalogRows.add(new CatalogRow("Сапоги стражника", "55"));
-                catalogRows.add(new CatalogRow("Сапоги путника", "32"));
-                catalogRows.add(new CatalogRow("Ботфорты охотника", "41"));
-            }
-            case "Зелье" -> {
-                catalogRows.add(new CatalogRow("Зелье «Чёрный гриф»", "15"));
-                catalogRows.add(new CatalogRow("Эликсир кошки", "22"));
-                catalogRows.add(new CatalogRow("Отвар грифона", "28"));
-            }
-            case "Комплекты" -> {
-                catalogRows.add(new CatalogRow("Школа Волка", "···"));
-                catalogRows.add(new CatalogRow("Школа Кота", "···"));
-                catalogRows.add(new CatalogRow("Школа Грифона", "···"));
-                catalogRows.add(new CatalogRow("Школа Мантикоры", "···"));
-            }
-            default -> catalogRows.add(new CatalogRow(category.name, category.priceLabel));
+    private void initShowcaseFromModel() {
+        items.clear();
+        for (ShopCategory cat : GRID_CATEGORIES) {
+            ItemKind kind = cat == ShopCategory.SETS ? ItemKind.SET_CATALOG : ItemKind.PIECE;
+            BufferedImage icon = iconForCategory(cat);
+            items.add(new ShopItem(
+                kind, cat,
+                model.priceLabelForCategory(cat),
+                model.dukeLineForCategory(cat),
+                model.statLinesForCategory(cat),
+                icon, icon));
         }
+    }
+
+    private BufferedImage iconForCategory(ShopCategory cat) {
+        if (cat == ShopCategory.SETS) {
+            return assets.setsIcon;
+        }
+        if (cat == ShopCategory.WEAPON) {
+            return assets.weaponIcon;
+        }
+        if (cat.iconIndex >= 0 && cat.iconIndex < assets.itemIcons.length) {
+            return assets.itemIcons[cat.iconIndex];
+        }
+        return null;
+    }
+
+    private void refreshShowcasePrices() {
+        for (ShopItem item : items) {
+            item.priceLabel = model.priceLabelForCategory(item.category);
+        }
+    }
+
+    private enum ItemKind {
+        PIECE,
+        SET_CATALOG
+    }
+
+    private void buildCatalogRows(ShopItem category) {
+        catalogEntries.clear();
+        hoveredRowIndex = -1;
+        catalogScrollOffset = 0;
+        cardFlipT = 0f;
+        cardFlipTarget = 0;
+        cardFlipIdleTicks = 0;
+        catalogEntries.addAll(model.getCatalog(category.category));
+        selectedRowIndex = catalogEntries.isEmpty() ? -1 : 0;
+    }
+
+    private int catalogRowStep() {
+        return assets.rowH + 4;
+    }
+
+    private int catalogListTop(int panelY) {
+        return panelY + 12;
+    }
+
+    private int catalogListBottom(int panelY) {
+        return panelY + assets.detailPanelH - assets.btnH - 10;
+    }
+
+    private int maxCatalogScroll(int panelY) {
+        int visible = catalogListBottom(panelY) - catalogListTop(panelY);
+        int content = catalogEntries.size() * catalogRowStep() - 4;
+        return Math.max(0, content - visible);
+    }
+
+    private void scrollCatalogBy(int panelY, int wheelNotches) {
+        catalogScrollOffset += wheelNotches * catalogRowStep();
+        catalogScrollOffset = Math.max(0, Math.min(maxCatalogScroll(panelY), catalogScrollOffset));
+    }
+
+    private void ensureRowVisible(int panelY, int rowIndex) {
+        if (rowIndex < 0) {
+            return;
+        }
+        int listTop = catalogListTop(panelY);
+        int listBottom = catalogListBottom(panelY);
+        int rowY = listTop + rowIndex * catalogRowStep() - catalogScrollOffset;
+        int rowBottom = rowY + assets.rowH;
+        if (rowY < listTop) {
+            catalogScrollOffset -= listTop - rowY;
+        } else if (rowBottom > listBottom) {
+            catalogScrollOffset += rowBottom - listBottom;
+        }
+        catalogScrollOffset = Math.max(0, Math.min(maxCatalogScroll(panelY), catalogScrollOffset));
     }
 
     static Rectangle computeContentBoundsPublic(BufferedImage img) {
@@ -260,9 +365,31 @@ public class ShopScreen {
     }
 
     public void update(int mouseX, int mouseY, boolean clicked, boolean escPressed) {
+        update(mouseX, mouseY, clicked, escPressed, 0);
+    }
+
+    public void update(int mouseX, int mouseY, boolean clicked, boolean escPressed, int wheelNotches) {
         tick++;
 
         if (escPressed) {
+            if (equipmentOpen) {
+                equipmentOpen = false;
+                inventoryOpen = true;
+                return;
+            }
+            if (inventoryOpen) {
+                inventoryOpen = false;
+                inventoryPouchFocused = true;
+                return;
+            }
+            if (state == ShopState.WALLET_REVEAL) {
+                walletRevealTicks = WALLET_REVEAL_TOTAL - 1;
+                return;
+            }
+            if (state == ShopState.PURCHASE_REVEAL) {
+                purchaseRevealTicks = PURCHASE_REVEAL_TOTAL - 1;
+                return;
+            }
             if (state == ShopState.CATEGORY || state == ShopState.CATEGORY_OPENING) {
                 beginCategoryClose();
                 return;
@@ -282,6 +409,20 @@ public class ShopScreen {
             }
         }
 
+        if (state == ShopState.WALLET_REVEAL) {
+            walletRevealTicks++;
+            if (walletRevealTicks >= WALLET_REVEAL_TOTAL) {
+                finishWalletReveal();
+            }
+        }
+
+        if (state == ShopState.PURCHASE_REVEAL) {
+            purchaseRevealTicks++;
+            if (purchaseRevealTicks >= PURCHASE_REVEAL_TOTAL) {
+                finishPurchaseReveal();
+            }
+        }
+
         if (state == ShopState.CATEGORY_OPENING || state == ShopState.CATEGORY_CLOSING) {
             categoryTicks++;
             if (categoryClosing) {
@@ -294,15 +435,48 @@ public class ShopScreen {
         }
 
         updateAshParticles();
+        updateCardFlip();
 
         ShopRevealAnimator reveal = revealAnimator();
         boolean showcaseInteractive = reveal.uiInteractive && state == ShopState.IDLE;
 
         ShopLayout layout = new ShopLayout(VIRTUAL_W, VIRTUAL_H, items.size(),
-            assets.hudX, assets.hudW, assets.hudH, assets.panelW);
+            assets.hudX, assets.hudW, assets.hudH, assets.panelW,
+            assets.panelHeaderH, assets.topRowCols, assets.bottomRowCols);
+
+        if (state == ShopState.WALLET_REVEAL && clicked) {
+            walletRevealTicks = WALLET_REVEAL_TOTAL - 1;
+            return;
+        }
+
+        if (state == ShopState.PURCHASE_REVEAL && clicked) {
+            purchaseRevealTicks = PURCHASE_REVEAL_TOTAL - 1;
+            return;
+        }
+
+        boolean bagUnlocked = !model.needsWalletReveal()
+            && state != ShopState.WALLET_REVEAL
+            && state != ShopState.PURCHASE_REVEAL;
+        if (bagUnlocked) {
+            updateInventoryInput(mouseX, mouseY, clicked);
+        } else {
+            inventoryBagBounds.setBounds(0, 0, 0, 0);
+            inventoryBagHovered = false;
+        }
+
+        if (inventoryOpen || equipmentOpen) {
+            hoveredIndex = -1;
+            hoveredRowIndex = -1;
+            categoryBuyHovered = false;
+            categoryBackHovered = false;
+            inventoryBagHovered = false;
+            return;
+        }
 
         hoveredIndex = -1;
         hoveredRowIndex = -1;
+        categoryBuyHovered = false;
+        categoryBackHovered = false;
 
         if (showcaseInteractive) {
             for (int i = 0; i < items.size(); i++) {
@@ -316,9 +490,13 @@ public class ShopScreen {
         if (state == ShopState.CATEGORY || state == ShopState.CATEGORY_OPENING
             || state == ShopState.CATEGORY_CLOSING) {
             ShopCategoryAnimator catAnim = categoryAnimator(layout);
+            if (wheelNotches != 0 && catAnim.listInteractive) {
+                Rectangle panel = layout.detailListPanelSlot(assets.detailPanelW, assets.detailPanelH);
+                scrollCatalogBy(panel.y, wheelNotches);
+            }
             if (catAnim.listInteractive) {
-                for (int i = 0; i < catalogRows.size(); i++) {
-                    if (catalogRows.get(i).bounds.contains(mouseX, mouseY)) {
+                for (int i = 0; i < catalogEntries.size(); i++) {
+                    if (catalogEntries.get(i).bounds.contains(mouseX, mouseY)) {
                         hoveredRowIndex = i;
                         break;
                     }
@@ -338,12 +516,210 @@ public class ShopScreen {
             buildCatalogRows(item);
         }
 
-        if ((state == ShopState.CATEGORY) && clicked && hoveredRowIndex >= 0) {
-            selectedRowIndex = hoveredRowIndex;
-            CatalogRow row = catalogRows.get(hoveredRowIndex);
-            currentDialog = "Глядите, " + row.name + " — за " + row.price
-                + (row.price.equals("···") ? "" : " крон. Берите, не стыдно.");
+        if (state == ShopState.CATEGORY && clicked) {
+            ShopCategoryAnimator cat = categoryAnimator(layout);
+            if (categoryBackBounds.contains(mouseX, mouseY) && cat.listInteractive) {
+                beginCategoryClose();
+            } else if (categoryBuyBounds.contains(mouseX, mouseY) && isBuyButtonEnabled()) {
+                tryPurchaseSelected();
+            } else if (hoveredRowIndex >= 0) {
+                selectedRowIndex = hoveredRowIndex;
+                cardFlipTarget = 1;
+                cardFlipIdleTicks = 0;
+                ShopCatalogEntry row = catalogEntries.get(hoveredRowIndex);
+                Rectangle panel = layout.detailListPanelSlot(assets.detailPanelW, assets.detailPanelH);
+                ensureRowVisible(panel.y, selectedRowIndex);
+                currentDialog = DukeLines.rowInspect(row.name, row.price);
+            } else if (cat.listInteractive && categoryCardContains(cat, mouseX, mouseY)) {
+                cardFlipTarget = cardFlipTarget == 0 ? 1 : 0;
+                cardFlipIdleTicks = 0;
+            }
         }
+
+        if (state == ShopState.CATEGORY && categoryBuyBounds.width > 0) {
+            categoryBuyHovered = categoryBuyBounds.contains(mouseX, mouseY);
+        }
+        if (state == ShopState.CATEGORY && categoryBackBounds.width > 0) {
+            categoryBackHovered = categoryBackBounds.contains(mouseX, mouseY);
+        }
+
+        if (bagUnlocked) {
+            inventoryBagHovered = inventoryBagBounds.contains(mouseX, mouseY);
+        }
+    }
+
+    private void updateInventoryInput(int mouseX, int mouseY, boolean clicked) {
+        inventoryBagSlot();
+        if (equipmentOpen) {
+            updateEquipmentInput(mouseX, mouseY, clicked);
+            return;
+        }
+        if (inventoryOpen) {
+            inventoryPouchIconHovered = inventoryPouchIconBounds.contains(mouseX, mouseY);
+            inventoryCloseHovered = inventoryCloseBounds.contains(mouseX, mouseY);
+            if (clicked) {
+                if (inventoryCloseBounds.contains(mouseX, mouseY)) {
+                    inventoryOpen = false;
+                    inventoryPouchFocused = true;
+                } else if (inventoryEquipButtonBounds.contains(mouseX, mouseY)) {
+                    equipmentOpen = true;
+                    inventoryOpen = false;
+                    equipmentHoveredRow = -1;
+                    equipmentHoveredSlot = -1;
+                } else if (inventoryPouchIconBounds.contains(mouseX, mouseY)) {
+                    inventoryPouchFocused = true;
+                } else if (!inventoryPanelBounds.contains(mouseX, mouseY)) {
+                    inventoryOpen = false;
+                    inventoryPouchFocused = true;
+                }
+            }
+        } else if (clicked && inventoryBagBounds.contains(mouseX, mouseY)) {
+            inventoryOpen = true;
+            inventoryPouchFocused = true;
+        }
+    }
+
+    private void updateEquipmentInput(int mouseX, int mouseY, boolean clicked) {
+        equipmentHoveredRow = -1;
+        equipmentHoveredSlot = -1;
+        for (int i = 0; i < equipmentRowBounds.size(); i++) {
+            if (equipmentRowBounds.get(i).contains(mouseX, mouseY)) {
+                equipmentHoveredRow = i;
+                break;
+            }
+        }
+        for (int i = 0; i < equipmentSlotBounds.length; i++) {
+            if (equipmentSlotBounds[i] != null && equipmentSlotBounds[i].contains(mouseX, mouseY)) {
+                equipmentHoveredSlot = i;
+                break;
+            }
+        }
+        if (!clicked) {
+            return;
+        }
+        if (equipmentBackButtonBounds.contains(mouseX, mouseY)) {
+            equipmentOpen = false;
+            inventoryOpen = true;
+            return;
+        }
+        if (equipmentHoveredRow >= 0) {
+            List<Armour> owned = model.ownedArmour();
+            if (equipmentHoveredRow < owned.size()) {
+                model.equipArmour(owned.get(equipmentHoveredRow));
+            }
+            return;
+        }
+        if (equipmentHoveredSlot >= 0) {
+            ShopEquipSlot slot = ShopEquipSlot.values()[equipmentHoveredSlot];
+            if (model.getEquipped(slot) != null) {
+                model.unequip(slot);
+            }
+        }
+    }
+
+    private void beginWalletReveal() {
+        walletRevealFromCategory = state == ShopState.CATEGORY;
+        state = ShopState.WALLET_REVEAL;
+        walletRevealTicks = 0;
+        inventoryOpen = false;
+        equipmentOpen = false;
+        currentDialog = DukeLines.walletReveal();
+    }
+
+    private void finishWalletReveal() {
+        model.revealWallet();
+        walletRevealTicks = 0;
+        state = walletRevealFromCategory ? ShopState.CATEGORY : ShopState.IDLE;
+        walletRevealFromCategory = false;
+        currentDialog = DukeLines.walletRevealAfter();
+    }
+
+    private boolean isBuyButtonEnabled() {
+        if (selectedRowIndex < 0 || selectedRowIndex >= catalogEntries.size()) {
+            return false;
+        }
+        return model.canPurchase(catalogEntries.get(selectedRowIndex));
+    }
+
+    private boolean inventoryPanelContains(int mx, int my) {
+        return inventoryPanelBounds.contains(mx, my);
+    }
+
+    private boolean categoryCardContains(ShopCategoryAnimator cat, int mx, int my) {
+        return mx >= cat.cardX && my >= cat.cardY
+            && mx < cat.cardX + cat.cardW && my < cat.cardY + cat.cardH;
+    }
+
+    private void updateCardFlip() {
+        if (state != ShopState.CATEGORY && state != ShopState.CATEGORY_CLOSING) {
+            if (state == ShopState.IDLE) {
+                cardFlipT = 0f;
+                cardFlipTarget = 0;
+                cardFlipIdleTicks = 0;
+            }
+            return;
+        }
+        float step = 1f / CARD_FLIP_TICKS;
+        if (cardFlipT < cardFlipTarget) {
+            cardFlipT = Math.min(1f, cardFlipT + step);
+        } else if (cardFlipT > cardFlipTarget) {
+            cardFlipT = Math.max(0f, cardFlipT - step);
+        }
+
+        if (state == ShopState.CATEGORY && cardFlipTarget == 1 && cardFlipT >= 1f) {
+            cardFlipIdleTicks++;
+            if (cardFlipIdleTicks >= CARD_FLIP_IDLE_TICKS) {
+                cardFlipTarget = 0;
+                cardFlipIdleTicks = 0;
+            }
+        } else if (cardFlipTarget == 0 && cardFlipT <= 0f) {
+            cardFlipIdleTicks = 0;
+        }
+    }
+
+    private void tryPurchaseSelected() {
+        if (selectedRowIndex < 0 || selectedRowIndex >= catalogEntries.size()) {
+            return;
+        }
+        if (model.needsWalletReveal()) {
+            beginWalletReveal();
+            return;
+        }
+        ShopCatalogEntry entry = catalogEntries.get(selectedRowIndex);
+        ShopModel.PurchaseResult result = model.purchase(entry);
+        currentDialog = result.dukeLine();
+        if (result.success()) {
+            beginPurchaseReveal(entry);
+        }
+    }
+
+    private void beginPurchaseReveal(ShopCatalogEntry entry) {
+        purchaseRevealKeepRow = selectedRowIndex;
+        if (selectedIndex >= 0 && selectedIndex < items.size()) {
+            ShopItem cat = items.get(selectedIndex);
+            purchaseRevealIcon = cat.cardArt != null ? cat.cardArt : cat.icon;
+        } else {
+            purchaseRevealIcon = null;
+        }
+        purchaseRevealTicks = 0;
+        inventoryOpen = false;
+        equipmentOpen = false;
+        state = ShopState.PURCHASE_REVEAL;
+    }
+
+    private void finishPurchaseReveal() {
+        purchaseRevealTicks = 0;
+        purchaseRevealIcon = null;
+        if (selectedIndex >= 0) {
+            int keepIndex = Math.min(purchaseRevealKeepRow, Math.max(0, catalogEntries.size() - 2));
+            buildCatalogRows(items.get(selectedIndex));
+            selectedRowIndex = catalogEntries.isEmpty()
+                ? -1
+                : Math.min(keepIndex, catalogEntries.size() - 1);
+        }
+        purchaseRevealKeepRow = -1;
+        refreshShowcasePrices();
+        state = ShopState.CATEGORY;
     }
 
     private void beginCategoryClose() {
@@ -351,6 +727,8 @@ public class ShopScreen {
         categoryTicks = 0;
         state = ShopState.CATEGORY_CLOSING;
         hoveredRowIndex = -1;
+        cardFlipTarget = 0;
+        cardFlipIdleTicks = 0;
     }
 
     private void finishCategoryClose() {
@@ -358,7 +736,11 @@ public class ShopScreen {
         categoryTicks = 0;
         selectedIndex = -1;
         selectedRowIndex = -1;
-        catalogRows.clear();
+        catalogEntries.clear();
+        catalogScrollOffset = 0;
+        cardFlipT = 0f;
+        cardFlipTarget = 0;
+        cardFlipIdleTicks = 0;
         state = ShopState.IDLE;
         currentDialog = IDLE_LINE;
     }
@@ -386,6 +768,7 @@ public class ShopScreen {
         return switch (state) {
             case REVEAL -> ShopRevealAnimator.forProgress(
                 revealTicks / (float) REVEAL_DURATION_TICKS, items.size(), true);
+            case WALLET_REVEAL, PURCHASE_REVEAL -> ShopRevealAnimator.complete(items.size());
             default -> ShopRevealAnimator.complete(items.size());
         };
     }
@@ -400,7 +783,8 @@ public class ShopScreen {
         g.fillRect(0, 0, sw, sh);
 
         ShopLayout layout = new ShopLayout(sw, sh, items.size(),
-            assets.hudX, assets.hudW, assets.hudH, assets.panelW);
+            assets.hudX, assets.hudW, assets.hudH, assets.panelW,
+            assets.panelHeaderH, assets.topRowCols, assets.bottomRowCols);
         ShopRevealAnimator reveal = revealAnimator();
         float brighten = reveal.sceneBrighten;
 
@@ -408,6 +792,26 @@ public class ShopScreen {
 
         boolean categoryMode = state == ShopState.CATEGORY_OPENING
             || state == ShopState.CATEGORY || state == ShopState.CATEGORY_CLOSING;
+        boolean walletScene = state == ShopState.WALLET_REVEAL;
+        boolean purchaseScene = state == ShopState.PURCHASE_REVEAL;
+
+        if (walletScene) {
+            drawWalletRevealScene(g, sw, sh, layout, mouseX, mouseY);
+            DialogBoxRenderer.drawCompactFramedSpeakerText(g, sw, sh, "Герцог", currentDialog,
+                DialogBoxRenderer.DUKE_COLOR, 1f);
+            drawCursor(g, mouseX, mouseY);
+            g.dispose();
+            return;
+        }
+
+        if (purchaseScene) {
+            drawPurchaseRevealScene(g, sw, sh, layout);
+            DialogBoxRenderer.drawCompactFramedSpeakerText(g, sw, sh, "Герцог", currentDialog,
+                DialogBoxRenderer.DUKE_COLOR, 1f);
+            drawCursor(g, mouseX, mouseY);
+            g.dispose();
+            return;
+        }
 
         if (!categoryMode) {
             drawDarkOverlay(g, sw, sh, layout, brighten * Math.max(0.25f, reveal.panelAlpha * 0.85f));
@@ -416,9 +820,10 @@ public class ShopScreen {
         }
 
         if (!categoryMode) {
+            float portraitAlpha = brighten;
             BufferedImage dukeDraw = assets.dukeScaled;
-            drawCharacter(g, sw, sh, assets.geraltScaled, true, layout.dialogTop, brighten);
-            drawCharacter(g, sw, sh, dukeDraw, false, layout.dialogTop, brighten);
+            drawCharacter(g, sw, sh, assets.geraltScaled, true, layout.dialogTop, portraitAlpha);
+            drawCharacter(g, sw, sh, dukeDraw, false, layout.dialogTop, portraitAlpha);
         }
 
         if (!categoryMode) {
@@ -426,21 +831,45 @@ public class ShopScreen {
         }
 
         if (categoryMode && selectedIndex >= 0) {
-            drawCategoryView(g, layout, reveal, categoryAnimator(layout));
-            drawCornerWallet(g, 1f, layout.dialogTop);
+            drawCategoryView(g, layout, reveal, categoryAnimator(layout), mouseX, mouseY);
+            drawCornerWallet(g, 1f);
         } else {
             drawCards(g, layout, reveal);
-            drawBuyButton(g, layout, reveal.btnAlpha, reveal.btnSlideY);
         }
 
-        if (reveal.panelAlpha > 0.45f) {
+        if (reveal.panelAlpha > 0.45f && !categoryMode) {
             drawAshParticles(g);
         }
 
         DialogBoxRenderer.drawCompactFramedSpeakerText(g, sw, sh, "Герцог", currentDialog,
             DialogBoxRenderer.DUKE_COLOR, 1f);
 
+        if (!model.needsWalletReveal()) {
+            drawInventoryBag(g, 1f);
+        }
+
+        if (equipmentOpen) {
+            drawEquipmentOverlay(g, sw, sh);
+        } else if (inventoryOpen) {
+            drawInventoryOverlay(g, sw, sh);
+        }
+
+        drawCursor(g, mouseX, mouseY);
+
         g.dispose();
+    }
+
+    private static void drawCursor(Graphics2D g, int mouseX, int mouseY) {
+        if (MENU_CURSOR != null) {
+            int cw = 28;
+            int ch = Math.max(1, cw * MENU_CURSOR.getHeight() / MENU_CURSOR.getWidth());
+            Object prevInterp = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
+            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+            g.drawImage(MENU_CURSOR, mouseX - 4, mouseY - 4, cw, ch, null);
+            if (prevInterp != null) {
+                g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, prevInterp);
+            }
+        }
     }
 
     public boolean isExitRequested() {
@@ -449,6 +878,653 @@ public class ShopScreen {
 
     public void clearExitRequest() {
         exitRequested = false;
+    }
+
+    private void drawWalletRevealScene(Graphics2D g, int sw, int sh, ShopLayout layout,
+                                       int mouseX, int mouseY) {
+        drawScaledBackground(g, assets.merchantBgScaled, sw, sh, 0.35f);
+
+        Composite prev = g.getComposite();
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.78f));
+        g.setColor(Color.BLACK);
+        g.fillRect(0, 0, sw, sh);
+        g.setComposite(prev);
+
+        drawCharacter(g, sw, sh, assets.geraltScaled, true, layout.dialogTop, 1f);
+        drawCharacter(g, sw, sh, assets.dukeScaled, false, layout.dialogTop, 1f);
+
+        drawWalletRevealBag(g, layout);
+        drawWalletRevealPouch(g, layout);
+    }
+
+    private void drawPurchaseRevealScene(Graphics2D g, int sw, int sh, ShopLayout layout) {
+        drawScaledBackground(g, assets.merchantBgScaled, sw, sh, 0.35f);
+
+        Composite prev = g.getComposite();
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.78f));
+        g.setColor(Color.BLACK);
+        g.fillRect(0, 0, sw, sh);
+        g.setComposite(prev);
+
+        drawCharacter(g, sw, sh, assets.geraltScaled, true, layout.dialogTop, 1f);
+        drawCharacter(g, sw, sh, assets.dukeScaled, false, layout.dialogTop, 1f);
+
+        drawPurchaseRevealBag(g, layout);
+        drawPurchaseRevealItem(g, layout);
+    }
+
+    private void drawPurchaseRevealBag(Graphics2D g, ShopLayout layout) {
+        Point slot = inventoryBagSlot();
+        float openT = bagOpenProgress(
+            purchaseRevealTicks,
+            PURCHASE_APPEAR_TICKS,
+            PURCHASE_FLY_TICKS,
+            PURCHASE_FADE_TICKS,
+            PURCHASE_CLOSE_TICKS);
+        drawInventoryBagSprite(g, slot.x, slot.y, INVENTORY_BAG_SIZE, openT, false, 1f);
+    }
+
+    /** Прогресс открытия сумки: закрыта → открыта на полёте → держится открытой → закрывается. */
+    private float bagOpenProgress(int ticks, int appearTicks, int flyTicks, int fadeTicks, int closeTicks) {
+        int bagShow = Math.max(0, appearTicks - 4);
+        int flyEnd = appearTicks + flyTicks;
+        int fadeEnd = flyEnd + fadeTicks;
+        int closeEnd = fadeEnd + closeTicks;
+        if (ticks < bagShow) {
+            return 0f;
+        }
+        if (ticks < flyEnd) {
+            return smoothstep((ticks - bagShow) / (float) Math.max(1, flyEnd - bagShow));
+        }
+        if (ticks < fadeEnd) {
+            return 1f;
+        }
+        if (ticks < closeEnd) {
+            float closeT = (ticks - fadeEnd) / (float) Math.max(1, closeTicks);
+            return smoothstep(1f - closeT);
+        }
+        return 0f;
+    }
+
+    private void drawPurchaseRevealItem(Graphics2D g, ShopLayout layout) {
+        if (purchaseRevealIcon == null) {
+            return;
+        }
+
+        int appearEnd = PURCHASE_APPEAR_TICKS;
+        int flyEnd = appearEnd + PURCHASE_FLY_TICKS;
+        int fadeEnd = flyEnd + PURCHASE_FADE_TICKS;
+        int tuckEnd = fadeEnd + PURCHASE_CLOSE_TICKS;
+
+        if (purchaseRevealTicks > fadeEnd) {
+            return;
+        }
+
+        float appearT = smoothstep(purchaseRevealTicks / (float) appearEnd);
+        float maxSize = 76f;
+        float minSize = 14f;
+
+        int centerX = VIRTUAL_W / 2;
+        int centerY = layout.dialogTop / 2 + 4;
+        Point bagSlot = inventoryBagSlot();
+        float bagCenterX = bagSlot.x + INVENTORY_BAG_SIZE / 2f;
+        float bagCenterY = bagSlot.y + INVENTORY_BAG_SIZE / 2f;
+
+        float px;
+        float py;
+        float pw;
+        float alpha;
+
+        if (purchaseRevealTicks <= appearEnd) {
+            pw = maxSize * (0.28f + appearT * 0.72f);
+            px = centerX - pw / 2f;
+            py = centerY - pw / 2f;
+            alpha = Math.min(1f, appearT * 1.1f);
+        } else {
+            float posT = smoothstep((purchaseRevealTicks - appearEnd) / (float) PURCHASE_FLY_TICKS);
+            float sizeT = posT * posT * (3f - 2f * posT);
+
+            pw = maxSize + (minSize - maxSize) * sizeT;
+            float cx = centerX + (bagCenterX - centerX) * posT;
+            float cy = centerY + (bagCenterY - centerY) * posT;
+            px = cx - pw / 2f;
+            py = cy - pw / 2f;
+            alpha = 1f;
+            if (purchaseRevealTicks > flyEnd) {
+                float fadeT = smoothstep((purchaseRevealTicks - flyEnd) / (float) PURCHASE_FADE_TICKS);
+                pw = minSize;
+                px = bagCenterX - pw / 2f;
+                py = bagCenterY - pw / 2f;
+                alpha = Math.max(0f, 1f - fadeT);
+            }
+        }
+
+        if (alpha <= 0.02f) {
+            return;
+        }
+
+        int ipw = Math.round(pw);
+        int ipx = Math.round(px);
+        int ipy = Math.round(py);
+
+        float glowAppearT = purchaseRevealTicks <= appearEnd ? appearT : 1f;
+        float glowFlyT = purchaseRevealTicks <= appearEnd ? 0f
+            : Math.min(1f, (purchaseRevealTicks - appearEnd) / (float) PURCHASE_FLY_TICKS);
+        float glowTuckT = purchaseRevealTicks > flyEnd
+            ? smoothstep((purchaseRevealTicks - flyEnd) / (float) PURCHASE_FADE_TICKS) : 0f;
+        drawItemRevealGlow(g, ipx, ipy, ipw, alpha, glowAppearT, glowFlyT, glowTuckT);
+
+        Rectangle crop = computeContentBounds(purchaseRevealIcon);
+        Composite comp = g.getComposite();
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
+        if (crop.width > 0 && crop.height > 0) {
+            g.drawImage(purchaseRevealIcon, ipx, ipy, ipx + ipw, ipy + ipw,
+                crop.x, crop.y, crop.x + crop.width, crop.y + crop.height, null);
+        } else {
+            g.drawImage(purchaseRevealIcon, ipx, ipy, ipw, ipw, null);
+        }
+        g.setComposite(comp);
+    }
+
+    private void drawItemRevealGlow(Graphics2D g, int px, int py, int pw,
+                                    float alpha, float appearT, float flyT, float tuckT) {
+        Composite prev = g.getComposite();
+        int cx = px + pw / 2;
+        int cy = py + pw / 2;
+        float glow = alpha * (0.4f + appearT * 0.5f) * (1f - flyT * 0.2f) * (1f - tuckT);
+
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, glow * 0.2f));
+        g.setColor(new Color(255, 210, 80));
+        int outer = Math.round(pw * 1.7f);
+        g.fillOval(cx - outer / 2, cy - outer / 2, outer, outer);
+
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, glow * 0.38f));
+        g.setColor(new Color(255, 235, 150));
+        int mid = Math.round(pw * 1.1f);
+        g.fillOval(cx - mid / 2, cy - mid / 2, mid, mid);
+        g.setComposite(prev);
+    }
+
+    private Point inventoryBagSlot() {
+        int bagX = INVENTORY_BAG_MARGIN;
+        int bagY = INVENTORY_BAG_MARGIN;
+        inventoryBagBounds.setBounds(bagX, bagY, INVENTORY_BAG_SIZE, INVENTORY_BAG_SIZE);
+        return new Point(bagX, bagY);
+    }
+
+    private void drawWalletRevealBag(Graphics2D g, ShopLayout layout) {
+        Point slot = inventoryBagSlot();
+        int bagX = slot.x;
+        int bagY = slot.y;
+        int bagSize = INVENTORY_BAG_SIZE;
+
+        int appearEnd = WALLET_APPEAR_TICKS;
+        int flyEnd = appearEnd + WALLET_FLY_TICKS;
+        int closeEnd = flyEnd + WALLET_BAG_CLOSE_TICKS;
+        boolean bagVisible = walletRevealTicks >= appearEnd - 4;
+
+        if (!bagVisible) {
+            return;
+        }
+
+        float openT = bagOpenProgress(
+            walletRevealTicks,
+            WALLET_APPEAR_TICKS,
+            WALLET_FLY_TICKS,
+            WALLET_FADE_TICKS,
+            WALLET_CLOSE_TICKS);
+        float alpha = Math.min(1f, (walletRevealTicks - (appearEnd - 4)) / 8f);
+        drawInventoryBagSprite(g, bagX, bagY, bagSize, openT, false, alpha);
+
+        int countStart = closeEnd;
+        if (walletRevealTicks >= countStart) {
+            drawBagWalletAmount(g, bagX, bagY, bagSize, alpha);
+        }
+    }
+
+    private void drawInventoryBag(Graphics2D g, float alpha) {
+        Point slot = inventoryBagSlot();
+        float openT = 0f;
+        if (inventoryOpen && assets.inventoryBagOpenFrames != null
+            && assets.inventoryBagOpenFrames.length > 0) {
+            openT = 1f;
+        }
+        drawInventoryBagSprite(g, slot.x, slot.y, INVENTORY_BAG_SIZE, openT, inventoryBagHovered, alpha);
+    }
+
+    private void drawInventoryBagSprite(Graphics2D g, int x, int y, int size, float openT,
+                                        boolean hovered, float alpha) {
+        Composite prev = g.getComposite();
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
+
+        BufferedImage sprite = pickBagSprite(openT, hovered);
+
+        if (sprite != null) {
+            drawScaledSprite(g, sprite, x, y, size, size, true);
+        } else {
+            g.setColor(new Color(72, 48, 28));
+            g.fillRoundRect(x + 4, y + 10, size - 8, size - 14, 4, 4);
+            g.setColor(new Color(110, 78, 42));
+            g.drawRoundRect(x + 4, y + 10, size - 8, size - 14, 4, 4);
+            if (openT > 0.2f) {
+                g.setColor(new Color(30, 20, 12));
+                g.fillOval(x + 8, y + 6, size - 16, 10);
+            }
+        }
+
+        if (hovered && assets.inventoryBagHover == null && openT < 0.05f) {
+            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha * 0.35f));
+            g.setColor(new Color(255, 220, 120));
+            g.drawRoundRect(x - 1, y - 1, size + 2, size + 2, 6, 6);
+        }
+
+        if (shouldShowPouchOnBag(openT) && assets.walletPouch != null) {
+            int pouchSize = Math.max(12, size / 3);
+            int pouchX = x + (size - pouchSize) / 2;
+            int pouchY = y + size / 2 - pouchSize / 2 - 2;
+            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
+            g.drawImage(assets.walletPouch, pouchX, pouchY, pouchSize, pouchSize, null);
+        }
+        g.setComposite(prev);
+    }
+
+    private boolean shouldShowPouchOnBag(float openT) {
+        if (model.needsWalletReveal()) {
+            return false;
+        }
+        if (state == ShopState.PURCHASE_REVEAL || state == ShopState.WALLET_REVEAL) {
+            return false;
+        }
+        return openT < 0.001f;
+    }
+
+    private BufferedImage pickBagSprite(float openT, boolean hovered) {
+        BufferedImage[] frames = assets.inventoryBagOpenFrames;
+        if (frames != null && frames.length > 0) {
+            if (openT > 0.001f) {
+                int frame = Math.min(frames.length - 1,
+                    Math.max(0, Math.round(openT * (frames.length - 1))));
+                if (frames[frame] != null) {
+                    return frames[frame];
+                }
+            } else if (state == ShopState.PURCHASE_REVEAL || state == ShopState.WALLET_REVEAL) {
+                return frames[0];
+            }
+        }
+        if (hovered && openT < 0.05f && assets.inventoryBagHover != null) {
+            return assets.inventoryBagHover;
+        }
+        if (assets.inventoryBagClosed != null) {
+            return assets.inventoryBagClosed;
+        }
+        return assets.inventoryBagIcon;
+    }
+
+    private void drawBagWalletAmount(Graphics2D g, int bagX, int bagY, int bagSize, float alpha) {
+        if (model.needsWalletReveal()) {
+            return;
+        }
+        String wallet = walletHudAmountText();
+        drawCrispText(g);
+        g.setFont(GameFonts.get().uiBold( 11));
+        FontMetrics fm = g.getFontMetrics();
+        int textW = fm.stringWidth(wallet);
+        int tx = bagX + (bagSize - textW) / 2;
+        int ty = bagY + bagSize + 12;
+        Composite prev = g.getComposite();
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
+        g.setColor(new Color(20, 14, 6, 200));
+        g.fillRoundRect(tx - 4, ty - fm.getAscent(), textW + 8, fm.getHeight() + 2, 4, 4);
+        g.setColor(new Color(255, 230, 150));
+        g.drawString(wallet, tx, ty);
+        g.setComposite(prev);
+    }
+
+    /** Кошелёк в правом верхнем углу — экран списка товаров. */
+    private void drawCornerWallet(Graphics2D g, float alpha) {
+        if (alpha <= 0.01f) {
+            return;
+        }
+        Composite prev = g.getComposite();
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
+
+        String wallet = walletHudAmountText();
+        String suffix = model.walletSuffix();
+        int crownSize = 16;
+        int crownGap = 4;
+        int margin = 8;
+        int padX = 7;
+        int padY = 4;
+
+        drawCrispText(g);
+        g.setFont(GameFonts.get().uiBold( 12));
+        FontMetrics fm = g.getFontMetrics();
+        int blockW = fm.stringWidth(wallet) + fm.stringWidth(suffix);
+        if (assets.crownIconScaled != null) {
+            blockW += crownSize + crownGap;
+        }
+        int blockH = Math.max(crownSize, fm.getHeight()) + padY * 2;
+        int blockX = VIRTUAL_W - margin - blockW - padX * 2;
+        int blockY = INVENTORY_BAG_MARGIN;
+
+        g.setColor(new Color(10, 7, 3, 185));
+        g.fillRoundRect(blockX, blockY, blockW + padX * 2, blockH, 6, 6);
+        g.setColor(new Color(140, 105, 45, 160));
+        g.drawRoundRect(blockX, blockY, blockW + padX * 2, blockH, 6, 6);
+
+        int textX = blockX + padX;
+        if (assets.crownIconScaled != null) {
+            int crownY = blockY + (blockH - crownSize) / 2;
+            g.drawImage(assets.crownIconScaled, textX, crownY, crownSize, crownSize, null);
+            textX += crownSize + crownGap;
+        }
+        g.setColor(new Color(255, 230, 150));
+        int walletY = blockY + (blockH + fm.getAscent()) / 2 - 2;
+        g.drawString(wallet, textX, walletY);
+        g.setColor(new Color(200, 180, 120));
+        g.drawString(suffix, textX + fm.stringWidth(wallet), walletY);
+
+        g.setComposite(prev);
+    }
+
+    private void drawInventoryOverlay(Graphics2D g, int sw, int sh) {
+        Composite prev = g.getComposite();
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.55f));
+        g.setColor(Color.BLACK);
+        g.fillRect(0, 0, sw, sh);
+
+        int px = (sw - INVENTORY_PANEL_W) / 2;
+        int py = (sh - INVENTORY_PANEL_H) / 2 - 16;
+        inventoryPanelBounds.setBounds(px, py, INVENTORY_PANEL_W, INVENTORY_PANEL_H);
+
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.96f));
+        g.setColor(new Color(18, 12, 8, 245));
+        g.fillRoundRect(px, py, INVENTORY_PANEL_W, INVENTORY_PANEL_H, 8, 8);
+        g.setColor(new Color(150, 110, 50));
+        g.drawRoundRect(px, py, INVENTORY_PANEL_W, INVENTORY_PANEL_H, 8, 8);
+
+        drawCrispText(g);
+        g.setFont(GameFonts.get().uiBold( 13));
+        g.setColor(new Color(255, 220, 140));
+        g.drawString("Инвентарь", px + 12, py + 20);
+
+        inventoryCloseBounds.setBounds(UiChrome.closeButtonRect(px, py, INVENTORY_PANEL_W));
+        UiChrome.drawCloseButton(g, inventoryCloseBounds, inventoryCloseHovered, 1f);
+
+        int iconX = px + 12;
+        int iconY = py + 34;
+        inventoryPouchIconBounds.setBounds(iconX, iconY, INVENTORY_POUCH_ICON, INVENTORY_POUCH_ICON);
+        drawInventoryPouchIcon(g, iconX, iconY, INVENTORY_POUCH_ICON,
+            inventoryPouchFocused, inventoryPouchIconHovered);
+
+        int detailX = px + 56;
+        int detailY = py + 28;
+        int detailW = INVENTORY_PANEL_W - 68;
+        int detailBottom = iconY + INVENTORY_POUCH_ICON;
+        if (inventoryPouchFocused) {
+            detailBottom = drawInventoryPouchDetail(g, detailX, detailY, detailW);
+        }
+
+        int listY = detailBottom + 12;
+        g.setColor(new Color(100, 75, 40, 140));
+        g.drawLine(px + 10, listY - 4, px + INVENTORY_PANEL_W - 10, listY - 4);
+        g.setFont(GameFonts.get().uiBold( 10));
+        g.setColor(new Color(180, 140, 80));
+        g.drawString("Куплено:", px + 12, listY + 10);
+        listY += 24;
+
+        g.setFont(GameFonts.get().uiPlain( 11));
+        g.setColor(new Color(200, 180, 130));
+        List<String> items = model.inventoryItemNames();
+        if (items.isEmpty()) {
+            g.drawString("Пока пусто…", px + 12, listY);
+        } else {
+            for (String name : items) {
+                if (listY > py + INVENTORY_PANEL_H - 20) {
+                    g.drawString("…", px + 12, listY);
+                    break;
+                }
+                g.drawString("• " + truncateToWidth(name, g.getFontMetrics(), INVENTORY_PANEL_W - 24),
+                    px + 12, listY);
+                listY += 14;
+            }
+        }
+
+        int equipBtnW = 108;
+        int equipBtnH = 22;
+        int equipBtnX = px + INVENTORY_PANEL_W - equipBtnW - 10;
+        int equipBtnY = py + INVENTORY_PANEL_H - equipBtnH - 8;
+        inventoryEquipButtonBounds.setBounds(equipBtnX, equipBtnY, equipBtnW, equipBtnH);
+        g.setFont(GameFonts.get().uiBold( 10));
+        g.setColor(new Color(28, 18, 8, 220));
+        g.fillRoundRect(equipBtnX, equipBtnY, equipBtnW, equipBtnH, 5, 5);
+        g.setColor(new Color(170, 125, 55));
+        g.drawRoundRect(equipBtnX, equipBtnY, equipBtnW, equipBtnH, 5, 5);
+        g.setColor(new Color(255, 225, 150));
+        String equipLabel = "Экипировка";
+        FontMetrics efm = g.getFontMetrics();
+        g.drawString(equipLabel, equipBtnX + (equipBtnW - efm.stringWidth(equipLabel)) / 2,
+            equipBtnY + 15);
+
+        g.setComposite(prev);
+    }
+
+    private void drawEquipmentOverlay(Graphics2D g, int sw, int sh) {
+        Composite prev = g.getComposite();
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.55f));
+        g.setColor(Color.BLACK);
+        g.fillRect(0, 0, sw, sh);
+
+        int px = EQUIP_MARGIN;
+        int py = EQUIP_MARGIN;
+        int panelW = sw - EQUIP_MARGIN * 2;
+        int panelH = sh - EQUIP_MARGIN * 2;
+        equipmentPanelBounds.setBounds(px, py, panelW, panelH);
+        equipmentRowBounds.clear();
+
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.97f));
+        g.setColor(new Color(14, 10, 6, 248));
+        g.fillRoundRect(px, py, panelW, panelH, 6, 6);
+        g.setColor(new Color(155, 115, 50));
+        g.drawRoundRect(px, py, panelW, panelH, 6, 6);
+
+        drawEquipText(g, GameFonts.get().uiBold(15), "Экипировка", px + 14, py + 24,
+            new Color(255, 220, 140));
+
+        int listX = px + 10;
+        int listY = py + 34;
+        int listW = 168;
+        int listH = panelH - 48;
+        g.setColor(new Color(8, 6, 4, 180));
+        g.fillRoundRect(listX, listY, listW, listH, 4, 4);
+        g.setColor(new Color(100, 75, 40));
+        g.drawRoundRect(listX, listY, listW, listH, 4, 4);
+
+        drawEquipText(g, GameFonts.get().uiBold(11), "Куплено", listX + 8, listY + 14,
+            new Color(180, 140, 80));
+        int itemsTop = listY + 22;
+        g.setColor(new Color(90, 68, 36, 160));
+        g.drawLine(listX + 6, itemsTop, listX + listW - 6, itemsTop);
+
+        List<Armour> owned = model.ownedArmour();
+        int rowH = 18;
+        int rowY = itemsTop + 14;
+        Font itemFont = GameFonts.get().uiPlain(11);
+        FontMetrics itemFm = g.getFontMetrics(itemFont);
+        for (int i = 0; i < owned.size(); i++) {
+            if (rowY + 4 > listY + listH - 6) {
+                break;
+            }
+            Armour armour = owned.get(i);
+            Rectangle row = new Rectangle(listX + 4, rowY - 13, listW - 8, rowH);
+            equipmentRowBounds.add(row);
+            boolean hovered = i == equipmentHoveredRow;
+            boolean equipped = model.isEquipped(armour);
+            if (hovered || equipped) {
+                g.setColor(equipped ? new Color(70, 52, 24, 200) : new Color(50, 38, 18, 170));
+                g.fillRoundRect(row.x, row.y, row.width, row.height, 3, 3);
+            }
+            String line = truncateToWidth(armour.getName(), itemFm, listW - 20);
+            drawEquipText(g, itemFont, line, listX + 8, rowY,
+                equipped ? new Color(255, 230, 150) : new Color(200, 180, 130));
+            rowY += rowH;
+        }
+        if (owned.isEmpty()) {
+            drawEquipText(g, GameFonts.get().uiPlain(11), "Пока нет брони…", listX + 8, rowY,
+                new Color(150, 130, 90));
+        }
+
+        int portraitX = listX + listW + 12;
+        int portraitY = py + 30;
+        int portraitW = 152;
+        int portraitH = panelH - 86;
+        g.setColor(new Color(6, 4, 2, 160));
+        g.fillRoundRect(portraitX - 4, portraitY - 4, portraitW + 8, portraitH + 8, 6, 6);
+        if (assets.geraltScaled != null) {
+            drawScaledSprite(g, assets.geraltScaled, portraitX, portraitY, portraitW, portraitH, true);
+        }
+
+        int slotSize = 48;
+        int slotGap = 10;
+        int slotX = px + panelW - slotSize - 12;
+        int slotY = py + 36;
+        ShopEquipSlot[] slots = ShopEquipSlot.values();
+        for (int i = 0; i < slots.length; i++) {
+            ShopEquipSlot slot = slots[i];
+            int sy = slotY + i * (slotSize + slotGap);
+            equipmentSlotBounds[i] = new Rectangle(slotX, sy, slotSize, slotSize);
+            boolean hovered = equipmentHoveredSlot == i;
+            Armour equipped = model.getEquipped(slot);
+            g.setColor(new Color(22, 14, 8, 220));
+            g.fillRoundRect(slotX, sy, slotSize, slotSize, 4, 4);
+            g.setColor(hovered ? new Color(200, 160, 70) : new Color(120, 90, 45));
+            g.drawRoundRect(slotX, sy, slotSize, slotSize, 4, 4);
+            BufferedImage icon = slot.iconIndex >= 0 && slot.iconIndex < assets.itemIcons.length
+                ? assets.itemIcons[slot.iconIndex] : null;
+            if (equipped != null && icon != null) {
+                int iconSz = 30;
+                g.drawImage(icon, slotX + (slotSize - iconSz) / 2, sy + 7, iconSz, iconSz, null);
+            } else if (icon != null) {
+                g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.35f));
+                int iconSz = 26;
+                g.drawImage(icon, slotX + (slotSize - iconSz) / 2, sy + 9, iconSz, iconSz, null);
+                g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.97f));
+            }
+            String slotLabel = slot.label;
+            Font slotFont = GameFonts.get().uiPlain(9);
+            FontMetrics sfm = g.getFontMetrics(slotFont);
+            drawEquipText(g, slotFont, slotLabel,
+                slotX + (slotSize - sfm.stringWidth(slotLabel)) / 2, sy + slotSize - 5,
+                new Color(170, 140, 90));
+        }
+
+        int statsX = portraitX;
+        int statsY = py + panelH - 80;
+        int statsW = slotX + slotSize - statsX;
+        int statsH = 70;
+        g.setColor(new Color(10, 7, 4, 200));
+        g.fillRoundRect(statsX, statsY, statsW, statsH, 4, 4);
+        g.setColor(new Color(100, 75, 40));
+        g.drawRoundRect(statsX, statsY, statsW, statsH, 4, 4);
+        drawEquipmentStats(g, statsX, statsY, statsW, statsH, model.equippedStatPreview());
+
+        int backW = 72;
+        int backH = 22;
+        int backX = px + 12;
+        int backY = listY + listH - backH;
+        equipmentBackButtonBounds.setBounds(backX, backY, backW, backH);
+        g.setColor(new Color(28, 18, 8, 220));
+        g.fillRoundRect(backX, backY, backW, backH, 5, 5);
+        g.setColor(new Color(150, 110, 50));
+        g.drawRoundRect(backX, backY, backW, backH, 5, 5);
+        Font backFont = GameFonts.get().uiBold(11);
+        FontMetrics bfm = g.getFontMetrics(backFont);
+        String backLabel = "Назад";
+        int labelX = backX + (backW - bfm.stringWidth(backLabel)) / 2;
+        int labelY = backY + (backH + bfm.getAscent() - bfm.getDescent()) / 2;
+        drawEquipText(g, backFont, backLabel, labelX, labelY, new Color(230, 200, 140));
+
+        g.setComposite(prev);
+    }
+
+    private void drawEquipmentStats(Graphics2D g, int x, int y, int w, int h, ShopModel.StatPreview preview) {
+        String header = "ХАРАКТЕРИСТИКИ";
+        Font headerFont = GameFonts.get().uiBold(11);
+        FontMetrics hfm = g.getFontMetrics(headerFont);
+        drawEquipText(g, headerFont, header, x + (w - hfm.stringWidth(header)) / 2, y + 18,
+            new Color(220, 200, 140));
+
+        String[] labels = {"Защита", "Выносл.", "Знаки"};
+        Font lineFont = GameFonts.get().uiPlain(11);
+        int lineY = y + 36;
+        ShopModel.StatRow[] rows = preview.rows();
+        for (int i = 0; i < labels.length && i < rows.length; i++) {
+            ShopModel.StatRow row = rows[i];
+            String delta = "";
+            if (row.delta() > 0) {
+                delta = " (+" + row.delta() + ")";
+            } else if (row.delta() < 0) {
+                delta = " (" + row.delta() + ")";
+            }
+            drawEquipText(g, lineFont, labels[i] + ": " + row.value() + delta, x + 12, lineY,
+                new Color(200, 180, 130));
+            lineY += 15;
+        }
+    }
+
+    private void drawInventoryPouchIcon(Graphics2D g, int x, int y, int size,
+                                        boolean selected, boolean hovered) {
+        if (assets.walletPouch == null) {
+            return;
+        }
+        Composite prev = g.getComposite();
+        if (selected || hovered) {
+            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.9f));
+            g.setColor(selected ? new Color(120, 90, 40) : new Color(80, 60, 30));
+            g.fillRoundRect(x - 2, y - 2, size + 4, size + 4, 4, 4);
+        }
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
+        g.drawImage(assets.walletPouch, x, y, size, size, null);
+        g.setComposite(prev);
+    }
+
+    private int drawInventoryPouchDetail(Graphics2D g, int x, int y, int maxW) {
+        if (assets.walletPouch == null) {
+            return y + INVENTORY_POUCH_ICON;
+        }
+        int large = INVENTORY_POUCH_LARGE;
+        int pouchX = x + (maxW - large) / 2;
+        int pouchY = y;
+        Shape prevClip = g.getClip();
+        g.clipRect(x, y, maxW, large + 40);
+
+        Rectangle crop = computeContentBounds(assets.walletPouch);
+        if (crop.width > 0 && crop.height > 0) {
+            g.drawImage(assets.walletPouch, pouchX, pouchY, pouchX + large, pouchY + large,
+                crop.x, crop.y, crop.x + crop.width, crop.y + crop.height, null);
+        } else {
+            g.drawImage(assets.walletPouch, pouchX, pouchY, large, large, null);
+        }
+
+        String amount = model.walletAmountText() + model.walletSuffix();
+        String[] lines = {
+            "Золотой мешок с гонораром.",
+            amount + " — плата за Арнскрон."
+        };
+        g.setFont(GameFonts.get().uiPlain( 10));
+        g.setColor(new Color(220, 195, 130));
+        int textY = pouchY + large + 12;
+        for (String line : lines) {
+            g.drawString(truncateToWidth(line, g.getFontMetrics(), maxW), x, textY);
+            textY += 13;
+        }
+        g.setClip(prevClip);
+        return textY;
+    }
+
+    private static float smoothstep(float t) {
+        t = Math.max(0f, Math.min(1f, t));
+        return t * t * (3f - 2f * t);
     }
 
     private void drawDarkOverlay(Graphics2D g, int sw, int sh, ShopLayout layout, float alpha) {
@@ -499,18 +1575,19 @@ public class ShopScreen {
             g.fillRect(layout.hudX, hudY, layout.hudW, layout.hudH);
         }
 
-        drawCrispText(g);
-        g.setFont(new Font("Serif", Font.BOLD, 14));
-        g.setColor(DialogBoxRenderer.DUKE_COLOR);
-        FontMetrics titleFm = g.getFontMetrics();
-        int titleY = hudY + (layout.hudH + titleFm.getAscent()) / 2 - 1;
-        g.drawString("Лавка Герцога", layout.hudX + 18, titleY);
+        if (assets.dukeSealIconScaled != null) {
+            int seal = assets.dukeSealSize;
+            int sealX = layout.hudX + 12;
+            int sealY = hudY + (layout.hudH - seal) / 2;
+            drawCrispIcon(g, assets.dukeSealIconScaled, sealX, sealY, seal);
+        }
 
-        String wallet = "???";
-        String suffix = " крон";
+        String wallet = walletHudAmountText();
+        String suffix = model.walletSuffix();
         int crownSize = 18;
         int crownGap = 4;
-        g.setFont(new Font("Serif", Font.BOLD, 13));
+        drawCrispText(g);
+        g.setFont(GameFonts.get().uiBold( 13));
         FontMetrics fm = g.getFontMetrics();
         int blockW = fm.stringWidth(wallet) + fm.stringWidth(suffix);
         if (assets.crownIconScaled != null) {
@@ -531,50 +1608,122 @@ public class ShopScreen {
         g.setComposite(prev);
     }
 
-    /** Кошелёк в правом верхнем углу — поверх прилавка, выше панели списка. */
-    private void drawCornerWallet(Graphics2D g, float alpha, int dialogTop) {
-        if (alpha <= 0.01f) {
+    private String walletHudAmountText() {
+        if (state != ShopState.WALLET_REVEAL) {
+            return model.walletAmountText();
+        }
+        int countStart = WALLET_APPEAR_TICKS + WALLET_FLY_TICKS + WALLET_BAG_CLOSE_TICKS;
+        if (walletRevealTicks < countStart) {
+            return "???";
+        }
+        float t = Math.min(1f, (walletRevealTicks - countStart) / (float) WALLET_COUNT_TICKS);
+        t = t * t * (3f - 2f * t);
+        return String.valueOf(Math.round(model.getWallet() * t));
+    }
+
+    private void drawWalletRevealPouch(Graphics2D g, ShopLayout layout) {
+        if (assets.walletPouch == null) {
             return;
         }
+
+        int appearEnd = WALLET_APPEAR_TICKS;
+        int flyEnd = appearEnd + WALLET_FLY_TICKS;
+        int fadeEnd = flyEnd + WALLET_FADE_TICKS;
+        int closeEnd = fadeEnd + WALLET_CLOSE_TICKS;
+
+        if (walletRevealTicks > fadeEnd) {
+            return;
+        }
+
+        float appearT = smoothstep(walletRevealTicks / (float) appearEnd);
+        float maxSize = 80f;
+        float minSize = 13f;
+
+        int centerX = VIRTUAL_W / 2;
+        int centerY = layout.dialogTop / 2 + 6;
+        Point bagSlot = inventoryBagSlot();
+        float bagCenterX = bagSlot.x + INVENTORY_BAG_SIZE / 2f;
+        float bagCenterY = bagSlot.y + INVENTORY_BAG_SIZE / 2f;
+
+        float px;
+        float py;
+        float pw;
+        float alpha;
+
+        if (walletRevealTicks <= appearEnd) {
+            pw = maxSize * (0.32f + appearT * 0.68f);
+            px = centerX - pw / 2f;
+            py = centerY - pw / 2f;
+            alpha = Math.min(1f, appearT * 1.15f);
+        } else {
+            float posT = smoothstep((walletRevealTicks - appearEnd) / (float) WALLET_FLY_TICKS);
+            float sizeT = posT * posT * (3f - 2f * posT);
+
+            pw = maxSize + (minSize - maxSize) * sizeT;
+            float cx = centerX + (bagCenterX - centerX) * posT;
+            float cy = centerY + (bagCenterY - centerY) * posT;
+            px = cx - pw / 2f;
+            py = cy - pw / 2f;
+            alpha = 1f;
+            if (walletRevealTicks > flyEnd) {
+                float fadeT = smoothstep((walletRevealTicks - flyEnd) / (float) WALLET_FADE_TICKS);
+                pw = minSize;
+                px = bagCenterX - pw / 2f;
+                py = bagCenterY - pw / 2f;
+                alpha = Math.max(0f, 1f - fadeT);
+            }
+        }
+
+        if (alpha <= 0.02f) {
+            return;
+        }
+
+        int ipw = Math.round(pw);
+        int iph = ipw;
+        int ipx = Math.round(px);
+        int ipy = Math.round(py);
+
+        float glowAppearT = walletRevealTicks <= appearEnd ? appearT : 1f;
+        float glowFlyT = walletRevealTicks <= appearEnd ? 0f
+            : Math.min(1f, (walletRevealTicks - appearEnd) / (float) WALLET_FLY_TICKS);
+        float glowTuckT = walletRevealTicks > flyEnd
+            ? smoothstep((walletRevealTicks - flyEnd) / (float) WALLET_FADE_TICKS) : 0f;
+        drawPouchGlow(g, ipx, ipy, ipw, iph, alpha, glowAppearT, glowFlyT, glowTuckT);
+
+        Rectangle crop = computeContentBounds(assets.walletPouch);
         Composite prev = g.getComposite();
         g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
-
-        String wallet = "???";
-        String suffix = " крон";
-        int crownSize = 16;
-        int crownGap = 4;
-        int margin = 8;
-        int padX = 7;
-        int padY = 4;
-
-        drawCrispText(g);
-        g.setFont(new Font("Serif", Font.BOLD, 12));
-        FontMetrics fm = g.getFontMetrics();
-        int blockW = fm.stringWidth(wallet) + fm.stringWidth(suffix);
-        if (assets.crownIconScaled != null) {
-            blockW += crownSize + crownGap;
+        if (crop.width > 0 && crop.height > 0) {
+            g.drawImage(assets.walletPouch, ipx, ipy, ipx + ipw, ipy + iph,
+                crop.x, crop.y, crop.x + crop.width, crop.y + crop.height, null);
+        } else {
+            g.drawImage(assets.walletPouch, ipx, ipy, ipw, iph, null);
         }
-        int blockH = Math.max(crownSize, fm.getHeight()) + padY * 2;
-        int blockX = VIRTUAL_W - margin - blockW - padX * 2;
-        int blockY = 8;
+        g.setComposite(prev);
+    }
 
-        g.setColor(new Color(10, 7, 3, 185));
-        g.fillRoundRect(blockX, blockY, blockW + padX * 2, blockH, 6, 6);
-        g.setColor(new Color(140, 105, 45, 160));
-        g.drawRoundRect(blockX, blockY, blockW + padX * 2, blockH, 6, 6);
+    private void drawPouchGlow(Graphics2D g, int px, int py, int pw, int ph,
+                               float alpha, float appearT, float flyT, float tuckT) {
+        Composite prev = g.getComposite();
+        int cx = px + pw / 2;
+        int cy = py + ph / 2;
+        float glow = alpha * (0.45f + appearT * 0.55f) * (1f - flyT * 0.25f) * (1f - tuckT);
 
-        int textX = blockX + padX;
-        if (assets.crownIconScaled != null) {
-            int crownY = blockY + (blockH - crownSize) / 2;
-            g.drawImage(assets.crownIconScaled, textX, crownY, crownSize, crownSize, null);
-            textX += crownSize + crownGap;
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, glow * 0.22f));
+        g.setColor(new Color(255, 200, 60));
+        int outer = Math.round(pw * 1.8f);
+        g.fillOval(cx - outer / 2, cy - outer / 2, outer, outer);
+
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, glow * 0.45f));
+        g.setColor(new Color(255, 230, 120));
+        int mid = Math.round(pw * 1.15f);
+        g.fillOval(cx - mid / 2, cy - mid / 2, mid, mid);
+
+        if (flyT > 0.05f && flyT < 0.95f) {
+            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha * 0.3f * (1f - flyT)));
+            g.setColor(new Color(255, 215, 90));
+            g.fillOval(cx - 4, cy - 4, 8, 8);
         }
-        g.setColor(new Color(255, 230, 150));
-        int walletY = blockY + (blockH + fm.getAscent()) / 2 - 2;
-        g.drawString(wallet, textX, walletY);
-        g.setColor(new Color(200, 180, 120));
-        g.drawString(suffix, textX + fm.stringWidth(wallet), walletY);
-
         g.setComposite(prev);
     }
 
@@ -593,15 +1742,9 @@ public class ShopScreen {
 
         if (assets.catalogPanelScaled != null) {
             g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, reveal.panelAlpha));
-            int px = layout.panelX;
-            int py = layout.panelY + Math.round(reveal.panelSlideY);
-            BufferedImage panel = assets.catalogPanelScaled;
-            if (Math.abs(scale - 1f) < 0.001f
-                && panel.getWidth() == layout.panelW && panel.getHeight() == layout.panelH) {
-                g.drawImage(panel, px, py, null);
-            } else {
-                drawScaledCentered(g, panel, px, py, layout.panelW, layout.panelH, panelCx, panelCy, scale);
-            }
+            drawScaledCentered(g, assets.catalogPanelScaled,
+                layout.panelX, layout.panelY + Math.round(reveal.panelSlideY),
+                layout.panelW, layout.panelH, panelCx, panelCy, scale);
         }
 
         for (int i = 0; i < items.size(); i++) {
@@ -627,7 +1770,7 @@ public class ShopScreen {
     }
 
     private void drawCategoryView(Graphics2D g, ShopLayout layout, ShopRevealAnimator reveal,
-                                  ShopCategoryAnimator cat) {
+                                  ShopCategoryAnimator cat, int mouseX, int mouseY) {
         Composite layer = g.getComposite();
         ShopItem item = items.get(selectedIndex);
 
@@ -635,12 +1778,7 @@ public class ShopScreen {
             g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, cat.counterAlpha));
             int cy = layout.categoryCounterY();
             int ch = layout.categoryCounterH(layout.dialogTop);
-            BufferedImage counter = assets.counterForeground;
-            if (ch == counter.getHeight() && assets.counterW == counter.getWidth()) {
-                g.drawImage(counter, assets.counterX, cy, null);
-            } else {
-                drawScaledSprite(g, counter, assets.counterX, cy, assets.counterW, ch, true);
-            }
+            g.drawImage(assets.counterForeground, assets.counterX, cy, assets.counterW, ch, null);
         }
 
         for (int i = 0; i < items.size(); i++) {
@@ -660,8 +1798,11 @@ public class ShopScreen {
         }
 
         item.bounds.setBounds(cat.cardX, cat.cardY, cat.cardW, cat.cardH);
-        drawItemCard(g, item, cat.cardX, cat.cardY, cat.cardW, cat.cardH,
-            selectedIndex, true, false, 1f);
+        boolean cardGrowing = state == ShopState.CATEGORY_OPENING || state == ShopState.CATEGORY_CLOSING;
+        String priceForCard = state == ShopState.CATEGORY ? selectedCatalogPrice() : null;
+        ShopCatalogEntry statEntry = selectedCatalogEntry();
+        drawFlippableItemCard(g, item, cat.cardX, cat.cardY, cat.cardW, cat.cardH,
+            true, false, 1f, priceForCard, cardGrowing, cardFlipT, statEntry);
 
         if (cat.detailPanelAlpha > 0.02f) {
             Rectangle panel = layout.detailListPanelSlot(assets.detailPanelW, assets.detailPanelH);
@@ -672,13 +1813,47 @@ public class ShopScreen {
                 g.drawImage(assets.catalogDetailPanel, px, py, null);
             }
             drawCatalogRows(g, px, py, cat.listInteractive);
-            drawCategoryBuyButton(g, px, py, cat.detailPanelAlpha);
+            drawCategoryBackButton(g, px, cat.detailPanelAlpha, cat.listInteractive);
+            drawCategoryBuyButton(g, px, py, cat.detailPanelAlpha, cat.listInteractive);
         }
 
         g.setComposite(layer);
     }
 
-    private void drawCategoryBuyButton(Graphics2D g, int panelX, int panelY, float alpha) {
+    private ShopCatalogEntry selectedCatalogEntry() {
+        if (selectedRowIndex >= 0 && selectedRowIndex < catalogEntries.size()) {
+            return catalogEntries.get(selectedRowIndex);
+        }
+        return null;
+    }
+
+    private String selectedCatalogPrice() {
+        if (selectedRowIndex >= 0 && selectedRowIndex < catalogEntries.size()) {
+            return catalogEntries.get(selectedRowIndex).priceLabel();
+        }
+        if (selectedIndex >= 0 && selectedIndex < items.size()) {
+            return items.get(selectedIndex).priceLabel;
+        }
+        return "···";
+    }
+
+    private void drawCategoryBackButton(Graphics2D g, int panelX, float alpha, boolean interactive) {
+        if (alpha <= 0.01f) {
+            categoryBackBounds.setBounds(0, 0, 0, 0);
+            return;
+        }
+        int size = UiChrome.BTN_SIZE;
+        int backX = panelX + 4;
+        int backY = INVENTORY_BAG_MARGIN;
+        if (interactive) {
+            categoryBackBounds.setBounds(backX, backY, size, size);
+        } else {
+            categoryBackBounds.setBounds(0, 0, 0, 0);
+        }
+        UiChrome.drawArrowBackButton(g, categoryBackBounds, categoryBackHovered, alpha);
+    }
+
+    private void drawCategoryBuyButton(Graphics2D g, int panelX, int panelY, float alpha, boolean interactive) {
         if (alpha <= 0.01f) {
             return;
         }
@@ -688,28 +1863,55 @@ public class ShopScreen {
         int btnH = assets.btnH;
         int btnX = panelX + (assets.detailPanelW - btnW) / 2;
         int btnY = panelY + assets.detailPanelH - btnH - 8;
-        if (assets.btnBuyScaled != null) {
-            g.drawImage(assets.btnBuyScaled, btnX, btnY, null);
+        boolean enabled = isBuyButtonEnabled();
+        if (interactive) {
+            categoryBuyBounds.setBounds(btnX, btnY, btnW, btnH);
+        } else {
+            categoryBuyBounds.setBounds(0, 0, 0, 0);
+        }
+        BufferedImage btnImg = enabled ? assets.btnBuyNormal : assets.btnBuyDisabled;
+        if (btnImg == null) {
+            btnImg = assets.btnBuyDisabled;
+        }
+        if (btnImg != null) {
+            g.drawImage(btnImg, btnX, btnY, null);
         }
         drawCrispText(g);
         g.setFont(cardFont(10));
         String label = "Купить";
         FontMetrics fm = g.getFontMetrics();
         int tx = btnX + (btnW - fm.stringWidth(label)) / 2;
-        drawOutlinedText(g, label, tx, btnY + 19, new Color(220, 200, 140));
+        Color labelColor = enabled
+            ? (categoryBuyHovered ? new Color(255, 240, 180) : new Color(220, 200, 140))
+            : new Color(120, 105, 75);
+        drawOutlinedText(g, label, tx, btnY + 19, labelColor);
         g.setComposite(prev);
     }
 
     private void drawCatalogRows(Graphics2D g, int panelX, int panelY, boolean interactive) {
         int rowGap = 4;
-        int startY = panelY + 12;
+        int rowStep = assets.rowH + rowGap;
+        int listTop = catalogListTop(panelY);
+        int listBottom = catalogListBottom(panelY);
+        int clipX = panelX + 6;
+        int clipW = assets.detailPanelW - 12;
+        int clipH = listBottom - listTop;
         int x = panelX + 8;
-        drawCardText(g);
-        g.setFont(cardFont(8));
 
-        for (int i = 0; i < catalogRows.size(); i++) {
-            CatalogRow row = catalogRows.get(i);
-            int y = startY + i * (assets.rowH + rowGap);
+        Shape prevClip = g.getClip();
+        g.clipRect(clipX, listTop, clipW, clipH);
+
+        drawCardText(g);
+        g.setFont(GameFonts.get().uiPlain(9));
+
+        for (int i = 0; i < catalogEntries.size(); i++) {
+            ShopCatalogEntry row = catalogEntries.get(i);
+            int y = listTop + i * rowStep - catalogScrollOffset;
+            if (y + assets.rowH < listTop || y > listBottom) {
+                row.bounds.setBounds(0, 0, 0, 0);
+                continue;
+            }
+
             boolean hovered = interactive && i == hoveredRowIndex;
             boolean selected = i == selectedRowIndex;
 
@@ -726,11 +1928,11 @@ public class ShopScreen {
             row.bounds.setBounds(interactive ? x : 0, interactive ? y : 0, assets.rowW, assets.rowH);
 
             FontMetrics fm = g.getFontMetrics();
-            String label = truncateToWidth(row.name, fm, assets.rowW - 54);
-            int textY = y + (assets.rowH + fm.getAscent()) / 2 - 2;
-            drawOutlinedText(g, label, x + 8, textY, new Color(235, 215, 155));
+            String label = truncateToWidth(row.name, fm, assets.rowW - 58);
+            int textY = y + (assets.rowH + fm.getAscent()) / 2 - 1;
+            drawOutlinedText(g, label, x + 12, textY, new Color(235, 215, 155));
 
-            String price = row.price;
+            String price = row.priceLabel();
             int priceW = fm.stringWidth(price);
             if (assets.crownIconSmall != null && !price.equals("···")) {
                 priceW += assets.crownIconSmall.getWidth() + 2;
@@ -742,6 +1944,24 @@ public class ShopScreen {
             }
             drawOutlinedText(g, price, priceX, textY, new Color(255, 220, 100));
         }
+
+        g.setClip(prevClip);
+
+        if (interactive && maxCatalogScroll(panelY) > 0) {
+            drawCatalogScrollHint(g, clipX + clipW - 5, listTop, clipH - 8, panelY);
+        }
+    }
+
+    private void drawCatalogScrollHint(Graphics2D g, int x, int trackTop, int trackH, int panelY) {
+        Composite prev = g.getComposite();
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.45f));
+        g.setColor(new Color(200, 170, 90));
+        int thumbH = Math.max(12, trackH / 4);
+        int max = maxCatalogScroll(panelY);
+        float t = max > 0 ? catalogScrollOffset / (float) max : 0f;
+        int thumbY = trackTop + Math.round((trackH - thumbH) * t);
+        g.fillRoundRect(x, thumbY, 3, thumbH, 2, 2);
+        g.setComposite(prev);
     }
 
     private static void drawScaledCentered(Graphics2D g, BufferedImage img,
@@ -750,20 +1970,22 @@ public class ShopScreen {
         int sh = Math.round(h * scale);
         int sx = cx - sw / 2;
         int sy = cy - sh / 2;
-        if (sw == img.getWidth() && sh == img.getHeight()) {
-            g.drawImage(img, sx, sy, null);
-            return;
-        }
-        Object prevInterp = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
-        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
         g.drawImage(img, sx, sy, sw, sh, null);
-        if (prevInterp != null) {
-            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, prevInterp);
-        }
     }
 
     private void drawItemCard(Graphics2D g, ShopItem item, int x, int y, int w, int h, int index,
                               boolean selected, boolean hovered, float revealAlpha) {
+        drawItemCard(g, item, x, y, w, h, index, selected, hovered, revealAlpha, null);
+    }
+
+    private void drawItemCard(Graphics2D g, ShopItem item, int x, int y, int w, int h, int index,
+                              boolean selected, boolean hovered, float revealAlpha, String priceOverride) {
+        drawItemCard(g, item, x, y, w, h, index, selected, hovered, revealAlpha, priceOverride, false);
+    }
+
+    private void drawItemCard(Graphics2D g, ShopItem item, int x, int y, int w, int h, int index,
+                              boolean selected, boolean hovered, float revealAlpha, String priceOverride,
+                              boolean smoothIconGrowth) {
         Composite savedComposite = g.getComposite();
         g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, revealAlpha));
 
@@ -776,19 +1998,77 @@ public class ShopScreen {
 
         Rectangle cardRect;
         if (frame != null) {
-            if (w == frame.getWidth() && h == frame.getHeight()) {
-                g.drawImage(frame, x, y, null);
-            } else {
-                drawScaledSprite(g, frame, x, y, w, h, true);
+            Object prevInterp = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
+            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+                RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+            g.drawImage(frame, x, y, w, h, null);
+            if (prevInterp != null) {
+                g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, prevInterp);
             }
             cardRect = new Rectangle(x, y, w, h);
         } else {
             drawFallbackCard(g, x, y, w, h, false);
             cardRect = new Rectangle(x, y, w, h);
         }
-        drawCardFrontContent(g, item, cardRect, w, h);
+        drawCardFrontContent(g, item, cardRect, w, h, priceOverride, smoothIconGrowth);
 
         g.setComposite(savedComposite);
+    }
+
+    private void drawFlippableItemCard(Graphics2D g, ShopItem item, int x, int y, int w, int h,
+                                       boolean selected, boolean hovered, float revealAlpha,
+                                       String priceOverride, boolean smoothIconGrowth,
+                                       float flipT, ShopCatalogEntry statEntry) {
+        Shape savedClip = g.getClip();
+        g.clipRect(x, y, w, h);
+        try {
+            if (flipT <= 0.001f) {
+                drawItemCard(g, item, x, y, w, h, selectedIndex, selected, hovered,
+                    revealAlpha, priceOverride, smoothIconGrowth);
+                return;
+            }
+            if (flipT >= 0.999f) {
+                drawItemCardBack(g, x, y, w, h, revealAlpha, statEntry);
+                return;
+            }
+
+            float squeeze = flipT < 0.5f ? 1f - flipT * 2f : (flipT - 0.5f) * 2f;
+            int sw = Math.max(2, Math.round(w * squeeze));
+            int sx = x + (w - sw) / 2;
+            if (flipT < 0.5f) {
+                drawItemCard(g, item, sx, y, sw, h, selectedIndex, selected, hovered,
+                    revealAlpha, priceOverride, smoothIconGrowth);
+            } else {
+                drawItemCardBack(g, sx, y, sw, h, revealAlpha, statEntry);
+            }
+        } finally {
+            g.setClip(savedClip);
+        }
+    }
+
+    private void drawItemCardBack(Graphics2D g, int x, int y, int w, int h, float alpha,
+                                  ShopCatalogEntry statEntry) {
+        Composite saved = g.getComposite();
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
+
+        BufferedImage frame = assets.cardBackScaled;
+        if (frame != null) {
+            Object prev = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
+            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+            g.drawImage(frame, x, y, w, h, null);
+            if (prev != null) {
+                g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, prev);
+            }
+        } else {
+            drawFallbackCard(g, x, y, w, h, true);
+        }
+
+        if (statEntry != null && w >= 70 && h >= 100) {
+            ShopStatBarRenderer.draw(g, x, y, w, h, model.statPreview(statEntry),
+                assets.statVialEmpty, assets.statVialOverlay, assets.statVialEndCap, tick);
+        }
+
+        g.setComposite(saved);
     }
 
     private void drawFallbackCard(Graphics2D g, int x, int y, int w, int h, boolean back) {
@@ -798,37 +2078,71 @@ public class ShopScreen {
         g.drawRoundRect(x + 1, y + 1, w - 2, h - 2, 6, 6);
     }
 
-    private void drawCardFrontContent(Graphics2D g, ShopItem item, Rectangle card, int w, int h) {
+    private void drawCardFrontContent(Graphics2D g, ShopItem item, Rectangle card, int w, int h,
+                                    String priceOverride, boolean smoothIconGrowth) {
         int x = card.x;
         int y = card.y;
+        boolean categoryGrid = priceOverride == null;
+
+        drawCardText(g);
+        int fontSize;
+        if (categoryGrid) {
+            fontSize = w >= 50 ? 10 : Math.max(8, Math.round(10f * w / 54f));
+        } else {
+            fontSize = w < 60 ? 8 : (h > 200 ? 12 : (w < 90 ? 9 : 10));
+        }
+        g.setFont(categoryGrid ? GameFonts.get().uiPlain(fontSize) : cardFont(fontSize));
+        String name = categoryGrid ? item.displayName() : item.displayName();
+        if (categoryGrid) {
+            g.setFont(fitUiFontToWidth(g, name, w - 4, fontSize, 7));
+        } else {
+            FontMetrics nameFm = g.getFontMetrics();
+            name = truncateToWidth(name, nameFm, w - 8);
+        }
+        FontMetrics nameFm = g.getFontMetrics();
+        int nameY = categoryGrid
+            ? y + h - 6
+            : priceOverride != null
+                ? y + h - Math.max(18, Math.round(h * 0.22f))
+                : y + h - 10;
 
         BufferedImage art = item.cardArt != null ? item.cardArt : item.icon;
         if (art != null) {
-            int maxArt = w < 60 ? 32 : (h > 200 ? 80 : (w < 90 ? 44 : 56));
-            int artSize = Math.min(maxArt, Math.min(w - 10, h - 48));
-            int ax = x + (w - artSize) / 2;
-            int ay = y + Math.max(6, Math.round(h * 0.08f));
-            drawCrispIcon(g, art, ax, ay, artSize);
+            int slotX = x + 4;
+            int slotW = w - 8;
+            int slotTop = y + Math.round(h * 0.12f);
+            int labelReserve = categoryGrid
+                ? nameFm.getHeight() + 6
+                : Math.round(h * 0.10f);
+            int slotBottom = nameY - labelReserve;
+            int slotH = Math.max(1, slotBottom - slotTop);
+            Rectangle crop = computeContentBounds(art);
+            int maxArt = iconCapForCard(slotW, slotH, smoothIconGrowth);
+            drawAspectFitCroppedSprite(g, art, crop, slotX, slotTop, slotW, slotH, true, maxArt);
         }
 
-        drawCardText(g);
-        int fontSize = w < 60 ? 7 : (h > 200 ? 12 : (w < 90 ? 8 : 10));
-        g.setFont(cardFont(fontSize));
-        FontMetrics nameFm = g.getFontMetrics();
-        String name = truncateToWidth(item.name, nameFm, w - 8);
-        int nameY = y + h - Math.max(18, Math.round(h * 0.22f));
         Color nameColor = item.kind == ItemKind.SET_CATALOG
             ? new Color(255, 210, 100) : new Color(245, 230, 190);
-        drawOutlinedText(g, name, x + (w - nameFm.stringWidth(name)) / 2, nameY, nameColor);
+        if (categoryGrid) {
+            drawCategoryGridLabel(g, name, x, y, w, h, nameColor, nameFm);
+        } else {
+            int nameX = x + (w - nameFm.stringWidth(name)) / 2;
+            drawOutlinedText(g, name, nameX, nameY, nameColor);
+        }
 
-        if (item.kind == ItemKind.SET_CATALOG) {
+        if (priceOverride == null) {
+            return;
+        }
+
+        String priceLabel = priceOverride;
+        if (item.kind == ItemKind.SET_CATALOG && "···".equals(priceLabel)) {
             return;
         }
 
         g.setFont(cardFont(Math.max(7, fontSize)));
         FontMetrics priceFm = g.getFontMetrics();
         BufferedImage coin = assets.crownIconSmall != null ? assets.crownIconSmall : assets.crownIconScaled;
-        int priceW = priceFm.stringWidth(item.priceLabel);
+        int priceW = priceFm.stringWidth(priceLabel);
         int coinH = coin != null ? coin.getHeight() : 0;
         if (coin != null) {
             priceW += coin.getWidth() + 2;
@@ -840,11 +2154,30 @@ public class ShopScreen {
             g.drawImage(coin, priceX, coinY, null);
             priceX += coin.getWidth() + 2;
         }
-        drawOutlinedText(g, item.priceLabel, priceX, priceRowY, new Color(255, 220, 90));
+        drawOutlinedText(g, priceLabel, priceX, priceRowY, new Color(255, 220, 90));
+    }
+
+    /** Иконка растёт вместе с слотом; при анимации — без скачка 32→96. */
+    private int iconCapForCard(int slotW, int slotH, boolean smoothGrowth) {
+        int base = assets.cardArtSize;
+        int slotMax = Math.min(slotW, slotH);
+        int target = Math.round(slotMax * 0.72f);
+        if (smoothGrowth) {
+            return Math.max(base, Math.min(slotMax, target));
+        }
+        if (slotMax <= base + 2) {
+            return base;
+        }
+        int mult = Math.max(1, target / base);
+        int cap = mult * base;
+        if (cap > slotMax) {
+            cap = Math.max(base, (slotMax / base) * base);
+        }
+        return cap;
     }
 
     private static Font cardFont(int size) {
-        return new Font(Font.SANS_SERIF, Font.BOLD, size);
+        return GameFonts.get().uiBold(size);
     }
 
     private static void drawCardText(Graphics2D g) {
@@ -852,8 +2185,43 @@ public class ShopScreen {
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
     }
 
+    /** Подпись на витрине — одна строка, шрифт уже подогнан под ширину карточки. */
+    private static void drawCategoryGridLabel(Graphics2D g, String name, int x, int y, int w, int h,
+                                              Color color, FontMetrics fm) {
+        int nameY = y + h - 6;
+        int nameX = x + (w - fm.stringWidth(name)) / 2;
+        drawCategoryLabel(g, name, nameX, nameY, color);
+    }
+
+    private static Font fitUiFontToWidth(Graphics2D g, String text, int maxWidth, int startSize, int minSize) {
+        for (int size = startSize; size >= minSize; size--) {
+            Font font = GameFonts.get().uiPlain(size);
+            g.setFont(font);
+            if (g.getFontMetrics().stringWidth(text) <= maxWidth) {
+                return font;
+            }
+        }
+        Font font = GameFonts.get().uiPlain(minSize);
+        g.setFont(font);
+        return font;
+    }
+
+    /** Подпись на сетке категорий — крупнее и строго по пиксельной сетке. */
+    private static void drawCategoryLabel(Graphics2D g, String text, int tx, int ty, Color fill) {
+        tx = (tx + 1) & ~1;
+        ty = (ty + 1) & ~1;
+        g.setColor(new Color(8, 4, 2, 240));
+        g.drawString(text, tx + 1, ty);
+        g.drawString(text, tx - 1, ty);
+        g.drawString(text, tx, ty + 1);
+        g.setColor(fill);
+        g.drawString(text, tx, ty);
+    }
+
     /** Тёмная обводка — текст читается на золотой рамке карточки. */
     private static void drawOutlinedText(Graphics2D g, String text, int tx, int ty, Color fill) {
+        tx = Math.round(tx);
+        ty = Math.round(ty);
         g.setColor(new Color(20, 12, 4, 220));
         for (int dx = -1; dx <= 1; dx++) {
             for (int dy = -1; dy <= 1; dy++) {
@@ -895,21 +2263,71 @@ public class ShopScreen {
         return new Rectangle(drawX, drawY, drawW, drawH);
     }
 
+    private Rectangle drawAspectFitCroppedSprite(Graphics2D g, BufferedImage img, Rectangle crop,
+                                                 int x, int y, int w, int h, boolean pixelArt,
+                                                 int maxPixelSize) {
+        if (img == null || crop == null || crop.width <= 0 || crop.height <= 0 || w <= 0 || h <= 0) {
+            return new Rectangle(x, y, w, h);
+        }
+        float srcAspect = (float) crop.width / crop.height;
+        float dstAspect = (float) w / h;
+        int drawW;
+        int drawH;
+        if (srcAspect > dstAspect) {
+            drawW = w;
+            drawH = Math.max(1, Math.round(w / srcAspect));
+        } else {
+            drawH = h;
+            drawW = Math.max(1, Math.round(h * srcAspect));
+        }
+        if (pixelArt && maxPixelSize > 0) {
+            int cap = Math.min(maxPixelSize, Math.min(w, h));
+            if (drawW > cap || drawH > cap) {
+                if (drawW >= drawH) {
+                    drawW = cap;
+                    drawH = Math.max(1, Math.round(cap / srcAspect));
+                } else {
+                    drawH = cap;
+                    drawW = Math.max(1, Math.round(cap * srcAspect));
+                }
+            }
+        }
+        int drawX = x + (w - drawW) / 2;
+        int drawY = y + (h - drawH) / 2;
+        drawCroppedScaledSprite(g, img, crop, drawX, drawY, drawW, drawH, pixelArt);
+        return new Rectangle(drawX, drawY, drawW, drawH);
+    }
+
     /** Отрисовка иконки без размытия — nearest-neighbor, целые координаты. */
     private void drawCrispIcon(Graphics2D g, BufferedImage icon, int x, int y, int size) {
         if (icon == null || size <= 0) return;
         int ix = Math.round(x);
         int iy = Math.round(y);
+        int iw = icon.getWidth();
+        int ih = icon.getHeight();
         Object prevInterp = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
         Object prevRender = g.getRenderingHint(RenderingHints.KEY_RENDERING);
+        Object prevAa = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
         g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
         g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
-        g.drawImage(icon, ix, iy, ix + size, iy + size, 0, 0, icon.getWidth(), icon.getHeight(), null);
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+        if (iw == size && ih == size) {
+            g.drawImage(icon, ix, iy, null);
+        } else if (iw * 2 == size && ih * 2 == size) {
+            g.drawImage(icon, ix, iy, ix + size, iy + size, 0, 0, iw, ih, null);
+        } else if (iw == size * 2 && ih == size * 2) {
+            g.drawImage(icon, ix, iy, ix + size, iy + size, 0, 0, iw, ih, null);
+        } else {
+            g.drawImage(icon, ix, iy, ix + size, iy + size, 0, 0, iw, ih, null);
+        }
         if (prevInterp != null) {
             g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, prevInterp);
         }
         if (prevRender != null) {
             g.setRenderingHint(RenderingHints.KEY_RENDERING, prevRender);
+        }
+        if (prevAa != null) {
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, prevAa);
         }
     }
 
@@ -923,27 +2341,6 @@ public class ShopScreen {
         return ellipsis;
     }
 
-    private void drawBuyButton(Graphics2D g, ShopLayout layout, float alpha, float slideY) {
-        if (alpha <= 0.01f) {
-            return;
-        }
-        Composite prev = g.getComposite();
-        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
-        int btnY = layout.btnY + Math.round(slideY);
-
-        if (assets.btnBuyScaled != null) {
-            g.drawImage(assets.btnBuyScaled, layout.btnX, btnY, null);
-        }
-
-        drawCrispText(g);
-        g.setFont(cardFont(10));
-        String label = "Купить";
-        FontMetrics fm = g.getFontMetrics();
-        int tx = layout.btnX + (layout.btnW - fm.stringWidth(label)) / 2;
-        drawOutlinedText(g, label, tx, btnY + 19, new Color(220, 200, 140));
-        g.setComposite(prev);
-    }
-
     private static void applyCrispRendering(Graphics2D g) {
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
         g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
@@ -953,8 +2350,15 @@ public class ShopScreen {
     }
 
     private static void drawCrispText(Graphics2D g) {
-        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
-        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+        GameFonts.applyGameHints(g);
+    }
+
+    private static void drawEquipText(Graphics2D g, Font font, String text, int x, int y, Color color) {
+        drawCardText(g);
+        g.setFont(font);
+        int tx = (x + 1) & ~1;
+        int ty = (y + 1) & ~1;
+        GameFonts.drawOutlined(g, text, tx, ty, color);
     }
 
     private void drawCharacter(Graphics2D g, int sw, int sh, BufferedImage sprite,
@@ -976,12 +2380,12 @@ public class ShopScreen {
     }
 
     private void drawScaledSprite(Graphics2D g, BufferedImage img, int x, int y, int w, int h, boolean pixelArt) {
-        if (img == null || w <= 0 || h <= 0) {
-            return;
-        }
+        if (img == null || w <= 0 || h <= 0) return;
         Object prevInterp = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
-        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
-        g.drawImage(img, x, y, x + w, y + h, 0, 0, img.getWidth(), img.getHeight(), null);
+        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+            pixelArt ? RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR
+                     : RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+        g.drawImage(img, x, y, w, h, null);
         if (prevInterp != null) {
             g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, prevInterp);
         }
@@ -989,11 +2393,11 @@ public class ShopScreen {
 
     private void drawCroppedScaledSprite(Graphics2D g, BufferedImage img, Rectangle crop,
                                          int x, int y, int w, int h, boolean pixelArt) {
-        if (img == null || crop == null || crop.width <= 0 || crop.height <= 0 || w <= 0 || h <= 0) {
-            return;
-        }
+        if (img == null || crop == null || crop.width <= 0 || crop.height <= 0 || w <= 0 || h <= 0) return;
         Object prevInterp = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
-        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+            pixelArt ? RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR
+                     : RenderingHints.VALUE_INTERPOLATION_BILINEAR);
         g.drawImage(img, x, y, x + w, y + h,
             crop.x, crop.y, crop.x + crop.width, crop.y + crop.height, null);
         if (prevInterp != null) {

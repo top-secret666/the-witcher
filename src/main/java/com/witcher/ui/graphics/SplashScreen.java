@@ -8,6 +8,9 @@ import java.util.List;
 import java.util.Random;
 
 public class SplashScreen {
+    private static final int VIRTUAL_W = 480;
+    private static final int VIRTUAL_H = 360;
+
     private final SpriteSheet logoAnim;     // анимированный логотип (6 кадров, мерцание искр)
     private final Sprite background;
 
@@ -21,9 +24,10 @@ public class SplashScreen {
     private int bgScaledForW, bgScaledForH;
 
     private float alpha = 0.05f;
-    private int progress = 0;
+    private volatile int loadProgress = 0;
+    private volatile boolean loadingComplete = false;
     private boolean finished = false;
-    private int timer = 0;
+    private int holdTimer = 0;
     private int tick = 0;
 
     // Атмосфера
@@ -51,8 +55,8 @@ public class SplashScreen {
         SpriteSheet la = SpriteSheet.load("/assets/sprites/witcher_logo_new.png", 2, 3, 8);
         logoAnim = (la != null) ? la.setPingPong(true) : null;
 
-        // Ведьмак за баром — 5 кадров в ряд, прозрачный фон
-        SpriteSheet wb = SpriteSheet.load("/assets/sprites/witcher_bar.png", 5, 1, 15);
+        // Ведьмак за баром — 5 кадров в ряд внизу листа, прозрачный фон
+        SpriteSheet wb = SpriteSheet.load("/assets/sprites/witcher_bar.png", 5, 1, 15, true, true);
         witcherBar = (wb != null) ? wb.setPingPong(true) : null;
 
         // Грифон — 3×2 сетка (6 кадров), чёрный фон удаляется
@@ -75,11 +79,9 @@ public class SplashScreen {
         if (alpha < 1f) {
             alpha += 0.06f;
             if (alpha > 1f) alpha = 1f;
-        } else if (progress < 100) {
-            progress += 1;
-        } else {
-            timer++;
-            if (timer > 80) finished = true;
+        } else if (loadingComplete && loadProgress >= 100) {
+            holdTimer++;
+            if (holdTimer > 50) finished = true;
         }
 
         // Частицы (золотые искры)
@@ -95,14 +97,14 @@ public class SplashScreen {
         particles.removeIf(p -> !p.alive);
         for (Particle p : particles) p.update();
 
-        // Дым
-        if (tick % 8 == 0 && alpha > 0.25f) {
-            float px = 35 + rng.nextFloat() * 410;
-            float py = 60 + rng.nextFloat() * 120;
-            float vx = (rng.nextFloat() - 0.5f) * 0.18f;
-            float vy = -0.12f - rng.nextFloat() * 0.22f;
-            int life = 120 + rng.nextInt(120);
-            int r = 10 + rng.nextInt(18);
+        // Дым — только в центре под логотипом, без кругов на монстрах
+        if (tick % 12 == 0 && alpha > 0.25f) {
+            float px = VIRTUAL_W * 0.38f + rng.nextFloat() * VIRTUAL_W * 0.24f;
+            float py = VIRTUAL_H * 0.14f + rng.nextFloat() * VIRTUAL_H * 0.12f;
+            float vx = (rng.nextFloat() - 0.5f) * 0.12f;
+            float vy = -0.08f - rng.nextFloat() * 0.14f;
+            int life = 70 + rng.nextInt(50);
+            int r = 6 + rng.nextInt(6);
             smokePuffs.add(new SmokePuff(px, py, vx, vy, life, r));
         }
         smokePuffs.removeIf(p -> !p.alive);
@@ -211,16 +213,16 @@ public class SplashScreen {
             griffinAnim.draw(g, gpX, gpY, gpW, gpH, alpha * 0.92f);
         }
 
-        // === ВЕДЬМАК ЗА БАРОМ (по центру, крупный) ===
+        // === ВЕДЬМАК ЗА БАРОМ (по центру, за прилавком) ===
         if (witcherBar != null && alpha > 0.1f) {
-            // Каждый кадр ~205×1024. Масштабируем по ширине — ~22% ширины экрана
-            float wbScale = (sw * 0.22f) / witcherBar.getFrameWidth();
+            int barZoneH = 28;
+            float wbScale = (sh * 0.30f) / witcherBar.getFrameHeight();
             int wbW = Math.round(witcherBar.getFrameWidth() * wbScale);
             int wbH = Math.round(witcherBar.getFrameHeight() * wbScale);
             int wbX = (sw - wbW) / 2;
-            // Выровнять по низу области сцены (чтобы ноги не уходили за экран слишком сильно)
-            int wbY = sh - wbH + (int)(wbH * 0.31f);
-            witcherBar.draw(g, wbX, wbY, wbW, wbH, alpha * 0.95f);
+            int wbY = sh - barZoneH - wbH - 6;
+            float wbAlpha = Math.min(1f, alpha);
+            witcherBar.draw(g, wbX, wbY, wbW, wbH, wbAlpha);
         }
 
         // === ЧАСТИЦЫ ===
@@ -248,6 +250,7 @@ public class SplashScreen {
         g.setColor(BAR_BG);
         g.fillRect(barX, barY, barW, barH);
 
+        int progress = Math.max(0, Math.min(100, loadProgress));
         int fillW = (int) Math.round(barW * (progress / 100.0));
         if (fillW > 0) {
             GradientPaint barGrad = new GradientPaint(barX, barY, GOLD_DARK, barX + barW, barY, GOLD);
@@ -262,7 +265,7 @@ public class SplashScreen {
         g.setStroke(new BasicStroke(1f));
         g.drawRect(barX, barY, barW, barH);
 
-        g.setFont(new Font("Monospaced", Font.BOLD, 11));
+        g.setFont(GameFonts.get().bold(11));
         g.setColor(GOLD);
         String loadText = "\u0417\u0430\u0433\u0440\u0443\u0437\u043a\u0430... " + progress + "%";
         int textW = g.getFontMetrics().stringWidth(loadText);
@@ -309,6 +312,15 @@ public class SplashScreen {
 
     public boolean isFinished() {
         return finished;
+    }
+
+    void setLoadProgress(int percent) {
+        loadProgress = Math.max(0, Math.min(100, percent));
+    }
+
+    void markLoadingComplete() {
+        loadingComplete = true;
+        loadProgress = 100;
     }
 
     private static float clamp(float v, float min, float max) {
@@ -360,14 +372,17 @@ public class SplashScreen {
         void update() {
             x += vx;
             y += vy;
-            r += 0.03f;
+            r += 0.015f;
+            if (r > 18f) {
+                r = 18f;
+            }
             life--;
             if (life <= 0) alive = false;
         }
 
         void draw(Graphics2D g) {
             float t = 1f - (life / (float) maxLife);
-            float a = (float) (Math.sin(t * Math.PI) * 0.22f); // максимум в середине жизни
+            float a = (float) (Math.sin(t * Math.PI) * 0.12f);
             if (a <= 0f) return;
 
             Composite prev = g.getComposite();
@@ -378,11 +393,7 @@ public class SplashScreen {
             int cy = (int) y;
             int rr = (int) r;
 
-            // "мягкость" без blur: несколько овалов
             g.fillOval(cx - rr, cy - rr, rr * 2, rr * 2);
-            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, a * 0.55f));
-            g.fillOval(cx - rr - 4, cy - rr + 2, rr * 2, rr * 2);
-            g.fillOval(cx - rr + 6, cy - rr - 1, rr * 2, rr * 2);
             g.setComposite(prev);
         }
     }

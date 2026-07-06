@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Нарезка ассетов лавки под виртуальное разрешение GameWindow (480×360, отображение ×2).
+Нарезка ассетов лавки под виртуальное разрешение GameWindow (480x360, scale x2).
 
 Исходники: src/main/resources/assets/sprites/lavka/
 Результат:  src/main/resources/assets/sprites/lavka/1x/
@@ -12,6 +12,7 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
 from PIL import Image
@@ -19,22 +20,47 @@ from PIL import Image
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "src/main/resources/assets/sprites/lavka"
 DST = SRC / "1x"
-SCREEN_SAVER = ROOT / "src/main/resources/assets/sprites/screen saver"
 
 VIRTUAL_W, VIRTUAL_H = 480, 360
 CARD_W, CARD_H = 54, 81
-CARD_ART = 38
+CARD_ART = 32
 GRID_COLS = 5
 GRID_ROWS = 2
 PANEL_W = 380
-DETAIL_PANEL_W = 292
 BTN_W, BTN_H = 100, 30
 HUD_H = 58
-ROW_H = 24
-ROW_W = DETAIL_PANEL_W - 16
-CHAR_H = round(VIRTUAL_H * 0.82)
+PANEL_HEADER_H = 8
+PANEL_H = PANEL_HEADER_H + 4 + GRID_ROWS * CARD_H + (GRID_ROWS - 1) * 6 + 6 + BTN_H + 8
+CHAR_H = round(VIRTUAL_H * 0.70)
 
-PANEL_H = 22 + 6 + GRID_ROWS * CARD_H + (GRID_ROWS - 1) * 6 + 6 + BTN_H + 4
+
+def ensure_weapon_icon() -> None:
+    """Заглушка, пока нет своего icon_weapon.png."""
+    path = SRC / "icons/icon_weapon.png"
+    if path.is_file():
+        return
+    path.parent.mkdir(parents=True, exist_ok=True)
+    size = 64
+    img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+    px = img.load()
+    cx = size // 2
+    steel = (185, 195, 210, 255)
+    gold = (210, 170, 55, 255)
+    grip = (90, 55, 30, 255)
+    for y in range(12, 46):
+        px[cx - 1, y] = steel
+        px[cx, y] = steel
+    for y in range(46, 54):
+        for dx in (-1, 0, 1):
+            px[cx + dx, y] = grip
+    for x in range(cx - 4, cx + 5):
+        px[x, 54] = gold
+        px[x, 55] = gold
+    for x in range(cx - 1, cx + 2):
+        px[x, 10] = steel
+        px[x, 11] = steel
+    img.save(path)
+    print(f"  PLACEHOLDER icons/icon_weapon.png ({size}x{size})")
 
 
 def content_bounds(img: Image.Image) -> tuple[int, int, int, int]:
@@ -61,12 +87,25 @@ def content_bounds(img: Image.Image) -> tuple[int, int, int, int]:
 
 
 def crisp_resize(img: Image.Image, dst_w: int, dst_h: int) -> Image.Image:
-    """Только NEAREST; перед финалом — деление пополам, без «мыла»."""
     work = img.convert("RGBA")
     while work.width > dst_w * 2 and work.height > dst_h * 2:
-        work = work.resize((work.width // 2, work.height // 2), Image.Resampling.NEAREST)
+        work = work.resize((work.width // 2, work.height // 2), Image.NEAREST)
+    return work.resize((dst_w, dst_h), Image.NEAREST)
+
+
+def crisp_resize_icon(img: Image.Image, dst_w: int, dst_h: int) -> Image.Image:
+    """Иконки: только деление на 2, без финального «ломающего» ресайза если получилось ровно."""
+    work = img.convert("RGBA")
+    while work.width > dst_w and work.height > dst_h:
+        if work.width == dst_w * 2 and work.height == dst_h * 2:
+            work = work.resize((dst_w, dst_h), Image.NEAREST)
+            return work
+        if work.width > dst_w * 2 and work.height > dst_h * 2:
+            work = work.resize((work.width // 2, work.height // 2), Image.NEAREST)
+            continue
+        break
     if work.width != dst_w or work.height != dst_h:
-        work = work.resize((dst_w, dst_h), Image.Resampling.NEAREST)
+        work = work.resize((dst_w, dst_h), Image.NEAREST)
     return work
 
 
@@ -75,118 +114,169 @@ def crop_region(img: Image.Image, box: tuple[int, int, int, int]) -> Image.Image
     return img.crop((x, y, x + w, y + h))
 
 
-def load_src(rel: str, fallback: Path | None = None) -> Image.Image | None:
-    path = SRC / rel
-    if not path.is_file() and fallback and fallback.is_file():
-        path = fallback
-    if not path.is_file():
+def cover_size(src_w: int, src_h: int, view_w: int, view_h: int) -> tuple[int, int]:
+    scale = max(view_w / src_w, view_h / src_h)
+    return round(src_w * scale), round(src_h * scale)
+
+
+def char_size(src_w: int, src_h: int, target_h: int) -> tuple[int, int]:
+    target_w = round(src_w * (target_h / src_h))
+    return target_w, target_h
+
+
+def bake_file(rel: str, dst_w: int, dst_h: int, *, crop: bool = False) -> dict | None:
+    src_path = SRC / rel
+    if not src_path.is_file():
+        print(f"  SKIP (нет файла): {rel}")
         return None
-    return Image.open(path)
 
-
-def bake_image(img: Image.Image, dst_w: int, dst_h: int, out_rel: str, *, crop: bool = False) -> dict | None:
-    work = img
-    src_size = list(img.size)
+    img = Image.open(src_path)
     if crop:
-        work = crop_region(work, content_bounds(work))
-    out = crisp_resize(work, dst_w, dst_h)
-    out_path = DST / out_rel
+        box = content_bounds(img)
+        img = crop_region(img, box)
+
+    out = crisp_resize(img, dst_w, dst_h)
+    out_path = DST / rel
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out.save(out_path, optimize=True)
-    print(f"  OK {out_rel}: {src_size} -> {dst_w}x{dst_h} ({out_path.stat().st_size // 1024} KB)")
-    return {
-        "output": f"1x/{out_rel}",
-        "size": [dst_w, dst_h],
+
+    info = {
+        "source": rel,
+        "sourceSize": list(img.size) if crop else list(Image.open(src_path).size),
+        "output": f"1x/{rel}",
+        "outputSize": [dst_w, dst_h],
         "bytes": out_path.stat().st_size,
     }
-
-
-def portrait_fallback(name: str) -> Path:
-    mapping = {
-        "geralt_portrait_shop.png": SCREEN_SAVER / "geralt_portrait.png",
-        "duke_portrait_shop.png": SCREEN_SAVER / "duke_portrait.png",
-        "duke_portrait_fun_shop.png": SCREEN_SAVER / "duke_portrait_fun.png",
-    }
-    return mapping.get(name, SRC / name)
+    print(f"  OK {rel}: {info['sourceSize']} -> {dst_w}x{dst_h} ({info['bytes'] // 1024} KB)")
+    return info
 
 
 def main() -> None:
     print(f"Источник: {SRC}")
-    print(f"Выход:    {DST}")
-    print(f"Виртуалка {VIRTUAL_W}x{VIRTUAL_H}, портреты h={CHAR_H}, иконка карты {CARD_ART}px\n")
+    print(f"Выход:    {DST}\n")
+
+    ensure_weapon_icon()
 
     manifest: list[dict] = []
 
     jobs: list[tuple[str, int, int, dict]] = [
         ("ui/shop_hud_bar.png", PANEL_W, HUD_H, {"crop": True}),
-        ("ui/shop_catalog_panel.png", PANEL_W, PANEL_H, {"crop": False}),
-        ("ui/shop_catalog_panel.png", DETAIL_PANEL_W, 232, {"crop": False, "out": "ui/shop_catalog_panel_detail.png"}),
-        ("ui/shop_card_front.png", CARD_W, CARD_H, {"crop": True}),
-        ("ui/shop_card_back.png", CARD_W, CARD_H, {"crop": True}),
-        ("ui/shop_card_hover.png", CARD_W, CARD_H, {"crop": True}),
-        ("ui/shop_card_selected.png", CARD_W, CARD_H, {"crop": True}),
+        ("ui/shop_catalog_panel.png", PANEL_W, PANEL_H, {}),
+        ("ui/shop_card_front.png", CARD_W, CARD_H, {}),
+        ("ui/shop_card_back.png", CARD_W, CARD_H, {}),
+        ("ui/shop_card_hover.png", CARD_W, CARD_H, {}),
+        ("ui/shop_card_selected.png", CARD_W, CARD_H, {}),
         ("ui/shop_btn_buy_disabled.png", BTN_W, BTN_H, {}),
         ("ui/shop_btn_buy_normal.png", BTN_W, BTN_H, {}),
-        ("ui/shop_row_normal.png", ROW_W, ROW_H, {}),
-        ("ui/shop_row_hover.png", ROW_W, ROW_H, {}),
-        ("ui/shop_row_selected.png", ROW_W, ROW_H, {}),
-        ("ui/icon_legendary_frame.png", CARD_ART, CARD_ART, {"crop": True}),
-        ("icons/icon_crown.png", 18, 18, {"crop": True}),
-        ("icons/icon_crown_small.png", 10, 10, {"crop": True, "src": "icons/icon_crown.png"}),
-        ("icons/icon_armor_chest.png", CARD_ART, CARD_ART, {"crop": True}),
-        ("icons/icon_armor_legs.png", CARD_ART, CARD_ART, {"crop": True}),
-        ("icons/icon_armor_gloves.png", CARD_ART, CARD_ART, {"crop": True}),
-        ("icons/icon_armor_boots.png", CARD_ART, CARD_ART, {"crop": True}),
-        ("icons/icon_potion.png", CARD_ART, CARD_ART, {"crop": True}),
+        ("ui/inventory_bag_closed.png", 40, 40, {"crop": True, "icon": True}),
+        ("ui/inventory_bag_open.png", 40, 40, {"crop": True, "icon": True}),
+        ("ui/inventory_bag_hover.png", 40, 40, {"crop": True, "icon": True}),
+        ("icons/icon_crown.png", 18, 18, {"crop": True, "icon": True}),
+        ("icons/icon_crown_small.png", 10, 10, {"crop": True, "src": "icons/icon_crown.png", "icon": True}),
+        ("icons/icon_duke_seal.png", 32, 32, {"crop": True, "icon": True}),
+        ("icons/icon_armor_chest.png", CARD_ART, CARD_ART, {"crop": True, "icon": True}),
+        ("icons/icon_armor_legs.png", CARD_ART, CARD_ART, {"crop": True, "icon": True}),
+        ("icons/icon_armor_gloves.png", CARD_ART, CARD_ART, {"crop": True, "icon": True}),
+        ("icons/icon_armor_boots.png", CARD_ART, CARD_ART, {"crop": True, "icon": True}),
+        ("icons/icon_potion.png", CARD_ART, CARD_ART, {"crop": True, "icon": True}),
+        ("icons/icon_weapon.png", CARD_ART, CARD_ART, {"crop": True, "icon": True}),
+        ("icons/icon_armor_set.png", CARD_ART, CARD_ART, {"crop": True, "icon": True}),
+        ("icons/icon_inventory_bag.png", 32, 32, {"crop": True, "icon": True}),
     ]
+
+    cap_path = SRC / "ui/stat_vial_end_cap.png"
+    if cap_path.is_file():
+        img = Image.open(cap_path)
+        box = content_bounds(img)
+        img = crop_region(img, box)
+        cap_w = max(1, int(img.width * 0.24))
+        left_cap = img.crop((0, 0, cap_w, img.height))
+        out = crisp_resize(left_cap, 14, 16)
+        rel = "ui/stat_vial_end_cap.png"
+        out_path = DST / rel
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        out.save(out_path, optimize=True)
+        manifest.append({"output": f"1x/{rel}", "size": [14, 16]})
+        print(f"  OK {rel} (left end cap): -> 14x16")
+
+    sheet_path = SRC / "ui/inventory_bag_open_sheet.png"
+    if sheet_path.is_file():
+        sheet = Image.open(sheet_path)
+        cols, rows = 5, 2
+        fw, fh = sheet.width // cols, sheet.height // rows
+        idx = 0
+        for row in range(rows):
+            for col in range(cols):
+                cell = sheet.crop((col * fw, row * fh, (col + 1) * fw, (row + 1) * fh))
+                cell = crop_region(cell, content_bounds(cell))
+                out = crisp_resize_icon(cell, 40, 40)
+                rel = f"ui/inventory_bag_open_{idx:02d}.png"
+                out_path = DST / rel
+                out_path.parent.mkdir(parents=True, exist_ok=True)
+                out.save(out_path, optimize=True)
+                manifest.append({"output": f"1x/{rel}", "size": [40, 40]})
+                print(f"  OK {rel}: sheet frame {idx + 1}/10 -> 40x40")
+                idx += 1
 
     for rel, w, h, opts in jobs:
         src_rel = opts.get("src", rel)
-        out_rel = opts.get("out", rel)
-        img = load_src(src_rel)
-        if img is None:
-            print(f"  SKIP (нет файла): {src_rel}")
+        src_path = SRC / src_rel
+        if not src_path.is_file():
+            print(f"  SKIP: {rel}")
             continue
-        info = bake_image(img, w, h, out_rel, crop=opts.get("crop", False))
-        if info:
-            manifest.append(info)
-
-    counter_src = SRC / "ui/shop_counter_foreground.png"
-    if counter_src.is_file():
-        counter_h = (VIRTUAL_H - 54) - (4 + HUD_H + 2) - 4
-        info = bake_image(Image.open(counter_src), VIRTUAL_W, counter_h, "ui/shop_counter_foreground.png", crop=False)
-        if info:
-            manifest.append(info)
+        img = Image.open(src_path)
+        if opts.get("crop"):
+            img = crop_region(img, content_bounds(img))
+        resize = crisp_resize_icon if opts.get("icon") else crisp_resize
+        out = resize(img, w, h)
+        out_path = DST / rel
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        out.save(out_path, optimize=True)
+        manifest.append({
+            "output": f"1x/{rel}",
+            "size": [w, h],
+            "bytes": out_path.stat().st_size,
+        })
+        print(f"  OK {rel}: -> {w}x{h}")
 
     for name in ("geralt_portrait_shop.png", "duke_portrait_shop.png", "duke_portrait_fun_shop.png"):
-        img = load_src(name, portrait_fallback(name))
-        if img is None:
+        src_path = SRC / name
+        if not src_path.is_file():
+            fb = ROOT / f"src/main/resources/assets/sprites/screen saver/{name.replace('_shop', '')}"
+            if name == "geralt_portrait_shop.png":
+                fb = ROOT / "src/main/resources/assets/sprites/screen saver/geralt_portrait.png"
+            if fb.is_file():
+                src_path = fb
+        if not src_path.is_file():
             print(f"  SKIP portrait: {name}")
             continue
-        cropped = crop_region(img, content_bounds(img))
-        cw = round(cropped.width * (CHAR_H / cropped.height))
-        info = bake_image(cropped, cw, CHAR_H, name, crop=False)
-        if info:
-            manifest.append(info)
+        img = Image.open(src_path)
+        cw, ch = char_size(img.width, img.height, CHAR_H)
+        out = crisp_resize(img, cw, ch)
+        out_path = DST / name
+        out.save(out_path, optimize=True)
+        manifest.append({"output": f"1x/{name}", "size": [cw, ch]})
+        print(f"  OK {name}: -> {cw}x{ch}")
 
-    bg = load_src("merchant_bg_lavka.png")
-    if bg is not None:
-        info = bake_image(bg, VIRTUAL_W, VIRTUAL_H, "merchant_bg_lavka.png", crop=False)
-        if info:
-            manifest.append(info)
+    bg_path = SRC / "merchant_bg_lavka.png"
+    if bg_path.is_file():
+        img = Image.open(bg_path)
+        bw, bh = cover_size(img.width, img.height, VIRTUAL_W, VIRTUAL_H)
+        out = crisp_resize(img, bw, bh)
+        out_path = DST / "merchant_bg_lavka.png"
+        out.save(out_path, optimize=True)
+        manifest.append({"output": "1x/merchant_bg_lavka.png", "size": [bw, bh]})
+        print(f"  OK merchant_bg_lavka.png: -> {bw}x{bh}")
 
     meta = {
         "virtualResolution": [VIRTUAL_W, VIRTUAL_H],
         "panelW": PANEL_W,
-        "detailPanelW": DETAIL_PANEL_W,
         "cardSize": [CARD_W, CARD_H],
-        "cardArt": CARD_ART,
-        "charHeight": CHAR_H,
         "assets": manifest,
     }
     meta_path = DST / "manifest.json"
     meta_path.write_text(json.dumps(meta, indent=2, ensure_ascii=False), encoding="utf-8")
-    print(f"\nГотово: {len(manifest)} файлов -> {meta_path.relative_to(ROOT)}")
+    print(f"\nГотово: {len(manifest)} файлов, manifest -> {meta_path.relative_to(ROOT)}")
 
 
 if __name__ == "__main__":

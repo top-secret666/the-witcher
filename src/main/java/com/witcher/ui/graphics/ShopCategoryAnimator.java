@@ -35,11 +35,12 @@ final class ShopCategoryAnimator {
     static ShopCategoryAnimator opening(float t, int fromX, int fromY, int fromW, int fromH,
                                         int toX, int toY, int toW, int toH) {
         float p = clamp01(t);
-        float move = easeOutCubic(p);
+        float move = easeInOutCubic(p);
         int cardX = Math.round(lerp(fromX, toX, move));
         int cardY = Math.round(lerp(fromY, toY, move));
-        int cardW = Math.round(lerp(fromW, toW, easeOutBack(p)));
-        int cardH = Math.round(lerp(fromH, toH, easeOutBack(p)));
+        float scaleT = easeInOutCubic(p);
+        int cardW = Math.round(lerp(fromW, toW, scaleT));
+        int cardH = Math.round(lerp(fromH, toH, scaleT));
 
         float gridFade = 1f - easeOutCubic(Math.min(p * 1.35f, 1f));
         float counterT = segment(p, 0.06f, 0.72f);
@@ -78,6 +79,14 @@ final class ShopCategoryAnimator {
     private static float easeOutCubic(float t) {
         float x = clamp01(t);
         return 1f - (float) Math.pow(1f - x, 3);
+    }
+
+    private static float easeInOutCubic(float t) {
+        float x = clamp01(t);
+        if (x < 0.5f) {
+            return 4f * x * x * x;
+        }
+        return 1f - (float) Math.pow(-2f * x + 2f, 3) / 2f;
     }
 
     private static float easeOutBack(float t) {

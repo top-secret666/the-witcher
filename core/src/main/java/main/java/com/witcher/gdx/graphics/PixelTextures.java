@@ -307,17 +307,28 @@ public final class PixelTextures {
         batch.setColor(1f, 1f, 1f, prev);
     }
 
+    /** Как Swing: вписать фон с полями, не cover на весь экран. */
+    public static void drawContain(SpriteBatch batch, Texture texture, float viewW, float viewH, float alpha, float margin) {
+        if (texture == null) {
+            return;
+        }
+        float tw = texture.getWidth();
+        float th = texture.getHeight();
+        if (tw <= 0f || th <= 0f) {
+            return;
+        }
+        float a = batch.getColor().a;
+        batch.setColor(1f, 1f, 1f, alpha);
+        float contain = Math.min(viewW / tw, viewH / th) * margin;
+        float drawW = tw * contain;
+        float drawH = th * contain;
+        float x = (viewW - drawW) * 0.5f;
+        float y = (viewH - drawH) * 0.5f;
+        batch.draw(texture, x, y, drawW, drawH);
+        batch.setColor(1f, 1f, 1f, a);
+    }
+
     public static void drawCover(SpriteBatch batch, Texture texture, float viewW, float viewH, float alpha) {
-        drawCoverAligned(batch, texture, viewW, viewH, alpha, 0.5f, 0.5f);
-    }
-
-    /** Cover с привязкой к низу — для splash_bg, где арт в нижней части PNG. */
-    public static void drawCoverBottom(SpriteBatch batch, Texture texture, float viewW, float viewH, float alpha) {
-        drawCoverAligned(batch, texture, viewW, viewH, alpha, 0.5f, 0f);
-    }
-
-    private static void drawCoverAligned(SpriteBatch batch, Texture texture, float viewW, float viewH,
-                                         float alpha, float alignX, float alignY) {
         if (texture == null) {
             return;
         }
@@ -332,31 +343,31 @@ public final class PixelTextures {
         float cover = Math.max(viewW / tw, viewH / th);
         float drawW = tw * cover;
         float drawH = th * cover;
-        float x = (viewW - drawW) * alignX;
-        float y = (viewH - drawH) * alignY;
+        float x = (viewW - drawW) * 0.5f;
+        float y = (viewH - drawH) * 0.5f;
         batch.draw(texture, x, y, drawW, drawH);
         batch.setColor(1f, 1f, 1f, a);
     }
 
-    /**
-     * Обрезка по непрозрачной области + cover; alignY=0 — низ кадра к низу экрана.
-     */
-    public static void drawCroppedCover(SpriteBatch batch, Texture texture,
-                                        int cropX, int cropY, int cropW, int cropH,
-                                        float viewW, float viewH, float alpha,
-                                        float alignX, float alignY) {
-        if (texture == null || cropW <= 0 || cropH <= 0) {
+    /** Cover, но нижний край картинки прижат к низу экрана (splash_bg с пустым верхом в PNG). */
+    public static void drawCoverBottom(SpriteBatch batch, Texture texture, float viewW, float viewH, float alpha) {
+        if (texture == null) {
             return;
         }
-        float cover = Math.max(viewW / cropW, viewH / cropH);
-        float drawW = cropW * cover;
-        float drawH = cropH * cover;
-        float x = (viewW - drawW) * alignX;
-        float y = (viewH - drawH) * alignY;
-        float prev = batch.getColor().a;
+        float tw = texture.getWidth();
+        float th = texture.getHeight();
+        if (tw <= 0f || th <= 0f) {
+            return;
+        }
+        float a = batch.getColor().a;
         batch.setColor(1f, 1f, 1f, alpha);
-        drawCropped(batch, texture, cropX, cropY, cropW, cropH, x, y, drawW, drawH);
-        batch.setColor(1f, 1f, 1f, prev);
+        float cover = Math.max(viewW / tw, viewH / th);
+        float drawW = tw * cover;
+        float drawH = th * cover;
+        float x = (viewW - drawW) * 0.5f;
+        float y = 0f;
+        batch.draw(texture, x, y, drawW, drawH);
+        batch.setColor(1f, 1f, 1f, a);
     }
 
     public static void drawRegion(SpriteBatch batch, TextureRegion region, float x, float y, float w, float h) {

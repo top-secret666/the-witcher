@@ -1,36 +1,42 @@
 package main.java.com.witcher.desktop;
 
-import com.badlogic.gdx.backends.lwjgl3.Lwjgl3Application;
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3ApplicationConfiguration;
 import com.badlogic.gdx.graphics.glutils.HdpiMode;
 import main.java.com.witcher.gdx.WitcherGame;
-import org.lwjgl.glfw.GLFW;
 
 /**
- * Окно как Swing {@code Renderer(480, 360, 2)} — 960×720 на экране.
- * При 125% Windows GLFW-окно 768×576 (ОС растягивает до ~960×720 без полей).
+ * При Windows 125%: GLFW-окно = FRAME/scale (784×616), ОС растягивает до ~980×770 без чёрных полей.
  */
 public class DesktopLauncher {
 
-    public static void main(String[] args) {
+    static {
+        System.setProperty("sun.java2d.uiScale.enabled", "false");
+        System.setProperty("awt.useSystemAAFontSettings", "off");
         System.setProperty("org.lwjgl.opengl.Display.allowLegacyDXGIScaling", "false");
+    }
+
+    public static void main(String[] args) {
         try {
-            float monitorScale = queryPrimaryMonitorContentScale();
-            int[] glfw = glfwWindowSize(monitorScale);
+            WitcherLwjgl3Application.applyGlfwHints();
+
+            float scale = desktopScale();
+            int[] glfw = glfwWindowSize(scale);
 
             Lwjgl3ApplicationConfiguration config = new Lwjgl3ApplicationConfiguration();
             config.setTitle("The Witcher — LibGDX");
             config.setHdpiMode(HdpiMode.Pixels);
             config.setWindowedMode(glfw[0], glfw[1]);
+            config.setDecorated(false);
             config.setResizable(false);
             config.setForegroundFPS(60);
             config.useVsync(true);
+            config.setWindowIcon("sprites/app_icon.png");
 
-            System.out.println("[DesktopLauncher] glfw=" + glfw[0] + 'x' + glfw[1]
-                + " monitorScale=" + monitorScale
-                + " celNaEkrane=" + WitcherGame.WINDOW_W + 'x' + WitcherGame.WINDOW_H);
+            System.out.println("[DesktopLauncher] celNaEkrane=" + WitcherGame.FRAME_W + 'x' + WitcherGame.FRAME_H
+                + " glfw=" + glfw[0] + 'x' + glfw[1]
+                + " scale=" + scale);
 
-            new Lwjgl3Application(new WitcherGame(), config);
+            new WitcherLwjgl3Application(new WitcherGame(), config);
         } catch (Throwable error) {
             error.printStackTrace();
             System.err.println("LibGDX crash: " + error.getMessage());
@@ -38,31 +44,21 @@ public class DesktopLauncher {
         }
     }
 
-    static float queryPrimaryMonitorContentScale() {
+    static float desktopScale() {
         try {
-            if (!GLFW.glfwInit()) {
-                return 1f;
-            }
-            long monitor = GLFW.glfwGetPrimaryMonitor();
-            float[] sx = new float[1];
-            float[] sy = new float[1];
-            GLFW.glfwGetMonitorContentScale(monitor, sx, sy);
-            GLFW.glfwTerminate();
-            return Math.max(1f, Math.max(sx[0], sy[0]));
+            return Math.max(1f, java.awt.Toolkit.getDefaultToolkit().getScreenResolution() / 96f);
         } catch (Throwable ignored) {
             return 1f;
         }
     }
 
-    static int[] glfwWindowSize(float monitorScale) {
-        int targetW = WitcherGame.WINDOW_W;
-        int targetH = WitcherGame.WINDOW_H;
-        if (monitorScale <= 1.01f) {
-            return new int[]{targetW, targetH};
+    static int[] glfwWindowSize(float scale) {
+        if (scale <= 1.01f) {
+            return new int[] { WitcherGame.FRAME_W, WitcherGame.FRAME_H };
         }
-        return new int[]{
-            Math.max(1, Math.round(targetW / monitorScale)),
-            Math.max(1, Math.round(targetH / monitorScale))
+        return new int[] {
+            Math.max(1, Math.round(WitcherGame.FRAME_W / scale)),
+            Math.max(1, Math.round(WitcherGame.FRAME_H / scale))
         };
     }
 }
