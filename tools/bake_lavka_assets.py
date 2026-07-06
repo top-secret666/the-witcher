@@ -239,6 +239,23 @@ def main() -> None:
         })
         print(f"  OK {rel}: -> {w}x{h}")
 
+    items_dir = SRC / "icons/items"
+    if items_dir.is_dir():
+        for src_path in sorted(items_dir.glob("*.png")):
+            rel = f"icons/items/{src_path.name}"
+            img = Image.open(src_path)
+            img = crop_region(img, content_bounds(img))
+            out = crisp_resize_icon(img, CARD_ART, CARD_ART)
+            out_path = DST / rel
+            out_path.parent.mkdir(parents=True, exist_ok=True)
+            out.save(out_path, optimize=True)
+            manifest.append({
+                "output": f"1x/{rel}",
+                "size": [CARD_ART, CARD_ART],
+                "bytes": out_path.stat().st_size,
+            })
+            print(f"  OK {rel}: -> {CARD_ART}x{CARD_ART}")
+
     for name in ("geralt_portrait_shop.png", "duke_portrait_shop.png", "duke_portrait_fun_shop.png"):
         src_path = SRC / name
         if not src_path.is_file():
