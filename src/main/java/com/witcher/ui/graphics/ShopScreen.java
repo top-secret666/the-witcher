@@ -55,8 +55,7 @@ public class ShopScreen {
     private static final int INVENTORY_PANEL_H = 238;
     private static final int INVENTORY_POUCH_ICON = 32;
     private static final int INVENTORY_POUCH_LARGE = 96;
-    private static final int EQUIP_PANEL_W = 440;
-    private static final int EQUIP_PANEL_H = 324;
+    private static final int EQUIP_MARGIN = 4;
     /** ~1 мин при 30 FPS — оборот сам возвращается на лицо, если игрок AFK. */
     private static final int CARD_FLIP_IDLE_TICKS = 30 * 60;
 
@@ -1301,45 +1300,48 @@ public class ShopScreen {
         g.setColor(Color.BLACK);
         g.fillRect(0, 0, sw, sh);
 
-        int px = (sw - EQUIP_PANEL_W) / 2;
-        int py = (sh - EQUIP_PANEL_H) / 2 - 2;
-        equipmentPanelBounds.setBounds(px, py, EQUIP_PANEL_W, EQUIP_PANEL_H);
+        int px = EQUIP_MARGIN;
+        int py = EQUIP_MARGIN;
+        int panelW = sw - EQUIP_MARGIN * 2;
+        int panelH = sh - EQUIP_MARGIN * 2;
+        equipmentPanelBounds.setBounds(px, py, panelW, panelH);
         equipmentRowBounds.clear();
 
         g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.97f));
         g.setColor(new Color(14, 10, 6, 248));
-        g.fillRoundRect(px, py, EQUIP_PANEL_W, EQUIP_PANEL_H, 8, 8);
+        g.fillRoundRect(px, py, panelW, panelH, 6, 6);
         g.setColor(new Color(155, 115, 50));
-        g.drawRoundRect(px, py, EQUIP_PANEL_W, EQUIP_PANEL_H, 8, 8);
+        g.drawRoundRect(px, py, panelW, panelH, 6, 6);
 
-        drawCrispText(g);
-        g.setFont(GameFonts.get().uiBold(14));
-        g.setColor(new Color(255, 220, 140));
-        g.drawString("Экипировка", px + 14, py + 22);
+        drawEquipText(g, GameFonts.get().uiBold(15), "Экипировка", px + 14, py + 24,
+            new Color(255, 220, 140));
 
-        int listX = px + 12;
+        int listX = px + 10;
         int listY = py + 34;
-        int listW = 148;
-        int listH = EQUIP_PANEL_H - 90;
+        int listW = 168;
+        int listH = panelH - 48;
         g.setColor(new Color(8, 6, 4, 180));
         g.fillRoundRect(listX, listY, listW, listH, 4, 4);
         g.setColor(new Color(100, 75, 40));
         g.drawRoundRect(listX, listY, listW, listH, 4, 4);
 
-        g.setFont(GameFonts.get().uiBold(10));
-        g.setColor(new Color(180, 140, 80));
-        g.drawString("Куплено", listX + 8, listY + 14);
+        drawEquipText(g, GameFonts.get().uiBold(11), "Куплено", listX + 8, listY + 14,
+            new Color(180, 140, 80));
+        int itemsTop = listY + 22;
+        g.setColor(new Color(90, 68, 36, 160));
+        g.drawLine(listX + 6, itemsTop, listX + listW - 6, itemsTop);
 
         List<Armour> owned = model.ownedArmour();
-        g.setFont(GameFonts.get().uiPlain(10));
-        int rowY = listY + 24;
-        int rowH = 16;
+        int rowH = 18;
+        int rowY = itemsTop + 14;
+        Font itemFont = GameFonts.get().uiPlain(11);
+        FontMetrics itemFm = g.getFontMetrics(itemFont);
         for (int i = 0; i < owned.size(); i++) {
-            if (rowY + rowH > listY + listH - 4) {
+            if (rowY + 4 > listY + listH - 6) {
                 break;
             }
             Armour armour = owned.get(i);
-            Rectangle row = new Rectangle(listX + 4, rowY - 11, listW - 8, rowH);
+            Rectangle row = new Rectangle(listX + 4, rowY - 13, listW - 8, rowH);
             equipmentRowBounds.add(row);
             boolean hovered = i == equipmentHoveredRow;
             boolean equipped = model.isEquipped(armour);
@@ -1347,30 +1349,30 @@ public class ShopScreen {
                 g.setColor(equipped ? new Color(70, 52, 24, 200) : new Color(50, 38, 18, 170));
                 g.fillRoundRect(row.x, row.y, row.width, row.height, 3, 3);
             }
-            g.setColor(equipped ? new Color(255, 230, 150) : new Color(200, 180, 130));
-            String line = truncateToWidth(armour.getName(), g.getFontMetrics(), listW - 20);
-            g.drawString(line, listX + 8, rowY);
+            String line = truncateToWidth(armour.getName(), itemFm, listW - 20);
+            drawEquipText(g, itemFont, line, listX + 8, rowY,
+                equipped ? new Color(255, 230, 150) : new Color(200, 180, 130));
             rowY += rowH;
         }
         if (owned.isEmpty()) {
-            g.setColor(new Color(150, 130, 90));
-            g.drawString("Пока нет брони…", listX + 8, rowY);
+            drawEquipText(g, GameFonts.get().uiPlain(11), "Пока нет брони…", listX + 8, rowY,
+                new Color(150, 130, 90));
         }
 
-        int portraitX = px + 172;
+        int portraitX = listX + listW + 12;
         int portraitY = py + 30;
-        int portraitW = 128;
-        int portraitH = 210;
+        int portraitW = 152;
+        int portraitH = panelH - 86;
         g.setColor(new Color(6, 4, 2, 160));
         g.fillRoundRect(portraitX - 4, portraitY - 4, portraitW + 8, portraitH + 8, 6, 6);
         if (assets.geraltScaled != null) {
             drawScaledSprite(g, assets.geraltScaled, portraitX, portraitY, portraitW, portraitH, true);
         }
 
-        int slotX = px + 318;
-        int slotY = py + 38;
-        int slotSize = 44;
-        int slotGap = 8;
+        int slotSize = 48;
+        int slotGap = 10;
+        int slotX = px + panelW - slotSize - 12;
+        int slotY = py + 36;
         ShopEquipSlot[] slots = ShopEquipSlot.values();
         for (int i = 0; i < slots.length; i++) {
             ShopEquipSlot slot = slots[i];
@@ -1385,25 +1387,26 @@ public class ShopScreen {
             BufferedImage icon = slot.iconIndex >= 0 && slot.iconIndex < assets.itemIcons.length
                 ? assets.itemIcons[slot.iconIndex] : null;
             if (equipped != null && icon != null) {
-                int iconSz = 28;
-                g.drawImage(icon, slotX + (slotSize - iconSz) / 2, sy + 6, iconSz, iconSz, null);
+                int iconSz = 30;
+                g.drawImage(icon, slotX + (slotSize - iconSz) / 2, sy + 7, iconSz, iconSz, null);
             } else if (icon != null) {
                 g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.35f));
-                int iconSz = 24;
-                g.drawImage(icon, slotX + (slotSize - iconSz) / 2, sy + 8, iconSz, iconSz, null);
+                int iconSz = 26;
+                g.drawImage(icon, slotX + (slotSize - iconSz) / 2, sy + 9, iconSz, iconSz, null);
                 g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.97f));
             }
-            g.setFont(GameFonts.get().uiPlain(7));
-            g.setColor(new Color(170, 140, 90));
             String slotLabel = slot.label;
-            FontMetrics sfm = g.getFontMetrics();
-            g.drawString(slotLabel, slotX + (slotSize - sfm.stringWidth(slotLabel)) / 2, sy + slotSize - 3);
+            Font slotFont = GameFonts.get().uiPlain(8);
+            FontMetrics sfm = g.getFontMetrics(slotFont);
+            drawEquipText(g, slotFont, slotLabel,
+                slotX + (slotSize - sfm.stringWidth(slotLabel)) / 2, sy + slotSize - 4,
+                new Color(170, 140, 90));
         }
 
         int statsX = portraitX;
-        int statsY = py + 256;
-        int statsW = EQUIP_PANEL_W - (statsX - px) - 12;
-        int statsH = 64;
+        int statsY = py + panelH - 80;
+        int statsW = slotX + slotSize - statsX;
+        int statsH = 70;
         g.setColor(new Color(10, 7, 4, 200));
         g.fillRoundRect(statsX, statsY, statsW, statsH, 4, 4);
         g.setColor(new Color(100, 75, 40));
@@ -1413,34 +1416,30 @@ public class ShopScreen {
         int backW = 72;
         int backH = 22;
         int backX = px + 12;
-        int backY = py + EQUIP_PANEL_H - backH - 10;
+        int backY = py + panelH - backH - 8;
         equipmentBackButtonBounds.setBounds(backX, backY, backW, backH);
-        g.setFont(GameFonts.get().uiBold(10));
         g.setColor(new Color(28, 18, 8, 220));
         g.fillRoundRect(backX, backY, backW, backH, 5, 5);
         g.setColor(new Color(150, 110, 50));
         g.drawRoundRect(backX, backY, backW, backH, 5, 5);
-        g.setColor(new Color(230, 200, 140));
-        g.drawString("Назад", backX + 18, backY + 15);
-
-        g.setFont(GameFonts.get().uiItalic(9));
-        g.setColor(new Color(140, 120, 80));
-        g.drawString("Esc — назад", backX + backW + 10, backY + 15);
+        drawEquipText(g, GameFonts.get().uiBold(11), "Назад", backX + 18, backY + 15,
+            new Color(230, 200, 140));
+        drawEquipText(g, GameFonts.get().uiItalic(10), "Esc — назад", backX + backW + 10, backY + 15,
+            new Color(140, 120, 80));
 
         g.setComposite(prev);
     }
 
     private void drawEquipmentStats(Graphics2D g, int x, int y, int w, int h, ShopModel.StatPreview preview) {
-        drawCrispText(g);
-        g.setFont(GameFonts.get().uiBold(10));
-        g.setColor(new Color(220, 200, 140));
         String header = "ХАРАКТЕРИСТИКИ";
-        FontMetrics hfm = g.getFontMetrics();
-        g.drawString(header, x + (w - hfm.stringWidth(header)) / 2, y + 16);
+        Font headerFont = GameFonts.get().uiBold(11);
+        FontMetrics hfm = g.getFontMetrics(headerFont);
+        drawEquipText(g, headerFont, header, x + (w - hfm.stringWidth(header)) / 2, y + 18,
+            new Color(220, 200, 140));
 
         String[] labels = {"Защита", "Выносл.", "Знаки"};
-        g.setFont(GameFonts.get().uiPlain(10));
-        int lineY = y + 32;
+        Font lineFont = GameFonts.get().uiPlain(11);
+        int lineY = y + 36;
         ShopModel.StatRow[] rows = preview.rows();
         for (int i = 0; i < labels.length && i < rows.length; i++) {
             ShopModel.StatRow row = rows[i];
@@ -1450,9 +1449,9 @@ public class ShopScreen {
             } else if (row.delta() < 0) {
                 delta = " (" + row.delta() + ")";
             }
-            g.setColor(new Color(200, 180, 130));
-            g.drawString(labels[i] + ": " + row.value() + delta, x + 12, lineY);
-            lineY += 14;
+            drawEquipText(g, lineFont, labels[i] + ": " + row.value() + delta, x + 12, lineY,
+                new Color(200, 180, 130));
+            lineY += 15;
         }
     }
 
@@ -2331,8 +2330,14 @@ public class ShopScreen {
     }
 
     private static void drawCrispText(Graphics2D g) {
-        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
-        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+        GameFonts.applyGameHints(g);
+    }
+
+    private static void drawEquipText(Graphics2D g, Font font, String text, int x, int y, Color color) {
+        GameFonts.applyGameHints(g);
+        g.setFont(font);
+        g.setColor(color);
+        g.drawString(text, x, y);
     }
 
     private void drawCharacter(Graphics2D g, int sw, int sh, BufferedImage sprite,
