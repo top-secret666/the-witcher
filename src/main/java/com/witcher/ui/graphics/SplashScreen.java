@@ -45,6 +45,10 @@ public class SplashScreen {
     private static final Color WARM_LIGHT = new Color(255, 170, 85);
     private static final Color SMOKE = new Color(190, 180, 165);
 
+    /** Исходный размер ячейки witcher_bar.png — якорь для позиции за стойкой. */
+    private static final float WITCHER_BAR_REF_W = 205f;
+    private static final float WITCHER_BAR_REF_H = 1024f;
+
     public SplashScreen() {
         background = Sprite.load("/assets/sprites/splash_bg.png");
 
@@ -214,14 +218,20 @@ public class SplashScreen {
 
         // === ВЕДЬМАК ЗА БАРОМ (по центру, крупный) ===
         if (witcherBar != null && alpha > 0.1f) {
-            // Каждый кадр ~205×1024. Масштабируем по ширине — ~22% ширины экрана
-            float wbScale = (sw * 0.22f) / witcherBar.getFrameWidth();
-            int wbW = Math.round(witcherBar.getFrameWidth() * wbScale);
-            int wbH = Math.round(witcherBar.getFrameHeight() * wbScale);
-            int wbX = (sw - wbW) / 2;
-            // Выровнять по низу области сцены (чтобы ноги не уходили за экран слишком сильно)
-            int wbY = sh - wbH + (int)(wbH * 0.31f);
-            witcherBar.draw(g, wbX, wbY, wbW, wbH, alpha * 0.95f);
+            float wbScale = (sw * 0.22f) / WITCHER_BAR_REF_W;
+            int slotW = Math.round(WITCHER_BAR_REF_W * wbScale);
+            int slotH = Math.round(WITCHER_BAR_REF_H * wbScale);
+            int slotX = (sw - slotW) / 2;
+            // 31% спрайта уходит ниже края — ведьмак «за стойкой» на фоне
+            int slotY = sh - slotH + Math.round(slotH * 0.31f);
+
+            int frameW = witcherBar.getFrameWidth();
+            int frameH = witcherBar.getFrameHeight();
+            int drawW = Math.round(frameW * wbScale);
+            int drawH = Math.round(frameH * wbScale);
+            int drawX = slotX + (slotW - drawW) / 2;
+            int drawY = slotY + slotH - drawH;
+            witcherBar.draw(g, drawX, drawY, drawW, drawH, alpha * 0.95f);
         }
 
         // === ЧАСТИЦЫ ===
