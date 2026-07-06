@@ -56,7 +56,7 @@ public class ShopScreen {
     private static final int INVENTORY_POUCH_ICON = 32;
     private static final int INVENTORY_POUCH_LARGE = 96;
     private static final int EQUIP_PANEL_W = 440;
-    private static final int EQUIP_PANEL_H = 292;
+    private static final int EQUIP_PANEL_H = 308;
     /** ~1 мин при 30 FPS — оборот сам возвращается на лицо, если игрок AFK. */
     private static final int CARD_FLIP_IDLE_TICKS = 30 * 60;
 
@@ -1320,7 +1320,7 @@ public class ShopScreen {
         int listX = px + 12;
         int listY = py + 34;
         int listW = 148;
-        int listH = EQUIP_PANEL_H - 78;
+        int listH = EQUIP_PANEL_H - 86;
         g.setColor(new Color(8, 6, 4, 180));
         g.fillRoundRect(listX, listY, listW, listH, 4, 4);
         g.setColor(new Color(100, 75, 40));
@@ -1401,9 +1401,9 @@ public class ShopScreen {
         }
 
         int statsX = portraitX;
-        int statsY = py + EQUIP_PANEL_H - 68;
+        int statsY = py + 250;
         int statsW = EQUIP_PANEL_W - (statsX - px) - 12;
-        int statsH = 52;
+        int statsH = 58;
         g.setColor(new Color(10, 7, 4, 200));
         g.fillRoundRect(statsX, statsY, statsW, statsH, 4, 4);
         drawEquipmentStats(g, statsX, statsY, statsW, statsH, model.equippedStatPreview());
@@ -1434,11 +1434,11 @@ public class ShopScreen {
         g.setColor(new Color(220, 200, 140));
         String header = "ХАРАКТЕРИСТИКИ";
         FontMetrics hfm = g.getFontMetrics();
-        g.drawString(header, x + (w - hfm.stringWidth(header)) / 2, y + 14);
+        g.drawString(header, x + (w - hfm.stringWidth(header)) / 2, y + 16);
 
         String[] labels = {"Защита", "Выносл.", "Знаки"};
         g.setFont(GameFonts.get().uiPlain(10));
-        int lineY = y + 30;
+        int lineY = y + 32;
         ShopModel.StatRow[] rows = preview.rows();
         for (int i = 0; i < labels.length && i < rows.length; i++) {
             ShopModel.StatRow row = rows[i];
