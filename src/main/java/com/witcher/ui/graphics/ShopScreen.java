@@ -58,6 +58,10 @@ public class ShopScreen {
         PURCHASE_APPEAR_TICKS + PURCHASE_FLY_TICKS + PURCHASE_TUCK_TICKS;
     private static final int INVENTORY_BAG_SIZE = 40;
     private static final int INVENTORY_BAG_MARGIN = 8;
+    /** Внутреннее «окно» shop_catalog_panel_detail — не золотая рамка PNG. */
+    private static final int CATALOG_PANEL_INSET_X = 14;
+    private static final int CATALOG_PANEL_INSET_TOP = 20;
+    private static final int CATALOG_PANEL_GAP_ABOVE_BUY = 10;
     private static final int INVENTORY_PANEL_W = 280;
     private static final int INVENTORY_PANEL_H = 238;
     private static final int INVENTORY_POUCH_ICON = 32;
@@ -326,11 +330,19 @@ public class ShopScreen {
     }
 
     private int catalogListTop(int panelY) {
-        return panelY + 12;
+        return panelY + CATALOG_PANEL_INSET_TOP;
     }
 
     private int catalogListBottom(int panelY) {
-        return panelY + assets.detailPanelH - assets.btnH - 10;
+        return categoryBuyButtonY(panelY) - CATALOG_PANEL_GAP_ABOVE_BUY;
+    }
+
+    private int catalogRowContentW() {
+        return assets.detailPanelW - CATALOG_PANEL_INSET_X * 2;
+    }
+
+    private int catalogRowX(int panelX) {
+        return panelX + CATALOG_PANEL_INSET_X;
     }
 
     private int categoryBuyButtonY(int panelY) {
@@ -1842,7 +1854,7 @@ public class ShopScreen {
         if (categoryItem == null || categoryItem.kind != ItemKind.PIECE) {
             return null;
         }
-        if (entry != null && entry.armour != null) {
+        if (entry != null) {
             BufferedImage icon = armourIcons.iconForEntry(entry, categoryItem.category);
             if (icon != null) {
                 return icon;
@@ -1969,10 +1981,11 @@ public class ShopScreen {
         int rowStep = assets.rowH + rowGap;
         int listTop = catalogListTop(panelY);
         int listBottom = catalogListBottom(panelY);
-        int clipX = panelX + 6;
-        int clipW = assets.detailPanelW - 12;
-        int clipH = listBottom - listTop;
-        int x = panelX + 8;
+        int rowW = catalogRowContentW();
+        int x = catalogRowX(panelX);
+        int clipX = x;
+        int clipW = rowW;
+        int clipH = Math.max(0, listBottom - listTop);
 
         Shape prevClip = g.getClip();
         g.clipRect(clipX, listTop, clipW, clipH);
@@ -1998,10 +2011,10 @@ public class ShopScreen {
                 bg = assets.rowHover;
             }
             if (bg != null) {
-                g.drawImage(bg, x, y, null);
+                g.drawImage(bg, x, y, rowW, assets.rowH, null);
             }
 
-            row.bounds.setBounds(interactive ? x : 0, interactive ? y : 0, assets.rowW, assets.rowH);
+            row.bounds.setBounds(interactive ? x : 0, interactive ? y : 0, rowW, assets.rowH);
 
             g.setFont(GameFonts.get().uiPlain(9));
             FontMetrics fm = g.getFontMetrics();
@@ -2010,7 +2023,7 @@ public class ShopScreen {
             if (assets.crownIconSmall != null && !price.equals("···")) {
                 priceW += assets.crownIconSmall.getWidth() + 2;
             }
-            int priceX = x + assets.rowW - priceW - 8;
+            int priceX = x + rowW - priceW - 6;
 
             int[] deltas = catalogStatDeltas(row);
             g.setFont(GameFonts.get().uiPlain(8));
@@ -2023,10 +2036,10 @@ public class ShopScreen {
 
             g.setFont(GameFonts.get().uiPlain(9));
             fm = g.getFontMetrics();
-            int nameMaxW = Math.max(20, statsRight - statsW - (x + 10));
+            int nameMaxW = Math.max(20, statsRight - statsW - (x + 8));
             String label = truncateToWidth(row.name, fm, nameMaxW);
             int textY = y + (assets.rowH + fm.getAscent()) / 2 - 1;
-            drawOutlinedText(g, label, x + 10, textY, new Color(235, 215, 155));
+            drawOutlinedText(g, label, x + 8, textY, new Color(235, 215, 155));
 
             if (statsW > 0) {
                 g.setFont(GameFonts.get().uiPlain(8));
