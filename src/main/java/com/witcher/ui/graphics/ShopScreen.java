@@ -318,8 +318,17 @@ public class ShopScreen {
         return assets.rowH + 4;
     }
 
+    private static final int CATALOG_STAT_LEGEND_H = 11;
+
     private int catalogListTop(int panelY) {
-        return panelY + 12;
+        return panelY + 12 + (catalogShowsStatLegend() ? CATALOG_STAT_LEGEND_H : 0);
+    }
+
+    private boolean catalogShowsStatLegend() {
+        if (selectedIndex < 0 || selectedIndex >= items.size()) {
+            return false;
+        }
+        return items.get(selectedIndex).kind == ItemKind.PIECE;
     }
 
     private int catalogListBottom(int panelY) {
@@ -1862,27 +1871,16 @@ public class ShopScreen {
         g.setComposite(prev);
     }
 
-    private String catalogStatLine(ShopCatalogEntry row) {
+    private int[] catalogStatDeltas(ShopCatalogEntry row) {
         ShopModel.StatPreview preview = model.statPreview(row);
         if (preview.rows().length < 3) {
-            return "";
+            return new int[]{0, 0, 0};
         }
-        int prot = preview.rows()[0].delta();
-        int stamina = preview.rows()[1].delta();
-        int signs = preview.rows()[2].delta();
-        if (prot == 0 && stamina == 0 && signs == 0) {
-            return "";
-        }
-        return "\uD83D\uDEE1" + formatMiniStatValue(prot)
-            + " \u26A1" + formatMiniStatValue(stamina)
-            + " \u2726" + formatMiniStatValue(signs);
-    }
-
-    private static String formatMiniStatValue(int delta) {
-        if (delta > 0) {
-            return String.valueOf(delta);
-        }
-        return String.valueOf(delta);
+        return new int[]{
+            preview.rows()[0].delta(),
+            preview.rows()[1].delta(),
+            preview.rows()[2].delta()
+        };
     }
 
     private void drawCatalogRows(Graphics2D g, int panelX, int panelY, boolean interactive) {
@@ -1900,6 +1898,15 @@ public class ShopScreen {
 
         drawCardText(g);
         g.setFont(GameFonts.get().uiPlain(9));
+
+        if (catalogShowsStatLegend()) {
+            g.setFont(GameFonts.get().uiPlain(7));
+            FontMetrics legendFm = g.getFontMetrics();
+            int legendY = panelY + 18;
+            int legendX = x + assets.rowW - ShopStatGlyphs.legendWidth(legendFm) - 8;
+            ShopStatGlyphs.drawLegend(g, legendX, legendY, legendFm);
+            g.setFont(GameFonts.get().uiPlain(9));
+        }
 
         for (int i = 0; i < catalogEntries.size(); i++) {
             ShopCatalogEntry row = catalogEntries.get(i);
@@ -1933,21 +1940,26 @@ public class ShopScreen {
             }
             int priceX = x + assets.rowW - priceW - 8;
 
-            String stats = catalogStatLine(row);
+            int[] deltas = catalogStatDeltas(row);
             g.setFont(GameFonts.get().uiPlain(8));
             FontMetrics statsFm = g.getFontMetrics();
-            int statsW = stats.isEmpty() ? 0 : statsFm.stringWidth(stats) + 4;
-            int statsX = priceX - statsW - 2;
+            int statsW = ShopStatGlyphs.rowWidth(statsFm, deltas[0], deltas[1], deltas[2]);
+            if (statsW > 0) {
+                statsW += 4;
+            }
+            int statsRight = priceX - 2;
 
             g.setFont(GameFonts.get().uiPlain(9));
             fm = g.getFontMetrics();
-            int nameMaxW = Math.max(20, statsX - (x + 10));
+            int nameMaxW = Math.max(20, statsRight - statsW - (x + 10));
             String label = truncateToWidth(row.name, fm, nameMaxW);
             int textY = y + (assets.rowH + fm.getAscent()) / 2 - 1;
             drawOutlinedText(g, label, x + 10, textY, new Color(235, 215, 155));
 
-            if (!stats.isEmpty()) {
-                drawOutlinedText(g, stats, statsX, textY, new Color(180, 200, 160));
+            if (statsW > 0) {
+                g.setFont(GameFonts.get().uiPlain(8));
+                statsFm = g.getFontMetrics();
+                ShopStatGlyphs.drawRow(g, statsRight, textY, statsFm, deltas[0], deltas[1], deltas[2]);
             }
 
             if (assets.crownIconSmall != null && !price.equals("···")) {
@@ -2191,7 +2203,7 @@ public class ShopScreen {
     }
 
     /** Тёмная обводка — текст читается на золотой рамке карточки. */
-    private static void drawOutlinedText(Graphics2D g, String text, int tx, int ty, Color fill) {
+    static void drawOutlinedText(Graphics2D g, String text, int tx, int ty, Color fill) {
         tx = Math.round(tx);
         ty = Math.round(ty);
         g.setColor(new Color(20, 12, 4, 220));

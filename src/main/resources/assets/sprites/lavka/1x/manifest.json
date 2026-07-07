@@ -455,6 +455,14 @@
       "bytes": 2707
     },
     {
+      "output": "1x/icons/items/order_of_the_flaming_rose_armor.png",
+      "size": [
+        32,
+        32
+      ],
+      "bytes": 2485
+    },
+    {
       "output": "1x/icons/items/prisoner's_trousers.png",
       "size": [
         32,
@@ -463,12 +471,28 @@
       "bytes": 2848
     },
     {
+      "output": "1x/icons/items/redanian_halberdier's_armor.png",
+      "size": [
+        32,
+        32
+      ],
+      "bytes": 2455
+    },
+    {
       "output": "1x/icons/items/skellige_armor.png",
       "size": [
         32,
         32
       ],
       "bytes": 3020
+    },
+    {
+      "output": "1x/icons/items/spikeroog_aketon.png",
+      "size": [
+        32,
+        32
+      ],
+      "bytes": 3039
     },
     {
       "output": "1x/icons/items/thyssen_armor.png",
