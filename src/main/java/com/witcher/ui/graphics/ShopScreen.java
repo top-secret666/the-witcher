@@ -62,6 +62,12 @@ public class ShopScreen {
     private static final int CATALOG_PANEL_INSET_X = 14;
     private static final int CATALOG_PANEL_INSET_TOP = 20;
     private static final int CATALOG_PANEL_GAP_ABOVE_BUY = 10;
+    /** Тёмная «внутренность» shop_card_back — не золотая рамка. */
+    private static final int PRODUCT_CARD_INSET_X = 7;
+    private static final int PRODUCT_CARD_INSET_TOP = 10;
+    private static final int PRODUCT_CARD_INSET_BOTTOM = 24;
+    private static final int PRODUCT_CARD_ICON_TEXT_GAP = 5;
+    private static final int PRODUCT_CARD_NAME_PRICE_GAP = 5;
     private static final int INVENTORY_PANEL_W = 280;
     private static final int INVENTORY_PANEL_H = 238;
     private static final int INVENTORY_POUCH_ICON = 32;
@@ -2197,28 +2203,40 @@ public class ShopScreen {
             BufferedImage coinPreview = assets.crownIconSmall != null
                 ? assets.crownIconSmall : assets.crownIconScaled;
             int coinH = coinPreview != null ? coinPreview.getHeight() : priceFmPreview.getHeight();
-            priceBlockH = Math.max(priceFmPreview.getHeight(), coinH) + 4;
+            priceBlockH = Math.max(priceFmPreview.getHeight(), coinH) + 2;
         }
-        int nameBlockBottom = categoryGrid
-            ? y + h - 6
-            : y + h - 6 - priceBlockH;
-        int labelReserve = nameLines.size() * lineH + 6 + (showPrice ? priceBlockH : 0);
 
+        int nameBlockH = nameLines.size() * lineH;
+        int textBlockH = nameBlockH + (showPrice ? priceBlockH + PRODUCT_CARD_NAME_PRICE_GAP : 0);
+
+        Rectangle artBounds = null;
         BufferedImage art = cardArtOverride != null
             ? cardArtOverride
             : item.cardArt != null ? item.cardArt : item.icon;
         if (art != null) {
-            int slotX = x + 4;
-            int slotW = w - 8;
-            int slotTop = y + Math.round(h * 0.12f);
-            int labelReservePx = categoryGrid
-                ? labelReserve
-                : Math.max(labelReserve, Math.round(h * 0.10f));
-            int slotBottom = nameBlockBottom - labelReservePx;
+            int slotX;
+            int slotW;
+            int slotTop;
+            int slotBottom;
+            if (categoryGrid) {
+                int nameBlockBottom = y + h - 6;
+                int labelReserve = nameBlockH + 6;
+                slotX = x + 4;
+                slotW = w - 8;
+                slotTop = y + Math.round(h * 0.12f);
+                slotBottom = nameBlockBottom - labelReserve;
+            } else {
+                int innerBottom = y + h - PRODUCT_CARD_INSET_BOTTOM;
+                int labelTop = innerBottom - textBlockH;
+                slotX = x + PRODUCT_CARD_INSET_X;
+                slotW = w - PRODUCT_CARD_INSET_X * 2;
+                slotTop = y + PRODUCT_CARD_INSET_TOP;
+                slotBottom = labelTop - PRODUCT_CARD_ICON_TEXT_GAP;
+            }
             int slotH = Math.max(1, slotBottom - slotTop);
             Rectangle crop = computeContentBounds(art);
             int maxArt = iconCapForCard(slotW, slotH, smoothIconGrowth);
-            Rectangle artBounds = aspectFitCroppedBounds(crop, slotX, slotTop, slotW, slotH, maxArt);
+            artBounds = aspectFitCroppedBounds(crop, slotX, slotTop, slotW, slotH, maxArt);
             if (!categoryGrid) {
                 drawItemArtGoldContour(g, artBounds);
             }
@@ -2226,21 +2244,34 @@ public class ShopScreen {
                 artBounds.width, artBounds.height, true);
         }
 
-        int baseline = nameBlockBottom;
-        for (int i = nameLines.size() - 1; i >= 0; i--) {
-            String line = nameLines.get(i);
-            int lineX = x + (w - nameFm.stringWidth(line)) / 2;
-            drawCategoryLabel(g, line, lineX, baseline, nameColor);
-            baseline -= lineH;
+        if (categoryGrid) {
+            int nameBlockBottom = y + h - 6;
+            int baseline = nameBlockBottom;
+            for (int i = nameLines.size() - 1; i >= 0; i--) {
+                String line = nameLines.get(i);
+                int lineX = x + (w - nameFm.stringWidth(line)) / 2;
+                drawCategoryLabel(g, line, lineX, baseline, nameColor);
+                baseline -= lineH;
+            }
+        } else {
+            int innerBottom = y + h - PRODUCT_CARD_INSET_BOTTOM;
+            int labelTop = innerBottom - textBlockH;
+            int baseline = labelTop + nameFm.getAscent();
+            for (String line : nameLines) {
+                int lineX = x + (w - nameFm.stringWidth(line)) / 2;
+                drawCategoryLabel(g, line, lineX, baseline, nameColor);
+                baseline += lineH;
+            }
+            if (showPrice) {
+                drawProductCardPrice(g, x, w, priceOverride, labelTop + nameBlockH + PRODUCT_CARD_NAME_PRICE_GAP);
+            }
         }
+    }
 
-        if (!showPrice) {
-            return;
-        }
-
-        String priceLabel = priceOverride;
-        int fontSize = nameFontSize;
-        g.setFont(cardFont(Math.max(7, fontSize)));
+    private void drawProductCardPrice(Graphics2D g, int cardX, int cardW, String priceLabel,
+                                      int priceTopY) {
+        drawCardText(g);
+        g.setFont(GameFonts.get().uiPlain(9));
         FontMetrics priceFm = g.getFontMetrics();
         BufferedImage coin = assets.crownIconSmall != null ? assets.crownIconSmall : assets.crownIconScaled;
         int priceW = priceFm.stringWidth(priceLabel);
@@ -2248,14 +2279,14 @@ public class ShopScreen {
         if (coin != null) {
             priceW += coin.getWidth() + 2;
         }
-        int priceRowY = nameBlockBottom + nameFm.getDescent() + 3;
-        int priceX = x + (w - priceW) / 2;
+        int priceRowY = (priceTopY + priceFm.getAscent()) & ~1;
+        int priceX = cardX + (cardW - priceW) / 2;
         if (coin != null) {
-            int coinY = priceRowY - coinH + 1;
+            int coinY = (priceRowY - coinH + 1) & ~1;
             g.drawImage(coin, priceX, coinY, null);
             priceX += coin.getWidth() + 2;
         }
-        drawOutlinedText(g, priceLabel, priceX, priceRowY, new Color(255, 220, 90));
+        drawCategoryLabel(g, priceLabel, priceX, priceRowY, new Color(255, 232, 120));
     }
 
     /** Мягкое золотое свечение под иконкой — как при покупке, но компактнее. */
