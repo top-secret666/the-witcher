@@ -1827,13 +1827,17 @@ public class ShopScreen {
         g.setComposite(layer);
     }
 
+    private static final int CATALOG_ROW_ICON = 16;
+
     private BufferedImage chestArtForEntry(ShopCatalogEntry entry, ShopItem categoryItem) {
         if (categoryItem == null || categoryItem.category != ShopCategory.CHEST) {
             return null;
         }
-        BufferedImage icon = chestIcons.iconForEntry(entry);
-        if (icon != null) {
-            return icon;
+        if (entry != null && entry.armour != null && chestIcons.hasMappedIcon(entry.armour.getName())) {
+            BufferedImage icon = chestIcons.iconForEntry(entry);
+            if (icon != null) {
+                return icon;
+            }
         }
         return categoryItem.cardArt != null ? categoryItem.cardArt : categoryItem.icon;
     }
@@ -1951,21 +1955,30 @@ public class ShopScreen {
 
             row.bounds.setBounds(interactive ? x : 0, interactive ? y : 0, assets.rowW, assets.rowH);
 
-            int textX = x + 12;
-            if (isChestCategoryOpen()) {
-                BufferedImage rowIcon = chestIcons.iconForEntry(row);
+            int labelX = x + 10;
+            int labelRightPad = 50;
+            if (isChestCategoryOpen() && row.armour != null
+                && chestIcons.hasMappedIcon(row.armour.getName())) {
+                BufferedImage rowIcon = chestIcons.iconForEntry(row, CATALOG_ROW_ICON);
                 if (rowIcon != null) {
-                    int iconSz = 18;
-                    int iconY = y + (assets.rowH - iconSz) / 2;
-                    g.drawImage(rowIcon, x + 4, iconY, iconSz, iconSz, null);
-                    textX = x + 4 + iconSz + 4;
+                    int iconX = x + 6;
+                    int iconY = y + (assets.rowH - CATALOG_ROW_ICON) / 2;
+                    Object prevInterp = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
+                    g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+                        RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+                    g.drawImage(rowIcon, iconX, iconY, CATALOG_ROW_ICON, CATALOG_ROW_ICON, null);
+                    if (prevInterp != null) {
+                        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, prevInterp);
+                    }
+                    labelX = iconX + CATALOG_ROW_ICON + 8;
+                    labelRightPad = 46;
                 }
             }
 
             FontMetrics fm = g.getFontMetrics();
-            String label = truncateToWidth(row.name, fm, assets.rowW - (textX - x) - 46);
+            String label = truncateToWidth(row.name, fm, assets.rowW - (labelX - x) - labelRightPad);
             int textY = y + (assets.rowH + fm.getAscent()) / 2 - 1;
-            drawOutlinedText(g, label, textX, textY, new Color(235, 215, 155));
+            drawOutlinedText(g, label, labelX, textY, new Color(235, 215, 155));
 
             String price = row.priceLabel();
             int priceW = fm.stringWidth(price);

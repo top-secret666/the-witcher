@@ -14,6 +14,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -56,13 +57,32 @@ public final class ChestIconRegistry {
     }
 
     public BufferedImage iconForEntry(ShopCatalogEntry entry) {
+        return iconForEntry(entry, iconSize);
+    }
+
+    public BufferedImage iconForEntry(ShopCatalogEntry entry, int size) {
         if (entry == null || entry.armour == null) {
             return null;
         }
-        return iconFor(entry.armour);
+        return iconFor(entry.armour, size);
+    }
+
+    public BufferedImage iconFor(Armour armour, int size) {
+        if (!(armour instanceof Chestpiece)) {
+            return null;
+        }
+        return iconForName(armour.getName(), size);
+    }
+
+    public boolean hasMappedIcon(String armourName) {
+        return armourName != null && !armourName.isBlank() && resolveFile(armourName) != null;
     }
 
     public BufferedImage iconForName(String armourName) {
+        return iconForName(armourName, iconSize);
+    }
+
+    public BufferedImage iconForName(String armourName, int size) {
         if (armourName == null || armourName.isBlank()) {
             return null;
         }
@@ -70,7 +90,8 @@ public final class ChestIconRegistry {
         if (file == null) {
             return null;
         }
-        return cache.computeIfAbsent(file, this::loadIcon);
+        String cacheKey = file + "@" + size;
+        return cache.computeIfAbsent(cacheKey, key -> loadIcon(file, size));
     }
 
     private String resolveFile(String armourName) {
@@ -83,20 +104,20 @@ public final class ChestIconRegistry {
         return null;
     }
 
-    private BufferedImage loadIcon(String fileName) {
+    private BufferedImage loadIcon(String fileName, int size) {
         BufferedImage baked = loadRaw(BAKED + fileName);
         if (baked != null) {
-            if (baked.getWidth() == iconSize && baked.getHeight() == iconSize) {
+            if (baked.getWidth() == size && baked.getHeight() == size) {
                 return baked;
             }
-            return PixelScaler.crispScale(baked, iconSize, iconSize);
+            return PixelScaler.crispScale(baked, size, size);
         }
         BufferedImage src = loadRaw(SRC + fileName);
         if (src == null) {
             return null;
         }
         Rectangle box = ShopScreen.computeContentBoundsPublic(src);
-        return PixelScaler.crispScaleRegion(src, box, iconSize, iconSize);
+        return PixelScaler.crispScaleRegion(src, box, size, size);
     }
 
     private static BufferedImage loadRaw(String path) {
@@ -123,6 +144,7 @@ public final class ChestIconRegistry {
                 out.add(new Rule(key.toLowerCase(Locale.ROOT), file));
             }
         }
+        out.sort(Comparator.comparingInt((Rule rule) -> rule.keyword.length()).reversed());
         return out;
     }
 }
