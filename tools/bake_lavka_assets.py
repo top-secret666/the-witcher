@@ -7,6 +7,11 @@
 
 Запуск из корня проекта:
     python tools/bake_lavka_assets.py
+
+Кадры анимации сумки (1x/ui/inventory_bag_open_00..09) правятся вручную — скрипт их
+не перезаписывает. Чтобы снова нарезать из sheet (обычно не нужно):
+    set REBAKE_BAG_FRAMES=1
+    python tools/bake_lavka_assets.py
 """
 
 from __future__ import annotations
@@ -200,7 +205,7 @@ def main() -> None:
         print(f"  OK {rel} (left end cap): -> 14x16")
 
     sheet_path = SRC / "ui/inventory_bag_open_sheet.png"
-    if sheet_path.is_file():
+    if os.environ.get("REBAKE_BAG_FRAMES") == "1" and sheet_path.is_file():
         sheet = Image.open(sheet_path)
         cols, rows = 5, 2
         fw, fh = sheet.width // cols, sheet.height // rows
@@ -217,6 +222,8 @@ def main() -> None:
                 manifest.append({"output": f"1x/{rel}", "size": [40, 40]})
                 print(f"  OK {rel}: sheet frame {idx + 1}/10 -> 40x40")
                 idx += 1
+    elif sheet_path.is_file():
+        print("  SKIP ui/inventory_bag_open_00..09 (hand-edited; set REBAKE_BAG_FRAMES=1 to rebuild)")
 
     for rel, w, h, opts in jobs:
         src_rel = opts.get("src", rel)
