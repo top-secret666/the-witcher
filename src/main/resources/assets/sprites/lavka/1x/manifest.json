@@ -166,7 +166,7 @@
         32,
         32
       ],
-      "bytes": 2296
+      "bytes": 2526
     },
     {
       "output": "1x/icons/icon_weapon.png",
@@ -182,7 +182,7 @@
         32,
         32
       ],
-      "bytes": 3116
+      "bytes": 2985
     },
     {
       "output": "1x/icons/icon_inventory_bag.png",
@@ -199,6 +199,22 @@
         32
       ],
       "bytes": 2694
+    },
+    {
+      "output": "1x/icons/items/assault_gauntlets.png",
+      "size": [
+        32,
+        32
+      ],
+      "bytes": 2729
+    },
+    {
+      "output": "1x/icons/items/Beauclair_shoes.png",
+      "size": [
+        32,
+        32
+      ],
+      "bytes": 2574
     },
     {
       "output": "1x/icons/items/bounty_hunter's_gambeson.png",
@@ -329,6 +345,14 @@
       "bytes": 2815
     },
     {
+      "output": "1x/icons/items/elegant_beauclair_boots.png",
+      "size": [
+        32,
+        32
+      ],
+      "bytes": 2299
+    },
+    {
       "output": "1x/icons/items/elegant_beauclair_trousers.png",
       "size": [
         32,
@@ -351,6 +375,22 @@
         32
       ],
       "bytes": 2553
+    },
+    {
+      "output": "1x/icons/items/hunting_boots.png",
+      "size": [
+        32,
+        32
+      ],
+      "bytes": 2412
+    },
+    {
+      "output": "1x/icons/items/hunting_gauntlets.png",
+      "size": [
+        32,
+        32
+      ],
+      "bytes": 2405
     },
     {
       "output": "1x/icons/items/hunting_trousers.png",
@@ -383,6 +423,14 @@
         32
       ],
       "bytes": 2699
+    },
+    {
+      "output": "1x/icons/items/mahakan_gloves.png",
+      "size": [
+        32,
+        32
+      ],
+      "bytes": 2046
     },
     {
       "output": "1x/icons/items/nilfgaardian_trousers.png",
@@ -425,6 +473,14 @@
       "bytes": 2455
     },
     {
+      "output": "1x/icons/items/skellig_gloves.png",
+      "size": [
+        32,
+        32
+      ],
+      "bytes": 2715
+    },
+    {
       "output": "1x/icons/items/skellige_armor.png",
       "size": [
         32,
@@ -441,12 +497,36 @@
       "bytes": 2570
     },
     {
+      "output": "1x/icons/items/skellige_festive_slippers.png",
+      "size": [
+        32,
+        32
+      ],
+      "bytes": 2222
+    },
+    {
       "output": "1x/icons/items/spikeroog_aketon.png",
       "size": [
         32,
         32
       ],
       "bytes": 3039
+    },
+    {
+      "output": "1x/icons/items/the_black_vulture_potion.png",
+      "size": [
+        32,
+        32
+      ],
+      "bytes": 2297
+    },
+    {
+      "output": "1x/icons/items/the_cat's_elixir.png",
+      "size": [
+        32,
+        32
+      ],
+      "bytes": 2292
     },
     {
       "output": "1x/icons/items/thyssen_armor.png",
@@ -463,6 +543,22 @@
         32
       ],
       "bytes": 2936
+    },
+    {
+      "output": "1x/icons/items/сaptain's_boots.png",
+      "size": [
+        32,
+        32
+      ],
+      "bytes": 2245
+    },
+    {
+      "output": "1x/icons/items/сavalry_gauntlets.png",
+      "size": [
+        32,
+        32
+      ],
+      "bytes": 2397
     },
     {
       "output": "1x/geralt_portrait_shop.png",
