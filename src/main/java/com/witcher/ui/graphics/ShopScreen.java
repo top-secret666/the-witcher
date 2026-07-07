@@ -1822,8 +1822,7 @@ public class ShopScreen {
         }
 
         item.bounds.setBounds(cat.cardX, cat.cardY, cat.cardW, cat.cardH);
-        boolean cardGrowing = state == ShopState.CATEGORY_OPENING || state == ShopState.CATEGORY_CLOSING;
-        drawFlippingCategoryCard(g, item, cat.cardX, cat.cardY, cat.cardW, cat.cardH, cardGrowing);
+        drawFlippingCategoryCard(g, item, cat.cardX, cat.cardY, cat.cardW, cat.cardH, true);
 
         if (cat.detailPanelAlpha > 0.02f) {
             Rectangle panel = layout.detailListPanelSlot(assets.detailPanelW, assets.detailPanelH);
@@ -1877,7 +1876,9 @@ public class ShopScreen {
         String priceForCard = itemFace ? selectedCatalogPrice() : null;
         BufferedImage cardArt = itemFace ? itemArtForEntry(statEntry, item) : null;
         String nameOverride = itemFace && statEntry != null ? statEntry.name : null;
-        BufferedImage frame = itemFace ? assets.cardFrontScaled : assets.cardSelectedScaled;
+        BufferedImage frame = itemFace
+            ? (assets.cardBackScaled != null ? assets.cardBackScaled : assets.cardFrontScaled)
+            : assets.cardSelectedScaled;
 
         drawItemCard(g, item, x, y, w, h, selectedIndex, true, false, 1f,
             priceForCard, smoothIconGrowth, cardArt, nameOverride, frame);
@@ -2186,10 +2187,12 @@ public class ShopScreen {
             int slotH = Math.max(1, slotBottom - slotTop);
             Rectangle crop = computeContentBounds(art);
             int maxArt = iconCapForCard(slotW, slotH, smoothIconGrowth);
-            Rectangle artBounds = drawAspectFitCroppedSprite(g, art, crop, slotX, slotTop, slotW, slotH, true, maxArt);
+            Rectangle artBounds = aspectFitCroppedBounds(crop, slotX, slotTop, slotW, slotH, maxArt);
             if (!categoryGrid) {
-                drawItemArtGoldContour(g, artBounds);
+                drawItemArtGoldContour(g, art, crop, artBounds);
             }
+            drawCroppedScaledSprite(g, art, crop, artBounds.x, artBounds.y,
+                artBounds.width, artBounds.height, true);
         }
 
         Color nameColor = item.kind == ItemKind.SET_CATALOG
@@ -2228,20 +2231,67 @@ public class ShopScreen {
         drawOutlinedText(g, priceLabel, priceX, priceRowY, new Color(255, 220, 90));
     }
 
-    /** Золотой контур вокруг иконки товара — не сливается с тёмным фоном карточки. */
-    private static void drawItemArtGoldContour(Graphics2D g, Rectangle artBounds) {
-        if (artBounds == null || artBounds.width <= 0 || artBounds.height <= 0) {
+    /** Золотой контур по силуэту иконки — рисуется под спрайтом, снаружи пикселей. */
+    private static void drawItemArtGoldContour(Graphics2D g, BufferedImage img, Rectangle crop,
+                                               Rectangle drawBounds) {
+        if (img == null || crop == null || drawBounds == null
+            || crop.width <= 0 || crop.height <= 0
+            || drawBounds.width <= 0 || drawBounds.height <= 0) {
             return;
         }
-        int pad = 3;
-        int rx = artBounds.x - pad;
-        int ry = artBounds.y - pad;
-        int rw = artBounds.width + pad * 2;
-        int rh = artBounds.height + pad * 2;
-        g.setColor(new Color(140, 105, 45, 210));
-        g.drawRoundRect(rx, ry, rw, rh, 5, 5);
-        g.setColor(new Color(255, 210, 90, 90));
-        g.drawRoundRect(rx + 1, ry + 1, rw - 2, rh - 2, 4, 4);
+
+        double scaleX = (double) drawBounds.width / crop.width;
+        double scaleY = (double) drawBounds.height / crop.height;
+        int tileW = Math.max(1, (int) Math.ceil(scaleX));
+        int tileH = Math.max(1, (int) Math.ceil(scaleY));
+
+        Object prevAa = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+
+        int cropRight = crop.x + crop.width;
+        int cropBottom = crop.y + crop.height;
+        int[][] dirs = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+        for (int sy = crop.y; sy < cropBottom; sy++) {
+            for (int sx = crop.x; sx < cropRight; sx++) {
+                if (!isVisibleIconPixel(img, sx, sy)) {
+                    continue;
+                }
+                for (int[] d : dirs) {
+                    if (isVisibleIconPixel(img, sx + d[0], sy + d[1])) {
+                        continue;
+                    }
+                    int dx = drawBounds.x + (int) Math.round((sx + d[0] - crop.x) * scaleX);
+                    int dy = drawBounds.y + (int) Math.round((sy + d[1] - crop.y) * scaleY);
+                    g.setColor(new Color(120, 85, 30, 235));
+                    g.fillRect(dx, dy, tileW, tileH);
+                    g.setColor(new Color(255, 215, 95, 210));
+                    if (tileW == 1 && tileH == 1) {
+                        g.fillRect(dx, dy, 1, 1);
+                    } else {
+                        g.drawRect(dx, dy, Math.max(0, tileW - 1), Math.max(0, tileH - 1));
+                    }
+                }
+            }
+        }
+
+        if (prevAa != null) {
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, prevAa);
+        }
+    }
+
+    private static boolean isVisibleIconPixel(BufferedImage img, int x, int y) {
+        if (x < 0 || y < 0 || x >= img.getWidth() || y >= img.getHeight()) {
+            return false;
+        }
+        int argb = img.getRGB(x, y);
+        int a = (argb >>> 24) & 0xff;
+        if (a <= 20) {
+            return false;
+        }
+        int r = (argb >>> 16) & 0xff;
+        int gr = (argb >>> 8) & 0xff;
+        int b = argb & 0xff;
+        return !(r < 24 && gr < 24 && b < 24);
     }
 
     /** Иконка растёт вместе с слотом; при анимации — без скачка 32→96. */
@@ -2350,10 +2400,9 @@ public class ShopScreen {
         return new Rectangle(drawX, drawY, drawW, drawH);
     }
 
-    private Rectangle drawAspectFitCroppedSprite(Graphics2D g, BufferedImage img, Rectangle crop,
-                                                 int x, int y, int w, int h, boolean pixelArt,
-                                                 int maxPixelSize) {
-        if (img == null || crop == null || crop.width <= 0 || crop.height <= 0 || w <= 0 || h <= 0) {
+    private static Rectangle aspectFitCroppedBounds(Rectangle crop, int x, int y, int w, int h,
+                                                    int maxPixelSize) {
+        if (crop == null || crop.width <= 0 || crop.height <= 0 || w <= 0 || h <= 0) {
             return new Rectangle(x, y, w, h);
         }
         float srcAspect = (float) crop.width / crop.height;
@@ -2367,7 +2416,7 @@ public class ShopScreen {
             drawH = h;
             drawW = Math.max(1, Math.round(h * srcAspect));
         }
-        if (pixelArt && maxPixelSize > 0) {
+        if (maxPixelSize > 0) {
             int cap = Math.min(maxPixelSize, Math.min(w, h));
             if (drawW > cap || drawH > cap) {
                 if (drawW >= drawH) {
@@ -2381,8 +2430,18 @@ public class ShopScreen {
         }
         int drawX = x + (w - drawW) / 2;
         int drawY = y + (h - drawH) / 2;
-        drawCroppedScaledSprite(g, img, crop, drawX, drawY, drawW, drawH, pixelArt);
         return new Rectangle(drawX, drawY, drawW, drawH);
+    }
+
+    private Rectangle drawAspectFitCroppedSprite(Graphics2D g, BufferedImage img, Rectangle crop,
+                                                 int x, int y, int w, int h, boolean pixelArt,
+                                                 int maxPixelSize) {
+        if (img == null || crop == null || crop.width <= 0 || crop.height <= 0 || w <= 0 || h <= 0) {
+            return new Rectangle(x, y, w, h);
+        }
+        Rectangle bounds = aspectFitCroppedBounds(crop, x, y, w, h, pixelArt ? maxPixelSize : 0);
+        drawCroppedScaledSprite(g, img, crop, bounds.x, bounds.y, bounds.width, bounds.height, pixelArt);
+        return bounds;
     }
 
     /** Отрисовка иконки без размытия — nearest-neighbor, целые координаты. */
