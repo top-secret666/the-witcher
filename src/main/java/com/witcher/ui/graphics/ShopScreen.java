@@ -330,16 +330,11 @@ public class ShopScreen {
     }
 
     private int catalogListBottom(int panelY) {
-        return categoryBuyButtonY(panelY) - 6;
+        return panelY + assets.detailPanelH - assets.btnH - 10;
     }
 
     private int categoryBuyButtonY(int panelY) {
-        return panelY + assets.detailPanelH - assets.btnH - categoryLegendReserve() - 8;
-    }
-
-    /** Место под расшифровку статов под кнопкой «Купить». */
-    private static int categoryLegendReserve() {
-        return 26;
+        return panelY + assets.detailPanelH - assets.btnH - 8;
     }
 
     private int maxCatalogScroll(int panelY) {
@@ -1248,7 +1243,7 @@ public class ShopScreen {
         Rectangle legendBox = ShopStatGlyphs.legendBounds(fm);
         int btnY = categoryBuyButtonY(panelY);
         int legendX = panelX + (assets.detailPanelW - legendBox.width) / 2;
-        int legendY = btnY + assets.btnH + 4;
+        int legendY = btnY + assets.btnH + 3;
         ShopStatGlyphs.drawLegend(g, legendX, legendY, fm, alpha);
         g.setComposite(prev);
     }
