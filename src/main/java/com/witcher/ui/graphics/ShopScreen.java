@@ -1,7 +1,7 @@
 package main.java.com.witcher.ui.graphics;
 
 import main.java.com.witcher.ui.shop.DukeLines;
-import main.java.com.witcher.ui.shop.ChestIconRegistry;
+import main.java.com.witcher.ui.shop.ArmourIconRegistry;
 import main.java.com.witcher.ui.shop.ShopCatalogEntry;
 import main.java.com.witcher.ui.shop.ShopCategory;
 import main.java.com.witcher.model.armour.Armour;
@@ -206,7 +206,7 @@ public class ShopScreen {
 
     private final ShopModel model;
     private final ShopAssetCache assets = ShopAssetCache.get();
-    private final ChestIconRegistry chestIcons;
+    private final ArmourIconRegistry armourIcons;
 
     private final List<ShopItem> items = new ArrayList<>();
     private final List<ShopCatalogEntry> catalogEntries = new ArrayList<>();
@@ -263,7 +263,7 @@ public class ShopScreen {
 
     public ShopScreen(ShopModel model) {
         this.model = model;
-        this.chestIcons = ChestIconRegistry.get(assets.cardArtSize);
+        this.armourIcons = ArmourIconRegistry.get(assets.cardArtSize);
         initShowcaseFromModel();
         currentDialog = WELCOME_LINE;
     }
@@ -652,7 +652,7 @@ public class ShopScreen {
         purchaseRevealKeepRow = selectedRowIndex;
         if (selectedIndex >= 0 && selectedIndex < items.size()) {
             ShopItem cat = items.get(selectedIndex);
-            purchaseRevealIcon = chestIcons.iconForEntry(entry);
+            purchaseRevealIcon = armourIcons.iconForEntry(entry);
             if (purchaseRevealIcon == null) {
                 purchaseRevealIcon = cat.cardArt != null ? cat.cardArt : cat.icon;
             }
@@ -1354,6 +1354,12 @@ public class ShopScreen {
             g.drawRoundRect(slotX, sy, slotSize, slotSize, 4, 4);
             BufferedImage icon = slot.iconIndex >= 0 && slot.iconIndex < assets.itemIcons.length
                 ? assets.itemIcons[slot.iconIndex] : null;
+            if (equipped != null) {
+                BufferedImage armourArt = armourIcons.iconFor(equipped, 30);
+                if (armourArt != null) {
+                    icon = armourArt;
+                }
+            }
             if (equipped != null && icon != null) {
                 int iconSz = 30;
                 g.drawImage(icon, slotX + (slotSize - iconSz) / 2, sy + 7, iconSz, iconSz, null);
@@ -1754,7 +1760,7 @@ public class ShopScreen {
         boolean cardGrowing = state == ShopState.CATEGORY_OPENING || state == ShopState.CATEGORY_CLOSING;
         String priceForCard = state == ShopState.CATEGORY ? selectedCatalogPrice() : null;
         ShopCatalogEntry statEntry = selectedCatalogEntry();
-        BufferedImage cardArt = chestArtForEntry(statEntry, item);
+        BufferedImage cardArt = itemArtForEntry(statEntry, item);
         drawItemCard(g, item, cat.cardX, cat.cardY, cat.cardW, cat.cardH,
             selectedIndex, true, false, 1f, priceForCard, cardGrowing, cardArt,
             statEntry != null ? statEntry.name : null);
@@ -1775,12 +1781,12 @@ public class ShopScreen {
         g.setComposite(layer);
     }
 
-    private BufferedImage chestArtForEntry(ShopCatalogEntry entry, ShopItem categoryItem) {
-        if (categoryItem == null || categoryItem.category != ShopCategory.CHEST) {
+    private BufferedImage itemArtForEntry(ShopCatalogEntry entry, ShopItem categoryItem) {
+        if (categoryItem == null || categoryItem.kind != ItemKind.PIECE) {
             return null;
         }
         if (entry != null && entry.armour != null) {
-            BufferedImage icon = chestIcons.iconForEntry(entry);
+            BufferedImage icon = armourIcons.iconForEntry(entry);
             if (icon != null) {
                 return icon;
             }

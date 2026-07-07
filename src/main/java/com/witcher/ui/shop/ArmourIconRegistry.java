@@ -1,7 +1,6 @@
 package main.java.com.witcher.ui.shop;
 
 import main.java.com.witcher.model.armour.Armour;
-import main.java.com.witcher.model.armour.Chestpiece;
 import main.java.com.witcher.ui.graphics.PixelScaler;
 import main.java.com.witcher.ui.graphics.ShopScreen;
 import main.java.com.witcher.ui.graphics.Sprite;
@@ -21,14 +20,14 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-/** Иконки нагрудников по ключевым словам в названии доспеха. */
-public final class ChestIconRegistry {
+/** Иконки доспехов по ключевым словам в названии. */
+public final class ArmourIconRegistry {
 
-    private static final String MAP_PATH = "/chest_icon_map.properties";
+    private static final String MAP_PATH = "/armor_icon_map.properties";
     private static final String BAKED = "/assets/sprites/lavka/1x/icons/items/";
     private static final String SRC = "/assets/sprites/lavka/icons/items/";
 
-    private static ChestIconRegistry instance;
+    private static ArmourIconRegistry instance;
 
     private final int iconSize;
     private final List<Rule> rules;
@@ -37,7 +36,7 @@ public final class ChestIconRegistry {
     private record Rule(String keyword, String fileName) {
     }
 
-    private ChestIconRegistry(int iconSize) {
+    private ArmourIconRegistry(int iconSize) {
         this.iconSize = iconSize;
         this.rules = loadRules();
         preloadDistinctIcons();
@@ -54,18 +53,18 @@ public final class ChestIconRegistry {
                 loaded++;
             }
         }
-        System.out.println("Chest icons: " + loaded + "/" + files.size() + " textures ready");
+        System.out.println("Armour icons: " + loaded + "/" + files.size() + " textures ready");
     }
 
-    public static ChestIconRegistry get(int iconSize) {
+    public static ArmourIconRegistry get(int iconSize) {
         if (instance == null || instance.iconSize != iconSize) {
-            instance = new ChestIconRegistry(iconSize);
+            instance = new ArmourIconRegistry(iconSize);
         }
         return instance;
     }
 
     public BufferedImage iconFor(Armour armour) {
-        if (!(armour instanceof Chestpiece)) {
+        if (armour == null) {
             return null;
         }
         return iconForName(armour.getName());
@@ -83,7 +82,7 @@ public final class ChestIconRegistry {
     }
 
     public BufferedImage iconFor(Armour armour, int size) {
-        if (!(armour instanceof Chestpiece)) {
+        if (armour == null) {
             return null;
         }
         return iconForName(armour.getName(), size);
@@ -129,7 +128,7 @@ public final class ChestIconRegistry {
         }
         BufferedImage src = loadRaw(SRC + fileName);
         if (src == null) {
-            System.err.println("Chest icons: missing file " + fileName);
+            System.err.println("Armour icons: missing file " + fileName);
             return null;
         }
         Rectangle box = ShopScreen.computeContentBoundsPublic(src);
@@ -143,9 +142,9 @@ public final class ChestIconRegistry {
 
     private static List<Rule> loadRules() {
         List<Rule> out = new ArrayList<>();
-        try (InputStream in = ChestIconRegistry.class.getResourceAsStream(MAP_PATH)) {
+        try (InputStream in = ArmourIconRegistry.class.getResourceAsStream(MAP_PATH)) {
             if (in == null) {
-                System.err.println("Chest icons: map not found at " + MAP_PATH);
+                System.err.println("Armour icons: map not found at " + MAP_PATH);
                 return out;
             }
             try (BufferedReader reader = new BufferedReader(
@@ -168,10 +167,10 @@ public final class ChestIconRegistry {
                 }
             }
         } catch (IOException e) {
-            throw new RuntimeException("Failed to load chest icon map", e);
+            throw new RuntimeException("Failed to load armour icon map", e);
         }
         out.sort(Comparator.comparingInt((Rule rule) -> rule.keyword.length()).reversed());
-        System.out.println("Chest icons: " + out.size() + " name rules loaded");
+        System.out.println("Armour icons: " + out.size() + " name rules loaded");
         return out;
     }
 }

@@ -263,6 +263,30 @@
       "bytes": 2720
     },
     {
+      "output": "1x/icons/items/angrenian_cuirass.png",
+      "size": [
+        32,
+        32
+      ],
+      "bytes": 2694
+    },
+    {
+      "output": "1x/icons/items/bounty_hunter's_gambeson.png",
+      "size": [
+        32,
+        32
+      ],
+      "bytes": 2969
+    },
+    {
+      "output": "1x/icons/items/cavalry_trousers.png",
+      "size": [
+        32,
+        32
+      ],
+      "bytes": 2675
+    },
+    {
       "output": "1x/icons/items/chest_ban_ard.png",
       "size": [
         32,
@@ -357,6 +381,110 @@
         32
       ],
       "bytes": 2784
+    },
+    {
+      "output": "1x/icons/items/cidarian_cavalry_armor.png",
+      "size": [
+        32,
+        32
+      ],
+      "bytes": 2568
+    },
+    {
+      "output": "1x/icons/items/covirsrca_armor.png",
+      "size": [
+        32,
+        32
+      ],
+      "bytes": 2815
+    },
+    {
+      "output": "1x/icons/items/elegant_beauclair_trousers.png",
+      "size": [
+        32,
+        32
+      ],
+      "bytes": 2450
+    },
+    {
+      "output": "1x/icons/items/eternal_fire_executioner's_armor.png",
+      "size": [
+        32,
+        32
+      ],
+      "bytes": 2866
+    },
+    {
+      "output": "1x/icons/items/hunting_trousers.png",
+      "size": [
+        32,
+        32
+      ],
+      "bytes": 2500
+    },
+    {
+      "output": "1x/icons/items/lyrian_hardened_leather_trousers.png",
+      "size": [
+        32,
+        32
+      ],
+      "bytes": 2678
+    },
+    {
+      "output": "1x/icons/items/mahakaman_heavy_armor.png",
+      "size": [
+        32,
+        32
+      ],
+      "bytes": 2940
+    },
+    {
+      "output": "1x/icons/items/mahakaman_trousers.png",
+      "size": [
+        32,
+        32
+      ],
+      "bytes": 2699
+    },
+    {
+      "output": "1x/icons/items/nilfgaardian_trousers.png",
+      "size": [
+        32,
+        32
+      ],
+      "bytes": 2707
+    },
+    {
+      "output": "1x/icons/items/prisoner's_trousers.png",
+      "size": [
+        32,
+        32
+      ],
+      "bytes": 2848
+    },
+    {
+      "output": "1x/icons/items/skellige_armor.png",
+      "size": [
+        32,
+        32
+      ],
+      "bytes": 3020
+    },
+    {
+      "output": "1x/icons/items/thyssen_armor.png",
+      "size": [
+        32,
+        32
+      ],
+      "bytes": 2936
+    },
+    {
+      "output": "1x/icons/items/witch_hunter's_armor.png",
+      "size": [
+        32,
+        32
+      ],
+      "bytes": 2936
     },
     {
       "output": "1x/geralt_portrait_shop.png",
