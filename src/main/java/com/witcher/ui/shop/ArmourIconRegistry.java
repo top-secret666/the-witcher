@@ -19,6 +19,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 /** Иконки доспехов по ключевым словам в названии. */
 public final class ArmourIconRegistry {
@@ -29,9 +30,12 @@ public final class ArmourIconRegistry {
 
     private static ArmourIconRegistry instance;
 
+    private static final BufferedImage MISSING_ICON = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
+
     private final int iconSize;
     private final List<Rule> rules;
     private final Map<String, BufferedImage> cache = new HashMap<>();
+    private final Set<String> loggedMissing = new HashSet<>();
 
     private record Rule(String keyword, String fileName) {
     }
@@ -119,7 +123,13 @@ public final class ArmourIconRegistry {
             return null;
         }
         String cacheKey = file + "@" + size;
-        return cache.computeIfAbsent(cacheKey, key -> loadIcon(file, size));
+        BufferedImage cached = cache.get(cacheKey);
+        if (cached != null) {
+            return cached == MISSING_ICON ? null : cached;
+        }
+        BufferedImage loaded = loadIcon(file, size);
+        cache.put(cacheKey, loaded != null ? loaded : MISSING_ICON);
+        return loaded;
     }
 
     private static boolean matchesCategory(String fileName, ShopCategory category) {
@@ -149,7 +159,8 @@ public final class ArmourIconRegistry {
 
     private static boolean isSetIcon(String fileName) {
         String lower = fileName.toLowerCase(Locale.ROOT);
-        return lower.contains("school") || lower.contains("szkola");
+        return lower.contains("school") || lower.contains("szkola") || lower.contains("szkoła")
+            || lower.contains("cechu");
     }
 
     private static boolean isPotionIcon(String fileName) {
@@ -202,7 +213,9 @@ public final class ArmourIconRegistry {
         }
         BufferedImage src = loadRaw(SRC + fileName);
         if (src == null) {
-            System.err.println("Armour icons: missing file " + fileName);
+            if (loggedMissing.add(fileName)) {
+                System.err.println("Armour icons: missing file " + fileName);
+            }
             return null;
         }
         Rectangle box = ShopScreen.computeContentBoundsPublic(src);
