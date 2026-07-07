@@ -2148,7 +2148,10 @@ public class ShopScreen {
             int slotH = Math.max(1, slotBottom - slotTop);
             Rectangle crop = computeContentBounds(art);
             int maxArt = iconCapForCard(slotW, slotH, smoothIconGrowth);
-            drawAspectFitCroppedSprite(g, art, crop, slotX, slotTop, slotW, slotH, true, maxArt);
+            Rectangle artBounds = drawAspectFitCroppedSprite(g, art, crop, slotX, slotTop, slotW, slotH, true, maxArt);
+            if (!categoryGrid) {
+                drawItemArtGoldContour(g, artBounds);
+            }
         }
 
         Color nameColor = item.kind == ItemKind.SET_CATALOG
@@ -2185,6 +2188,22 @@ public class ShopScreen {
             priceX += coin.getWidth() + 2;
         }
         drawOutlinedText(g, priceLabel, priceX, priceRowY, new Color(255, 220, 90));
+    }
+
+    /** Золотой контур вокруг иконки товара — не сливается с тёмным фоном карточки. */
+    private static void drawItemArtGoldContour(Graphics2D g, Rectangle artBounds) {
+        if (artBounds == null || artBounds.width <= 0 || artBounds.height <= 0) {
+            return;
+        }
+        int pad = 3;
+        int rx = artBounds.x - pad;
+        int ry = artBounds.y - pad;
+        int rw = artBounds.width + pad * 2;
+        int rh = artBounds.height + pad * 2;
+        g.setColor(new Color(140, 105, 45, 210));
+        g.drawRoundRect(rx, ry, rw, rh, 5, 5);
+        g.setColor(new Color(255, 210, 90, 90));
+        g.drawRoundRect(rx + 1, ry + 1, rw - 2, rh - 2, 4, 4);
     }
 
     /** Иконка растёт вместе с слотом; при анимации — без скачка 32→96. */
