@@ -79,10 +79,16 @@ public final class ArmourIconRegistry {
     }
 
     public BufferedImage iconForEntry(ShopCatalogEntry entry, ShopCategory category, int size) {
-        if (entry == null || entry.armour == null) {
+        if (entry == null) {
             return null;
         }
-        return iconFor(entry.armour, category, size);
+        if (entry.armour != null) {
+            return iconFor(entry.armour, category, size);
+        }
+        if (entry.name != null && !entry.name.isBlank()) {
+            return iconForName(entry.name, category, size);
+        }
+        return null;
     }
 
     public BufferedImage iconFor(Armour armour, int size) {
@@ -123,9 +129,37 @@ public final class ArmourIconRegistry {
         return switch (category) {
             case CHEST -> isChestIcon(fileName);
             case LEGS -> isLegsIcon(fileName);
-            case GLOVES, BOOTS -> false;
-            default -> false;
+            case GLOVES -> isGlovesIcon(fileName);
+            case BOOTS -> isBootsIcon(fileName);
+            case SETS -> isSetIcon(fileName);
+            case POTION -> isPotionIcon(fileName);
+            case WEAPON -> isWeaponIcon(fileName);
         };
+    }
+
+    private static boolean isGlovesIcon(String fileName) {
+        String lower = fileName.toLowerCase(Locale.ROOT);
+        return lower.contains("gauntlets") || lower.contains("gloves");
+    }
+
+    private static boolean isBootsIcon(String fileName) {
+        String lower = fileName.toLowerCase(Locale.ROOT);
+        return lower.contains("boots") || lower.contains("shoes") || lower.contains("slippers");
+    }
+
+    private static boolean isSetIcon(String fileName) {
+        String lower = fileName.toLowerCase(Locale.ROOT);
+        return lower.contains("school") || lower.contains("szkola");
+    }
+
+    private static boolean isPotionIcon(String fileName) {
+        String lower = fileName.toLowerCase(Locale.ROOT);
+        return lower.contains("potion") || lower.contains("elixir") || lower.contains("decoction");
+    }
+
+    private static boolean isWeaponIcon(String fileName) {
+        String lower = fileName.toLowerCase(Locale.ROOT);
+        return lower.contains("sword") || lower.contains("crossbow") || lower.contains("laymore");
     }
 
     private static boolean isLegsIcon(String fileName) {
