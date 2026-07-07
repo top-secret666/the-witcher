@@ -1227,7 +1227,8 @@ public class ShopScreen {
         if (selectedIndex < 0 || selectedIndex >= items.size()) {
             return;
         }
-        if (items.get(selectedIndex).kind != ItemKind.PIECE) {
+        ItemKind kind = items.get(selectedIndex).kind;
+        if (kind != ItemKind.PIECE && kind != ItemKind.SET_CATALOG) {
             return;
         }
         if (alpha <= 0.01f) {
