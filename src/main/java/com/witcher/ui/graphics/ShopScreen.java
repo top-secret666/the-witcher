@@ -1827,8 +1827,6 @@ public class ShopScreen {
         g.setComposite(layer);
     }
 
-    private static final int CATALOG_ROW_ICON = 16;
-
     private BufferedImage chestArtForEntry(ShopCatalogEntry entry, ShopItem categoryItem) {
         if (categoryItem == null || categoryItem.category != ShopCategory.CHEST) {
             return null;
@@ -1840,12 +1838,6 @@ public class ShopScreen {
             }
         }
         return categoryItem.cardArt != null ? categoryItem.cardArt : categoryItem.icon;
-    }
-
-    private boolean isChestCategoryOpen() {
-        return selectedIndex >= 0
-            && selectedIndex < items.size()
-            && items.get(selectedIndex).category == ShopCategory.CHEST;
     }
 
     private ShopCatalogEntry selectedCatalogEntry() {
@@ -1955,30 +1947,10 @@ public class ShopScreen {
 
             row.bounds.setBounds(interactive ? x : 0, interactive ? y : 0, assets.rowW, assets.rowH);
 
-            int labelX = x + 10;
-            int labelRightPad = 50;
-            if (isChestCategoryOpen() && row.armour != null
-                && chestIcons.hasMappedIcon(row.armour.getName())) {
-                BufferedImage rowIcon = chestIcons.iconForEntry(row, CATALOG_ROW_ICON);
-                if (rowIcon != null) {
-                    int iconX = x + 6;
-                    int iconY = y + (assets.rowH - CATALOG_ROW_ICON) / 2;
-                    Object prevInterp = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
-                    g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
-                        RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
-                    g.drawImage(rowIcon, iconX, iconY, CATALOG_ROW_ICON, CATALOG_ROW_ICON, null);
-                    if (prevInterp != null) {
-                        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, prevInterp);
-                    }
-                    labelX = iconX + CATALOG_ROW_ICON + 8;
-                    labelRightPad = 46;
-                }
-            }
-
             FontMetrics fm = g.getFontMetrics();
-            String label = truncateToWidth(row.name, fm, assets.rowW - (labelX - x) - labelRightPad);
+            String label = truncateToWidth(row.name, fm, assets.rowW - 58);
             int textY = y + (assets.rowH + fm.getAscent()) / 2 - 1;
-            drawOutlinedText(g, label, labelX, textY, new Color(235, 215, 155));
+            drawOutlinedText(g, label, x + 12, textY, new Color(235, 215, 155));
 
             String price = row.priceLabel();
             int priceW = fm.stringWidth(price);
