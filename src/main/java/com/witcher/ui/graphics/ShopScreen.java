@@ -36,7 +36,6 @@ public class ShopScreen {
     /** ~3 с при 30 FPS — появление витрины. */
     private static final int REVEAL_DURATION_TICKS = 84;
     private static final int CATEGORY_OPEN_DURATION_TICKS = 50;
-    private static final int CARD_FLIP_TICKS = 12;
     /** Сцена кошелька: появление → полёт в сумку → закрытие → счётчик. */
     private static final int WALLET_APPEAR_TICKS = 30;
     private static final int WALLET_FLY_TICKS = 40;
@@ -61,9 +60,6 @@ public class ShopScreen {
     private static final int INVENTORY_POUCH_ICON = 32;
     private static final int INVENTORY_POUCH_LARGE = 96;
     private static final int EQUIP_MARGIN = 4;
-    /** ~1 мин при 30 FPS — оборот сам возвращается на лицо, если игрок AFK. */
-    private static final int CARD_FLIP_IDLE_TICKS = 30 * 60;
-
     private static final int GRID_COLS = 5;
     private static final int TOP_ROW_COLS = 5;
     private static final int BOTTOM_ROW_COLS = 2;
@@ -255,9 +251,6 @@ public class ShopScreen {
     private final Rectangle categoryBackBounds = new Rectangle();
     private boolean categoryBackHovered = false;
     private int catalogScrollOffset = 0;
-    private float cardFlipT = 0f;
-    private int cardFlipTarget = 0;
-    private int cardFlipIdleTicks = 0;
     private boolean exitRequested = false;
 
     private static final String WELCOME_LINE = DukeLines.WELCOME;
@@ -317,9 +310,6 @@ public class ShopScreen {
         catalogEntries.clear();
         hoveredRowIndex = -1;
         catalogScrollOffset = 0;
-        cardFlipT = 0f;
-        cardFlipTarget = 0;
-        cardFlipIdleTicks = 0;
         catalogEntries.addAll(model.getCatalog(category.category));
         selectedRowIndex = catalogEntries.isEmpty() ? -1 : 0;
     }
@@ -438,7 +428,6 @@ public class ShopScreen {
         }
 
         updateAshParticles();
-        updateCardFlip();
 
         ShopRevealAnimator reveal = revealAnimator();
         boolean showcaseInteractive = reveal.uiInteractive && state == ShopState.IDLE;
@@ -527,15 +516,10 @@ public class ShopScreen {
                 tryPurchaseSelected();
             } else if (hoveredRowIndex >= 0) {
                 selectedRowIndex = hoveredRowIndex;
-                cardFlipTarget = 1;
-                cardFlipIdleTicks = 0;
                 ShopCatalogEntry row = catalogEntries.get(hoveredRowIndex);
                 Rectangle panel = layout.detailListPanelSlot(assets.detailPanelW, assets.detailPanelH);
                 ensureRowVisible(panel.y, selectedRowIndex);
                 currentDialog = DukeLines.rowInspect(row.name, row.price);
-            } else if (cat.listInteractive && categoryCardContains(cat, mouseX, mouseY)) {
-                cardFlipTarget = cardFlipTarget == 0 ? 1 : 0;
-                cardFlipIdleTicks = 0;
             }
         }
 
@@ -648,38 +632,6 @@ public class ShopScreen {
         return inventoryPanelBounds.contains(mx, my);
     }
 
-    private boolean categoryCardContains(ShopCategoryAnimator cat, int mx, int my) {
-        return mx >= cat.cardX && my >= cat.cardY
-            && mx < cat.cardX + cat.cardW && my < cat.cardY + cat.cardH;
-    }
-
-    private void updateCardFlip() {
-        if (state != ShopState.CATEGORY && state != ShopState.CATEGORY_CLOSING) {
-            if (state == ShopState.IDLE) {
-                cardFlipT = 0f;
-                cardFlipTarget = 0;
-                cardFlipIdleTicks = 0;
-            }
-            return;
-        }
-        float step = 1f / CARD_FLIP_TICKS;
-        if (cardFlipT < cardFlipTarget) {
-            cardFlipT = Math.min(1f, cardFlipT + step);
-        } else if (cardFlipT > cardFlipTarget) {
-            cardFlipT = Math.max(0f, cardFlipT - step);
-        }
-
-        if (state == ShopState.CATEGORY && cardFlipTarget == 1 && cardFlipT >= 1f) {
-            cardFlipIdleTicks++;
-            if (cardFlipIdleTicks >= CARD_FLIP_IDLE_TICKS) {
-                cardFlipTarget = 0;
-                cardFlipIdleTicks = 0;
-            }
-        } else if (cardFlipTarget == 0 && cardFlipT <= 0f) {
-            cardFlipIdleTicks = 0;
-        }
-    }
-
     private void tryPurchaseSelected() {
         if (selectedRowIndex < 0 || selectedRowIndex >= catalogEntries.size()) {
             return;
@@ -733,8 +685,6 @@ public class ShopScreen {
         categoryTicks = 0;
         state = ShopState.CATEGORY_CLOSING;
         hoveredRowIndex = -1;
-        cardFlipTarget = 0;
-        cardFlipIdleTicks = 0;
     }
 
     private void finishCategoryClose() {
@@ -744,9 +694,6 @@ public class ShopScreen {
         selectedRowIndex = -1;
         catalogEntries.clear();
         catalogScrollOffset = 0;
-        cardFlipT = 0f;
-        cardFlipTarget = 0;
-        cardFlipIdleTicks = 0;
         state = ShopState.IDLE;
         currentDialog = IDLE_LINE;
     }
@@ -1808,8 +1755,9 @@ public class ShopScreen {
         String priceForCard = state == ShopState.CATEGORY ? selectedCatalogPrice() : null;
         ShopCatalogEntry statEntry = selectedCatalogEntry();
         BufferedImage cardArt = chestArtForEntry(statEntry, item);
-        drawFlippableItemCard(g, item, cat.cardX, cat.cardY, cat.cardW, cat.cardH,
-            true, false, 1f, priceForCard, cardGrowing, cardFlipT, statEntry, cardArt);
+        drawItemCard(g, item, cat.cardX, cat.cardY, cat.cardW, cat.cardH,
+            selectedIndex, true, false, 1f, priceForCard, cardGrowing, cardArt,
+            statEntry != null ? statEntry.name : null);
 
         if (cat.detailPanelAlpha > 0.02f) {
             Rectangle panel = layout.detailListPanelSlot(assets.detailPanelW, assets.detailPanelH);
@@ -1908,6 +1856,29 @@ public class ShopScreen {
         g.setComposite(prev);
     }
 
+    private String catalogStatLine(ShopCatalogEntry row) {
+        ShopModel.StatPreview preview = model.statPreview(row);
+        if (preview.rows().length < 3) {
+            return "";
+        }
+        int prot = preview.rows()[0].delta();
+        int stamina = preview.rows()[1].delta();
+        int signs = preview.rows()[2].delta();
+        if (prot == 0 && stamina == 0 && signs == 0) {
+            return "";
+        }
+        return "\uD83D\uDEE1" + formatMiniStatValue(prot)
+            + " \u26A1" + formatMiniStatValue(stamina)
+            + " \u2726" + formatMiniStatValue(signs);
+    }
+
+    private static String formatMiniStatValue(int delta) {
+        if (delta > 0) {
+            return String.valueOf(delta);
+        }
+        return String.valueOf(delta);
+    }
+
     private void drawCatalogRows(Graphics2D g, int panelX, int panelY, boolean interactive) {
         int rowGap = 4;
         int rowStep = assets.rowH + rowGap;
@@ -1947,17 +1918,32 @@ public class ShopScreen {
 
             row.bounds.setBounds(interactive ? x : 0, interactive ? y : 0, assets.rowW, assets.rowH);
 
+            g.setFont(GameFonts.get().uiPlain(9));
             FontMetrics fm = g.getFontMetrics();
-            String label = truncateToWidth(row.name, fm, assets.rowW - 58);
-            int textY = y + (assets.rowH + fm.getAscent()) / 2 - 1;
-            drawOutlinedText(g, label, x + 12, textY, new Color(235, 215, 155));
-
             String price = row.priceLabel();
             int priceW = fm.stringWidth(price);
             if (assets.crownIconSmall != null && !price.equals("···")) {
                 priceW += assets.crownIconSmall.getWidth() + 2;
             }
             int priceX = x + assets.rowW - priceW - 8;
+
+            String stats = catalogStatLine(row);
+            g.setFont(GameFonts.get().uiPlain(8));
+            FontMetrics statsFm = g.getFontMetrics();
+            int statsW = stats.isEmpty() ? 0 : statsFm.stringWidth(stats) + 4;
+            int statsX = priceX - statsW - 2;
+
+            g.setFont(GameFonts.get().uiPlain(9));
+            fm = g.getFontMetrics();
+            int nameMaxW = Math.max(20, statsX - (x + 10));
+            String label = truncateToWidth(row.name, fm, nameMaxW);
+            int textY = y + (assets.rowH + fm.getAscent()) / 2 - 1;
+            drawOutlinedText(g, label, x + 10, textY, new Color(235, 215, 155));
+
+            if (!stats.isEmpty()) {
+                drawOutlinedText(g, stats, statsX, textY, new Color(180, 200, 160));
+            }
+
             if (assets.crownIconSmall != null && !price.equals("···")) {
                 g.drawImage(assets.crownIconSmall, priceX, y + 6, null);
                 priceX += assets.crownIconSmall.getWidth() + 2;
@@ -2013,6 +1999,13 @@ public class ShopScreen {
     private void drawItemCard(Graphics2D g, ShopItem item, int x, int y, int w, int h, int index,
                               boolean selected, boolean hovered, float revealAlpha, String priceOverride,
                               boolean smoothIconGrowth, BufferedImage cardArtOverride) {
+        drawItemCard(g, item, x, y, w, h, index, selected, hovered,
+            revealAlpha, priceOverride, smoothIconGrowth, cardArtOverride, null);
+    }
+
+    private void drawItemCard(Graphics2D g, ShopItem item, int x, int y, int w, int h, int index,
+                              boolean selected, boolean hovered, float revealAlpha, String priceOverride,
+                              boolean smoothIconGrowth, BufferedImage cardArtOverride, String nameOverride) {
         Composite savedComposite = g.getComposite();
         g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, revealAlpha));
 
@@ -2037,66 +2030,9 @@ public class ShopScreen {
             drawFallbackCard(g, x, y, w, h, false);
             cardRect = new Rectangle(x, y, w, h);
         }
-        drawCardFrontContent(g, item, cardRect, w, h, priceOverride, smoothIconGrowth, cardArtOverride);
+        drawCardFrontContent(g, item, cardRect, w, h, priceOverride, smoothIconGrowth, cardArtOverride, nameOverride);
 
         g.setComposite(savedComposite);
-    }
-
-    private void drawFlippableItemCard(Graphics2D g, ShopItem item, int x, int y, int w, int h,
-                                       boolean selected, boolean hovered, float revealAlpha,
-                                       String priceOverride, boolean smoothIconGrowth,
-                                       float flipT, ShopCatalogEntry statEntry,
-                                       BufferedImage cardArtOverride) {
-        Shape savedClip = g.getClip();
-        g.clipRect(x, y, w, h);
-        try {
-            if (flipT <= 0.001f) {
-                drawItemCard(g, item, x, y, w, h, selectedIndex, selected, hovered,
-                    revealAlpha, priceOverride, smoothIconGrowth, cardArtOverride);
-                return;
-            }
-            if (flipT >= 0.999f) {
-                drawItemCardBack(g, x, y, w, h, revealAlpha, statEntry);
-                return;
-            }
-
-            float squeeze = flipT < 0.5f ? 1f - flipT * 2f : (flipT - 0.5f) * 2f;
-            int sw = Math.max(2, Math.round(w * squeeze));
-            int sx = x + (w - sw) / 2;
-            if (flipT < 0.5f) {
-                drawItemCard(g, item, sx, y, sw, h, selectedIndex, selected, hovered,
-                    revealAlpha, priceOverride, smoothIconGrowth, cardArtOverride);
-            } else {
-                drawItemCardBack(g, sx, y, sw, h, revealAlpha, statEntry);
-            }
-        } finally {
-            g.setClip(savedClip);
-        }
-    }
-
-    private void drawItemCardBack(Graphics2D g, int x, int y, int w, int h, float alpha,
-                                  ShopCatalogEntry statEntry) {
-        Composite saved = g.getComposite();
-        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
-
-        BufferedImage frame = assets.cardBackScaled;
-        if (frame != null) {
-            Object prev = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
-            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
-            g.drawImage(frame, x, y, w, h, null);
-            if (prev != null) {
-                g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, prev);
-            }
-        } else {
-            drawFallbackCard(g, x, y, w, h, true);
-        }
-
-        if (statEntry != null && w >= 70 && h >= 100) {
-            ShopStatBarRenderer.draw(g, x, y, w, h, model.statPreview(statEntry),
-                assets.statVialEmpty, assets.statVialOverlay, assets.statVialEndCap, tick);
-        }
-
-        g.setComposite(saved);
     }
 
     private void drawFallbackCard(Graphics2D g, int x, int y, int w, int h, boolean back) {
@@ -2108,7 +2044,7 @@ public class ShopScreen {
 
     private void drawCardFrontContent(Graphics2D g, ShopItem item, Rectangle card, int w, int h,
                                     String priceOverride, boolean smoothIconGrowth,
-                                    BufferedImage cardArtOverride) {
+                                    BufferedImage cardArtOverride, String nameOverride) {
         int x = card.x;
         int y = card.y;
         boolean categoryGrid = priceOverride == null;
@@ -2121,12 +2057,11 @@ public class ShopScreen {
             fontSize = w < 60 ? 8 : (h > 200 ? 12 : (w < 90 ? 9 : 10));
         }
         g.setFont(categoryGrid ? GameFonts.get().uiPlain(fontSize) : cardFont(fontSize));
-        String name = categoryGrid ? item.displayName() : item.displayName();
+        String name = nameOverride != null ? nameOverride : item.displayName();
         if (categoryGrid) {
             g.setFont(fitUiFontToWidth(g, name, w - 4, fontSize, 7));
         } else {
-            FontMetrics nameFm = g.getFontMetrics();
-            name = truncateToWidth(name, nameFm, w - 8);
+            g.setFont(fitUiFontToWidth(g, name, w - 8, fontSize, 7));
         }
         FontMetrics nameFm = g.getFontMetrics();
         int nameY = categoryGrid
