@@ -9,6 +9,7 @@ import main.java.com.witcher.ui.shop.ShopEquipSlot;
 import main.java.com.witcher.ui.shop.ShopModel;
 
 import java.awt.*;
+import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
@@ -1822,12 +1823,7 @@ public class ShopScreen {
 
         item.bounds.setBounds(cat.cardX, cat.cardY, cat.cardW, cat.cardH);
         boolean cardGrowing = state == ShopState.CATEGORY_OPENING || state == ShopState.CATEGORY_CLOSING;
-        String priceForCard = state == ShopState.CATEGORY ? selectedCatalogPrice() : null;
-        ShopCatalogEntry statEntry = selectedCatalogEntry();
-        BufferedImage cardArt = itemArtForEntry(statEntry, item);
-        drawItemCard(g, item, cat.cardX, cat.cardY, cat.cardW, cat.cardH,
-            selectedIndex, true, false, 1f, priceForCard, cardGrowing, cardArt,
-            statEntry != null ? statEntry.name : null);
+        drawFlippingCategoryCard(g, item, cat.cardX, cat.cardY, cat.cardW, cat.cardH, cardGrowing);
 
         if (cat.detailPanelAlpha > 0.02f) {
             Rectangle panel = layout.detailListPanelSlot(assets.detailPanelW, assets.detailPanelH);
@@ -1856,6 +1852,37 @@ public class ShopScreen {
             }
         }
         return categoryItem.cardArt != null ? categoryItem.cardArt : categoryItem.icon;
+    }
+
+    /** Переворот категории → товар при открытии и обратно при закрытии. */
+    private void drawFlippingCategoryCard(Graphics2D g, ShopItem item, int x, int y, int w, int h,
+                                          boolean smoothIconGrowth) {
+        float flipT = categoryAnimProgress();
+        float scaleX = Math.abs((float) Math.cos(flipT * Math.PI));
+        if (scaleX < 0.04f) {
+            scaleX = 0.04f;
+        }
+        boolean itemFace = flipT >= 0.5f;
+
+        AffineTransform saved = g.getTransform();
+        int cx = x + w / 2;
+        int cy = y + h / 2;
+        AffineTransform flip = new AffineTransform(saved);
+        flip.translate(cx, cy);
+        flip.scale(scaleX, 1.0);
+        flip.translate(-cx, -cy);
+        g.setTransform(flip);
+
+        ShopCatalogEntry statEntry = selectedCatalogEntry();
+        String priceForCard = itemFace ? selectedCatalogPrice() : null;
+        BufferedImage cardArt = itemFace ? itemArtForEntry(statEntry, item) : null;
+        String nameOverride = itemFace && statEntry != null ? statEntry.name : null;
+        BufferedImage frame = itemFace ? assets.cardFrontScaled : assets.cardSelectedScaled;
+
+        drawItemCard(g, item, x, y, w, h, selectedIndex, true, false, 1f,
+            priceForCard, smoothIconGrowth, cardArt, nameOverride, frame);
+
+        g.setTransform(saved);
     }
 
     private ShopCatalogEntry selectedCatalogEntry() {
@@ -2070,14 +2097,25 @@ public class ShopScreen {
     private void drawItemCard(Graphics2D g, ShopItem item, int x, int y, int w, int h, int index,
                               boolean selected, boolean hovered, float revealAlpha, String priceOverride,
                               boolean smoothIconGrowth, BufferedImage cardArtOverride, String nameOverride) {
+        drawItemCard(g, item, x, y, w, h, index, selected, hovered,
+            revealAlpha, priceOverride, smoothIconGrowth, cardArtOverride, nameOverride, null);
+    }
+
+    private void drawItemCard(Graphics2D g, ShopItem item, int x, int y, int w, int h, int index,
+                              boolean selected, boolean hovered, float revealAlpha, String priceOverride,
+                              boolean smoothIconGrowth, BufferedImage cardArtOverride, String nameOverride,
+                              BufferedImage frameOverride) {
         Composite savedComposite = g.getComposite();
         g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, revealAlpha));
 
-        BufferedImage frame = assets.cardFrontScaled;
-        if (selected && assets.cardSelectedScaled != null) {
-            frame = assets.cardSelectedScaled;
-        } else if (hovered && assets.cardHoverScaled != null) {
-            frame = assets.cardHoverScaled;
+        BufferedImage frame = frameOverride;
+        if (frame == null) {
+            frame = assets.cardFrontScaled;
+            if (selected && assets.cardSelectedScaled != null) {
+                frame = assets.cardSelectedScaled;
+            } else if (hovered && assets.cardHoverScaled != null) {
+                frame = assets.cardHoverScaled;
+            }
         }
 
         Rectangle cardRect;
