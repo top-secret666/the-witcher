@@ -1851,7 +1851,7 @@ public class ShopScreen {
     }
 
     private BufferedImage itemArtForEntry(ShopCatalogEntry entry, ShopItem categoryItem) {
-        if (categoryItem == null || categoryItem.kind != ItemKind.PIECE) {
+        if (categoryItem == null) {
             return null;
         }
         if (entry != null) {
@@ -2187,10 +2187,21 @@ public class ShopScreen {
         }
 
         int lineH = nameFm.getHeight();
+        boolean showPrice = !categoryGrid && priceOverride != null
+            && !(item.kind == ItemKind.SET_CATALOG && "···".equals(priceOverride));
+        int priceBlockH = 0;
+        if (showPrice) {
+            g.setFont(cardFont(Math.max(7, nameFontSize)));
+            FontMetrics priceFmPreview = g.getFontMetrics();
+            BufferedImage coinPreview = assets.crownIconSmall != null
+                ? assets.crownIconSmall : assets.crownIconScaled;
+            int coinH = coinPreview != null ? coinPreview.getHeight() : priceFmPreview.getHeight();
+            priceBlockH = Math.max(priceFmPreview.getHeight(), coinH) + 4;
+        }
         int nameBlockBottom = categoryGrid
             ? y + h - 6
-            : y + h - Math.max(18, Math.round(h * 0.22f));
-        int labelReserve = nameLines.size() * lineH + 6;
+            : y + h - 6 - priceBlockH;
+        int labelReserve = nameLines.size() * lineH + 6 + (showPrice ? priceBlockH : 0);
 
         BufferedImage art = cardArtOverride != null
             ? cardArtOverride
@@ -2222,15 +2233,11 @@ public class ShopScreen {
             baseline -= lineH;
         }
 
-        if (priceOverride == null) {
+        if (!showPrice) {
             return;
         }
 
         String priceLabel = priceOverride;
-        if (item.kind == ItemKind.SET_CATALOG && "···".equals(priceLabel)) {
-            return;
-        }
-
         int fontSize = nameFontSize;
         g.setFont(cardFont(Math.max(7, fontSize)));
         FontMetrics priceFm = g.getFontMetrics();
@@ -2240,7 +2247,7 @@ public class ShopScreen {
         if (coin != null) {
             priceW += coin.getWidth() + 2;
         }
-        int priceRowY = y + h - 8;
+        int priceRowY = nameBlockBottom + nameFm.getDescent() + 3;
         int priceX = x + (w - priceW) / 2;
         if (coin != null) {
             int coinY = priceRowY - coinH + 1;
