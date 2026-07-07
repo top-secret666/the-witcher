@@ -1172,15 +1172,12 @@ public class ShopScreen {
         int padX = 7;
 
         Rectangle block = cornerWalletBounds(g);
+        drawGoldHudChip(g, block, alpha);
+
         int blockX = block.x;
         int blockY = block.y;
         int blockW = block.width;
         int blockH = block.height;
-
-        g.setColor(new Color(10, 7, 3, 185));
-        g.fillRoundRect(blockX, blockY, blockW, blockH, 6, 6);
-        g.setColor(new Color(140, 105, 45, 160));
-        g.drawRoundRect(blockX, blockY, blockW, blockH, 6, 6);
 
         FontMetrics fm = g.getFontMetrics();
         int textX = blockX + padX;
@@ -1219,13 +1216,25 @@ public class ShopScreen {
         Composite prev = g.getComposite();
         g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
         drawCardText(g);
-        g.setFont(GameFonts.get().uiPlain(7));
+        g.setFont(GameFonts.get().uiPlain(8));
         FontMetrics fm = g.getFontMetrics();
-        int legendW = ShopStatGlyphs.legendWidth(fm);
+        Rectangle legendBox = ShopStatGlyphs.legendBounds(fm);
         int gap = walletLeft - backRight;
-        int legendX = backRight + Math.max(0, (gap - legendW) / 2);
-        int baselineY = INVENTORY_BAG_MARGIN + (UiChrome.BTN_SIZE + fm.getAscent()) / 2;
-        ShopStatGlyphs.drawLegend(g, legendX, baselineY, fm);
+        int legendX = backRight + Math.max(0, (gap - legendBox.width) / 2);
+        int legendY = INVENTORY_BAG_MARGIN + (UiChrome.BTN_SIZE - legendBox.height) / 2;
+        ShopStatGlyphs.drawLegend(g, legendX, legendY, fm, alpha);
+        g.setComposite(prev);
+    }
+
+    static void drawGoldHudChip(Graphics2D g, Rectangle box, float alpha) {
+        Composite prev = g.getComposite();
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
+        g.setColor(new Color(10, 7, 3, 200));
+        g.fillRoundRect(box.x, box.y, box.width, box.height, 6, 6);
+        g.setColor(new Color(140, 105, 45, 200));
+        g.drawRoundRect(box.x, box.y, box.width, box.height, 6, 6);
+        g.setColor(new Color(255, 210, 90, 60));
+        g.drawRoundRect(box.x + 1, box.y + 1, box.width - 2, box.height - 2, 5, 5);
         g.setComposite(prev);
     }
 
