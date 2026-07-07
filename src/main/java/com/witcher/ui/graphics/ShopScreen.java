@@ -2151,25 +2151,33 @@ public class ShopScreen {
         boolean categoryGrid = priceOverride == null;
 
         drawCardText(g);
-        int fontSize;
-        if (categoryGrid) {
-            fontSize = w >= 50 ? 11 : Math.max(9, Math.round(11f * w / 54f));
-        } else {
-            fontSize = w < 60 ? 8 : (h > 200 ? 12 : (w < 90 ? 9 : 10));
-        }
-        g.setFont(categoryGrid ? GameFonts.get().uiPlain(fontSize) : cardFont(fontSize));
         String name = nameOverride != null ? nameOverride : item.displayName();
+        Color nameColor = item.kind == ItemKind.SET_CATALOG
+            ? new Color(255, 210, 100) : new Color(245, 230, 190);
+
+        int nameMaxW = categoryGrid ? w - 4 : w - 8;
+        int nameFontSize;
         if (categoryGrid) {
-            g.setFont(fitUiFontToWidth(g, name, w - 4, fontSize, 7));
+            nameFontSize = w >= 50 ? 11 : Math.max(9, Math.round(11f * w / 54f));
+            g.setFont(fitUiFontToWidth(g, name, nameMaxW, nameFontSize, 8));
         } else {
-            g.setFont(fitUiFontToWidth(g, name, w - 8, fontSize, 7));
+            nameFontSize = h > 200 ? 10 : 9;
+            g.setFont(GameFonts.get().uiPlain(nameFontSize));
         }
         FontMetrics nameFm = g.getFontMetrics();
-        int nameY = categoryGrid
+        List<String> nameLines = wrapCardNameLines(nameFm, name, nameMaxW, 2);
+        if (categoryGrid && nameLines.size() == 1
+            && nameFm.stringWidth(nameLines.get(0)) > nameMaxW) {
+            g.setFont(GameFonts.get().uiPlain(8));
+            nameFm = g.getFontMetrics();
+            nameLines = wrapCardNameLines(nameFm, name, nameMaxW, 2);
+        }
+
+        int lineH = nameFm.getHeight();
+        int nameBlockBottom = categoryGrid
             ? y + h - 6
-            : priceOverride != null
-                ? y + h - Math.max(18, Math.round(h * 0.22f))
-                : y + h - 10;
+            : y + h - Math.max(18, Math.round(h * 0.22f));
+        int labelReserve = nameLines.size() * lineH + 6;
 
         BufferedImage art = cardArtOverride != null
             ? cardArtOverride
@@ -2178,10 +2186,10 @@ public class ShopScreen {
             int slotX = x + 4;
             int slotW = w - 8;
             int slotTop = y + Math.round(h * 0.12f);
-            int labelReserve = categoryGrid
-                ? nameFm.getHeight() + 6
-                : Math.round(h * 0.10f);
-            int slotBottom = nameY - labelReserve;
+            int labelReservePx = categoryGrid
+                ? labelReserve
+                : Math.max(labelReserve, Math.round(h * 0.10f));
+            int slotBottom = nameBlockBottom - labelReservePx;
             int slotH = Math.max(1, slotBottom - slotTop);
             Rectangle crop = computeContentBounds(art);
             int maxArt = iconCapForCard(slotW, slotH, smoothIconGrowth);
@@ -2193,13 +2201,12 @@ public class ShopScreen {
                 artBounds.width, artBounds.height, true);
         }
 
-        Color nameColor = item.kind == ItemKind.SET_CATALOG
-            ? new Color(255, 210, 100) : new Color(245, 230, 190);
-        if (categoryGrid) {
-            drawCategoryGridLabel(g, name, x, y, w, h, nameColor, nameFm);
-        } else {
-            int nameX = x + (w - nameFm.stringWidth(name)) / 2;
-            drawOutlinedText(g, name, nameX, nameY, nameColor);
+        int baseline = nameBlockBottom;
+        for (int i = nameLines.size() - 1; i >= 0; i--) {
+            String line = nameLines.get(i);
+            int lineX = x + (w - nameFm.stringWidth(line)) / 2;
+            drawCategoryLabel(g, line, lineX, baseline, nameColor);
+            baseline -= lineH;
         }
 
         if (priceOverride == null) {
@@ -2211,6 +2218,7 @@ public class ShopScreen {
             return;
         }
 
+        int fontSize = nameFontSize;
         g.setFont(cardFont(Math.max(7, fontSize)));
         FontMetrics priceFm = g.getFontMetrics();
         BufferedImage coin = assets.crownIconSmall != null ? assets.crownIconSmall : assets.crownIconScaled;
@@ -2309,6 +2317,55 @@ public class ShopScreen {
         Font font = GameFonts.get().uiPlain(minSize);
         g.setFont(font);
         return font;
+    }
+
+    private static List<String> wrapCardNameLines(FontMetrics fm, String text, int maxW, int maxLines) {
+        if (text == null || text.isBlank()) {
+            return List.of("");
+        }
+        if (fm.stringWidth(text) <= maxW) {
+            return List.of(text);
+        }
+
+        List<String> lines = new ArrayList<>();
+        int index = 0;
+        while (index < text.length() && lines.size() < maxLines) {
+            int end = index + 1;
+            while (end <= text.length() && fm.stringWidth(text.substring(index, end)) <= maxW) {
+                end++;
+            }
+            end = Math.max(index + 1, end - 1);
+
+            int breakAt = end;
+            int lastSpace = -1;
+            for (int i = index; i < breakAt; i++) {
+                if (text.charAt(i) == ' ') {
+                    lastSpace = i;
+                }
+            }
+            if (lastSpace > index) {
+                breakAt = lastSpace;
+            }
+
+            if (lines.size() == maxLines - 1 && breakAt < text.length()) {
+                lines.add(truncateToWidth(text.substring(index).trim(), fm, maxW));
+                return lines;
+            }
+
+            String line = text.substring(index, breakAt).trim();
+            if (!line.isEmpty()) {
+                lines.add(line);
+            }
+            index = breakAt;
+            while (index < text.length() && text.charAt(index) == ' ') {
+                index++;
+            }
+        }
+
+        if (lines.isEmpty()) {
+            lines.add(truncateToWidth(text, fm, maxW));
+        }
+        return lines;
     }
 
     /** Подпись на сетке категорий — крупнее и строго по пиксельной сетке. */
