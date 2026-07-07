@@ -11,6 +11,7 @@ public final class ShopStatGlyphs {
     public static final int GROUP_GAP = 5;
 
     private static final Color ICON_COLOR = new Color(198, 188, 168);
+    private static final Color LABEL_COLOR = new Color(145, 130, 95);
     private static final Color POS_VALUE = new Color(168, 214, 148);
     private static final Color NEG_VALUE = new Color(214, 148, 128);
     private static final Color ZERO_VALUE = new Color(150, 142, 128);
@@ -34,6 +35,33 @@ public final class ShopStatGlyphs {
             width += ICON_SIZE + 1 + fm.stringWidth(formatValue(value));
         }
         return width;
+    }
+
+    public static int legendWidth(FontMetrics fm) {
+        int width = 0;
+        String[] labels = {"Защ.", "Вын.", "Знак."};
+        for (int i = 0; i < labels.length; i++) {
+            if (i > 0) {
+                width += GROUP_GAP + 2;
+            }
+            width += ICON_SIZE + 2 + fm.stringWidth(labels[i]);
+        }
+        return width;
+    }
+
+    public static void drawLegend(Graphics2D g, int x, int baselineY, FontMetrics fm) {
+        String[] labels = {"Защ.", "Вын.", "Знак."};
+        int cx = x;
+        int iconY = baselineY - ICON_SIZE + 1;
+        for (int i = 0; i < labels.length; i++) {
+            if (i > 0) {
+                cx += GROUP_GAP + 2;
+            }
+            drawIcon(g, i, cx, iconY, ICON_COLOR);
+            cx += ICON_SIZE + 2;
+            ShopScreen.drawOutlinedText(g, labels[i], cx, baselineY, LABEL_COLOR);
+            cx += fm.stringWidth(labels[i]);
+        }
     }
 
     public static void drawRow(Graphics2D g, int rightX, int baselineY, FontMetrics fm,

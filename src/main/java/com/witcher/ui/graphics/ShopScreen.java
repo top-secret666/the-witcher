@@ -322,13 +322,6 @@ public class ShopScreen {
         return panelY + 12;
     }
 
-    private String dialogForCategoryOpen(ShopItem item) {
-        if (item.kind == ItemKind.PIECE) {
-            return item.dukeLine + "\n" + DukeLines.statGlyphsLegend();
-        }
-        return item.dukeLine;
-    }
-
     private int catalogListBottom(int panelY) {
         return panelY + assets.detailPanelH - assets.btnH - 10;
     }
@@ -506,7 +499,7 @@ public class ShopScreen {
         if (showcaseInteractive && clicked && hoveredIndex >= 0) {
             selectedIndex = hoveredIndex;
             ShopItem item = items.get(hoveredIndex);
-            currentDialog = dialogForCategoryOpen(item);
+            currentDialog = item.dukeLine;
             state = ShopState.CATEGORY_OPENING;
             categoryClosing = false;
             categoryTicks = 0;
@@ -791,7 +784,9 @@ public class ShopScreen {
         }
 
         if (categoryMode && selectedIndex >= 0) {
-            drawCategoryView(g, layout, reveal, categoryAnimator(layout), mouseX, mouseY);
+            ShopCategoryAnimator catAnim = categoryAnimator(layout);
+            drawCategoryView(g, layout, reveal, catAnim, mouseX, mouseY);
+            drawCategoryStatLegend(g, layout, catAnim);
             drawCornerWallet(g, 1f);
         } else {
             drawCards(g, layout, reveal);
@@ -1141,6 +1136,28 @@ public class ShopScreen {
     }
 
     /** Кошелёк в правом верхнем углу — экран списка товаров. */
+    private Rectangle cornerWalletBounds(Graphics2D g) {
+        String wallet = walletHudAmountText();
+        String suffix = model.walletSuffix();
+        int crownSize = 16;
+        int crownGap = 4;
+        int margin = 8;
+        int padX = 7;
+        int padY = 4;
+
+        drawCrispText(g);
+        g.setFont(GameFonts.get().uiBold(12));
+        FontMetrics fm = g.getFontMetrics();
+        int blockW = fm.stringWidth(wallet) + fm.stringWidth(suffix);
+        if (assets.crownIconScaled != null) {
+            blockW += crownSize + crownGap;
+        }
+        int blockH = Math.max(crownSize, fm.getHeight()) + padY * 2;
+        int blockX = VIRTUAL_W - margin - blockW - padX * 2;
+        int blockY = INVENTORY_BAG_MARGIN;
+        return new Rectangle(blockX, blockY, blockW + padX * 2, blockH);
+    }
+
     private void drawCornerWallet(Graphics2D g, float alpha) {
         if (alpha <= 0.01f) {
             return;
@@ -1152,26 +1169,20 @@ public class ShopScreen {
         String suffix = model.walletSuffix();
         int crownSize = 16;
         int crownGap = 4;
-        int margin = 8;
         int padX = 7;
-        int padY = 4;
 
-        drawCrispText(g);
-        g.setFont(GameFonts.get().uiBold( 12));
-        FontMetrics fm = g.getFontMetrics();
-        int blockW = fm.stringWidth(wallet) + fm.stringWidth(suffix);
-        if (assets.crownIconScaled != null) {
-            blockW += crownSize + crownGap;
-        }
-        int blockH = Math.max(crownSize, fm.getHeight()) + padY * 2;
-        int blockX = VIRTUAL_W - margin - blockW - padX * 2;
-        int blockY = INVENTORY_BAG_MARGIN;
+        Rectangle block = cornerWalletBounds(g);
+        int blockX = block.x;
+        int blockY = block.y;
+        int blockW = block.width;
+        int blockH = block.height;
 
         g.setColor(new Color(10, 7, 3, 185));
-        g.fillRoundRect(blockX, blockY, blockW + padX * 2, blockH, 6, 6);
+        g.fillRoundRect(blockX, blockY, blockW, blockH, 6, 6);
         g.setColor(new Color(140, 105, 45, 160));
-        g.drawRoundRect(blockX, blockY, blockW + padX * 2, blockH, 6, 6);
+        g.drawRoundRect(blockX, blockY, blockW, blockH, 6, 6);
 
+        FontMetrics fm = g.getFontMetrics();
         int textX = blockX + padX;
         if (assets.crownIconScaled != null) {
             int crownY = blockY + (blockH - crownSize) / 2;
@@ -1184,6 +1195,37 @@ public class ShopScreen {
         g.setColor(new Color(200, 180, 120));
         g.drawString(suffix, textX + fm.stringWidth(wallet), walletY);
 
+        g.setComposite(prev);
+    }
+
+    private void drawCategoryStatLegend(Graphics2D g, ShopLayout layout, ShopCategoryAnimator cat) {
+        if (selectedIndex < 0 || selectedIndex >= items.size()) {
+            return;
+        }
+        if (items.get(selectedIndex).kind != ItemKind.PIECE) {
+            return;
+        }
+        float alpha = cat.detailPanelAlpha;
+        if (alpha <= 0.01f) {
+            return;
+        }
+
+        Rectangle panel = layout.detailListPanelSlot(assets.detailPanelW, assets.detailPanelH);
+        int panelX = panel.x + Math.round(cat.detailPanelSlideX);
+        int backRight = panelX + 4 + UiChrome.BTN_SIZE + 6;
+        Rectangle wallet = cornerWalletBounds(g);
+        int walletLeft = wallet.x;
+
+        Composite prev = g.getComposite();
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
+        drawCardText(g);
+        g.setFont(GameFonts.get().uiPlain(7));
+        FontMetrics fm = g.getFontMetrics();
+        int legendW = ShopStatGlyphs.legendWidth(fm);
+        int gap = walletLeft - backRight;
+        int legendX = backRight + Math.max(0, (gap - legendW) / 2);
+        int baselineY = INVENTORY_BAG_MARGIN + (UiChrome.BTN_SIZE + fm.getAscent()) / 2;
+        ShopStatGlyphs.drawLegend(g, legendX, baselineY, fm);
         g.setComposite(prev);
     }
 
