@@ -238,6 +238,7 @@ public class ShopScreen {
     private int purchaseRevealKeepRow = -1;
     private boolean inventoryOpen = false;
     private boolean equipmentOpen = false;
+    private boolean equipmentBackHovered = false;
     private boolean inventoryPouchFocused = true;
     private boolean inventoryBagHovered = false;
     private boolean inventoryPouchIconHovered = false;
@@ -329,7 +330,16 @@ public class ShopScreen {
     }
 
     private int catalogListBottom(int panelY) {
-        return panelY + assets.detailPanelH - assets.btnH - 10;
+        return categoryBuyButtonY(panelY) - 6;
+    }
+
+    private int categoryBuyButtonY(int panelY) {
+        return panelY + assets.detailPanelH - assets.btnH - categoryLegendReserve() - 8;
+    }
+
+    /** Место под расшифровку статов под кнопкой «Купить». */
+    private static int categoryLegendReserve() {
+        return 26;
     }
 
     private int maxCatalogScroll(int panelY) {
@@ -580,6 +590,7 @@ public class ShopScreen {
     private void updateEquipmentInput(int mouseX, int mouseY, boolean clicked) {
         equipmentHoveredRow = -1;
         equipmentHoveredSlot = -1;
+        equipmentBackHovered = equipmentBackButtonBounds.contains(mouseX, mouseY);
         for (int i = 0; i < equipmentRowBounds.size(); i++) {
             if (equipmentRowBounds.get(i).contains(mouseX, mouseY)) {
                 equipmentHoveredRow = i;
@@ -810,7 +821,6 @@ public class ShopScreen {
         if (categoryMode && selectedIndex >= 0) {
             ShopCategoryAnimator catAnim = categoryAnimator(layout);
             drawCategoryView(g, layout, reveal, catAnim, mouseX, mouseY);
-            drawCategoryStatLegend(g, layout, catAnim);
             drawCornerWallet(g, 1f);
         } else {
             drawCards(g, layout, reveal);
@@ -1219,23 +1229,16 @@ public class ShopScreen {
         g.setComposite(prev);
     }
 
-    private void drawCategoryStatLegend(Graphics2D g, ShopLayout layout, ShopCategoryAnimator cat) {
+    private void drawCategoryStatLegend(Graphics2D g, int panelX, int panelY, float alpha) {
         if (selectedIndex < 0 || selectedIndex >= items.size()) {
             return;
         }
         if (items.get(selectedIndex).kind != ItemKind.PIECE) {
             return;
         }
-        float alpha = cat.detailPanelAlpha;
         if (alpha <= 0.01f) {
             return;
         }
-
-        Rectangle panel = layout.detailListPanelSlot(assets.detailPanelW, assets.detailPanelH);
-        int panelX = panel.x + Math.round(cat.detailPanelSlideX);
-        int backRight = panelX + 4 + UiChrome.BTN_SIZE + 6;
-        Rectangle wallet = cornerWalletBounds(g);
-        int walletLeft = wallet.x;
 
         Composite prev = g.getComposite();
         g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
@@ -1243,9 +1246,9 @@ public class ShopScreen {
         g.setFont(GameFonts.get().uiPlain(10));
         FontMetrics fm = g.getFontMetrics();
         Rectangle legendBox = ShopStatGlyphs.legendBounds(fm);
-        int gap = walletLeft - backRight;
-        int legendX = backRight + Math.max(0, (gap - legendBox.width) / 2);
-        int legendY = INVENTORY_BAG_MARGIN + (UiChrome.BTN_SIZE - legendBox.height) / 2;
+        int btnY = categoryBuyButtonY(panelY);
+        int legendX = panelX + (assets.detailPanelW - legendBox.width) / 2;
+        int legendY = btnY + assets.btnH + 4;
         ShopStatGlyphs.drawLegend(g, legendX, legendY, fm, alpha);
         g.setComposite(prev);
     }
@@ -1363,8 +1366,13 @@ public class ShopScreen {
         g.setColor(new Color(155, 115, 50));
         g.drawRoundRect(px, py, panelW, panelH, 6, 6);
 
-        drawEquipText(g, GameFonts.get().uiBold(15), "Экипировка", px + 14, py + 24,
+        drawEquipText(g, GameFonts.get().uiBold(15), "Экипировка", px + 14 + UiChrome.BTN_SIZE + 6, py + 24,
             new Color(255, 220, 140));
+
+        int backX = px + 10;
+        int backY = py + 10;
+        equipmentBackButtonBounds.setBounds(backX, backY, UiChrome.BTN_SIZE, UiChrome.BTN_SIZE);
+        UiChrome.drawArrowBackButton(g, equipmentBackButtonBounds, equipmentBackHovered, 1f);
 
         int listX = px + 10;
         int listY = py + 34;
@@ -1474,22 +1482,6 @@ public class ShopScreen {
         g.setColor(new Color(100, 75, 40));
         g.drawRoundRect(statsX, statsY, statsW, statsH, 4, 4);
         drawEquipmentStats(g, statsX, statsY, statsW, statsH, model.equippedStatPreview());
-
-        int backW = 72;
-        int backH = 22;
-        int backX = px + 12;
-        int backY = listY + listH - backH;
-        equipmentBackButtonBounds.setBounds(backX, backY, backW, backH);
-        g.setColor(new Color(28, 18, 8, 220));
-        g.fillRoundRect(backX, backY, backW, backH, 5, 5);
-        g.setColor(new Color(150, 110, 50));
-        g.drawRoundRect(backX, backY, backW, backH, 5, 5);
-        Font backFont = GameFonts.get().uiBold(11);
-        FontMetrics bfm = g.getFontMetrics(backFont);
-        String backLabel = "Назад";
-        int labelX = backX + (backW - bfm.stringWidth(backLabel)) / 2;
-        int labelY = backY + (backH + bfm.getAscent() - bfm.getDescent()) / 2;
-        drawEquipText(g, backFont, backLabel, labelX, labelY, new Color(230, 200, 140));
 
         g.setComposite(prev);
     }
@@ -1858,6 +1850,7 @@ public class ShopScreen {
             drawCatalogRows(g, px, py, cat.listInteractive);
             drawCategoryBackButton(g, px, cat.detailPanelAlpha, cat.listInteractive);
             drawCategoryBuyButton(g, px, py, cat.detailPanelAlpha, cat.listInteractive);
+            drawCategoryStatLegend(g, px, py, cat.detailPanelAlpha);
         }
 
         g.setComposite(layer);
@@ -1951,7 +1944,7 @@ public class ShopScreen {
         int btnW = assets.btnW;
         int btnH = assets.btnH;
         int btnX = panelX + (assets.detailPanelW - btnW) / 2;
-        int btnY = panelY + assets.detailPanelH - btnH - 8;
+        int btnY = categoryBuyButtonY(panelY);
         boolean enabled = isBuyButtonEnabled();
         if (interactive) {
             categoryBuyBounds.setBounds(btnX, btnY, btnW, btnH);
