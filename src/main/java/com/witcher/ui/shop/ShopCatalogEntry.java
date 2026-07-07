@@ -23,7 +23,11 @@ public final class ShopCatalogEntry {
     }
 
     public static ShopCatalogEntry fromArmour(Armour armour) {
-        return new ShopCatalogEntry(armour.getName(), ShopPricing.armorPrice(armour), armour, null, false);
+        return fromArmour(armour, ShopPricing.armorPrice(armour));
+    }
+
+    public static ShopCatalogEntry fromArmour(Armour armour, int shopPrice) {
+        return new ShopCatalogEntry(armour.getName(), shopPrice, armour, null, false);
     }
 
     public static ShopCatalogEntry fromSet(ArmourSet set, int price) {

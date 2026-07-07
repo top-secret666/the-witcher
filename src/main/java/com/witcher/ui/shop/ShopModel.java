@@ -312,11 +312,13 @@ public final class ShopModel {
 
     private List<ShopCatalogEntry> armorByType(Class<? extends Armour> type) {
         List<ShopCatalogEntry> out = new ArrayList<>();
+        Set<Integer> usedPrices = new HashSet<>();
         for (Armour armour : armourRepository.getAllArmor()) {
             if (!type.isInstance(armour) || soldArmor.contains(armour)) {
                 continue;
             }
-            out.add(ShopCatalogEntry.fromArmour(armour));
+            int price = ShopPricing.uniqueArmorPrice(armour, usedPrices);
+            out.add(ShopCatalogEntry.fromArmour(armour, price));
         }
         out.sort(Comparator.comparingInt(e -> e.price));
         return out;

@@ -28,8 +28,32 @@ public final class ShopPricing {
         } else if (armour instanceof Boots || armour instanceof Gloves) {
             tier -= 1;
         }
-        int scaled = 38 + (int) (Math.sqrt(raw) * 4.2) + tier * 8 + (int) (weight * 1.5);
-        return clamp(scaled, 48, 198);
+        double norm = Math.log1p(raw) / Math.log1p(2000);
+        int scaled = 48 + (int) (norm * 118) + tier * 7 + (int) (weight * 1.2);
+        int jitter = Math.floorMod(armour.getName().hashCode(), 13) - 6;
+        return clamp(scaled + jitter, 48, 198);
+    }
+
+    /** Витринная цена, уникальная внутри одной категории каталога. */
+    public static int uniqueArmorPrice(Armour armour, java.util.Set<Integer> usedPrices) {
+        int base = armorPrice(armour);
+        if (usedPrices.add(base)) {
+            return base;
+        }
+        for (int delta = 1; delta <= 75; delta++) {
+            if (base + delta <= 198 && usedPrices.add(base + delta)) {
+                return base + delta;
+            }
+            if (base - delta >= 48 && usedPrices.add(base - delta)) {
+                return base - delta;
+            }
+        }
+        for (int p = 48; p <= 198; p++) {
+            if (usedPrices.add(p)) {
+                return p;
+            }
+        }
+        return base;
     }
 
     public static int setPrice(ArmourSet set) {
