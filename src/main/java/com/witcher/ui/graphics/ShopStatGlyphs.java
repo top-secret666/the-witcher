@@ -9,12 +9,12 @@ import java.awt.Rectangle;
 public final class ShopStatGlyphs {
 
     public static final int ROW_ICON_SIZE = 8;
-    public static final int LEGEND_ICON_SIZE = 10;
+    public static final int LEGEND_ICON_SIZE = 12;
     public static final int ROW_GAP = 5;
-    public static final int LEGEND_GAP = 10;
+    public static final int LEGEND_GAP = 12;
 
-    private static final Color ICON_COLOR = new Color(220, 205, 175);
-    private static final Color LABEL_COLOR = new Color(255, 230, 155);
+    private static final Color ICON_COLOR = new Color(235, 220, 190);
+    private static final Color LABEL_COLOR = new Color(255, 238, 170);
     private static final Color POS_VALUE = new Color(168, 214, 148);
     private static final Color NEG_VALUE = new Color(214, 148, 128);
     private static final Color ZERO_VALUE = new Color(150, 142, 128);
@@ -29,8 +29,8 @@ public final class ShopStatGlyphs {
     }
 
     public static Rectangle legendBounds(FontMetrics fm) {
-        int padX = 8;
-        int padY = 3;
+        int padX = 10;
+        int padY = 4;
         int w = legendContentWidth(fm) + padX * 2;
         int h = Math.max(LEGEND_ICON_SIZE, fm.getHeight()) + padY * 2;
         return new Rectangle(0, 0, w, h);
@@ -42,7 +42,7 @@ public final class ShopStatGlyphs {
             if (i > 0) {
                 width += LEGEND_GAP;
             }
-            width += LEGEND_ICON_SIZE + 3 + fm.stringWidth(LEGEND_LABELS[i]);
+            width += LEGEND_ICON_SIZE + 4 + fm.stringWidth(LEGEND_LABELS[i]);
         }
         return width;
     }
@@ -52,16 +52,17 @@ public final class ShopStatGlyphs {
         box.x = x;
         box.y = y;
         ShopScreen.drawGoldHudChip(g, box, alpha);
-        int cx = x + 8;
-        int baselineY = y + box.height - 4;
+        int cx = x + 10;
+        int baselineY = (y + box.height - 5 + 1) & ~1;
         int iconY = baselineY - LEGEND_ICON_SIZE + 1;
         for (int i = 0; i < LEGEND_LABELS.length; i++) {
             if (i > 0) {
                 cx += LEGEND_GAP;
             }
             drawIcon(g, i, cx, iconY, LEGEND_ICON_SIZE, ICON_COLOR);
-            cx += LEGEND_ICON_SIZE + 3;
-            ShopScreen.drawOutlinedText(g, LEGEND_LABELS[i], cx, baselineY, LABEL_COLOR);
+            cx += LEGEND_ICON_SIZE + 4;
+            int labelX = (cx + 1) & ~1;
+            ShopScreen.drawOutlinedText(g, LEGEND_LABELS[i], labelX, baselineY, LABEL_COLOR);
             cx += fm.stringWidth(LEGEND_LABELS[i]);
         }
     }

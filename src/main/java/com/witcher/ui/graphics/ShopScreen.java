@@ -23,6 +23,8 @@ public class ShopScreen {
     private static final int VIRTUAL_W = 480;
     private static final int VIRTUAL_H = 360;
     private static final int DIALOG_TEXT_ZONE = 54;
+    /** Зазор между низом витрины и зоной диалога Герцога. */
+    private static final int PANEL_BOTTOM_MARGIN = 4;
 
     private enum ShopState {
         REVEAL,
@@ -122,10 +124,13 @@ public class ShopScreen {
             int bottomRowW = bottomCount * cardW + Math.max(0, bottomCount - 1) * cardGap;
             cardsStartXBottom = panelX + (panelW - bottomRowW) / 2;
 
-            cardsY = panelY + headerH + 4;
-            int contentBottom = cardsY + gridRows * cardH + (gridRows - 1) * cardGap;
-            panelH = contentBottom - panelY + 8;
+            int gridContentH = gridRows * cardH + (gridRows - 1) * cardGap;
+            panelH = dialogTop - panelY - PANEL_BOTTOM_MARGIN;
+            int innerTop = panelY + headerH;
+            int innerH = Math.max(gridContentH, panelH - headerH);
+            cardsY = innerTop + Math.max(4, (innerH - gridContentH) / 2);
 
+            int contentBottom = cardsY + gridContentH;
             btnX = panelX + (panelW - btnW) / 2;
             btnY = contentBottom + 6;
         }
@@ -1216,8 +1221,8 @@ public class ShopScreen {
 
         Composite prev = g.getComposite();
         g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
-        drawCardText(g);
-        g.setFont(GameFonts.get().uiPlain(8));
+        drawCrispText(g);
+        g.setFont(GameFonts.get().uiPlain(10));
         FontMetrics fm = g.getFontMetrics();
         Rectangle legendBox = ShopStatGlyphs.legendBounds(fm);
         int gap = walletLeft - backRight;
@@ -1561,7 +1566,7 @@ public class ShopScreen {
         g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.55f * alpha));
         int pad = 6;
         g.fillRoundRect(layout.panelX - pad, layout.panelY - pad,
-            layout.panelW + pad * 2, layout.panelH + layout.btnH + pad * 2 + 10, 4, 4);
+            layout.panelW + pad * 2, layout.panelH + pad * 2, 4, 4);
 
         g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.35f * alpha));
         GradientPaint sides = new GradientPaint(0, 0, new Color(0, 0, 0, 200),
@@ -2155,7 +2160,7 @@ public class ShopScreen {
         drawCardText(g);
         int fontSize;
         if (categoryGrid) {
-            fontSize = w >= 50 ? 10 : Math.max(8, Math.round(10f * w / 54f));
+            fontSize = w >= 50 ? 11 : Math.max(9, Math.round(11f * w / 54f));
         } else {
             fontSize = w < 60 ? 8 : (h > 200 ? 12 : (w < 90 ? 9 : 10));
         }

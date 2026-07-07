@@ -41,6 +41,9 @@ final class ShopAssetCache {
     final int btnW = 100;
     final int btnH = 30;
     final int panelW = 380;
+    private static final int VIRTUAL_H = 360;
+    private static final int DIALOG_TEXT_ZONE = 54;
+    private static final int PANEL_BOTTOM_MARGIN = 4;
 
     final BufferedImage hudBar;
     final BufferedImage counterForeground;
@@ -153,12 +156,10 @@ final class ShopAssetCache {
 
         int headerH = panelHeaderH;
         int panelY = hudY + hudH + 6;
-        int cardsY = panelY + headerH + 6;
-        int cardGap = 6;
-        int contentBottom = cardsY + gridRows * cardH + (gridRows - 1) * cardGap;
-        int panelDrawH = contentBottom + 6 + btnH + 4 - panelY;
+        int dialogTop = VIRTUAL_H - DIALOG_TEXT_ZONE;
+        int panelDrawH = dialogTop - panelY - PANEL_BOTTOM_MARGIN;
         counterY = hudY + hudH + 2;
-        counterH = (360 - 54) - counterY - 4;
+        counterH = dialogTop - counterY - 4;
         counterForeground = loadSized(UI + "shop_counter_foreground.png", counterW, counterH,
             BASE + "ui/shop_counter_foreground.png", false);
 
