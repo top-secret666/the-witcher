@@ -1831,7 +1831,7 @@ public class ShopScreen {
         if (categoryItem == null || categoryItem.category != ShopCategory.CHEST) {
             return null;
         }
-        if (entry != null && entry.armour != null && chestIcons.hasMappedIcon(entry.armour.getName())) {
+        if (entry != null && entry.armour != null) {
             BufferedImage icon = chestIcons.iconForEntry(entry);
             if (icon != null) {
                 return icon;

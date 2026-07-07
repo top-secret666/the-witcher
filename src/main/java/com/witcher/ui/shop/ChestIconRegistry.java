@@ -16,10 +16,10 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Properties;
 
 /** Иконки нагрудников по ключевым словам в названии доспеха. */
 public final class ChestIconRegistry {
@@ -40,6 +40,21 @@ public final class ChestIconRegistry {
     private ChestIconRegistry(int iconSize) {
         this.iconSize = iconSize;
         this.rules = loadRules();
+        preloadDistinctIcons();
+    }
+
+    private void preloadDistinctIcons() {
+        HashSet<String> files = new HashSet<>();
+        for (Rule rule : rules) {
+            files.add(rule.fileName);
+        }
+        int loaded = 0;
+        for (String file : files) {
+            if (loadIcon(file, iconSize) != null) {
+                loaded++;
+            }
+        }
+        System.out.println("Chest icons: " + loaded + "/" + files.size() + " textures ready");
     }
 
     public static ChestIconRegistry get(int iconSize) {
@@ -114,6 +129,7 @@ public final class ChestIconRegistry {
         }
         BufferedImage src = loadRaw(SRC + fileName);
         if (src == null) {
+            System.err.println("Chest icons: missing file " + fileName);
             return null;
         }
         Rectangle box = ShopScreen.computeContentBoundsPublic(src);
@@ -126,25 +142,36 @@ public final class ChestIconRegistry {
     }
 
     private static List<Rule> loadRules() {
-        Properties props = new Properties();
+        List<Rule> out = new ArrayList<>();
         try (InputStream in = ChestIconRegistry.class.getResourceAsStream(MAP_PATH)) {
-            if (in != null) {
-                try (BufferedReader reader = new BufferedReader(
-                    new InputStreamReader(in, StandardCharsets.UTF_8))) {
-                    props.load(reader);
+            if (in == null) {
+                System.err.println("Chest icons: map not found at " + MAP_PATH);
+                return out;
+            }
+            try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(in, StandardCharsets.UTF_8))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    line = line.strip();
+                    if (line.isEmpty() || line.startsWith("#")) {
+                        continue;
+                    }
+                    int sep = line.indexOf('=');
+                    if (sep <= 0) {
+                        continue;
+                    }
+                    String keyword = line.substring(0, sep).strip().toLowerCase(Locale.ROOT);
+                    String file = line.substring(sep + 1).strip();
+                    if (!keyword.isEmpty() && !file.isEmpty()) {
+                        out.add(new Rule(keyword, file));
+                    }
                 }
             }
         } catch (IOException e) {
             throw new RuntimeException("Failed to load chest icon map", e);
         }
-        List<Rule> out = new ArrayList<>();
-        for (String key : props.stringPropertyNames()) {
-            String file = props.getProperty(key).trim();
-            if (!file.isEmpty()) {
-                out.add(new Rule(key.toLowerCase(Locale.ROOT), file));
-            }
-        }
         out.sort(Comparator.comparingInt((Rule rule) -> rule.keyword.length()).reversed());
+        System.out.println("Chest icons: " + out.size() + " name rules loaded");
         return out;
     }
 }
