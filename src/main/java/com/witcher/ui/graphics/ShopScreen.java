@@ -38,7 +38,7 @@ public class ShopScreen {
 
     /** ~3 с при 30 FPS — появление витрины. */
     private static final int REVEAL_DURATION_TICKS = 84;
-    private static final int CATEGORY_OPEN_DURATION_TICKS = 50;
+    private static final int CATEGORY_OPEN_DURATION_TICKS = 28;
     /** Сцена кошелька: появление → полёт в сумку → закрытие → счётчик. */
     private static final int WALLET_APPEAR_TICKS = 30;
     private static final int WALLET_FLY_TICKS = 40;
@@ -452,6 +452,11 @@ public class ShopScreen {
             return;
         }
 
+        if ((state == ShopState.CATEGORY_OPENING || state == ShopState.CATEGORY_CLOSING) && clicked) {
+            skipCategoryAnimation();
+            return;
+        }
+
         boolean bagUnlocked = !model.needsWalletReveal()
             && state != ShopState.WALLET_REVEAL
             && state != ShopState.PURCHASE_REVEAL;
@@ -691,6 +696,19 @@ public class ShopScreen {
         categoryTicks = 0;
         state = ShopState.CATEGORY_CLOSING;
         hoveredRowIndex = -1;
+    }
+
+    private void skipCategoryAnimation() {
+        if (state == ShopState.CATEGORY_OPENING) {
+            categoryTicks = CATEGORY_OPEN_DURATION_TICKS;
+            categoryClosing = false;
+            state = ShopState.CATEGORY;
+            return;
+        }
+        if (state == ShopState.CATEGORY_CLOSING) {
+            categoryTicks = CATEGORY_OPEN_DURATION_TICKS;
+            finishCategoryClose();
+        }
     }
 
     private void finishCategoryClose() {
@@ -2194,7 +2212,7 @@ public class ShopScreen {
             int maxArt = iconCapForCard(slotW, slotH, smoothIconGrowth);
             Rectangle artBounds = aspectFitCroppedBounds(crop, slotX, slotTop, slotW, slotH, maxArt);
             if (!categoryGrid) {
-                drawItemArtGoldContour(g, art, crop, artBounds);
+                drawItemArtGoldContour(g, artBounds);
             }
             drawCroppedScaledSprite(g, art, crop, artBounds.x, artBounds.y,
                 artBounds.width, artBounds.height, true);
@@ -2236,67 +2254,29 @@ public class ShopScreen {
         drawOutlinedText(g, priceLabel, priceX, priceRowY, new Color(255, 220, 90));
     }
 
-    /** Золотой контур по силуэту иконки — рисуется под спрайтом, снаружи пикселей. */
-    private static void drawItemArtGoldContour(Graphics2D g, BufferedImage img, Rectangle crop,
-                                               Rectangle drawBounds) {
-        if (img == null || crop == null || drawBounds == null
-            || crop.width <= 0 || crop.height <= 0
-            || drawBounds.width <= 0 || drawBounds.height <= 0) {
+    /** Мягкая золотая подложка под иконку товара — читается на тёмном фоне карточки. */
+    private static void drawItemArtGoldContour(Graphics2D g, Rectangle drawBounds) {
+        if (drawBounds == null || drawBounds.width <= 0 || drawBounds.height <= 0) {
             return;
         }
+        int pad = Math.max(3, Math.min(drawBounds.width, drawBounds.height) / 9);
+        int rx = drawBounds.x - pad;
+        int ry = drawBounds.y - pad;
+        int rw = drawBounds.width + pad * 2;
+        int rh = drawBounds.height + pad * 2;
 
-        double scaleX = (double) drawBounds.width / crop.width;
-        double scaleY = (double) drawBounds.height / crop.height;
-        int tileW = Math.max(1, (int) Math.ceil(scaleX));
-        int tileH = Math.max(1, (int) Math.ceil(scaleY));
-
-        Object prevAa = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
-        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
-
-        int cropRight = crop.x + crop.width;
-        int cropBottom = crop.y + crop.height;
-        int[][] dirs = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
-        for (int sy = crop.y; sy < cropBottom; sy++) {
-            for (int sx = crop.x; sx < cropRight; sx++) {
-                if (!isVisibleIconPixel(img, sx, sy)) {
-                    continue;
-                }
-                for (int[] d : dirs) {
-                    if (isVisibleIconPixel(img, sx + d[0], sy + d[1])) {
-                        continue;
-                    }
-                    int dx = drawBounds.x + (int) Math.round((sx + d[0] - crop.x) * scaleX);
-                    int dy = drawBounds.y + (int) Math.round((sy + d[1] - crop.y) * scaleY);
-                    g.setColor(new Color(120, 85, 30, 235));
-                    g.fillRect(dx, dy, tileW, tileH);
-                    g.setColor(new Color(255, 215, 95, 210));
-                    if (tileW == 1 && tileH == 1) {
-                        g.fillRect(dx, dy, 1, 1);
-                    } else {
-                        g.drawRect(dx, dy, Math.max(0, tileW - 1), Math.max(0, tileH - 1));
-                    }
-                }
-            }
-        }
-
-        if (prevAa != null) {
-            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, prevAa);
-        }
-    }
-
-    private static boolean isVisibleIconPixel(BufferedImage img, int x, int y) {
-        if (x < 0 || y < 0 || x >= img.getWidth() || y >= img.getHeight()) {
-            return false;
-        }
-        int argb = img.getRGB(x, y);
-        int a = (argb >>> 24) & 0xff;
-        if (a <= 20) {
-            return false;
-        }
-        int r = (argb >>> 16) & 0xff;
-        int gr = (argb >>> 8) & 0xff;
-        int b = argb & 0xff;
-        return !(r < 24 && gr < 24 && b < 24);
+        Composite prev = g.getComposite();
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.38f));
+        g.setColor(new Color(255, 196, 64));
+        g.fillRoundRect(rx, ry, rw, rh, 6, 6);
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
+        g.setColor(new Color(10, 7, 3, 170));
+        g.fillRoundRect(rx + 1, ry + 1, rw - 2, rh - 2, 5, 5);
+        g.setColor(new Color(150, 110, 40, 220));
+        g.drawRoundRect(rx, ry, rw, rh, 6, 6);
+        g.setColor(new Color(255, 225, 140, 110));
+        g.drawRoundRect(rx + 1, ry + 1, rw - 2, rh - 2, 5, 5);
+        g.setComposite(prev);
     }
 
     /** Иконка растёт вместе с слотом; при анимации — без скачка 32→96. */
