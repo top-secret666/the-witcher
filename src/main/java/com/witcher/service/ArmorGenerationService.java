@@ -39,26 +39,12 @@ public class ArmorGenerationService {
         // Generate each type with completion tracking
         ArmorFactory.clearUsedNames();
         generateItems("Броня", armorCount, ArmorFactory::createRandomArmor);
-
-        ArmorFactory.clearUsedNames();
         generateItems("Бригандина", brigandineCount, ArmorFactory::createRandomBrigandine);
-
-        ArmorFactory.clearUsedNames();
         generateItems("Кирасса", cuirassCount, ArmorFactory::createRandomCuirass);
-
-        ArmorFactory.clearUsedNames();
         generateItems("Нагрудник", breastplateCount, ArmorFactory::createRandomBreastplate);
-
-        ArmorFactory.clearUsedNames();
         generateItems("Перчатки", glovesCount, ArmorFactory::createRandomGloves);
-
-        ArmorFactory.clearUsedNames();
         generateItems("Ботинки", bootsCount, ArmorFactory::createRandomBoots);
-
-        ArmorFactory.clearUsedNames();
         generateItems("Бриджи", breechesCount, ArmorFactory::createRandomBreeches);
-
-        ArmorFactory.clearUsedNames();
         generateItems("Штаны", pantsCount, ArmorFactory::createRandomPants);
 
 

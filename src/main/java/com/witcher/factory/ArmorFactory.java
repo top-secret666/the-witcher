@@ -7,6 +7,9 @@ import main.java.com.witcher.model.enums.ArmourType;
 import java.io.*;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Properties;
 import java.util.Random;
@@ -35,9 +38,38 @@ public class ArmorFactory {
         return armorNames.getProperty(key).split(",");
     }
 
-    private static String getUniqueName(String propertyKey) {
-        String[] nameArray = getNames(propertyKey);
-        return nameArray[random.nextInt(nameArray.length)];
+    private static String uniqueFullName(String propertyKey, String suffix) {
+        return allocateName(getNames(propertyKey), suffix, true);
+    }
+
+    private static String uniquePrefixedName(String prefix, String propertyKey) {
+        return allocateName(getNames(propertyKey), prefix, false);
+    }
+
+    private static String allocateName(String[] nameArray, String affix, boolean suffix) {
+        if (nameArray.length == 0) {
+            throw new IllegalStateException("No armor names configured");
+        }
+        ArrayList<String> pool = new ArrayList<>(Arrays.asList(nameArray));
+        Collections.shuffle(pool, random);
+        for (String part : pool) {
+            String full = suffix ? part + affix : affix + part;
+            if (usedNames.add(full)) {
+                return full;
+            }
+        }
+        for (String part : nameArray) {
+            for (int n = 2; n < 20; n++) {
+                String variant = suffix ? part + " " + n + affix : affix + part + " " + n;
+                if (usedNames.add(variant)) {
+                    return variant;
+                }
+            }
+        }
+        String fallback = (suffix ? "Редкий " : "Редкий ") + (usedNames.size() + 1)
+            + (suffix ? affix : "");
+        usedNames.add(fallback);
+        return fallback;
     }
 
     public static void clearUsedNames() {
@@ -53,7 +85,7 @@ public class ArmorFactory {
     }
 
     public static Brigandine createRandomBrigandine() {
-        String name = getUniqueName("brigandine.names") + " Бригантина";
+        String name = uniqueFullName("brigandine.names", " Бригантина");
         ArmourType type = ArmourType.values()[random.nextInt(ArmourType.values().length)];
         ArmourCategory category = ArmourCategory.values()[random.nextInt(ArmourCategory.values().length)];
         int basePrice = randomInt(100, 500);
@@ -72,7 +104,7 @@ public class ArmorFactory {
 
 
     public static Cuirass createRandomCuirass() {
-        String name = getUniqueName("cuirass.names") + " Кирасса";
+        String name = uniqueFullName("cuirass.names", " Кирасса");
         ArmourType type = ArmourType.values()[random.nextInt(ArmourType.values().length)];
         ArmourCategory category = ArmourCategory.values()[random.nextInt(ArmourCategory.values().length)];
         int basePrice = randomInt(150, 1200);
@@ -97,7 +129,7 @@ public class ArmorFactory {
     }
 
     public static Armor createRandomArmor() {
-        String name = "Доспех " + getUniqueName("armor.names");
+        String name = uniquePrefixedName("Доспех ", "armor.names");
         ArmourType type = ArmourType.values()[random.nextInt(ArmourType.values().length)];
         ArmourCategory category = ArmourCategory.values()[random.nextInt(ArmourCategory.values().length)];
         int basePrice = randomInt(250, 2000);
@@ -120,7 +152,7 @@ public class ArmorFactory {
 
 
     public static Breastplate createRandomBreastplate() {
-        String name = "Нагрудник " + getUniqueName("breastplate.names");
+        String name = uniquePrefixedName("Нагрудник ", "breastplate.names");
         ArmourType type = ArmourType.values()[random.nextInt(ArmourType.values().length)];
         ArmourCategory category = ArmourCategory.values()[random.nextInt(ArmourCategory.values().length)];
         int basePrice = randomInt(200, 800);
@@ -142,7 +174,7 @@ public class ArmorFactory {
 
 
     public static Gloves createRandomGloves() {
-        String name = getUniqueName("gloves.names") + " Перчатки";
+        String name = uniqueFullName("gloves.names", " Перчатки");
         ArmourType type = ArmourType.values()[random.nextInt(ArmourType.values().length)];
         ArmourCategory category = ArmourCategory.values()[random.nextInt(ArmourCategory.values().length)];
         int basePrice = randomInt(50, 300);
@@ -156,7 +188,7 @@ public class ArmorFactory {
     }
 
     public static Boots createRandomBoots() {
-        String name = getUniqueName("boots.names") + " Сапоги";
+        String name = uniqueFullName("boots.names", " Сапоги");
         ArmourType type = ArmourType.values()[random.nextInt(ArmourType.values().length)];
         ArmourCategory category = ArmourCategory.values()[random.nextInt(ArmourCategory.values().length)];
         int basePrice = randomInt(80, 400);
@@ -169,7 +201,7 @@ public class ArmorFactory {
     }
 
     public static Breeches createRandomBreeches() {
-        String name = getUniqueName("breeches.names") + " Бриджи";
+        String name = uniqueFullName("breeches.names", " Бриджи");
         ArmourType type = ArmourType.values()[random.nextInt(ArmourType.values().length)];
         ArmourCategory category = ArmourCategory.values()[random.nextInt(ArmourCategory.values().length)];
         int basePrice = randomInt(80, 700);
@@ -187,7 +219,7 @@ public class ArmorFactory {
     }
 
     public static Pants createRandomPants() {
-        String name = getUniqueName("pants.names") + " Брюки";
+        String name = uniqueFullName("pants.names", " Брюки");
         ArmourType type = ArmourType.values()[random.nextInt(ArmourType.values().length)];
         ArmourCategory category = ArmourCategory.values()[random.nextInt(ArmourCategory.values().length)];
         int basePrice = randomInt(80, 400);
