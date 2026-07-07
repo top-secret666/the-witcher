@@ -17,76 +17,6 @@
       ]
     },
     {
-      "output": "1x/ui/inventory_bag_open_00.png",
-      "size": [
-        40,
-        40
-      ]
-    },
-    {
-      "output": "1x/ui/inventory_bag_open_01.png",
-      "size": [
-        40,
-        40
-      ]
-    },
-    {
-      "output": "1x/ui/inventory_bag_open_02.png",
-      "size": [
-        40,
-        40
-      ]
-    },
-    {
-      "output": "1x/ui/inventory_bag_open_03.png",
-      "size": [
-        40,
-        40
-      ]
-    },
-    {
-      "output": "1x/ui/inventory_bag_open_04.png",
-      "size": [
-        40,
-        40
-      ]
-    },
-    {
-      "output": "1x/ui/inventory_bag_open_05.png",
-      "size": [
-        40,
-        40
-      ]
-    },
-    {
-      "output": "1x/ui/inventory_bag_open_06.png",
-      "size": [
-        40,
-        40
-      ]
-    },
-    {
-      "output": "1x/ui/inventory_bag_open_07.png",
-      "size": [
-        40,
-        40
-      ]
-    },
-    {
-      "output": "1x/ui/inventory_bag_open_08.png",
-      "size": [
-        40,
-        40
-      ]
-    },
-    {
-      "output": "1x/ui/inventory_bag_open_09.png",
-      "size": [
-        40,
-        40
-      ]
-    },
-    {
       "output": "1x/ui/shop_hud_bar.png",
       "size": [
         380,
@@ -415,6 +345,14 @@
       "bytes": 2866
     },
     {
+      "output": "1x/icons/items/guardsman's_trousers.png",
+      "size": [
+        32,
+        32
+      ],
+      "bytes": 2553
+    },
+    {
       "output": "1x/icons/items/hunting_trousers.png",
       "size": [
         32,
@@ -485,6 +423,14 @@
         32
       ],
       "bytes": 3020
+    },
+    {
+      "output": "1x/icons/items/skellige_breeches.png",
+      "size": [
+        32,
+        32
+      ],
+      "bytes": 2570
     },
     {
       "output": "1x/icons/items/spikeroog_aketon.png",

@@ -318,17 +318,15 @@ public class ShopScreen {
         return assets.rowH + 4;
     }
 
-    private static final int CATALOG_STAT_LEGEND_H = 11;
-
     private int catalogListTop(int panelY) {
-        return panelY + 12 + (catalogShowsStatLegend() ? CATALOG_STAT_LEGEND_H : 0);
+        return panelY + 12;
     }
 
-    private boolean catalogShowsStatLegend() {
-        if (selectedIndex < 0 || selectedIndex >= items.size()) {
-            return false;
+    private String dialogForCategoryOpen(ShopItem item) {
+        if (item.kind == ItemKind.PIECE) {
+            return item.dukeLine + "\n" + DukeLines.statGlyphsLegend();
         }
-        return items.get(selectedIndex).kind == ItemKind.PIECE;
+        return item.dukeLine;
     }
 
     private int catalogListBottom(int panelY) {
@@ -508,7 +506,7 @@ public class ShopScreen {
         if (showcaseInteractive && clicked && hoveredIndex >= 0) {
             selectedIndex = hoveredIndex;
             ShopItem item = items.get(hoveredIndex);
-            currentDialog = item.dukeLine;
+            currentDialog = dialogForCategoryOpen(item);
             state = ShopState.CATEGORY_OPENING;
             categoryClosing = false;
             categoryTicks = 0;
@@ -1898,15 +1896,6 @@ public class ShopScreen {
 
         drawCardText(g);
         g.setFont(GameFonts.get().uiPlain(9));
-
-        if (catalogShowsStatLegend()) {
-            g.setFont(GameFonts.get().uiPlain(7));
-            FontMetrics legendFm = g.getFontMetrics();
-            int legendY = panelY + 18;
-            int legendX = x + assets.rowW - ShopStatGlyphs.legendWidth(legendFm) - 8;
-            ShopStatGlyphs.drawLegend(g, legendX, legendY, legendFm);
-            g.setFont(GameFonts.get().uiPlain(9));
-        }
 
         for (int i = 0; i < catalogEntries.size(); i++) {
             ShopCatalogEntry row = catalogEntries.get(i);

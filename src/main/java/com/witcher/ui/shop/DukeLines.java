@@ -51,6 +51,10 @@ public final class DukeLines {
         };
     }
 
+    public static String statGlyphsLegend() {
+        return "У цифр в списке значки: щит — защита, молния — выносливость, ромб — знаки. Плюс — лучше, минус — хуже.";
+    }
+
     public static String rowInspect(String itemName, int price) {
         return pick(
             "Так-так… " + itemName + ". За " + price + " крон — сделка честная.",
