@@ -1012,21 +1012,8 @@ public class ShopScreen {
 
     private void drawItemRevealGlow(Graphics2D g, int px, int py, int pw,
                                     float alpha, float appearT, float flyT, float tuckT) {
-        Composite prev = g.getComposite();
-        int cx = px + pw / 2;
-        int cy = py + pw / 2;
         float glow = alpha * (0.4f + appearT * 0.5f) * (1f - flyT * 0.2f) * (1f - tuckT);
-
-        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, glow * 0.2f));
-        g.setColor(new Color(255, 210, 80));
-        int outer = Math.round(pw * 1.7f);
-        g.fillOval(cx - outer / 2, cy - outer / 2, outer, outer);
-
-        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, glow * 0.38f));
-        g.setColor(new Color(255, 235, 150));
-        int mid = Math.round(pw * 1.1f);
-        g.fillOval(cx - mid / 2, cy - mid / 2, mid, mid);
-        g.setComposite(prev);
+        drawSoftGoldItemGlow(g, px + pw / 2, py + pw / 2, pw, glow, 1.7f, 1.1f, 0.2f, 0.38f);
     }
 
     private Point inventoryBagSlot() {
@@ -2200,7 +2187,7 @@ public class ShopScreen {
             int maxArt = iconCapForCard(slotW, slotH, smoothIconGrowth);
             Rectangle artBounds = aspectFitCroppedBounds(crop, slotX, slotTop, slotW, slotH, maxArt);
             if (!categoryGrid) {
-                drawItemArtGoldContour(g, art, crop, artBounds);
+                drawItemArtGoldContour(g, artBounds);
             }
             drawCroppedScaledSprite(g, art, crop, artBounds.x, artBounds.y,
                 artBounds.width, artBounds.height, true);
@@ -2242,89 +2229,37 @@ public class ShopScreen {
         drawOutlinedText(g, priceLabel, priceX, priceRowY, new Color(255, 220, 90));
     }
 
-    /** Мягкое золотое свечение по контуру иконки — без прямоугольной рамки. */
-    private static void drawItemArtGoldContour(Graphics2D g, BufferedImage img, Rectangle crop,
-                                               Rectangle drawBounds) {
-        if (img == null || crop == null || drawBounds == null
-            || crop.width <= 0 || crop.height <= 0
-            || drawBounds.width <= 0 || drawBounds.height <= 0) {
+    /** Мягкое золотое свечение под иконкой — как при покупке, но компактнее. */
+    private static void drawItemArtGoldContour(Graphics2D g, Rectangle drawBounds) {
+        if (drawBounds == null || drawBounds.width <= 0 || drawBounds.height <= 0) {
             return;
         }
+        int cx = drawBounds.x + drawBounds.width / 2;
+        int cy = drawBounds.y + drawBounds.height / 2;
+        int base = Math.max(drawBounds.width, drawBounds.height);
+        drawSoftGoldItemGlow(g, cx, cy, base, 0.88f, 1.28f, 0.90f, 0.16f, 0.30f);
+    }
 
-        double scaleX = (double) drawBounds.width / crop.width;
-        double scaleY = (double) drawBounds.height / crop.height;
-
+    private static void drawSoftGoldItemGlow(Graphics2D g, int cx, int cy, int baseSize, float strength,
+                                             float outerMul, float midMul, float outerAlpha, float midAlpha) {
+        Composite prev = g.getComposite();
         Object prevAa = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
-        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        drawIconContourGlowPass(g, img, crop, drawBounds, scaleX, scaleY, 2,
-            0.13f, new Color(255, 175, 40));
-        drawIconContourGlowPass(g, img, crop, drawBounds, scaleX, scaleY, 1,
-            0.30f, new Color(255, 218, 105));
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, strength * outerAlpha));
+        g.setColor(new Color(255, 210, 80));
+        int outer = Math.round(baseSize * outerMul);
+        g.fillOval(cx - outer / 2, cy - outer / 2, outer, outer);
 
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, strength * midAlpha));
+        g.setColor(new Color(255, 235, 150));
+        int mid = Math.round(baseSize * midMul);
+        g.fillOval(cx - mid / 2, cy - mid / 2, mid, mid);
+
+        g.setComposite(prev);
         if (prevAa != null) {
             g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, prevAa);
         }
-    }
-
-    private static void drawIconContourGlowPass(Graphics2D g, BufferedImage img, Rectangle crop,
-                                                Rectangle drawBounds, double scaleX, double scaleY,
-                                                int outward, float alpha, Color color) {
-        Composite prev = g.getComposite();
-        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
-        g.setColor(color);
-
-        int cropRight = crop.x + crop.width;
-        int cropBottom = crop.y + crop.height;
-        for (int sy = crop.y; sy < cropBottom; sy++) {
-            for (int sx = crop.x; sx < cropRight; sx++) {
-                if (!isVisibleIconPixel(img, sx, sy)) {
-                    continue;
-                }
-                int x0 = drawBounds.x + (int) Math.floor((sx - crop.x) * scaleX);
-                int y0 = drawBounds.y + (int) Math.floor((sy - crop.y) * scaleY);
-                int x1 = drawBounds.x + (int) Math.ceil((sx + 1 - crop.x) * scaleX) - 1;
-                int y1 = drawBounds.y + (int) Math.ceil((sy + 1 - crop.y) * scaleY) - 1;
-
-                if (!isVisibleIconPixel(img, sx - 1, sy)) {
-                    for (int y = y0; y <= y1; y++) {
-                        g.fillRect(x0 - outward, y, 1, 1);
-                    }
-                }
-                if (!isVisibleIconPixel(img, sx + 1, sy)) {
-                    for (int y = y0; y <= y1; y++) {
-                        g.fillRect(x1 + outward, y, 1, 1);
-                    }
-                }
-                if (!isVisibleIconPixel(img, sx, sy - 1)) {
-                    for (int x = x0; x <= x1; x++) {
-                        g.fillRect(x, y0 - outward, 1, 1);
-                    }
-                }
-                if (!isVisibleIconPixel(img, sx, sy + 1)) {
-                    for (int x = x0; x <= x1; x++) {
-                        g.fillRect(x, y1 + outward, 1, 1);
-                    }
-                }
-            }
-        }
-
-        g.setComposite(prev);
-    }
-
-    private static boolean isVisibleIconPixel(BufferedImage img, int x, int y) {
-        if (x < 0 || y < 0 || x >= img.getWidth() || y >= img.getHeight()) {
-            return false;
-        }
-        int argb = img.getRGB(x, y);
-        int a = (argb >>> 24) & 0xff;
-        if (a <= 20) {
-            return false;
-        }
-        int r = (argb >>> 16) & 0xff;
-        int gr = (argb >>> 8) & 0xff;
-        int b = argb & 0xff;
-        return !(r < 24 && gr < 24 && b < 24);
     }
 
     /** Иконка растёт вместе с слотом; при анимации — без скачка 32→96. */
