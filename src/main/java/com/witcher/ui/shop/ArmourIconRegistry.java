@@ -71,21 +71,29 @@ public final class ArmourIconRegistry {
     }
 
     public BufferedImage iconForEntry(ShopCatalogEntry entry) {
-        return iconForEntry(entry, iconSize);
+        return iconForEntry(entry, null, iconSize);
     }
 
-    public BufferedImage iconForEntry(ShopCatalogEntry entry, int size) {
+    public BufferedImage iconForEntry(ShopCatalogEntry entry, ShopCategory category) {
+        return iconForEntry(entry, category, iconSize);
+    }
+
+    public BufferedImage iconForEntry(ShopCatalogEntry entry, ShopCategory category, int size) {
         if (entry == null || entry.armour == null) {
             return null;
         }
-        return iconFor(entry.armour, size);
+        return iconFor(entry.armour, category, size);
     }
 
     public BufferedImage iconFor(Armour armour, int size) {
+        return iconFor(armour, null, size);
+    }
+
+    public BufferedImage iconFor(Armour armour, ShopCategory category, int size) {
         if (armour == null) {
             return null;
         }
-        return iconForName(armour.getName(), size);
+        return iconForName(armour.getName(), category, size);
     }
 
     public boolean hasMappedIcon(String armourName) {
@@ -93,19 +101,51 @@ public final class ArmourIconRegistry {
     }
 
     public BufferedImage iconForName(String armourName) {
-        return iconForName(armourName, iconSize);
+        return iconForName(armourName, null, iconSize);
     }
 
-    public BufferedImage iconForName(String armourName, int size) {
+    public BufferedImage iconForName(String armourName, ShopCategory category, int size) {
         if (armourName == null || armourName.isBlank()) {
             return null;
         }
         String file = resolveFile(armourName);
-        if (file == null) {
+        if (file == null || !matchesCategory(file, category)) {
             return null;
         }
         String cacheKey = file + "@" + size;
         return cache.computeIfAbsent(cacheKey, key -> loadIcon(file, size));
+    }
+
+    private static boolean matchesCategory(String fileName, ShopCategory category) {
+        if (category == null) {
+            return true;
+        }
+        return switch (category) {
+            case CHEST -> isChestIcon(fileName);
+            case LEGS -> isLegsIcon(fileName);
+            case GLOVES, BOOTS -> false;
+            default -> false;
+        };
+    }
+
+    private static boolean isLegsIcon(String fileName) {
+        String lower = fileName.toLowerCase(Locale.ROOT);
+        return lower.contains("trousers")
+            || lower.contains("breeches")
+            || lower.contains("sharovary");
+    }
+
+    private static boolean isChestIcon(String fileName) {
+        if (isLegsIcon(fileName)) {
+            return false;
+        }
+        String lower = fileName.toLowerCase(Locale.ROOT);
+        return lower.startsWith("chest_")
+            || lower.contains("armor")
+            || lower.contains("cuirass")
+            || lower.contains("aketon")
+            || lower.contains("gambeson")
+            || lower.contains("halberdier");
     }
 
     private String resolveFile(String armourName) {

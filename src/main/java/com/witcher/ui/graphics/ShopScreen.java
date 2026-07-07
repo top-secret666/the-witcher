@@ -652,7 +652,7 @@ public class ShopScreen {
         purchaseRevealKeepRow = selectedRowIndex;
         if (selectedIndex >= 0 && selectedIndex < items.size()) {
             ShopItem cat = items.get(selectedIndex);
-            purchaseRevealIcon = armourIcons.iconForEntry(entry);
+            purchaseRevealIcon = armourIcons.iconForEntry(entry, cat.category);
             if (purchaseRevealIcon == null) {
                 purchaseRevealIcon = cat.cardArt != null ? cat.cardArt : cat.icon;
             }
@@ -1413,7 +1413,13 @@ public class ShopScreen {
             BufferedImage icon = slot.iconIndex >= 0 && slot.iconIndex < assets.itemIcons.length
                 ? assets.itemIcons[slot.iconIndex] : null;
             if (equipped != null) {
-                BufferedImage armourArt = armourIcons.iconFor(equipped, 30);
+                ShopCategory slotCategory = switch (slot) {
+                    case CHEST -> ShopCategory.CHEST;
+                    case LEGS -> ShopCategory.LEGS;
+                    case GLOVES -> ShopCategory.GLOVES;
+                    case BOOTS -> ShopCategory.BOOTS;
+                };
+                BufferedImage armourArt = armourIcons.iconFor(equipped, slotCategory, 30);
                 if (armourArt != null) {
                     icon = armourArt;
                 }
@@ -1844,7 +1850,7 @@ public class ShopScreen {
             return null;
         }
         if (entry != null && entry.armour != null) {
-            BufferedImage icon = armourIcons.iconForEntry(entry);
+            BufferedImage icon = armourIcons.iconForEntry(entry, categoryItem.category);
             if (icon != null) {
                 return icon;
             }
