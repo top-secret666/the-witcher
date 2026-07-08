@@ -101,37 +101,52 @@ public final class GdxIntroAssets implements Disposable {
             }
             Pixmap source = new Pixmap(file);
             try {
-                Pixmap trimmed = trimTransparent(removeNearBlack(source));
+                source = ensureRgba(source);
+                stripNearBlack(source);
+                Pixmap trimmed = trimTransparent(source);
+                if (trimmed != source) {
+                    source.dispose();
+                }
                 Texture texture = new Texture(trimmed);
                 RenderQuality.apply(texture);
                 trimmed.dispose();
                 com.badlogic.gdx.Gdx.app.log("GdxIntroAssets", "Portrait OK " + path
                     + " -> " + texture.getWidth() + "x" + texture.getHeight());
                 return new PortraitLoad(texture, texture.getWidth(), texture.getHeight());
-            } finally {
+            } catch (RuntimeException e) {
                 source.dispose();
+                com.badlogic.gdx.Gdx.app.error("GdxIntroAssets", "Portrait fail " + path, e);
             }
         }
         return new PortraitLoad(null, 0, 0);
     }
 
-    private static Pixmap removeNearBlack(Pixmap src) {
-        Pixmap out = new Pixmap(src.getWidth(), src.getHeight(), Pixmap.Format.RGBA8888);
-        for (int y = 0; y < src.getHeight(); y++) {
-            for (int x = 0; x < src.getWidth(); x++) {
-                int rgba = src.getPixel(x, y);
-                int a = (rgba >>> 24) & 0xFF;
-                int r = (rgba >>> 16) & 0xFF;
-                int g = (rgba >>> 8) & 0xFF;
-                int b = rgba & 0xFF;
+    private static Pixmap ensureRgba(Pixmap pixmap) {
+        if (pixmap.getFormat() == Pixmap.Format.RGBA8888) {
+            return pixmap;
+        }
+        Pixmap rgba = new Pixmap(pixmap.getWidth(), pixmap.getHeight(), Pixmap.Format.RGBA8888);
+        rgba.drawPixmap(pixmap, 0, 0);
+        pixmap.dispose();
+        return rgba;
+    }
+
+    /** LibGDX RGBA8888: R в старшем байте, A в младшем — как в {@link GdxMenuAssets}. */
+    private static void stripNearBlack(Pixmap pixmap) {
+        int w = pixmap.getWidth();
+        int h = pixmap.getHeight();
+        for (int y = 0; y < h; y++) {
+            for (int x = 0; x < w; x++) {
+                int rgba = pixmap.getPixel(x, y);
+                int a = rgba & 0xFF;
+                int r = (rgba >>> 24) & 0xFF;
+                int g = (rgba >>> 16) & 0xFF;
+                int b = (rgba >>> 8) & 0xFF;
                 if (a == 0 || (r < 18 && g < 18 && b < 18)) {
-                    out.drawPixel(x, y, 0);
-                } else {
-                    out.drawPixel(x, y, (rgba & 0x00FFFFFF) | 0xFF000000);
+                    pixmap.drawPixel(x, y, 0);
                 }
             }
         }
-        return out;
     }
 
     private static Pixmap trimTransparent(Pixmap src) {
@@ -143,7 +158,7 @@ public final class GdxIntroAssets implements Disposable {
         int maxY = -1;
         for (int y = 0; y < h; y++) {
             for (int x = 0; x < w; x++) {
-                int a = (src.getPixel(x, y) >>> 24) & 0xFF;
+                int a = src.getPixel(x, y) & 0xFF;
                 if (a > 4) {
                     minX = Math.min(minX, x);
                     minY = Math.min(minY, y);

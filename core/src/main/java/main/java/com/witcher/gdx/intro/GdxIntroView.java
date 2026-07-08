@@ -32,6 +32,8 @@ import java.util.List;
 public final class GdxIntroView {
 
     private static final float DIALOG_FONT_BASE = 12f;
+    private static final float TEXT_SCALE_BOOST = 1.06f;
+    private static final float TEXT_SHADOW_A = 0.62f;
 
     private final GlyphLayout glyph = new GlyphLayout();
 
@@ -51,7 +53,9 @@ public final class GdxIntroView {
         drawMorphParticles(shapes, controller, C, fade);
         drawSwitchParticles(shapes, controller, C, fade);
 
+        PixelTextures.resetBlend();
         batch.begin();
+        batch.setColor(1f, 1f, 1f, 1f);
         drawCharacters(batch, assets, info, controller, C, sw, sh, fade);
         batch.end();
 
@@ -62,7 +66,9 @@ public final class GdxIntroView {
             drawHistoryOverlayShapes(shapes, controller, C, sw, sh, fade);
         }
 
+        PixelTextures.resetBlend();
         batch.begin();
+        batch.setColor(1f, 1f, 1f, 1f);
         if (controller.shouldShowDialogBox()) {
             drawDialogBoxText(batch, fonts, controller, C, sw, sh, fade);
         }
@@ -344,13 +350,13 @@ public final class GdxIntroView {
             return;
         }
         IntroDialogLayout.Layout layout = IntroDialogLayout.computeLayout(sw, sh);
-        float boxAlpha = fade * 0.92f;
+        float boxAlpha = fade * 0.95f;
         Gdx.gl.glEnable(GL20.GL_BLEND);
         Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
         shapes.begin(ShapeRenderer.ShapeType.Filled);
-        shapes.setColor(0.06f, 0.05f, 0.04f, boxAlpha * 0.88f);
+        shapes.setColor(10f / 255f, 8f / 255f, 4f / 255f, boxAlpha * 0.90f);
         shapes.rect(layout.boxX, C.rectY(layout.boxY, layout.boxH), layout.boxW, layout.boxH);
-        shapes.setColor(0.45f, 0.35f, 0.18f, boxAlpha * 0.6f);
+        shapes.setColor(140f / 255f, 100f / 255f, 35f / 255f, boxAlpha * 0.85f);
         shapes.rect(layout.boxX, C.rectY(layout.boxY, 2), layout.boxW, 2);
         shapes.end();
         PixelTextures.resetBlend();
@@ -364,41 +370,68 @@ public final class GdxIntroView {
         }
         IntroDialogLayout.Layout layout = IntroDialogLayout.computeLayout(sw, sh);
         BitmapFont font = fonts.dialog;
-        float scale = IntroTextLayout.dialogFontScale(layout.fontSize, DIALOG_FONT_BASE);
+        float scale = IntroTextLayout.dialogFontScale(layout.fontSize, DIALOG_FONT_BASE) * TEXT_SCALE_BOOST;
         font.getData().setScale(scale);
 
         String visible = entry.text().substring(0,
             Math.min(controller.getCharIndex(), entry.text().length()));
         Color speakerColor = speakerGdxColor(entry);
-        font.setColor(speakerColor.r, speakerColor.g, speakerColor.b, fade);
+        Color bodyColor = bodyTextGdxColor(entry, fade);
 
         float lineY = layout.textY;
         if (entry.speaker() != null) {
             float baseline = IntroTextLayout.dialogLineBaselineSwingY(lineY, font.getCapHeight());
-            font.draw(batch, entry.speaker(), layout.textX, C.textBaseline(baseline));
+            drawShadowedText(batch, font, entry.speaker(), layout.textX, baseline, C, speakerColor);
             lineY += layout.fontSize + 4;
         }
         List<String> lines = IntroDialogText.buildVisibleLines(visible, layout.textMaxW, layout.fontSize);
         for (String line : lines) {
             float baseline = IntroTextLayout.dialogLineBaselineSwingY(lineY, font.getCapHeight());
-            font.draw(batch, line, layout.textX, C.textBaseline(baseline));
+            drawShadowedText(batch, font, line, layout.textX, baseline, C, bodyColor);
             lineY += IntroDialogText.lineHeight(layout.fontSize);
         }
 
         if (controller.isWaitingForAdvance()) {
             String hint = controller.isAutoMode() ? "Авто ▶" : "▶ Enter";
-            font.setColor(speakerColor.r, speakerColor.g, speakerColor.b, fade * 0.85f);
+            Color hintColor = new Color(180f / 255f, 160f / 255f, 120f / 255f, fade * 0.9f);
             float hintY = layout.boxY + layout.boxH - layout.pad;
             float baseline = IntroTextLayout.dialogLineBaselineSwingY(hintY, font.getCapHeight());
-            font.draw(batch, hint, layout.textX + layout.textMaxW - 60f, C.textBaseline(baseline));
+            drawShadowedText(batch, font, hint, layout.textX + layout.textMaxW - 60f, baseline, C, hintColor);
         }
         font.getData().setScale(1f);
+    }
+
+    private void drawShadowedText(SpriteBatch batch, BitmapFont font, String text,
+                                    float x, float baselineSwingY, SwingCoords C, Color color) {
+        float by = C.textBaseline(baselineSwingY);
+        font.setColor(0f, 0f, 0f, color.a * TEXT_SHADOW_A);
+        font.draw(batch, text, x + 1f, by - 1f);
+        font.setColor(color);
+        font.draw(batch, text, x, by);
+    }
+
+    private static Color bodyTextGdxColor(IntroScript.DialogEntry entry, float fade) {
+        int rgb = IntroDialogText.textColorRgb(entry.speaker(), entry.speakerColorRgb());
+        if (entry.speaker() == null) {
+            int r = Math.min(255, ((rgb >> 16) & 0xFF) + 45);
+            int g = Math.min(255, ((rgb >> 8) & 0xFF) + 40);
+            int b = Math.min(255, (rgb & 0xFF) + 30);
+            rgb = IntroTheme.packRgb(r, g, b);
+        }
+        return rgbToGdxColor(rgb, fade);
+    }
+
+    private static Color rgbToGdxColor(int rgb, float alpha) {
+        float r = ((rgb >> 16) & 0xFF) / 255f;
+        float g = ((rgb >> 8) & 0xFF) / 255f;
+        float b = (rgb & 0xFF) / 255f;
+        return new Color(r, g, b, alpha);
     }
 
     private void drawVnButtons(SpriteBatch batch, BitmapFont font, IntroController controller,
                                SwingCoords C, int sh, int mouseX, int mouseY, float fade) {
         float vnSize = IntroTextLayout.vnFontSize(sh);
-        float scale = IntroTextLayout.dialogFontScale(Math.round(vnSize), DIALOG_FONT_BASE);
+        float scale = IntroTextLayout.dialogFontScale(Math.round(vnSize), DIALOG_FONT_BASE) * TEXT_SCALE_BOOST;
         font.getData().setScale(scale);
         drawVnButton(batch, font, controller.getBackButtonBounds(), "Назад",
             controller.isBackEnabled(), false,
@@ -418,19 +451,20 @@ public final class GdxIntroView {
                               boolean enabled, boolean active, boolean hover,
                               SwingCoords C, float fade) {
         float alpha = fade * (enabled ? 1f : 0.5f);
+        Color labelColor;
         if (!enabled) {
-            font.setColor(0.37f, 0.31f, 0.23f, alpha);
+            labelColor = new Color(0.45f, 0.38f, 0.28f, alpha);
         } else if (active) {
-            font.setColor(1f, 0.88f, 0.51f, alpha);
+            labelColor = new Color(1f, 0.92f, 0.58f, alpha);
         } else if (hover) {
-            font.setColor(1f, 0.92f, 0.67f, alpha);
+            labelColor = new Color(1f, 0.95f, 0.72f, alpha);
         } else {
-            font.setColor(0.8f, 0.71f, 0.45f, alpha);
+            labelColor = new Color(0.92f, 0.84f, 0.58f, alpha);
         }
         glyph.setText(font, label);
         float tx = r.x + (r.width - glyph.width) * 0.5f;
         float baselineY = IntroTextLayout.vnLabelBaselineSwingY(toVnRect(r), font.getCapHeight());
-        font.draw(batch, label, tx, C.textBaseline(baselineY));
+        drawShadowedText(batch, font, label, tx, baselineY, C, labelColor);
     }
 
     private void drawHistoryOverlayShapes(ShapeRenderer shapes, IntroController controller,
@@ -499,10 +533,7 @@ public final class GdxIntroView {
 
     private static Color speakerGdxColor(IntroScript.DialogEntry entry) {
         int rgb = entry.speaker() == null ? IntroTheme.narratorRgb() : entry.speakerColorRgb();
-        float r = ((rgb >> 16) & 0xFF) / 255f;
-        float g = ((rgb >> 8) & 0xFF) / 255f;
-        float b = (rgb & 0xFF) / 255f;
-        return new Color(r, g, b, 1f);
+        return rgbToGdxColor(rgb, 1f);
     }
 
     private static Texture pick(boolean shop, Texture shopTex, Texture normalTex) {
