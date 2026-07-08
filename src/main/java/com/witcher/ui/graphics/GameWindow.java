@@ -595,7 +595,7 @@ public class GameWindow {
                     introActive = false;
                     shopActive = true;
                     shopScreen = new ShopScreen();
-                    renderer.retro().setPreset(RetroPostProcessor.Preset.SNES);
+                    renderer.retro().setPreset(RetroPostProcessor.Preset.CRT);
                     useHiddenCursor();
                 }
             } else if (shopActive) {

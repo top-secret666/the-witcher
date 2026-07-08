@@ -16,8 +16,10 @@ public final class RetroPostProcessor {
         SNES,
         /** PS1-вайб: меньше цветов, дизеринг, хроматика, виньетка. */
         PS1,
-        /** CRT: сканлайны + виньетка + зерно. */
-        CRT
+        /** CRT: резкость → сканлайны → виньетка → зерно. */
+        CRT,
+        /** Только пиксельная резкость, без сканлайнов (для сравнения). */
+        CRISP
     }
 
     private Preset preset = Preset.OFF;
@@ -58,6 +60,7 @@ public final class RetroPostProcessor {
             case SNES -> applySnes(frame, w, h);
             case PS1 -> applyPs1(frame, w, h);
             case CRT -> applyCrt(frame, w, h);
+            case CRISP -> applyCrisp(frame, w, h);
             default -> { }
         }
     }
@@ -78,15 +81,20 @@ public final class RetroPostProcessor {
     }
 
     private void applyCrt(BufferedImage frame, int w, int h) {
+        pixelSharpen(frame, w, h, 0.42f);
         drawScanlines(frame, w, h, 0.18f, 2);
         drawVignette(frame, w, h, 0.35f);
         warmTint(frame, w, h, 0.04f);
         drawGrain(frame, w, h, 0.06f);
     }
 
+    private void applyCrisp(BufferedImage frame, int w, int h) {
+        pixelSharpen(frame, w, h, 0.55f);
+        localContrast(frame, w, h, 1.06f);
+    }
+
     private static void warmTint(BufferedImage frame, int w, int h, float amount) {
         int[] buf = ((DataBufferInt) frame.getRaster().getDataBuffer()).getData();
-        int stride = w;
         for (int i = 0; i < w * h; i++) {
             int argb = buf[i];
             int a = (argb >>> 24) & 0xFF;
@@ -289,5 +297,62 @@ public final class RetroPostProcessor {
 
     private static int clamp(int v) {
         return Math.max(0, Math.min(255, v));
+    }
+
+    /**
+     * Unsharp 1px — подчёркивает границы пикселей без размытия всего кадра.
+     */
+    private static void pixelSharpen(BufferedImage frame, int w, int h, float amount) {
+        if (amount <= 0f) {
+            return;
+        }
+        int[] buf = ((DataBufferInt) frame.getRaster().getDataBuffer()).getData();
+        int[] src = buf.clone();
+        for (int y = 1; y < h - 1; y++) {
+            int row = y * w;
+            for (int x = 1; x < w - 1; x++) {
+                int i = row + x;
+                int argb = src[i];
+                int a = (argb >>> 24) & 0xFF;
+                if (a == 0) {
+                    continue;
+                }
+                int r = sharpenChannel(src, i, w, 16, amount);
+                int g = sharpenChannel(src, i, w, 8, amount);
+                int b = sharpenChannel(src, i, w, 0, amount);
+                buf[i] = (a << 24) | (r << 16) | (g << 8) | b;
+            }
+        }
+    }
+
+    private static int sharpenChannel(int[] src, int i, int w, int shift, float amount) {
+        int c = (src[i] >>> shift) & 0xFF;
+        int blur = ((src[i - 1] >>> shift) & 0xFF)
+            + ((src[i + 1] >>> shift) & 0xFF)
+            + ((src[i - w] >>> shift) & 0xFF)
+            + ((src[i + w] >>> shift) & 0xFF);
+        blur /= 4;
+        return clamp((int) (c + (c - blur) * amount));
+    }
+
+    /** Лёгкий контраст по центру — пиксели «собраннее», без мыла. */
+    private static void localContrast(BufferedImage frame, int w, int h, float gain) {
+        int[] buf = ((DataBufferInt) frame.getRaster().getDataBuffer()).getData();
+        float mid = 128f;
+        for (int i = 0; i < w * h; i++) {
+            int argb = buf[i];
+            int a = (argb >>> 24) & 0xFF;
+            if (a == 0) {
+                continue;
+            }
+            int r = contrastChannel((argb >>> 16) & 0xFF, mid, gain);
+            int g = contrastChannel((argb >>> 8) & 0xFF, mid, gain);
+            int b = contrastChannel(argb & 0xFF, mid, gain);
+            buf[i] = (a << 24) | (r << 16) | (g << 8) | b;
+        }
+    }
+
+    private static int contrastChannel(int c, float mid, float gain) {
+        return clamp((int) (mid + (c - mid) * gain));
     }
 }
