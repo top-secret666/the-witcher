@@ -20,7 +20,7 @@ public final class MenuLayout {
     public static final float BUTTON_GAP_OF_AVAILABLE = 0.04f;
     public static final float BUTTON_W_RATIO = 0.62f;
     public static final float HELP_Y_FROM_BOTTOM = 8f;
-    public static final float CURSOR_W = 28f;
+    public static final float CURSOR_W = 18f;
     public static final float CURSOR_HOTSPOT_X = 4f;
     public static final float CURSOR_HOTSPOT_Y = 4f;
     public static final float TEXT_ANCHOR_Y = 0.54f;

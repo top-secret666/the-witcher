@@ -40,7 +40,7 @@ MENU_RATIOS = {
     "buttonGapOfAvailable": 0.04,
     "buttonW": 0.62,
     "helpYFromBottom": 8,
-    "cursorW": 28,
+    "cursorW": 18,
     "cursorHotspotX": 4,
     "cursorHotspotY": 4,
     "textAnchorX": [0.43, 0.47, 0.47],

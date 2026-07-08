@@ -3,6 +3,11 @@ package main.java.com.witcher.gdx.screens;
 import com.badlogic.gdx.math.Rectangle;
 import main.java.com.witcher.gdx.layout.MenuLayout;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Random;
+
 /**
  * Логика главного меню (без отрисовки) — аналог Swing {@code MainMenuScreen.update}.
  */
@@ -15,10 +20,13 @@ public final class MainMenuController {
     private static final String[] LABELS = {"Играть", "Настройки", "Выход"};
 
     private final Rectangle[] buttons = new Rectangle[3];
+    private final List<float[]> embers = new ArrayList<>();
+    private final Random rng = new Random();
     private Action pending = Action.NONE;
     private int hovered = -1;
     private int pressed = -1;
     private int pressedTicks;
+    private int tick;
 
     public MainMenuController() {
         for (int i = 0; i < buttons.length; i++) {
@@ -66,7 +74,10 @@ public final class MainMenuController {
         }
     }
 
-    public void update(int mouseX, int mouseY, boolean clicked) {
+    public void update(float viewW, float viewH, int mouseX, int mouseY, boolean clicked) {
+        tick++;
+        updateEmbers(viewW, viewH);
+
         if (pressedTicks > 0) {
             pressedTicks--;
         }
@@ -91,6 +102,37 @@ public final class MainMenuController {
         if (!clicked && pressedTicks == 0) {
             pressed = -1;
         }
+    }
+
+    /** Эмберы — порт Swing {@code MainMenuScreen.update} / {@code drawAtmosphere}. */
+    private void updateEmbers(float viewW, float viewH) {
+        if (tick % 3 == 0 && embers.size() < 40) {
+            float x = rng.nextFloat() * viewW;
+            float y = viewH + rng.nextFloat() * 20f;
+            float vx = (rng.nextFloat() - 0.5f) * 0.3f;
+            float vy = -0.4f - rng.nextFloat() * 0.6f;
+            float maxAge = 120 + rng.nextInt(180);
+            float sz = 1f + rng.nextFloat() * 2f;
+            float r = 200 + rng.nextInt(56);
+            float g = 80 + rng.nextInt(80);
+            float b = 10 + rng.nextInt(30);
+            embers.add(new float[] {x, y, vx, vy, 0f, maxAge, sz, r, g, b});
+        }
+        Iterator<float[]> it = embers.iterator();
+        while (it.hasNext()) {
+            float[] e = it.next();
+            e[0] += e[2] + (float) Math.sin(e[4] * 0.03) * 0.15f;
+            e[1] += e[3];
+            e[2] *= 0.995f;
+            e[4]++;
+            if (e[4] >= e[5] || e[1] < -10f) {
+                it.remove();
+            }
+        }
+    }
+
+    public List<float[]> embers() {
+        return embers;
     }
 
     public Action consumeAction() {
