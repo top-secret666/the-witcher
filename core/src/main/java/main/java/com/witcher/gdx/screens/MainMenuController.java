@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Random;
 
 /**
- * Логика главного меню (без отрисовки) — аналог Swing {@code MainMenuScreen.update}.
+ * Логика главного меню — полный порт Swing {@code MainMenuScreen.update}.
  */
 public final class MainMenuController {
 
@@ -23,8 +23,8 @@ public final class MainMenuController {
     private final List<float[]> embers = new ArrayList<>();
     private final Random rng = new Random();
     private Action pending = Action.NONE;
-    private int hovered = -1;
-    private int pressed = -1;
+    private int selectedIndex = -1;
+    private int pressedIndex = -1;
     private int pressedTicks;
     private int tick;
 
@@ -34,9 +34,6 @@ public final class MainMenuController {
         }
     }
 
-    /**
-     * Раскладка как в Swing {@code layoutButtons} — с реальным aspect таблички.
-     */
     public void layoutButtons(float viewW, float viewH, float buttonAspect,
                               float logoSignAspect, float titleLogoAspect,
                               boolean hasLogoSign, boolean hasTitleLogo) {
@@ -74,37 +71,67 @@ public final class MainMenuController {
         }
     }
 
-    public void update(float viewW, float viewH, int mouseX, int mouseY, boolean clicked) {
+    /**
+     * @param navDir -1 вверх, 0 нет, 1 вниз (W/S, стрелки)
+     * @param activate Enter / Space
+     */
+    public void update(float viewW, float viewH, int mouseX, int mouseY,
+                       boolean mouseClicked, int navDir, boolean activate) {
         tick++;
         updateEmbers(viewW, viewH);
 
         if (pressedTicks > 0) {
             pressedTicks--;
         }
-        hovered = -1;
+
+        int hoveredIndex = -1;
         for (int i = 0; i < buttons.length; i++) {
-            Rectangle r = buttons[i];
-            if (mouseX >= r.x && mouseX < r.x + r.width
-                && mouseY >= r.y && mouseY < r.y + r.height) {
-                hovered = i;
-                if (clicked) {
-                    pressed = i;
-                    pressedTicks = 6;
-                    pending = switch (i) {
-                        case 0 -> Action.START;
-                        case 1 -> Action.SETTINGS;
-                        default -> Action.EXIT;
-                    };
-                }
+            if (buttons[i].contains(mouseX, mouseY)) {
+                hoveredIndex = i;
                 break;
             }
         }
-        if (!clicked && pressedTicks == 0) {
-            pressed = -1;
+        if (hoveredIndex != -1) {
+            selectedIndex = hoveredIndex;
+        } else {
+            selectedIndex = -1;
+        }
+
+        if (navDir != 0) {
+            if (selectedIndex < 0) {
+                selectedIndex = 0;
+            }
+            selectedIndex = (selectedIndex + navDir) % buttons.length;
+            if (selectedIndex < 0) {
+                selectedIndex += buttons.length;
+            }
+        }
+
+        if (mouseClicked && selectedIndex >= 0 && buttons[selectedIndex].contains(mouseX, mouseY)) {
+            pressSelected();
+        } else if (activate && selectedIndex >= 0) {
+            pressSelected();
+        }
+
+        if (pressedTicks == 0) {
+            pressedIndex = -1;
         }
     }
 
-    /** Эмберы — порт Swing {@code MainMenuScreen.update} / {@code drawAtmosphere}. */
+    public void requestExit() {
+        pending = Action.EXIT;
+    }
+
+    private void pressSelected() {
+        pressedIndex = selectedIndex;
+        pressedTicks = 6;
+        pending = switch (selectedIndex) {
+            case 0 -> Action.START;
+            case 1 -> Action.SETTINGS;
+            default -> Action.EXIT;
+        };
+    }
+
     private void updateEmbers(float viewW, float viewH) {
         if (tick % 3 == 0 && embers.size() < 40) {
             float x = rng.nextFloat() * viewW;
@@ -153,12 +180,12 @@ public final class MainMenuController {
         return LABELS[index];
     }
 
-    /** 0 normal, 1 hover, 2 pressed */
+    /** 0 normal, 1 hover/selected, 2 pressed */
     public int buttonState(int index) {
-        if (pressed == index && pressedTicks > 0) {
+        if (pressedIndex == index && pressedTicks > 0) {
             return 2;
         }
-        if (hovered == index) {
+        if (selectedIndex == index) {
             return 1;
         }
         return 0;

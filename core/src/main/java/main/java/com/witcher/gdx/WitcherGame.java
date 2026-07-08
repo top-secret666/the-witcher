@@ -6,6 +6,7 @@ import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import main.java.com.witcher.gdx.graphics.DisplayMetrics;
 import main.java.com.witcher.gdx.graphics.GdxWindowAlign;
+import main.java.com.witcher.gdx.graphics.GdxMenuCursor;
 import main.java.com.witcher.gdx.graphics.PixelFrameChrome;
 import main.java.com.witcher.gdx.screens.MainMenuScreen;
 
@@ -52,6 +53,7 @@ public class WitcherGame extends Game {
     @Override
     public void dispose() {
         frameChrome.dispose();
+        GdxMenuCursor.dispose();
         if (batch != null) {
             batch.dispose();
         }
