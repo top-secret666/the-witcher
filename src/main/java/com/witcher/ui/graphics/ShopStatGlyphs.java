@@ -51,7 +51,7 @@ public final class ShopStatGlyphs {
         Rectangle box = legendBounds(fm);
         box.x = x;
         box.y = y;
-        ShopScreen.drawGoldHudChip(g, box, alpha);
+        ShopUiDraw.drawGoldHudChip(g, box, alpha);
         int cx = x + 10;
         int baselineY = (y + box.height - 5 + 1) & ~1;
         int iconY = baselineY - LEGEND_ICON_SIZE + 1;
@@ -62,7 +62,7 @@ public final class ShopStatGlyphs {
             drawIcon(g, i, cx, iconY, LEGEND_ICON_SIZE, ICON_COLOR);
             cx += LEGEND_ICON_SIZE + 4;
             int labelX = (cx + 1) & ~1;
-            ShopScreen.drawOutlinedText(g, LEGEND_LABELS[i], labelX, baselineY, LABEL_COLOR);
+            ShopUiDraw.drawOutlinedText(g, LEGEND_LABELS[i], labelX, baselineY, LABEL_COLOR);
             cx += fm.stringWidth(LEGEND_LABELS[i]);
         }
     }
@@ -98,7 +98,7 @@ public final class ShopStatGlyphs {
             cx += ROW_ICON_SIZE + 1;
             String text = formatValue(values[i]);
             Color color = values[i] > 0 ? POS_VALUE : values[i] < 0 ? NEG_VALUE : ZERO_VALUE;
-            ShopScreen.drawOutlinedText(g, text, cx, baselineY, color);
+            ShopUiDraw.drawOutlinedText(g, text, cx, baselineY, color);
             cx += fm.stringWidth(text);
         }
     }

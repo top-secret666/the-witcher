@@ -2,7 +2,7 @@ package main.java.com.witcher.ui.shop;
 
 import main.java.com.witcher.model.armour.Armour;
 import main.java.com.witcher.ui.graphics.PixelScaler;
-import main.java.com.witcher.ui.graphics.ShopScreen;
+import main.java.com.witcher.ui.graphics.ShopImageBounds;
 import main.java.com.witcher.ui.graphics.Sprite;
 
 import java.awt.Rectangle;
@@ -218,7 +218,7 @@ public final class ArmourIconRegistry {
             }
             return null;
         }
-        Rectangle box = ShopScreen.computeContentBoundsPublic(src);
+        Rectangle box = ShopImageBounds.compute(src);
         return PixelScaler.crispScaleRegion(src, box, size, size);
     }
 

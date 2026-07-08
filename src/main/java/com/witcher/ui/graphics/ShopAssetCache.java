@@ -224,7 +224,7 @@ public final class ShopAssetCache implements ShopUiMetrics {
                 int x = col * fw;
                 int y = row * fh;
                 BufferedImage cell = sheet.getSubimage(x, y, fw, fh);
-                Rectangle box = ShopScreen.computeContentBoundsPublic(cell);
+                Rectangle box = ShopImageBounds.compute(cell);
                 frames[idx++] = PixelScaler.crispScaleRegion(cell, box, size, size);
             }
         }
@@ -244,7 +244,7 @@ public final class ShopAssetCache implements ShopUiMetrics {
             return baked;
         }
         if (crop) {
-            Rectangle box = ShopScreen.computeContentBoundsPublic(src);
+            Rectangle box = ShopImageBounds.compute(src);
             return PixelScaler.crispScaleRegion(src, box, w, h);
         }
         return PixelScaler.crispScale(src, w, h);
@@ -277,7 +277,7 @@ public final class ShopAssetCache implements ShopUiMetrics {
         if (src == null) {
             return baked;
         }
-        Rectangle box = ShopScreen.computeContentBoundsPublic(src);
+        Rectangle box = ShopImageBounds.compute(src);
         int cropW = box.width;
         int cropH = box.height;
         int w = Math.round(cropW * ((float) targetH / cropH));

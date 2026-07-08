@@ -81,7 +81,7 @@ public final class UiChrome {
     if (src == null) {
       return baked;
     }
-    Rectangle box = ShopScreen.computeContentBoundsPublic(src);
+    Rectangle box = ShopImageBounds.compute(src);
     return PixelScaler.crispScaleRegion(src, box, BTN_SIZE, BTN_SIZE);
   }
 

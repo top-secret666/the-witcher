@@ -91,7 +91,7 @@ final class ShopStatBarRenderer {
         if (!empty && cachedOverlayCrop != null) {
             return cachedOverlayCrop;
         }
-        Rectangle crop = ShopScreen.computeContentBoundsPublic(img);
+        Rectangle crop = ShopImageBounds.compute(img);
         if (empty) {
             cachedEmptyCrop = crop;
         } else {
@@ -174,7 +174,7 @@ final class ShopStatBarRenderer {
         if (cachedEndCapCrop != null) {
             return cachedEndCapCrop;
         }
-        Rectangle full = ShopScreen.computeContentBoundsPublic(img);
+        Rectangle full = ShopImageBounds.compute(img);
         int bakedCap = img.getWidth();
         int bakedH = img.getHeight();
         // Уже нарезанный bake (узкий торец) — берём целиком
