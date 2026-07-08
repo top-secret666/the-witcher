@@ -5,7 +5,7 @@ import java.awt.image.DataBufferInt;
 import java.util.Random;
 
 /**
- * Фиксированная пост-обработка всей игры: CRT + пиксельная резкость.
+ * Фиксированная пост-обработка всей игры: CRT + мягкая чёткость пикселей.
  * Вызывается из {@link Renderer#present()} после каждого кадра 480×360.
  */
 public final class RetroPostProcessor {
@@ -24,13 +24,13 @@ public final class RetroPostProcessor {
             return;
         }
 
-        // Резкость и контраст — до сканлайнов, чтобы пиксели читались чётче.
-        pixelSharpen(frame, w, h, 0.48f);
-        localContrast(frame, w, h, 1.08f);
-        drawScanlines(frame, w, h, 0.18f, 2);
-        drawVignette(frame, w, h, 0.35f);
-        warmTint(frame, w, h, 0.04f);
-        drawGrain(frame, w, h, 0.06f);
+        // Чёткость (не резкость): лёгкое отделение пикселей без «жёстких» контуров.
+        pixelClarity(frame, w, h, 0.14f);
+        brighten(frame, w, h, 1.05f, 12);
+        drawScanlines(frame, w, h, 0.11f, 2);
+        drawVignette(frame, w, h, 0.22f);
+        warmTint(frame, w, h, 0.03f);
+        drawGrain(frame, w, h, 0.045f);
     }
 
     private static void warmTint(BufferedImage frame, int w, int h, float amount) {
@@ -146,7 +146,26 @@ public final class RetroPostProcessor {
         }
     }
 
-    private static void pixelSharpen(BufferedImage frame, int w, int h, float amount) {
+    /** Лёгкий подъём яркости — кадр не «давит» по краям и в тенях. */
+    private static void brighten(BufferedImage frame, int w, int h, float gain, int lift) {
+        int[] buf = ((DataBufferInt) frame.getRaster().getDataBuffer()).getData();
+        for (int i = 0; i < w * h; i++) {
+            int argb = buf[i];
+            int a = (argb >>> 24) & 0xFF;
+            if (a == 0) {
+                continue;
+            }
+            int r = clamp((int) (((argb >>> 16) & 0xFF) * gain + lift));
+            int g = clamp((int) (((argb >>> 8) & 0xFF) * gain + lift));
+            int b = clamp((int) ((argb & 0xFF) * gain + lift));
+            buf[i] = (a << 24) | (r << 16) | (g << 8) | b;
+        }
+    }
+
+    /**
+     * Чёткость пиксель-арта: слегка подчёркивает границы, но с лимитом — без ореолов.
+     */
+    private static void pixelClarity(BufferedImage frame, int w, int h, float amount) {
         if (amount <= 0f) {
             return;
         }
@@ -161,42 +180,28 @@ public final class RetroPostProcessor {
                 if (a == 0) {
                     continue;
                 }
-                int r = sharpenChannel(src, i, w, 16, amount);
-                int g = sharpenChannel(src, i, w, 8, amount);
-                int b = sharpenChannel(src, i, w, 0, amount);
+                int r = clarityChannel(src, i, w, 16, amount);
+                int g = clarityChannel(src, i, w, 8, amount);
+                int b = clarityChannel(src, i, w, 0, amount);
                 buf[i] = (a << 24) | (r << 16) | (g << 8) | b;
             }
         }
     }
 
-    private static int sharpenChannel(int[] src, int i, int w, int shift, float amount) {
+    private static int clarityChannel(int[] src, int i, int w, int shift, float amount) {
         int c = (src[i] >>> shift) & 0xFF;
         int blur = ((src[i - 1] >>> shift) & 0xFF)
             + ((src[i + 1] >>> shift) & 0xFF)
             + ((src[i - w] >>> shift) & 0xFF)
             + ((src[i + w] >>> shift) & 0xFF);
         blur /= 4;
-        return clamp((int) (c + (c - blur) * amount));
-    }
-
-    private static void localContrast(BufferedImage frame, int w, int h, float gain) {
-        int[] buf = ((DataBufferInt) frame.getRaster().getDataBuffer()).getData();
-        float mid = 128f;
-        for (int i = 0; i < w * h; i++) {
-            int argb = buf[i];
-            int a = (argb >>> 24) & 0xFF;
-            if (a == 0) {
-                continue;
-            }
-            int r = contrastChannel((argb >>> 16) & 0xFF, mid, gain);
-            int g = contrastChannel((argb >>> 8) & 0xFF, mid, gain);
-            int b = contrastChannel(argb & 0xFF, mid, gain);
-            buf[i] = (a << 24) | (r << 16) | (g << 8) | b;
+        int edge = c - blur;
+        if (Math.abs(edge) < 6) {
+            return c;
         }
-    }
-
-    private static int contrastChannel(int c, float mid, float gain) {
-        return clamp((int) (mid + (c - mid) * gain));
+        int delta = (int) (edge * amount);
+        delta = Math.max(-5, Math.min(5, delta));
+        return clamp(c + delta);
     }
 
     private static int clamp(int v) {
