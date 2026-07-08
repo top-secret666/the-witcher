@@ -11,7 +11,7 @@ import java.util.Random;
  */
 public final class IntroMorphAnimation {
 
-    public static final int VN_RIGHT_MORPH_TICKS = 66;
+    public static final int VN_RIGHT_MORPH_TICKS = 84;
 
     public static final class IntroRect {
         public float x;

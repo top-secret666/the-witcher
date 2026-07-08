@@ -34,6 +34,7 @@ public final class GdxIntroView {
     private static final float DIALOG_FONT_BASE = 12f;
     private static final float TEXT_SCALE_BOOST = 1.06f;
     private static final float TEXT_SHADOW_A = 0.62f;
+    private static final float HISTORY_LINE_H = 16f;
 
     private final GlyphLayout glyph = new GlyphLayout();
 
@@ -356,8 +357,15 @@ public final class GdxIntroView {
         shapes.begin(ShapeRenderer.ShapeType.Filled);
         shapes.setColor(10f / 255f, 8f / 255f, 4f / 255f, boxAlpha * 0.90f);
         shapes.rect(layout.boxX, C.rectY(layout.boxY, layout.boxH), layout.boxW, layout.boxH);
+        shapes.setColor(20f / 255f, 16f / 255f, 8f / 255f, boxAlpha * 0.28f);
+        shapes.rect(layout.boxX, C.rectY(layout.boxY, layout.boxH / 3f), layout.boxW, layout.boxH / 3f);
         shapes.setColor(140f / 255f, 100f / 255f, 35f / 255f, boxAlpha * 0.85f);
         shapes.rect(layout.boxX, C.rectY(layout.boxY, 2), layout.boxW, 2);
+        shapes.end();
+        shapes.begin(ShapeRenderer.ShapeType.Line);
+        shapes.setColor(140f / 255f, 100f / 255f, 35f / 255f, boxAlpha);
+        shapes.rect(layout.boxX + 0.5f, C.rectY(layout.boxY, layout.boxH) + 0.5f,
+            layout.boxW - 1f, layout.boxH - 1f);
         shapes.end();
         PixelTextures.resetBlend();
     }
@@ -395,8 +403,10 @@ public final class GdxIntroView {
             String hint = controller.isAutoMode() ? "Авто ▶" : "▶ Enter";
             Color hintColor = new Color(180f / 255f, 160f / 255f, 120f / 255f, fade * 0.9f);
             float hintY = layout.boxY + layout.boxH - layout.pad;
+            glyph.setText(font, hint);
+            float hintX = layout.boxX + layout.boxW - layout.pad - glyph.width;
             float baseline = IntroTextLayout.dialogLineBaselineSwingY(hintY, font.getCapHeight());
-            drawShadowedText(batch, font, hint, layout.textX + layout.textMaxW - 60f, baseline, C, hintColor);
+            drawShadowedText(batch, font, hint, hintX, baseline, C, hintColor);
         }
         font.getData().setScale(1f);
     }
@@ -477,6 +487,32 @@ public final class GdxIntroView {
         IntroController.IntroRect panel = controller.getHistoryPanelBounds();
         shapes.setColor(0.08f, 0.06f, 0.04f, fade * 0.95f);
         shapes.rect(panel.x, C.rectY(panel.y, panel.height), panel.width, panel.height);
+        shapes.setColor(20f / 255f, 16f / 255f, 8f / 255f, fade * 0.32f);
+        shapes.rect(panel.x, C.rectY(panel.y, panel.height / 3f), panel.width, panel.height / 3f);
+        shapes.end();
+        shapes.begin(ShapeRenderer.ShapeType.Line);
+        shapes.setColor(140f / 255f, 100f / 255f, 35f / 255f, fade);
+        shapes.rect(panel.x + 0.5f, C.rectY(panel.y, panel.height) + 0.5f, panel.width - 1f, panel.height - 1f);
+        float pad = Math.max(10f, sw * 0.022f);
+        float textX = panel.x + pad;
+        float textMaxW = panel.width - pad * 2f;
+        float titleBaseline = panel.y + pad + 14f;
+        float headerBottom = titleBaseline + 10f;
+        float hintBaseline = panel.y + panel.height - pad;
+        float footerTop = hintBaseline - 14f;
+        shapes.line(textX, C.textBaseline(headerBottom - 4f), textX + textMaxW, C.textBaseline(headerBottom - 4f));
+        shapes.line(textX, C.textBaseline(footerTop), textX + textMaxW, C.textBaseline(footerTop));
+        IntroController.IntroRect close = controller.getHistoryCloseBounds();
+        if (controller.isHistoryCloseHovered()) {
+            shapes.setColor(0.85f, 0.75f, 0.48f, fade * 0.20f);
+            shapes.rect(close.x, C.rectY(close.y, close.height), close.width, close.height);
+            shapes.setColor(140f / 255f, 100f / 255f, 35f / 255f, fade);
+        }
+        shapes.rect(close.x + 0.5f, C.rectY(close.y, close.height) + 0.5f, close.width - 1f, close.height - 1f);
+        shapes.line(close.x + 4f, C.textBaseline(close.y + 4f), close.x + close.width - 4f,
+            C.textBaseline(close.y + close.height - 4f));
+        shapes.line(close.x + 4f, C.textBaseline(close.y + close.height - 4f), close.x + close.width - 4f,
+            C.textBaseline(close.y + 4f));
         shapes.end();
         PixelTextures.resetBlend();
     }
@@ -485,20 +521,39 @@ public final class GdxIntroView {
                                         SwingCoords C, float fade) {
         IntroController.IntroRect panel = controller.getHistoryPanelBounds();
         BitmapFont font = fonts.dialog;
-        font.setColor(0.85f, 0.65f, 0.12f, fade);
-        font.draw(batch, "История", panel.x + 12f, C.textBaseline(panel.y + 20f));
+        float panelW = panel.width;
+        float panelH = panel.height;
+        float sw = panelW / 0.82f;
+        float pad = Math.max(10f, sw * 0.022f);
+        float textX = panel.x + pad;
+        float textMaxW = panel.width - pad * 2f;
+        float titleBaseline = panel.y + pad + 14f;
+        float hintBaseline = panel.y + panel.height - pad;
+        float footerTop = hintBaseline - 14f;
+        float contentTop = titleBaseline + 12f;
+        float contentBottom = footerTop;
+        float contentH = Math.max(0f, contentBottom - contentTop);
 
-        float lineY = panel.y + 36f;
-        for (String line : controller.buildHistoryLogLines()) {
+        font.setColor(218f / 255f, 165f / 255f, 32f / 255f, fade);
+        font.draw(batch, "История", textX, C.textBaseline(titleBaseline));
+
+        List<String> lines = controller.buildHistoryLogLines();
+        int visibleSkip = Math.max(0, Math.round(controller.getHistoryScroll() / HISTORY_LINE_H));
+        int maxLines = Math.max(0, (int) (contentH / HISTORY_LINE_H) + 1);
+        float lineY = contentTop + 12f;
+        for (int i = visibleSkip; i < lines.size() && i < visibleSkip + maxLines; i++) {
+            String line = lines.get(i);
             boolean speaker = line.startsWith("[") && line.endsWith("]");
             if (speaker) {
-                font.setColor(0.71f, 0.59f, 0.35f, fade);
+                font.setColor(180f / 255f, 150f / 255f, 90f / 255f, fade);
             } else {
-                font.setColor(0.82f, 0.76f, 0.61f, fade);
+                font.setColor(210f / 255f, 195f / 255f, 155f / 255f, fade);
             }
-            font.draw(batch, line, panel.x + 12f, C.textBaseline(lineY));
-            lineY += 16f;
+            font.draw(batch, line, textX, C.textBaseline(lineY));
+            lineY += HISTORY_LINE_H;
         }
+        font.setColor(150f / 255f, 130f / 255f, 95f / 255f, fade * 0.8f);
+        font.draw(batch, "Колёсико — прокрутка", textX, C.textBaseline(hintBaseline));
     }
 
     private void drawCursor(SpriteBatch batch, GdxIntroAssets assets, SwingCoords C,
