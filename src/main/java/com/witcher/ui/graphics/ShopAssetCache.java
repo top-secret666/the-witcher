@@ -1,6 +1,7 @@
 package main.java.com.witcher.ui.graphics;
 
 import main.java.com.witcher.ui.shop.ShopCategory;
+import main.java.com.witcher.ui.shop.ShopRuntimeAssets;
 import main.java.com.witcher.ui.shop.view.ShopUiMetrics;
 
 import java.awt.Rectangle;
@@ -10,7 +11,7 @@ import java.awt.image.BufferedImage;
  * Ассеты лавки — один раз за сессию.
  * Сначала грузит готовые {@code lavka/1x/} (см. tools/bake_lavka_assets.py), иначе даунскейлит на лету.
  */
-public final class ShopAssetCache implements ShopUiMetrics {
+public final class ShopAssetCache implements ShopRuntimeAssets {
 
     private static final String BASE = "/assets/sprites/lavka/";
     private static final String BAKED = BASE + "1x/";

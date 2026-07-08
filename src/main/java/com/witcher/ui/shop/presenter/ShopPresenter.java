@@ -1,13 +1,13 @@
 package main.java.com.witcher.ui.shop.presenter;
 
 import main.java.com.witcher.model.armour.Armour;
-import main.java.com.witcher.ui.graphics.ShopAssetCache;
-import main.java.com.witcher.ui.shop.ArmourIconRegistry;
 import main.java.com.witcher.ui.shop.DukeLines;
 import main.java.com.witcher.ui.shop.ShopCatalogEntry;
 import main.java.com.witcher.ui.shop.ShopCategory;
+import main.java.com.witcher.ui.shop.ShopEntryIcons;
 import main.java.com.witcher.ui.shop.ShopEquipSlot;
 import main.java.com.witcher.ui.shop.ShopModel;
+import main.java.com.witcher.ui.shop.ShopRuntimeAssets;
 import main.java.com.witcher.ui.shop.view.ShopLayout;
 import main.java.com.witcher.ui.shop.view.ShopUiMetrics;
 import main.java.com.witcher.ui.shop.view.ShopShowcaseItem;
@@ -35,13 +35,15 @@ public final class ShopPresenter {
 
     private final ShopModel model;
     private final ShopSessionState ui = new ShopSessionState();
-    private final ShopAssetCache assets = ShopAssetCache.get();
-    private final ShopUiMetrics metrics = assets;
-    private final ArmourIconRegistry armourIcons;
+    private final ShopRuntimeAssets assets;
+    private final ShopUiMetrics metrics;
+    private final ShopEntryIcons armourIcons;
 
-    public ShopPresenter(ShopModel model) {
+    public ShopPresenter(ShopModel model, ShopRuntimeAssets assets, ShopEntryIcons armourIcons) {
         this.model = model;
-        this.armourIcons = ArmourIconRegistry.get(metrics.cardArtSize());
+        this.assets = assets;
+        this.metrics = assets;
+        this.armourIcons = armourIcons;
         initShowcaseFromModel();
         ui.currentDialog = WELCOME_LINE;
     }
@@ -232,11 +234,11 @@ public final class ShopPresenter {
         return model;
     }
 
-    public ShopAssetCache assets() {
+    public ShopRuntimeAssets runtimeAssets() {
         return assets;
     }
 
-    public ArmourIconRegistry armourIcons() {
+    public ShopEntryIcons armourIcons() {
         return armourIcons;
     }
 

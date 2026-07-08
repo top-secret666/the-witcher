@@ -1,5 +1,7 @@
 package main.java.com.witcher.ui.shop;
 
+import main.java.com.witcher.ui.shop.ShopEntryIcons;
+
 import main.java.com.witcher.model.armour.Armour;
 import main.java.com.witcher.ui.graphics.PixelScaler;
 import main.java.com.witcher.ui.graphics.ShopImageBounds;
@@ -22,7 +24,7 @@ import java.util.Map;
 import java.util.Set;
 
 /** Иконки доспехов по ключевым словам в названии. */
-public final class ArmourIconRegistry {
+public final class ArmourIconRegistry implements ShopEntryIcons {
 
     private static final String MAP_PATH = "/armor_icon_map.properties";
     private static final String BAKED = "/assets/sprites/lavka/1x/icons/items/";

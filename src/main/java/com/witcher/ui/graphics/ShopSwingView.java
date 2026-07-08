@@ -49,8 +49,8 @@ public final class ShopSwingView implements ShopView {
     public ShopSwingView(ShopPresenter presenter) {
         this.presenter = presenter;
         this.ui = presenter.ui();
-        this.assets = presenter.assets();
-        this.armourIcons = presenter.armourIcons();
+        this.assets = ShopAssetCache.get();
+        this.armourIcons = (ArmourIconRegistry) presenter.armourIcons();
     }
 
     @Override
