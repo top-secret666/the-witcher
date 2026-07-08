@@ -24,6 +24,7 @@ public final class MainMenuController {
     private final Random rng = new Random();
     private Action pending = Action.NONE;
     private int selectedIndex = -1;
+    private int keyboardFocus = -1;
     private int pressedIndex = -1;
     private int pressedTicks;
     private int tick;
@@ -93,6 +94,9 @@ public final class MainMenuController {
         }
         if (hoveredIndex != -1) {
             selectedIndex = hoveredIndex;
+            keyboardFocus = -1;
+        } else if (keyboardFocus >= 0) {
+            selectedIndex = keyboardFocus;
         } else {
             selectedIndex = -1;
         }
@@ -105,6 +109,7 @@ public final class MainMenuController {
             if (selectedIndex < 0) {
                 selectedIndex += buttons.length;
             }
+            keyboardFocus = selectedIndex;
         }
 
         if (mouseClicked && selectedIndex >= 0 && buttons[selectedIndex].contains(mouseX, mouseY)) {

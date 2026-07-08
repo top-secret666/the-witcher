@@ -1,45 +1,44 @@
 package main.java.com.witcher.gdx.graphics;
 
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.graphics.Cursor;
-import com.badlogic.gdx.graphics.Pixmap;
+import com.badlogic.gdx.backends.lwjgl3.Lwjgl3Graphics;
+import org.lwjgl.glfw.GLFW;
 
-/** Скрытие системного курсора — как Swing {@code GameWindow.useHiddenCursor}. */
+/** Скрытие системного курсора через GLFW (без чёрного квадрата custom-cursor). */
 public final class GdxMenuCursor {
 
-    private static Cursor hidden;
     private static boolean menuHidden;
 
     private GdxMenuCursor() {
     }
 
     public static void hideForMenu() {
-        if (hidden == null) {
-            Pixmap blank = new Pixmap(16, 16, Pixmap.Format.RGBA8888);
-            hidden = Gdx.graphics.newCursor(blank, 0, 0);
-            blank.dispose();
+        long handle = windowHandle();
+        if (handle != 0) {
+            GLFW.glfwSetInputMode(handle, GLFW.GLFW_CURSOR, GLFW.GLFW_CURSOR_HIDDEN);
+            menuHidden = true;
         }
-        Gdx.graphics.setCursor(hidden);
-        menuHidden = true;
     }
 
     public static void restoreAfterMenu() {
         if (!menuHidden) {
             return;
         }
-        try {
-            Gdx.graphics.setSystemCursor(Cursor.SystemCursor.Arrow);
-        } catch (Exception ignored) {
-            Gdx.graphics.setCursor(null);
+        long handle = windowHandle();
+        if (handle != 0) {
+            GLFW.glfwSetInputMode(handle, GLFW.GLFW_CURSOR, GLFW.GLFW_CURSOR_NORMAL);
         }
         menuHidden = false;
     }
 
     public static void dispose() {
-        if (hidden != null) {
-            hidden.dispose();
-            hidden = null;
+        restoreAfterMenu();
+    }
+
+    private static long windowHandle() {
+        if (Gdx.graphics instanceof Lwjgl3Graphics g) {
+            return g.getWindow().getWindowHandle();
         }
-        menuHidden = false;
+        return 0;
     }
 }
