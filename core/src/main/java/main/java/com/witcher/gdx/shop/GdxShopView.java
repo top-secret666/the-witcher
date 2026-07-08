@@ -12,6 +12,7 @@ import main.java.com.witcher.gdx.graphics.GameFonts;
 import main.java.com.witcher.gdx.graphics.GameFrameLayout;
 import main.java.com.witcher.gdx.graphics.GdxTextureBridge;
 import main.java.com.witcher.gdx.graphics.PixelTextures;
+import main.java.com.witcher.gdx.graphics.SwingCoords;
 import main.java.com.witcher.ui.shop.ShopCatalogEntry;
 import main.java.com.witcher.ui.shop.presenter.ShopPresenter;
 import main.java.com.witcher.ui.shop.presenter.ShopScreenState;
@@ -33,6 +34,7 @@ public final class GdxShopView {
 
     private static final float VW = WitcherGame.VIRTUAL_W;
     private static final float VH = WitcherGame.VIRTUAL_H;
+    private static final SwingCoords C = SwingCoords.forVirtualFrame();
     private static final float DIALOG_BOTTOM_MARGIN = 18f;
     private static final int SMALL_CROWN = 10;
 
@@ -136,15 +138,25 @@ public final class GdxShopView {
         }
 
         batch.end();
+
+        if (ui.equipmentOpen) {
+            batch.begin();
+            GdxShopOverlays.drawEquipment(batch, shapes, fonts, presenter, assets,
+                presenter.armourIcons(), C, VW, VH);
+            batch.end();
+        } else if (ui.inventoryOpen) {
+            batch.begin();
+            GdxShopOverlays.drawInventory(batch, shapes, fonts, presenter, assets, C, VW, VH);
+            batch.end();
+        }
+
+        if (!presenter.model().needsWalletReveal()) {
+            batch.begin();
+            drawBagWalletAmount(batch);
+            batch.end();
+        }
+
         drawDialog(batch, shapes, ui.currentDialog);
-    }
-
-    private static float bottomFromTop(float top, float h) {
-        return VH - top - h;
-    }
-
-    private static float textYFromTop(float top) {
-        return VH - top;
     }
 
     private static float smoothstep(float t) {
@@ -173,11 +185,11 @@ public final class GdxShopView {
         shapes.rect(0f, 0f, VW, VH);
         shapes.setColor(0f, 0f, 0f, 0.55f * alpha);
         int pad = 6;
-        float panelY = bottomFromTop(layout.panelY, layout.panelH);
+        float panelY = C.rectY(layout.panelY, layout.panelH);
         shapes.rect(layout.panelX - pad, panelY - pad,
             layout.panelW + pad * 2f, layout.panelH + pad * 2f);
         shapes.setColor(0f, 0f, 0f, 0.35f * alpha);
-        float sideH = bottomFromTop(0f, layout.dialogTop);
+        float sideH = C.rectY(0f, layout.dialogTop);
         shapes.rect(0f, sideH, layout.panelX - 10f, layout.dialogTop);
         shapes.rect(layout.panelX + layout.panelW + 10f, sideH,
             VW - layout.panelX - layout.panelW - 10f, layout.dialogTop);
@@ -205,17 +217,21 @@ public final class GdxShopView {
         if (sprite == null) {
             return;
         }
-        float targetH = VH * 0.82f;
-        float scale = targetH / sprite.getHeight();
-        float cw = sprite.getWidth() * scale;
-        float ch = sprite.getHeight() * scale;
+        float cw = sprite.getWidth();
+        float ch = sprite.getHeight();
+        float maxH = dialogTop * 0.95f;
+        if (ch > maxH) {
+            float s = maxH / ch;
+            ch *= s;
+            cw *= s;
+        }
+        float baseY = dialogTop - ch + ch * 0.12f;
         float breathe = (float) Math.sin(ui.tick * 0.04 + (left ? 0 : 2)) * 1.5f;
-        float top = dialogTop - ch + ch * 0.12f + breathe;
+        float topY = baseY + breathe;
         float x = left ? -cw * 0.12f : VW - cw + cw * 0.12f;
-        float y = bottomFromTop(top, ch);
         float prev = batch.getColor().a;
         batch.setColor(1f, 1f, 1f, 0.92f * alpha);
-        batch.draw(sprite, x, y, cw, ch);
+        batch.draw(sprite, x, C.rectY(topY, ch), cw, ch);
         batch.setColor(1f, 1f, 1f, prev);
     }
 
@@ -224,7 +240,7 @@ public final class GdxShopView {
             return;
         }
         int hudY = layout.hudY + Math.round(slideY);
-        float hudBottom = bottomFromTop(hudY, layout.hudH);
+        float hudBottom = C.rectY(hudY, layout.hudH);
         float prev = batch.getColor().a;
         batch.setColor(1f, 1f, 1f, alpha);
 
@@ -235,7 +251,7 @@ public final class GdxShopView {
         if (assets.dukeSealIconScaled != null) {
             int seal = assets.dukeSealSize;
             int sealX = layout.hudX + 12;
-            float sealY = bottomFromTop(hudY + (layout.hudH - seal) / 2f, seal);
+            float sealY = C.rectY(hudY + (layout.hudH - seal) / 2f, seal);
             batch.draw(assets.dukeSealIconScaled, sealX, Math.round(sealY), seal, seal);
         }
 
@@ -254,11 +270,11 @@ public final class GdxShopView {
         float blockX = layout.hudX + (layout.hudW - blockW) * 0.5f;
         float textX = blockX;
         if (assets.crownIconScaled != null) {
-            float crownY = bottomFromTop(hudY + (layout.hudH - crownSize) * 0.5f, crownSize);
+            float crownY = C.rectY(hudY + (layout.hudH - crownSize) * 0.5f, crownSize);
             batch.draw(assets.crownIconScaled, blockX, Math.round(crownY), crownSize, crownSize);
             textX = blockX + crownSize + 4f;
         }
-        float walletY = textYFromTop(hudY + (layout.hudH + glyph.height) * 0.5f - 2f);
+        float walletY = C.textBaseline(hudY + (layout.hudH + glyph.height) * 0.5f - 2f);
         wFont.setColor(WALLET.r, WALLET.g, WALLET.b, alpha);
         wFont.draw(batch, wallet, textX, walletY);
         wFont.setColor(WALLET_SUFFIX.r, WALLET_SUFFIX.g, WALLET_SUFFIX.b, alpha);
@@ -277,7 +293,7 @@ public final class GdxShopView {
         float prev = batch.getColor().a;
         batch.setColor(1f, 1f, 1f, reveal.panelAlpha);
         if (assets.catalogPanelScaled != null) {
-            float panelY = bottomFromTop(layout.panelY + Math.round(reveal.panelSlideY), layout.panelH);
+            float panelY = C.rectY(layout.panelY + Math.round(reveal.panelSlideY), layout.panelH);
             batch.draw(assets.catalogPanelScaled,
                 layout.panelX, panelY,
                 layout.panelW, layout.panelH);
@@ -311,7 +327,7 @@ public final class GdxShopView {
             batch.setColor(1f, 1f, 1f, cat.counterAlpha);
             int cy = layout.categoryCounterY();
             int ch = layout.categoryCounterH(layout.dialogTop);
-            float drawY = bottomFromTop(cy, ch);
+            float drawY = C.rectY(cy, ch);
             batch.draw(assets.counterForeground, assets.counterX, Math.round(drawY),
                 assets.counterW, ch);
             batch.setColor(1f, 1f, 1f, prev);
@@ -338,7 +354,7 @@ public final class GdxShopView {
             java.awt.Rectangle panel = layout.detailListPanelSlot(assets.detailPanelW, assets.detailPanelH);
             int px = panel.x + Math.round(cat.detailPanelSlideX);
             int py = panel.y;
-            float drawY = bottomFromTop(py, assets.detailPanelH);
+            float drawY = C.rectY(py, assets.detailPanelH);
             float prev = batch.getColor().a;
             batch.setColor(1f, 1f, 1f, cat.detailPanelAlpha);
             if (assets.catalogDetailPanel != null) {
@@ -380,7 +396,7 @@ public final class GdxShopView {
                               boolean hovered, boolean selected, float alpha,
                               String priceOverride, BufferedImage cardArtOverride,
                               String nameOverride, Texture frameOverride) {
-        float drawY = bottomFromTop(topY, h);
+        float drawY = C.rectY(topY, h);
         float prev = batch.getColor().a;
         batch.setColor(1f, 1f, 1f, alpha);
 
@@ -403,7 +419,7 @@ public final class GdxShopView {
             int artSize = assets.cardArtSize;
             float artX = x + (w - artSize) * 0.5f;
             float artTop = topY + 8;
-            float artDrawY = bottomFromTop(artTop, artSize);
+            float artDrawY = C.rectY(artTop, artSize);
             batch.draw(artTex, Math.round(artX), Math.round(artDrawY), artSize, artSize);
         }
 
@@ -412,7 +428,7 @@ public final class GdxShopView {
         Color nameColor = item.kind == ShopShowcaseItem.Kind.SET_CATALOG ? CARD_NAME_SET : CARD_NAME;
         small.setColor(nameColor.r, nameColor.g, nameColor.b, alpha);
         String truncName = truncateToWidth(small, name, w - 8f);
-        drawCentered(batch, small, truncName, x + w * 0.5f, bottomFromTop(topY + h - 22, small.getLineHeight()));
+        drawCentered(batch, small, truncName, x + w * 0.5f, C.rectY(topY + h - 22, small.getLineHeight()));
 
         String price = priceOverride != null ? priceOverride : item.priceLabel;
         Texture priceCrown = assets.crownIconSmall != null ? assets.crownIconSmall : assets.crownIconScaled;
@@ -424,12 +440,12 @@ public final class GdxShopView {
         }
         float priceX = x + (w - priceW) * 0.5f;
         if (priceCrown != null && !"···".equals(price)) {
-            float crownY = bottomFromTop(topY + h - 14, crownSize);
+            float crownY = C.rectY(topY + h - 14, crownSize);
             batch.draw(priceCrown, Math.round(priceX), Math.round(crownY), crownSize, crownSize);
             priceX += crownSize + 2f;
         }
         small.setColor(CARD_PRICE.r, CARD_PRICE.g, CARD_PRICE.b, alpha);
-        small.draw(batch, price, priceX, bottomFromTop(topY + h - 4, small.getCapHeight()));
+        small.draw(batch, price, priceX, C.rectY(topY + h - 4, small.getCapHeight()));
         batch.setColor(1f, 1f, 1f, prev);
     }
 
@@ -451,7 +467,7 @@ public final class GdxShopView {
         PixelTextures.resetBlend();
         shapes.begin(ShapeRenderer.ShapeType.Filled);
         shapes.setColor(0.12f, 0.08f, 0.04f, alpha * 0.9f);
-        float drawY = bottomFromTop(backY, size);
+        float drawY = C.rectY(backY, size);
         shapes.rect(backX, drawY, size, size);
         shapes.setColor(DUKE_GOLD.r, DUKE_GOLD.g, DUKE_GOLD.b, alpha);
         shapes.triangle(backX + size * 0.62f, drawY + size * 0.5f,
@@ -483,14 +499,14 @@ public final class GdxShopView {
         float prev = batch.getColor().a;
         batch.setColor(1f, 1f, 1f, alpha);
         if (btnImg != null) {
-            batch.draw(btnImg, Math.round(btnX), Math.round(bottomFromTop(btnY, btnH)),
+            batch.draw(btnImg, Math.round(btnX), Math.round(C.rectY(btnY, btnH)),
                 btnW, btnH);
         }
         fonts.ui.setColor(enabled ? 220f / 255f : 120f / 255f,
             enabled ? 200f / 255f : 105f / 255f,
             enabled ? 140f / 255f : 75f / 255f, alpha);
         drawCentered(batch, fonts.ui, "Купить", btnX + btnW * 0.5f,
-            textYFromTop(btnY + 19f));
+            C.textBaseline(btnY + 19f));
         batch.setColor(1f, 1f, 1f, prev);
     }
 
@@ -526,7 +542,7 @@ public final class GdxShopView {
             } else if (hovered && assets.rowHover != null) {
                 bg = assets.rowHover;
             }
-            float drawY = bottomFromTop(y, assets.rowH);
+            float drawY = C.rectY(y, assets.rowH);
             if (bg != null) {
                 batch.draw(bg, Math.round(x), Math.round(drawY), rowW, assets.rowH);
             }
@@ -541,12 +557,12 @@ public final class GdxShopView {
             float priceX = x + rowW - priceW - 6f;
 
             String label = truncateToWidth(rowFont, row.name, priceX - (x + 8f));
-            float textY = textYFromTop(y + (assets.rowH + rowFont.getCapHeight()) * 0.5f - 1f);
+            float textY = C.textBaseline(y + (assets.rowH + rowFont.getCapHeight()) * 0.5f - 1f);
             rowFont.setColor(ROW_TEXT);
             rowFont.draw(batch, label, x + 8f, textY);
 
             if (assets.crownIconSmall != null && !"···".equals(price)) {
-                float crownY = bottomFromTop(y + 6, SMALL_CROWN);
+                float crownY = C.rectY(y + 6, SMALL_CROWN);
                 batch.draw(assets.crownIconSmall, priceX, crownY, SMALL_CROWN, SMALL_CROWN);
                 priceX += SMALL_CROWN + 2f;
             }
@@ -564,7 +580,7 @@ public final class GdxShopView {
             int max = presenter.maxCatalogScroll(panelY);
             float t = max > 0 ? ui.catalogScrollOffset / (float) max : 0f;
             int thumbY = trackTop + Math.round((trackH - thumbH) * t);
-            shapes.rect(x + rowW - 5, bottomFromTop(thumbY, thumbH), 3, thumbH);
+            shapes.rect(x + rowW - 5, C.rectY(thumbY, thumbH), 3, thumbH);
             shapes.end();
             batch.begin();
         }
@@ -597,21 +613,35 @@ public final class GdxShopView {
         batch.end();
         shapes.begin(ShapeRenderer.ShapeType.Filled);
         shapes.setColor(0.1f, 0.07f, 0.03f, alpha * 0.85f);
-        shapes.rect(blockX, bottomFromTop(blockTop, blockH), blockW + padX * 2f, blockH);
+        shapes.rect(blockX, C.rectY(blockTop, blockH), blockW + padX * 2f, blockH);
         shapes.end();
         batch.begin();
 
         float textX = blockX + padX;
         if (assets.crownIconScaled != null) {
-            float crownY = bottomFromTop(blockTop + (blockH - crownSize) * 0.5f, crownSize);
+            float crownY = C.rectY(blockTop + (blockH - crownSize) * 0.5f, crownSize);
             batch.draw(assets.crownIconScaled, textX, Math.round(crownY), crownSize, crownSize);
             textX += crownSize + crownGap;
         }
-        float walletY = textYFromTop(blockTop + (blockH + font.getCapHeight()) * 0.5f - 2f);
+        float walletY = C.textBaseline(blockTop + (blockH + font.getCapHeight()) * 0.5f - 2f);
         font.setColor(WALLET.r, WALLET.g, WALLET.b, alpha);
         font.draw(batch, wallet, textX, walletY);
         font.setColor(WALLET_SUFFIX.r, WALLET_SUFFIX.g, WALLET_SUFFIX.b, alpha);
         font.draw(batch, suffix, textX + walletW, walletY);
+    }
+
+    private void drawBagWalletAmount(SpriteBatch batch) {
+        if (presenter.model().needsWalletReveal()) {
+            return;
+        }
+        java.awt.Point slot = presenter.inventoryBagSlot();
+        String wallet = presenter.walletHudAmountText();
+        BitmapFont font = fonts.ui;
+        glyph.setText(font, wallet);
+        float tx = slot.x + (INVENTORY_BAG_SIZE - glyph.width) * 0.5f;
+        float ty = slot.y + INVENTORY_BAG_SIZE + 12;
+        font.setColor(1f, 0.9f, 0.58f, 1f);
+        font.draw(batch, wallet, tx, C.textBaseline(ty));
     }
 
     private void drawInventoryBag(SpriteBatch batch, float alpha) {
@@ -623,7 +653,7 @@ public final class GdxShopView {
     private void drawInventoryBagSprite(SpriteBatch batch, int x, int topY, int size,
                                         float openT, boolean hovered, float alpha) {
         Texture sprite = pickBagSprite(openT, hovered);
-        float drawY = bottomFromTop(topY, size);
+        float drawY = C.rectY(topY, size);
         float prev = batch.getColor().a;
         batch.setColor(1f, 1f, 1f, alpha);
         if (sprite != null) {
@@ -633,7 +663,7 @@ public final class GdxShopView {
             int pouchSize = Math.max(12, size / 3);
             int pouchX = x + (size - pouchSize) / 2;
             float pouchTop = topY + size / 2 - pouchSize / 2 - 2;
-            batch.draw(assets.walletPouch, pouchX, Math.round(bottomFromTop(pouchTop, pouchSize)),
+            batch.draw(assets.walletPouch, pouchX, Math.round(C.rectY(pouchTop, pouchSize)),
                 pouchSize, pouchSize);
         }
         batch.setColor(1f, 1f, 1f, prev);
@@ -735,7 +765,7 @@ public final class GdxShopView {
             return;
         }
         int ipw = Math.round(pw);
-        float drawY = bottomFromTop(py, ipw);
+        float drawY = C.rectY(py, ipw);
         float prev = batch.getColor().a;
         batch.setColor(1f, 1f, 1f, alpha);
         batch.draw(assets.walletPouch, Math.round(px), Math.round(drawY), ipw, ipw);
@@ -803,7 +833,7 @@ public final class GdxShopView {
         }
         Texture icon = GdxTextureBridge.toTexture(ui.purchaseRevealIcon);
         int ipw = Math.round(pw);
-        float drawY = bottomFromTop(py, ipw);
+        float drawY = C.rectY(py, ipw);
         float prev = batch.getColor().a;
         batch.setColor(1f, 1f, 1f, alpha);
         batch.draw(icon, Math.round(px), Math.round(drawY), ipw, ipw);
@@ -837,7 +867,7 @@ public final class GdxShopView {
         for (float[] p : ui.ashParticles) {
             float life = 1f - p[4] / p[5];
             shapes.setColor(200f / 255f, 170f / 255f, 100f / 255f, life * 50f / 255f);
-            shapes.rect(p[0], bottomFromTop(p[1], 1f), 1f, 1f);
+            shapes.rect(p[0], C.rectY(p[1], 1f), 1f, 1f);
         }
         shapes.end();
     }
@@ -860,7 +890,7 @@ public final class GdxShopView {
         float boxH = lineH * lineCount + pad * 2f;
         float boxX = boxMarginX;
         float boxTop = VH - DIALOG_BOTTOM_MARGIN - boxH;
-        float boxY = bottomFromTop(boxTop, boxH);
+        float boxY = C.rectY(boxTop, boxH);
 
         shapes.begin(ShapeRenderer.ShapeType.Filled);
         shapes.setColor(10f / 255f, 8f / 255f, 4f / 255f, 230f / 255f);
@@ -877,7 +907,7 @@ public final class GdxShopView {
 
         batch.begin();
         float textX = boxX + pad;
-        float startY = textYFromTop(boxTop + pad + textFont.getCapHeight());
+        float startY = C.textBaseline(boxTop + pad + textFont.getCapHeight());
         textFont.setColor(DUKE_GOLD);
         textFont.draw(batch, speakerLabel, textX, startY);
         textFont.setColor(SPEECH);

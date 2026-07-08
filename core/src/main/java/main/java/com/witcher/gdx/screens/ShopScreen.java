@@ -99,9 +99,9 @@ public class ShopScreen implements Screen {
         shapes.setProjectionMatrix(gameCamera.combined);
         PixelTextures.resetBlend();
 
-        pointer.toVirtual(layout, Gdx.input.getX(), Gdx.input.getY(), virtualMouse);
+        pointer.toSwing(layout, Gdx.input.getX(), Gdx.input.getY(), virtualMouse);
         int mouseX = Math.round(virtualMouse.x);
-        int mouseY = swingMouseY(virtualMouse.y);
+        int mouseY = Math.round(virtualMouse.y);
 
         view.render(game.batch, shapes, layout, mouseX, mouseY);
 
@@ -116,15 +116,10 @@ public class ShopScreen implements Screen {
         }
     }
 
-    /** Presenter использует Swing-координаты (Y сверху). */
-    private int swingMouseY(float libgdxY) {
-        return Math.round(WitcherGame.VIRTUAL_H - libgdxY);
-    }
-
     private void updateInput() {
-        pointer.toVirtual(layout, Gdx.input.getX(), Gdx.input.getY(), virtualMouse);
+        pointer.toSwing(layout, Gdx.input.getX(), Gdx.input.getY(), virtualMouse);
         int mouseX = Math.round(virtualMouse.x);
-        int mouseY = swingMouseY(virtualMouse.y);
+        int mouseY = Math.round(virtualMouse.y);
 
         boolean clicked = false;
         if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT) && !clickLatch) {

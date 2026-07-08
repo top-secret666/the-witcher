@@ -14,6 +14,7 @@ import main.java.com.witcher.gdx.WitcherGame;
 import main.java.com.witcher.gdx.graphics.GameFonts;
 import main.java.com.witcher.gdx.graphics.GameFrameLayout;
 import main.java.com.witcher.gdx.graphics.GdxShopPointer;
+import main.java.com.witcher.gdx.graphics.SwingCoords;
 import main.java.com.witcher.gdx.graphics.GdxWindowAlign;
 import main.java.com.witcher.gdx.graphics.PixelTextures;
 
@@ -28,6 +29,7 @@ public class MainMenuScreen implements Screen {
 
     private final WitcherGame game;
     private final MainMenuController controller = new MainMenuController();
+    private static final SwingCoords C = SwingCoords.forVirtualFrame();
     private final GdxShopPointer pointer = new GdxShopPointer();
     private final Vector2 virtualMouse = new Vector2();
 
@@ -149,7 +151,7 @@ public class MainMenuScreen implements Screen {
             } else {
                 shapes.setColor(0.38f, 0.26f, 0.10f, 0.88f);
             }
-            shapes.rect(r.x, VH - r.y - r.height, r.width, r.height);
+            shapes.rect(r.x, C.rectY(r.y, r.height), r.width, r.height);
         }
         shapes.end();
     }
@@ -159,7 +161,7 @@ public class MainMenuScreen implements Screen {
         for (int i = 0; i < controller.buttonCount(); i++) {
             Rectangle r = controller.buttonRect(i);
             font.setColor(0.96f, 0.86f, 0.47f, 1f);
-            float textY = VH - r.y - r.height * 0.38f;
+            float textY = C.textBaseline(r.y + r.height * 0.62f);
             font.draw(game.batch, controller.buttonLabel(i), r.x + r.width * 0.34f, textY);
         }
     }
