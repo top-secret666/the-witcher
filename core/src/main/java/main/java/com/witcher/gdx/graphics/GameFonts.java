@@ -137,7 +137,7 @@ public final class GameFonts implements Disposable {
     }
 
     private BitmapFont generateMenuBold(int size) {
-        return generateFrom(menuGenerator, size, true, 1.0f);
+        return generateFrom(menuGenerator, size, false, 0f);
     }
 
     private static BitmapFont generateFrom(

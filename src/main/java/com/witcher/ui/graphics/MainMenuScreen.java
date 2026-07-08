@@ -3,12 +3,13 @@ package main.java.com.witcher.ui.graphics;
 import java.awt.*;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
-import java.util.List;
 
 // Для поддержки спрайт-листа фона
 import main.java.com.witcher.ui.graphics.SpriteSheet;
 import main.java.com.witcher.ui.menu.MainMenuController;
+import main.java.com.witcher.ui.menu.MenuEmberAnimation;
 import main.java.com.witcher.ui.menu.view.MenuTextLayout;
+import main.java.com.witcher.ui.menu.view.MenuTheme;
 
 public class MainMenuScreen {
         // Табличка-борд для кнопок
@@ -204,11 +205,14 @@ public class MainMenuScreen {
                 int tx = (int) Math.round(anchorX - bounds.getWidth() / 2.0 - bounds.getX());
                 int ty = (int) Math.round(anchorY - bounds.getHeight() / 2.0 - bounds.getY());
 
-                g.setColor(new Color(0, 0, 0, 180));
-                g.drawString(label, tx + 1, ty + 1);
+                g.setColor(new Color(MenuTheme.SWING_SHADOW_R, MenuTheme.SWING_SHADOW_G,
+                    MenuTheme.SWING_SHADOW_B, MenuTheme.SWING_SHADOW_ALPHA));
+                g.drawString(label, tx + (int) MenuTheme.SHADOW_OFFSET_X, ty + (int) MenuTheme.SHADOW_OFFSET_Y);
 
-                Color main = state == 2 ? new Color(200, 170, 90) : new Color(245, 220, 120);
-                g.setColor(main);
+                g.setColor(new Color(
+                    Math.round(MenuTheme.labelR(state) * 255),
+                    Math.round(MenuTheme.labelG(state) * 255),
+                    Math.round(MenuTheme.labelB(state) * 255)));
                 g.drawString(label, tx, ty);
                 g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
             }
@@ -216,33 +220,22 @@ public class MainMenuScreen {
     }
 
     private void drawAtmosphere(Graphics2D g, int sw, int sh) {
-        List<float[]> embers = controller.embers();
-        for (float[] e : embers) {
-            float life = e[4] / e[5];
-            // Яркость = fade in -> stable -> fade out
-            float a;
-            if (life < 0.15f) a = life / 0.15f;
-            else if (life > 0.7f) a = (1f - life) / 0.3f;
-            else a = 1f;
-            a = Math.max(0f, Math.min(1f, a)) * 0.8f;
+        float scaleX = sw / 480f;
+        float scaleY = sh / 360f;
+        for (float[] particle : controller.embers()) {
+            MenuEmberAnimation.Visual v = MenuEmberAnimation.visual(particle, scaleX, scaleY);
+            int px = Math.round(v.x);
+            int py = Math.round(v.y);
+            int psz = Math.max(1, Math.round(v.size));
+            g.setColor(new Color(v.colorR, v.colorG, v.colorB, Math.min(1f, v.alpha)));
 
-            int r = Math.min(255, (int) e[7]);
-            int eg = Math.min(255, (int) e[8]);
-            int b = Math.min(255, (int) e[9]);
-            g.setColor(new Color(r, eg, b, (int) (a * 200)));
-
-            float sz = e[6] * (1f - life * 0.4f);
-            int px = Math.round(e[0] * sw / 480f);
-            int py = Math.round(e[1] * sh / 360f);
-            int psz = Math.max(1, Math.round(sz));
             g.fillOval(px, py, psz, psz);
 
-            // Glow вокруг частицы
-            if (sz > 1.2f && a > 0.3f) {
+            if (v.glow) {
                 Composite prev = g.getComposite();
-                g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, a * 0.15f));
-                g.setColor(new Color(255, 160, 60));
-                int glow = psz * 3;
+                g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, v.glowAlpha));
+                g.setColor(new Color(MenuEmberAnimation.GLOW_R, MenuEmberAnimation.GLOW_G, MenuEmberAnimation.GLOW_B));
+                int glow = Math.round(v.glowSize);
                 g.fillOval(px - glow / 2, py - glow / 2, glow, glow);
                 g.setComposite(prev);
             }

@@ -56,6 +56,7 @@ echo === Kompilyaciya shared (model + shop) ===
   dir /s /b "%SHARED%\com\witcher\ui\shop\view\anim\*.java" 2>nul
   dir /s /b "%SHARED%\com\witcher\ui\menu\*.java" 2>nul
   dir /s /b "%SHARED%\com\witcher\ui\menu\view\*.java" 2>nul
+  dir /s /b "%SHARED%\com\witcher\ui\menu\view\*.java" 2>nul
 ) > "%TMP%\gdx-sources-shared.txt"
 "%JAVA_HOME%\bin\javac.exe" -encoding UTF-8 -cp "%LIB_CP%" -d "%OUT_CORE%" @"%TMP%\gdx-sources-shared.txt"
 if errorlevel 1 goto :fail

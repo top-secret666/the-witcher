@@ -147,7 +147,7 @@ public final class MainMenuController {
 
     private void pressSelected() {
         pressedIndex = selectedIndex;
-        pressedTicks = 6;
+        pressedTicks = MenuEmberAnimation.PRESS_ANIMATION_TICKS;
         pending = switch (selectedIndex) {
             case 0 -> Action.START;
             case 1 -> Action.SETTINGS;
@@ -156,26 +156,14 @@ public final class MainMenuController {
     }
 
     private void updateEmbers(float viewW, float viewH) {
-        if (tick % 3 == 0 && embers.size() < 40) {
-            float x = rng.nextFloat() * viewW;
-            float y = viewH + rng.nextFloat() * 20f;
-            float vx = (rng.nextFloat() - 0.5f) * 0.3f;
-            float vy = -0.4f - rng.nextFloat() * 0.6f;
-            float maxAge = 120 + rng.nextInt(180);
-            float sz = 1f + rng.nextFloat() * 2f;
-            float r = 200 + rng.nextInt(56);
-            float g = 80 + rng.nextInt(80);
-            float b = 10 + rng.nextInt(30);
-            embers.add(new float[] {x, y, vx, vy, 0f, maxAge, sz, r, g, b});
+        if (tick % MenuEmberAnimation.SPAWN_INTERVAL == 0 && embers.size() < MenuEmberAnimation.MAX_PARTICLES) {
+            embers.add(MenuEmberAnimation.spawn(rng, viewW, viewH));
         }
         Iterator<float[]> it = embers.iterator();
         while (it.hasNext()) {
-            float[] e = it.next();
-            e[0] += e[2] + (float) Math.sin(e[4] * 0.03) * 0.15f;
-            e[1] += e[3];
-            e[2] *= 0.995f;
-            e[4]++;
-            if (e[4] >= e[5] || e[1] < -10f) {
+            float[] particle = it.next();
+            MenuEmberAnimation.tick(particle);
+            if (MenuEmberAnimation.isDead(particle)) {
                 it.remove();
             }
         }

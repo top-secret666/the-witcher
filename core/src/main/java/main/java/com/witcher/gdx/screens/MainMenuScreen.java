@@ -25,7 +25,9 @@ import main.java.com.witcher.gdx.graphics.SwingCoords;
 import main.java.com.witcher.gdx.graphics.SwingViewport;
 import main.java.com.witcher.ui.menu.MainMenuController;
 import main.java.com.witcher.ui.menu.view.MenuLayout;
+import main.java.com.witcher.ui.menu.MenuEmberAnimation;
 import main.java.com.witcher.ui.menu.view.MenuTextLayout;
+import main.java.com.witcher.ui.menu.view.MenuTheme;
 
 /**
  * LibGDX-меню: FBO {@code 480×360×scale} на GPU, ретро-оверлей без CPU readback.
@@ -189,26 +191,17 @@ public class MainMenuScreen implements Screen {
         Gdx.gl.glEnable(GL20.GL_BLEND);
         Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
         shapes.begin(ShapeRenderer.ShapeType.Filled);
-        for (float[] e : controller.embers()) {
-            float life = e[4] / e[5];
-            float alpha;
-            if (life < 0.15f) {
-                alpha = life / 0.15f;
-            } else if (life > 0.7f) {
-                alpha = (1f - life) / 0.3f;
-            } else {
-                alpha = 1f;
-            }
-            alpha = Math.max(0f, Math.min(1f, alpha)) * 0.8f;
-            float sz = e[6] * (1f - life * 0.4f);
-            float radius = Math.max(0.5f, sz * 0.5f);
-            float cx = e[0] + radius;
-            float cy = C.centerY(e[1], radius * 2f);
-            if (sz > 1.2f && alpha > 0.3f) {
-                shapes.setColor(1f, 0.63f, 0.24f, alpha * 0.15f);
+        for (float[] particle : controller.embers()) {
+            MenuEmberAnimation.Visual v = MenuEmberAnimation.visual(particle);
+            float radius = Math.max(0.5f, v.size * 0.5f);
+            float cx = v.x + radius;
+            float cy = C.centerY(v.y, radius * 2f);
+            if (v.glow) {
+                shapes.setColor(MenuEmberAnimation.GLOW_R, MenuEmberAnimation.GLOW_G,
+                    MenuEmberAnimation.GLOW_B, v.glowAlpha);
                 shapes.circle(cx, cy, radius * 3f);
             }
-            shapes.setColor(e[7] / 255f, e[8] / 255f, e[9] / 255f, alpha * 0.78f);
+            shapes.setColor(v.colorR, v.colorG, v.colorB, v.alpha);
             shapes.circle(cx, cy, radius);
         }
         shapes.end();
@@ -265,13 +258,9 @@ public class MainMenuScreen implements Screen {
             float anchorY = MenuTextLayout.anchorY(r, i);
             float tx = anchorX - glyph.width * 0.5f;
             float ty = C.textBaseline(anchorY - font.getCapHeight() * 0.5f);
-            font.setColor(0f, 0f, 0f, 0.7f);
-            font.draw(game.batch, label, tx + 1f, ty - 1f);
-            if (state == 2) {
-                font.setColor(200 / 255f, 170 / 255f, 90 / 255f, 1f);
-            } else {
-                font.setColor(245 / 255f, 220 / 255f, 120 / 255f, 1f);
-            }
+            font.setColor(MenuTheme.SHADOW_R, MenuTheme.SHADOW_G, MenuTheme.SHADOW_B, MenuTheme.SHADOW_A);
+            font.draw(game.batch, label, tx + MenuTheme.SHADOW_OFFSET_X, ty - MenuTheme.SHADOW_OFFSET_Y);
+            font.setColor(MenuTheme.labelR(state), MenuTheme.labelG(state), MenuTheme.labelB(state), 1f);
             font.draw(game.batch, label, tx, ty);
             font.getData().setScale(1f);
         }
