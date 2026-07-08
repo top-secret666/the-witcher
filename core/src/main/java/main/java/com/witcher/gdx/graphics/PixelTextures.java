@@ -183,6 +183,20 @@ public final class PixelTextures {
         }
     }
 
+    /** OpenGL framebuffer → Pixmap: ось Y снизу вверх, нужен разворот. */
+    public static void flipPixmapVertical(Pixmap pixmap) {
+        int w = pixmap.getWidth();
+        int h = pixmap.getHeight();
+        Pixmap flipped = new Pixmap(w, h, pixmap.getFormat());
+        for (int y = 0; y < h; y++) {
+            for (int x = 0; x < w; x++) {
+                flipped.drawPixel(x, h - 1 - y, pixmap.getPixel(x, y));
+            }
+        }
+        pixmap.drawPixmap(flipped, 0, 0);
+        flipped.dispose();
+    }
+
     public static void resetBlend() {
         Gdx.gl.glEnable(GL20.GL_BLEND);
         Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);

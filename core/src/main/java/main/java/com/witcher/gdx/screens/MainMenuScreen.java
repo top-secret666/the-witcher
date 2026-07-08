@@ -126,6 +126,7 @@ public class MainMenuScreen implements Screen {
 
         Pixmap frame = Pixmap.createFromFrameBuffer(0, 0, FB_W, FB_H);
         fbo.end();
+        PixelTextures.flipPixmapVertical(frame);
         retro.apply(frame);
         retroTexture.draw(frame, 0, 0);
         frame.dispose();
