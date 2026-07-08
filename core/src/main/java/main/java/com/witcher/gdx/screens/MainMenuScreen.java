@@ -25,6 +25,7 @@ import main.java.com.witcher.gdx.graphics.SwingCoords;
 import main.java.com.witcher.gdx.graphics.SwingViewport;
 import main.java.com.witcher.ui.menu.MainMenuController;
 import main.java.com.witcher.ui.menu.view.MenuLayout;
+import main.java.com.witcher.ui.menu.view.MenuTextLayout;
 
 /**
  * LibGDX-меню: FBO {@code 480×360×scale} на GPU, ретро-оверлей без CPU readback.
@@ -256,12 +257,14 @@ public class MainMenuScreen implements Screen {
             if (label.isEmpty()) {
                 continue;
             }
-            float fontSize = Math.max(MenuLayout.TEXT_FONT_MIN, r.height * MenuLayout.TEXT_FONT_HEIGHT_RATIO);
+            float fontSize = MenuTextLayout.fontSize(r.height);
             float fontScale = fontSize / fonts.menuBoldBaseSize();
             font.getData().setScale(fontScale);
             glyph.setText(font, label);
-            float tx = r.x + (r.width - glyph.width) * 0.5f;
-            float ty = C.textBaseline(r.y + (r.height + font.getCapHeight()) * 0.5f - 1f);
+            float anchorX = MenuTextLayout.anchorX(r, i);
+            float anchorY = MenuTextLayout.anchorY(r, i);
+            float tx = anchorX - glyph.width * 0.5f;
+            float ty = C.textBaseline(anchorY - font.getCapHeight() * 0.5f);
             font.setColor(0f, 0f, 0f, 0.7f);
             font.draw(game.batch, label, tx + 1f, ty - 1f);
             if (state == 2) {

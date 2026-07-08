@@ -8,6 +8,7 @@ import java.util.List;
 // Для поддержки спрайт-листа фона
 import main.java.com.witcher.ui.graphics.SpriteSheet;
 import main.java.com.witcher.ui.menu.MainMenuController;
+import main.java.com.witcher.ui.menu.view.MenuTextLayout;
 
 public class MainMenuScreen {
         // Табличка-борд для кнопок
@@ -191,15 +192,15 @@ public class MainMenuScreen {
 
             String label = controller.buttonLabel(i);
             if (!label.isEmpty()) {
-                int fontSize = Math.max(16, (int) (r.height * 0.36f));
+                int fontSize = Math.round(MenuTextLayout.fontSize(r.height));
                 Font font = GameFonts.get().bold(fontSize);
                 g.setFont(font);
                 GameFonts.applyDialogHints(g);
                 FontMetrics fm = g.getFontMetrics(font);
                 Rectangle2D bounds = fm.getStringBounds(label, g);
 
-                float anchorX = r.x + r.width * 0.5f;
-                float anchorY = r.y + r.height * 0.5f;
+                float anchorX = MenuTextLayout.anchorX(r, i);
+                float anchorY = MenuTextLayout.anchorY(r, i);
                 int tx = (int) Math.round(anchorX - bounds.getWidth() / 2.0 - bounds.getX());
                 int ty = (int) Math.round(anchorY - bounds.getHeight() / 2.0 - bounds.getY());
 

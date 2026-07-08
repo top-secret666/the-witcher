@@ -30,17 +30,68 @@
     "buttonGapOfAvailable": 0.04,
     "buttonW": 0.62,
     "helpYFromBottom": 8,
-    "cursorW": 28,
-    "cursorHotspotX": 4,
-    "cursorHotspotY": 4,
+    "cursorW": 14,
+    "cursorHotspotX": 3,
+    "cursorHotspotY": 3,
     "textAnchorX": [
-      0.43,
-      0.47,
-      0.47
+      0.5,
+      0.5,
+      0.5
     ],
-    "textAnchorY": 0.54,
-    "textFontMin": 16,
-    "textFontHeightRatio": 0.36
+    "textAnchorY": [
+      0.4606,
+      0.4606,
+      0.4606
+    ],
+    "textFontMin": 12,
+    "textFontHeightRatio": 0.28
+  },
+  "textLayout": {
+    "textAnchorX": [
+      0.5,
+      0.5,
+      0.5
+    ],
+    "textAnchorY": [
+      0.4606,
+      0.4606,
+      0.4606
+    ],
+    "perButton": [
+      {
+        "row": 0,
+        "inkCx": 0.5,
+        "inkCy": 0.46063829787234045,
+        "inkW": 0.799552071668533,
+        "inkH": 0.6,
+        "size": [
+          893,
+          470
+        ]
+      },
+      {
+        "row": 1,
+        "inkCx": 0.5,
+        "inkCy": 0.46063829787234045,
+        "inkW": 0.799552071668533,
+        "inkH": 0.6,
+        "size": [
+          893,
+          470
+        ]
+      },
+      {
+        "row": 2,
+        "inkCx": 0.5,
+        "inkCy": 0.46063829787234045,
+        "inkW": 0.799552071668533,
+        "inkH": 0.6,
+        "size": [
+          893,
+          470
+        ]
+      }
+    ]
   },
   "referenceFrame": {
     "pixelScale": 3,

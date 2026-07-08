@@ -3,6 +3,7 @@ package main.java.com.witcher.ui.menu.view;
 /**
  * Раскладка главного меню — сгенерировано tools/swing_to_gdx_layout.py.
  * Координаты в пространстве Swing: 480×360, Y сверху вниз.
+ * TEXT_ANCHOR_* — центр зоны пергамента на спрайте кнопки.
  */
 public final class MenuLayout {
 
@@ -22,10 +23,10 @@ public final class MenuLayout {
     public static final float CURSOR_W = 14f;
     public static final float CURSOR_HOTSPOT_X = 3f;
     public static final float CURSOR_HOTSPOT_Y = 3f;
-    public static final float TEXT_ANCHOR_Y = 0.54f;
-    public static final float TEXT_FONT_MIN = 16f;
-    public static final float TEXT_FONT_HEIGHT_RATIO = 0.36f;
-    public static final float[] TEXT_ANCHOR_X = { 0.43f, 0.47f, 0.47f };
+    public static final float TEXT_FONT_MIN = 12f;
+    public static final float TEXT_FONT_HEIGHT_RATIO = 0.28f;
+    public static final float[] TEXT_ANCHOR_X = { 0.5f, 0.5f, 0.5f };
+    public static final float[] TEXT_ANCHOR_Y = { 0.4606f, 0.4606f, 0.4606f };
 
     private MenuLayout() {
     }
@@ -36,5 +37,23 @@ public final class MenuLayout {
 
     public static float signW(float viewW) {
         return viewW * SIGN_W_RATIO;
+    }
+
+    public static float textAnchorX(int buttonIndex) {
+        if (buttonIndex >= 0 && buttonIndex < TEXT_ANCHOR_X.length) {
+            return TEXT_ANCHOR_X[buttonIndex];
+        }
+        return 0.5f;
+    }
+
+    public static float textAnchorY(int buttonIndex) {
+        if (buttonIndex >= 0 && buttonIndex < TEXT_ANCHOR_Y.length) {
+            return TEXT_ANCHOR_Y[buttonIndex];
+        }
+        return 0.5f;
+    }
+
+    public static float buttonFontSize(float buttonHeight) {
+        return Math.max(TEXT_FONT_MIN, buttonHeight * TEXT_FONT_HEIGHT_RATIO);
     }
 }
