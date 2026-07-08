@@ -123,9 +123,9 @@ public class MainMenuScreen implements Screen {
         drawButtons();
         drawCursor(mouseX, mouseY);
         game.batch.end();
-        fbo.end();
 
         Pixmap frame = Pixmap.createFromFrameBuffer(0, 0, FB_W, FB_H);
+        fbo.end();
         retro.apply(frame);
         retroTexture.draw(frame, 0, 0);
         frame.dispose();

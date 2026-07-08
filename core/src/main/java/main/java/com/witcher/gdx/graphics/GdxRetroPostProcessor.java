@@ -20,28 +20,24 @@ public final class GdxRetroPostProcessor {
         if (w <= 0 || h <= 0) {
             return;
         }
-        brighten(frame, w, h, 1.03f, 8);
-        drawScanlines(frame, w, h, 0.03f, 3);
-        drawVignette(frame, w, h, 0.12f);
-        warmTint(frame, w, h, 0.02f);
-        drawGrain(frame, w, h, 0.01f);
+        brighten(frame, w, h, 1.02f, 4);
+        drawScanlines(frame, w, h, 0.02f, 3);
+        drawVignette(frame, w, h, 0.08f);
+        warmTint(frame, w, h, 0.012f);
+        drawGrain(frame, w, h, 0.006f);
     }
 
     private static void warmTint(Pixmap frame, int w, int h, float amount) {
         for (int y = 0; y < h; y++) {
             for (int x = 0; x < w; x++) {
-                int argb = frame.getPixel(x, y);
-                int a = argb & 0xff;
-                if (a == 0) {
+                int[] c = read(frame, x, y);
+                if (c == null) {
                     continue;
                 }
-                int r = (argb >>> 24) & 0xff;
-                int g = (argb >>> 16) & 0xff;
-                int b = (argb >>> 8) & 0xff;
-                r = clamp((int) (r + 255 * amount));
-                g = clamp((int) (g + 180 * amount));
-                b = clamp((int) (b - 40 * amount));
-                frame.drawPixel(x, y, rgba(r, g, b, a));
+                c[0] = clamp((int) (c[0] + 255 * amount));
+                c[1] = clamp((int) (c[1] + 180 * amount));
+                c[2] = clamp((int) (c[2] - 40 * amount));
+                write(frame, x, y, c);
             }
         }
     }
@@ -50,21 +46,20 @@ public final class GdxRetroPostProcessor {
         int darken = clamp((int) (255 * strength));
         for (int y = 0; y < h; y += step) {
             for (int x = 0; x < w; x++) {
-                int argb = frame.getPixel(x, y);
-                int a = argb & 0xff;
-                if (a == 0) {
+                int[] c = read(frame, x, y);
+                if (c == null) {
                     continue;
                 }
-                int r = darkenChannel((argb >>> 24) & 0xff, darken);
-                int g = darkenChannel((argb >>> 16) & 0xff, darken);
-                int b = darkenChannel((argb >>> 8) & 0xff, darken);
-                frame.drawPixel(x, y, rgba(r, g, b, a));
+                c[0] = darkenChannel(c[0], darken);
+                c[1] = darkenChannel(c[1], darken);
+                c[2] = darkenChannel(c[2], darken);
+                write(frame, x, y, c);
             }
         }
     }
 
-    private static int darkenChannel(int c, int amount) {
-        return Math.max(0, c - amount);
+    private static int darkenChannel(int ch, int amount) {
+        return Math.max(0, ch - amount);
     }
 
     private static void drawVignette(Pixmap frame, int w, int h, float strength) {
@@ -73,23 +68,22 @@ public final class GdxRetroPostProcessor {
         float maxR = (float) Math.hypot(cx, cy) * 1.05f;
         for (int y = 0; y < h; y++) {
             for (int x = 0; x < w; x++) {
-                int argb = frame.getPixel(x, y);
-                int a = argb & 0xff;
-                if (a == 0) {
+                int[] c = read(frame, x, y);
+                if (c == null) {
                     continue;
                 }
                 float t = (float) Math.hypot(x - cx, y - cy) / maxR;
                 float v = Math.min(1f, t * t * strength);
-                int r = dim((argb >>> 24) & 0xff, v);
-                int g = dim((argb >>> 16) & 0xff, v);
-                int b = dim((argb >>> 8) & 0xff, v);
-                frame.drawPixel(x, y, rgba(r, g, b, a));
+                c[0] = dim(c[0], v);
+                c[1] = dim(c[1], v);
+                c[2] = dim(c[2], v);
+                write(frame, x, y, c);
             }
         }
     }
 
-    private static int dim(int c, float amount) {
-        return clamp((int) (c * (1f - amount)));
+    private static int dim(int ch, float amount) {
+        return clamp((int) (ch * (1f - amount)));
     }
 
     private void drawGrain(Pixmap frame, int w, int h, float alpha) {
@@ -101,25 +95,22 @@ public final class GdxRetroPostProcessor {
         }
         if (grainTick++ % 6 == 0) {
             for (int i = 0; i < grainTile.length; i++) {
-                int n = 110 + rng.nextInt(100);
-                int a = 10 + rng.nextInt(18);
-                grainTile[i] = (a << 24) | (n << 16) | (n << 8) | n;
+                grainTile[i] = 110 + rng.nextInt(100);
             }
         }
         int strength = clamp((int) (alpha * 255));
         for (int y = 0; y < h; y++) {
             for (int x = 0; x < w; x++) {
-                int argb = frame.getPixel(x, y);
-                int a = argb & 0xff;
-                if (a == 0) {
+                int[] c = read(frame, x, y);
+                if (c == null) {
                     continue;
                 }
-                int gn = grainTile[(y % 64) * 64 + (x % 64)] & 0xff;
+                int gn = grainTile[(y % 64) * 64 + (x % 64)];
                 int delta = (gn - 128) * strength / 255;
-                int r = clamp(((argb >>> 24) & 0xff) + delta);
-                int g = clamp(((argb >>> 16) & 0xff) + delta);
-                int b = clamp(((argb >>> 8) & 0xff) + delta);
-                frame.drawPixel(x, y, rgba(r, g, b, a));
+                c[0] = clamp(c[0] + delta);
+                c[1] = clamp(c[1] + delta);
+                c[2] = clamp(c[2] + delta);
+                write(frame, x, y, c);
             }
         }
     }
@@ -127,17 +118,45 @@ public final class GdxRetroPostProcessor {
     private static void brighten(Pixmap frame, int w, int h, float gain, int lift) {
         for (int y = 0; y < h; y++) {
             for (int x = 0; x < w; x++) {
-                int argb = frame.getPixel(x, y);
-                int a = argb & 0xff;
-                if (a == 0) {
+                int[] c = read(frame, x, y);
+                if (c == null) {
                     continue;
                 }
-                int r = clamp((int) (((argb >>> 24) & 0xff) * gain + lift));
-                int g = clamp((int) (((argb >>> 16) & 0xff) * gain + lift));
-                int b = clamp((int) (((argb >>> 8) & 0xff) * gain + lift));
-                frame.drawPixel(x, y, rgba(r, g, b, a));
+                c[0] = clamp((int) (c[0] * gain + lift));
+                c[1] = clamp((int) (c[1] * gain + lift));
+                c[2] = clamp((int) (c[2] * gain + lift));
+                write(frame, x, y, c);
             }
         }
+    }
+
+    /** @return {r,g,b,a} или null для пустого пикселя */
+    private static int[] read(Pixmap frame, int x, int y) {
+        int rgba = frame.getPixel(x, y);
+        if (!visible(rgba)) {
+            return null;
+        }
+        int a = rgba & 0xff;
+        if (a < 4) {
+            a = 255;
+        }
+        return new int[] {
+            (rgba >>> 24) & 0xff,
+            (rgba >>> 16) & 0xff,
+            (rgba >>> 8) & 0xff,
+            a
+        };
+    }
+
+    private static void write(Pixmap frame, int x, int y, int[] c) {
+        frame.drawPixel(x, y, rgba(c[0], c[1], c[2], c[3]));
+    }
+
+    private static boolean visible(int rgba) {
+        if ((rgba & 0xff) > 4) {
+            return true;
+        }
+        return (rgba >>> 8) != 0;
     }
 
     private static int rgba(int r, int g, int b, int a) {
