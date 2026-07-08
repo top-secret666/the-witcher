@@ -27,6 +27,7 @@ public final class PixelFrameChrome extends InputAdapter {
     private final GlyphLayout glyph = new GlyphLayout();
 
     private BitmapFont titleFont;
+    private boolean visible = true;
     private int fbW = WitcherGame.FRAME_W;
     private int fbH = WitcherGame.FRAME_H;
     private boolean hoverMinimize;
@@ -39,6 +40,14 @@ public final class PixelFrameChrome extends InputAdapter {
     private double dragCursorStartY;
     private int dragWinX;
     private int dragWinY;
+
+    public void setVisible(boolean visible) {
+        this.visible = visible;
+    }
+
+    public boolean isVisible() {
+        return visible;
+    }
 
     public void loadFont() {
         if (titleFont == null) {
@@ -60,6 +69,9 @@ public final class PixelFrameChrome extends InputAdapter {
     }
 
     public void drawBackground(ShapeRenderer shapes) {
+        if (!visible) {
+            return;
+        }
         float fw = WitcherGame.FRAME_W;
         float fh = WitcherGame.FRAME_H;
         float b = WitcherGame.BORDER;
@@ -80,6 +92,9 @@ public final class PixelFrameChrome extends InputAdapter {
     }
 
     public void drawForeground(ShapeRenderer shapes, SpriteBatch batch) {
+        if (!visible) {
+            return;
+        }
         float fh = WitcherGame.FRAME_H;
         float b = WitcherGame.BORDER;
         float th = WitcherGame.TITLE_H;
@@ -187,6 +202,9 @@ public final class PixelFrameChrome extends InputAdapter {
 
     @Override
     public boolean keyDown(int keycode) {
+        if (!visible) {
+            return false;
+        }
         if (keycode == Input.Keys.ESCAPE) {
             Gdx.app.exit();
             return true;
@@ -196,6 +214,9 @@ public final class PixelFrameChrome extends InputAdapter {
 
     @Override
     public boolean touchDown(int screenX, int screenY, int pointer, int button) {
+        if (!visible) {
+            return false;
+        }
         if (button != Input.Buttons.LEFT) {
             return false;
         }
@@ -228,6 +249,9 @@ public final class PixelFrameChrome extends InputAdapter {
 
     @Override
     public boolean touchDragged(int screenX, int screenY, int pointer) {
+        if (!visible) {
+            return false;
+        }
         if (!dragging || dragHandle == 0) {
             return false;
         }
@@ -242,6 +266,9 @@ public final class PixelFrameChrome extends InputAdapter {
 
     @Override
     public boolean touchUp(int screenX, int screenY, int pointer, int button) {
+        if (!visible) {
+            return false;
+        }
         if (button != Input.Buttons.LEFT) {
             return false;
         }
@@ -259,6 +286,9 @@ public final class PixelFrameChrome extends InputAdapter {
 
     @Override
     public boolean mouseMoved(int screenX, int screenY) {
+        if (!visible) {
+            return false;
+        }
         float[] w = screenToFrame(screenX, screenY);
         hoverMinimize = hit(minimizeBounds(), w[0], w[1]);
         hoverClose = hit(closeBounds(), w[0], w[1]);

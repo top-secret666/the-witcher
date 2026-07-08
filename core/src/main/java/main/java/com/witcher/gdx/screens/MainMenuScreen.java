@@ -13,7 +13,6 @@ import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import main.java.com.witcher.gdx.WitcherGame;
 import main.java.com.witcher.gdx.graphics.GameFonts;
-import main.java.com.witcher.gdx.graphics.GameFrameLayout;
 import main.java.com.witcher.gdx.graphics.GdxMenuAssets;
 import main.java.com.witcher.gdx.graphics.GdxWindowAlign;
 import main.java.com.witcher.gdx.graphics.PixelTextures;
@@ -22,13 +21,13 @@ import main.java.com.witcher.gdx.graphics.SwingViewport;
 import main.java.com.witcher.gdx.layout.MenuLayout;
 
 /**
- * LibGDX-меню — порт Swing {@code MainMenuScreen}.
- * Виртуальный кадр 480×360 растягивается на весь framebuffer (любой монитор).
+ * LibGDX-меню — порт Swing {@code MainMenuScreen}, fullscreen без шапки окна.
  */
 public class MainMenuScreen implements Screen {
 
     private static final float VW = WitcherGame.VIRTUAL_W;
     private static final float VH = WitcherGame.VIRTUAL_H;
+    private static final float TITLE_FONT_BASE = 15f;
 
     private final WitcherGame game;
     private final MainMenuController controller = new MainMenuController();
@@ -40,7 +39,6 @@ public class MainMenuScreen implements Screen {
     private OrthographicCamera camera;
     private ShapeRenderer shapes;
     private GameFonts fonts;
-    private GameFrameLayout layout;
     private GdxMenuAssets assets;
 
     public MainMenuScreen(WitcherGame game) {
@@ -54,6 +52,7 @@ public class MainMenuScreen implements Screen {
         fonts = new GameFonts();
         fonts.load();
         assets = GdxMenuAssets.load();
+        game.frameChrome.setVisible(false);
         relayoutButtons();
     }
 
@@ -83,7 +82,6 @@ public class MainMenuScreen implements Screen {
         int bbw = GdxWindowAlign.backBufferW();
         int bbh = GdxWindowAlign.backBufferH();
         game.bindChromeFramebuffer(bbw, bbh);
-        layout = GameFrameLayout.fromFramebuffer(bbw, bbh);
 
         Gdx.gl.glClearColor(0f, 0f, 0f, 1f);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
@@ -106,13 +104,13 @@ public class MainMenuScreen implements Screen {
         drawCursor(mouseX, mouseY);
         game.batch.end();
 
-        layout.bindFullFrame(camera);
-        game.batch.setProjectionMatrix(camera.combined);
-        shapes.setProjectionMatrix(camera.combined);
-        game.frameChrome.drawForeground(shapes, game.batch);
+        if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
+            Gdx.app.exit();
+        }
 
         MainMenuController.Action action = controller.consumeAction();
         if (action == MainMenuController.Action.START) {
+            game.frameChrome.setVisible(true);
             game.setScreen(new IntroScreen(game));
         } else if (action == MainMenuController.Action.EXIT) {
             Gdx.app.exit();
@@ -168,6 +166,9 @@ public class MainMenuScreen implements Screen {
                 continue;
             }
             float anchorX = i < MenuLayout.TEXT_ANCHOR_X.length ? MenuLayout.TEXT_ANCHOR_X[i] : 0.47f;
+            float fontSize = Math.max(MenuLayout.TEXT_FONT_MIN, r.height * MenuLayout.TEXT_FONT_HEIGHT_RATIO);
+            float fontScale = fontSize / TITLE_FONT_BASE;
+            font.getData().setScale(fontScale);
             glyph.setText(font, label);
             float tx = r.x + r.width * anchorX - glyph.width * 0.5f;
             float ty = C.textBaseline(r.y + r.height * MenuLayout.TEXT_ANCHOR_Y);
@@ -175,6 +176,7 @@ public class MainMenuScreen implements Screen {
             font.draw(game.batch, label, tx + 1f, ty - 1f);
             font.setColor(state == 2 ? 0.78f : 0.96f, state == 2 ? 0.67f : 0.86f, state == 2 ? 0.35f : 0.47f, 1f);
             font.draw(game.batch, label, tx, ty);
+            font.getData().setScale(1f);
         }
     }
 
@@ -213,10 +215,12 @@ public class MainMenuScreen implements Screen {
 
     @Override
     public void hide() {
+        game.frameChrome.setVisible(true);
     }
 
     @Override
     public void dispose() {
+        game.frameChrome.setVisible(true);
         if (assets != null) {
             assets.dispose();
             assets = null;

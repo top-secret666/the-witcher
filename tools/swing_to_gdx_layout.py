@@ -18,6 +18,7 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -44,6 +45,8 @@ MENU_RATIOS = {
     "cursorHotspotY": 4,
     "textAnchorX": [0.43, 0.47, 0.47],
     "textAnchorY": 0.54,
+    "textFontMin": 16,
+    "textFontHeightRatio": 0.36,
 }
 
 
@@ -55,6 +58,7 @@ def parse_swing_ratios(path: Path) -> dict[str, float]:
         ("logoY", r"logoY\s*=\s*\(int\)\s*\(\s*sh\s*\*\s*(0\.\d+f)\s*\)"),
         ("signW", r"signW\s*=\s*\(int\)\s*\(\s*sw\s*\*\s*(0\.\d+f)\s*\)"),
         ("buttonW", r"plankW\s*=\s*\(int\)\s*\(\s*sw\s*\*\s*(0\.\d+f)\s*\)"),
+        ("textFontHeightRatio", r"r\.height\s*\*\s*(0\.\d+f)\)"),
     ]
     for key, pat in rules:
         m = re.search(pat, text)
@@ -121,6 +125,8 @@ def emit_java() -> str:
         f"    public static final float CURSOR_HOTSPOT_X = {r['cursorHotspotX']}f;\n"
         f"    public static final float CURSOR_HOTSPOT_Y = {r['cursorHotspotY']}f;\n"
         f"    public static final float TEXT_ANCHOR_Y = {r['textAnchorY']}f;\n"
+        f"    public static final float TEXT_FONT_MIN = {r['textFontMin']}f;\n"
+        f"    public static final float TEXT_FONT_HEIGHT_RATIO = {r['textFontHeightRatio']}f;\n"
         f"    public static final float[] TEXT_ANCHOR_X = {{ {anchors} }};\n\n"
         "    private MenuLayout() {\n"
         "    }\n\n"
@@ -139,6 +145,7 @@ def main() -> None:
     parser.add_argument("--target", nargs=2, type=int, metavar=("W", "H"),
                         default=[DESIGN_W, DESIGN_H], help="целевое разрешение для preview")
     parser.add_argument("--scale", type=int, default=3, help="pixel scale для справки")
+    parser.add_argument("--bake", action="store_true", help="нарезать ассеты меню (bake_menu_assets.py)")
     args = parser.parse_args()
 
     if SWING_MENU.is_file():
@@ -166,6 +173,12 @@ def main() -> None:
     print(f"OK {OUT_JAVA.relative_to(ROOT)}")
     print(f"OK {OUT_JSON.relative_to(ROOT)}")
     print(f"  uniform scale {tw}x{th}: {preview['scaleUniform']:.4f}")
+
+    if args.bake:
+        import subprocess
+        bake = ROOT / "tools/bake_menu_assets.py"
+        print(f"\n=== bake {bake.name} ===")
+        subprocess.run([sys.executable, str(bake)], cwd=ROOT, check=True)
 
 
 if __name__ == "__main__":

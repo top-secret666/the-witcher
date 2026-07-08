@@ -4,15 +4,15 @@
     360
   ],
   "target": [
-    1920,
-    1200
+    480,
+    360
   ],
-  "scaleUniform": 3.3333333333333335,
-  "scaleStretchX": 4.0,
-  "scaleStretchY": 3.3333333333333335,
-  "logoY": 42.00000000000001,
-  "signW": 864.0,
-  "helpBaselineSwingY": 1192,
+  "scaleUniform": 1.0,
+  "scaleStretchX": 1.0,
+  "scaleStretchY": 1.0,
+  "logoY": 12.600000000000001,
+  "signW": 216.0,
+  "helpBaselineSwingY": 352,
   "transforms": {
     "rectGdxY": "viewH - swingTopY - height",
     "textGdxY": "viewH - swingTopY",
@@ -38,7 +38,9 @@
       0.47,
       0.47
     ],
-    "textAnchorY": 0.54
+    "textAnchorY": 0.54,
+    "textFontMin": 16,
+    "textFontHeightRatio": 0.36
   },
   "referenceFrame": {
     "pixelScale": 3,

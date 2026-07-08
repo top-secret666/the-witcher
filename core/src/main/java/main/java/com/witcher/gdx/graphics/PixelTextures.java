@@ -55,6 +55,13 @@ public final class PixelTextures {
         return loadFirst(all);
     }
 
+    /** Меню: сначала baked 1x (чёткие размеры под 480×360×scale), затем исходник. */
+    public static Texture loadMenu(String relativePath) {
+        return loadFirst(
+            "sprites/menu/1x/" + relativePath,
+            "sprites/menu/" + relativePath);
+    }
+
     public static BufferedImage loadLavkaBufferedImage(String relativePath, String... extraFallbacks) {
         String full = "sprites/lavka/" + relativePath;
         String baked = "sprites/lavka/1x/" + relativePath;

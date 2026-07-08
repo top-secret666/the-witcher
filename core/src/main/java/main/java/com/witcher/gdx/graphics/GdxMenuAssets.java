@@ -7,7 +7,7 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.utils.Disposable;
 
 /**
- * Загрузка ассетов главного меню — порт путей Swing {@code /assets/sprites/menu/…}.
+ * Загрузка ассетов главного меню — baked {@code sprites/menu/1x/} как у лавки.
  */
 public final class GdxMenuAssets implements Disposable {
 
@@ -19,17 +19,54 @@ public final class GdxMenuAssets implements Disposable {
 
     /** [кнопка 0..2][состояние 0..2] */
     public TextureRegion[][] buttonFrames;
-    /** Первый кадр листа 2×3 */
     public TextureRegion titleLogoFrame;
+
+    /** Отдельные baked-текстуры кнопок (если есть). */
+    public Texture[] bakedButtonTextures;
 
     public static GdxMenuAssets load() {
         GdxMenuAssets a = new GdxMenuAssets();
-        a.backgroundTex = PixelTextures.loadOptional("sprites/menu/menu_bg_custom.jpg");
-        a.cursorTex = PixelTextures.loadOptional("sprites/menu/menu_cursor.png");
-        a.logoSignTex = PixelTextures.loadOptional("sprites/menu/menu_logo_sign.png");
-        a.buttonFrames = loadGrid("sprites/menu/menu_buttons_sheet.png", 3, 3, true, a);
-        a.titleLogoFrame = loadFirstFrame("sprites/witcher_logo_new.png", 2, 3, true, a);
+        a.backgroundTex = PixelTextures.loadMenu("menu_bg_custom.jpg");
+        a.cursorTex = PixelTextures.loadMenu("menu_cursor.png");
+        a.logoSignTex = PixelTextures.loadMenu("menu_logo_sign.png");
+        a.titleLogoFrame = loadTitleLogo(a);
+        a.buttonFrames = loadBakedButtons(a);
+        if (a.buttonFrames == null || a.buttonFrames.length == 0) {
+            a.buttonFrames = loadGrid("sprites/menu/menu_buttons_sheet.png", 3, 3, true, a);
+        }
+        if (a.titleLogoFrame == null) {
+            a.titleLogoFrame = loadFirstFrame("sprites/witcher_logo_new.png", 2, 3, true, a);
+        }
         return a;
+    }
+
+    private static TextureRegion[][] loadBakedButtons(GdxMenuAssets owner) {
+        TextureRegion[][] grid = new TextureRegion[3][3];
+        java.util.ArrayList<Texture> baked = new java.util.ArrayList<>();
+        boolean any = false;
+        for (int r = 0; r < 3; r++) {
+            for (int c = 0; c < 3; c++) {
+                Texture tex = PixelTextures.loadMenu("buttons/btn_" + r + "_" + c + ".png");
+                if (tex != null) {
+                    grid[r][c] = new TextureRegion(tex);
+                    baked.add(tex);
+                    any = true;
+                }
+            }
+        }
+        if (any) {
+            owner.bakedButtonTextures = baked.toArray(new Texture[0]);
+        }
+        return any ? grid : new TextureRegion[0][0];
+    }
+
+    private static TextureRegion loadTitleLogo(GdxMenuAssets owner) {
+        Texture tex = PixelTextures.loadMenu("witcher_logo_frame.png");
+        if (tex == null) {
+            return null;
+        }
+        owner.titleLogoSheetTex = tex;
+        return new TextureRegion(tex);
     }
 
     private static TextureRegion[][] loadGrid(String path, int cols, int rows, boolean stripBlack,
@@ -132,6 +169,11 @@ public final class GdxMenuAssets implements Disposable {
     public void dispose() {
         disposeTex(backgroundTex);
         disposeTex(buttonsSheetTex);
+        if (bakedButtonTextures != null) {
+            for (Texture t : bakedButtonTextures) {
+                disposeTex(t);
+            }
+        }
         disposeTex(cursorTex);
         disposeTex(logoSignTex);
         disposeTex(titleLogoSheetTex);
@@ -142,6 +184,7 @@ public final class GdxMenuAssets implements Disposable {
         titleLogoSheetTex = null;
         buttonFrames = null;
         titleLogoFrame = null;
+        bakedButtonTextures = null;
     }
 
     private static void disposeTex(Texture t) {

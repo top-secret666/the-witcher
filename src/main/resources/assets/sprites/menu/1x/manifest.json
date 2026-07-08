@@ -1,0 +1,126 @@
+{
+  "virtualResolution": [
+    480,
+    360
+  ],
+  "pixelScale": 3,
+  "signDrawSize": [
+    648,
+    384
+  ],
+  "assets": [
+    {
+      "output": "1x/menu_bg_custom.jpg",
+      "size": [
+        1620,
+        1080
+      ],
+      "virtualCover": [
+        1440,
+        1080
+      ]
+    },
+    {
+      "output": "1x/buttons/btn_0_0.png",
+      "size": [
+        893,
+        470
+      ],
+      "row": 0,
+      "col": 0
+    },
+    {
+      "output": "1x/buttons/btn_0_1.png",
+      "size": [
+        893,
+        470
+      ],
+      "row": 0,
+      "col": 1
+    },
+    {
+      "output": "1x/buttons/btn_0_2.png",
+      "size": [
+        893,
+        470
+      ],
+      "row": 0,
+      "col": 2
+    },
+    {
+      "output": "1x/buttons/btn_1_0.png",
+      "size": [
+        893,
+        470
+      ],
+      "row": 1,
+      "col": 0
+    },
+    {
+      "output": "1x/buttons/btn_1_1.png",
+      "size": [
+        893,
+        470
+      ],
+      "row": 1,
+      "col": 1
+    },
+    {
+      "output": "1x/buttons/btn_1_2.png",
+      "size": [
+        893,
+        470
+      ],
+      "row": 1,
+      "col": 2
+    },
+    {
+      "output": "1x/buttons/btn_2_0.png",
+      "size": [
+        893,
+        470
+      ],
+      "row": 2,
+      "col": 0
+    },
+    {
+      "output": "1x/buttons/btn_2_1.png",
+      "size": [
+        893,
+        470
+      ],
+      "row": 2,
+      "col": 1
+    },
+    {
+      "output": "1x/buttons/btn_2_2.png",
+      "size": [
+        893,
+        470
+      ],
+      "row": 2,
+      "col": 2
+    },
+    {
+      "output": "1x/menu_logo_sign.png",
+      "size": [
+        648,
+        384
+      ]
+    },
+    {
+      "output": "1x/menu_cursor.png",
+      "size": [
+        84,
+        101
+      ]
+    },
+    {
+      "output": "1x/witcher_logo_frame.png",
+      "size": [
+        454,
+        318
+      ]
+    }
+  ]
+}

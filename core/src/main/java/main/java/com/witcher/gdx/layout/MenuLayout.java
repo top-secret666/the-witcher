@@ -24,6 +24,8 @@ public final class MenuLayout {
     public static final float CURSOR_HOTSPOT_X = 4f;
     public static final float CURSOR_HOTSPOT_Y = 4f;
     public static final float TEXT_ANCHOR_Y = 0.54f;
+    public static final float TEXT_FONT_MIN = 16f;
+    public static final float TEXT_FONT_HEIGHT_RATIO = 0.36f;
     public static final float[] TEXT_ANCHOR_X = { 0.43f, 0.47f, 0.47f };
 
     private MenuLayout() {
