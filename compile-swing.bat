@@ -35,7 +35,6 @@ dir /s /b "%SRC%\*.java" > "%~dp0.tmp\swing-sources.txt"
 "%JAVA_HOME%\bin\javac.exe" -encoding UTF-8 -d "%OUT%" @"%~dp0.tmp\swing-sources.txt"
 if errorlevel 1 (
   echo Oshibka kompilyacii.
-  pause
   exit /b 1
 )
 

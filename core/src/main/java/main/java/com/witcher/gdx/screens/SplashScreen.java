@@ -179,7 +179,7 @@ public class SplashScreen implements Screen {
 
         if (finished && !transitioning) {
             transitioning = true;
-            game.setScreen(new BootScreen(game));
+            game.setScreen(new ShopScreen(game));
         }
     }
 

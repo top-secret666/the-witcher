@@ -5,9 +5,26 @@ java {
 
 sourceSets.main.java.srcDirs = ['src/main/java']
 
+// Общая логика лавки и домен (без Swing-graphics)
+def sharedRoot = file("${rootProject.projectDir}/src/main/java/com/witcher")
+sourceSets.main.java.srcDirs += [
+    "${sharedRoot}/model",
+    "${sharedRoot}/repository",
+    "${sharedRoot}/service",
+    "${sharedRoot}/validation",
+    "${sharedRoot}/exception",
+    "${sharedRoot}/factory",
+    "${sharedRoot}/ui/shop",
+    "${sharedRoot}/ui/shop/presenter",
+    "${sharedRoot}/ui/shop/view/anim",
+]
+sourceSets.main.java.exclude '**/ui/shop/view/ShopView.java'
+sourceSets.main.java.exclude '**/ArmourIconRegistry.java'
+
 dependencies {
     api "com.badlogicgames.gdx:gdx:$gdxVersion"
     api "com.badlogicgames.gdx:gdx-jnigen-loader:2.3.1"
     api "com.badlogicgames.gdx:gdx-freetype:$gdxVersion"
     api "com.badlogicgames.gdx:gdx-freetype-platform:$gdxVersion:natives-desktop"
+    compileOnly "com.badlogicgames.gdx:gdx-backend-lwjgl3:$gdxVersion"
 }

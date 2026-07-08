@@ -25,10 +25,10 @@ public final class GameFonts implements Disposable {
         if (fontFile != null) {
             try {
                 generator = new FreeTypeFontGenerator(fontFile);
-                title = generate(16);
-                ui = generate(14);
-                uiSmall = generate(11);
-                dialog = generate(13);
+                title = generate(15, true);
+                ui = generate(13, false);
+                uiSmall = generate(10, false);
+                dialog = generate(12, false);
                 Gdx.app.log("GameFonts", "Shrift: " + fontFile.path());
                 return;
             } catch (Exception e) {
@@ -44,11 +44,17 @@ public final class GameFonts implements Disposable {
     }
 
     private static FileHandle resolveFontFile() {
-        if (Gdx.files.internal("fonts/noto-sans.ttf").exists()) {
-            return Gdx.files.internal("fonts/noto-sans.ttf");
-        }
-        if (Gdx.files.internal("fonts/game.ttf").exists()) {
-            return Gdx.files.internal("fonts/game.ttf");
+        String[] projectFonts = {
+            "fonts/Philosopher-Regular.ttf",
+            "fonts/Philosopher-Bold.ttf",
+            "fonts/game.ttf",
+            "fonts/noto-sans.ttf"
+        };
+        for (String path : projectFonts) {
+            FileHandle handle = resolveProjectFont(path);
+            if (handle != null) {
+                return handle;
+            }
         }
         String os = System.getProperty("os.name", "").toLowerCase();
         if (os.contains("win")) {
@@ -68,17 +74,35 @@ public final class GameFonts implements Disposable {
         return null;
     }
 
-    private BitmapFont generate(int size) {
+    private static FileHandle resolveProjectFont(String path) {
+        FileHandle fromPixel = PixelTextures.resolve(path);
+        if (fromPixel != null && fromPixel.exists()) {
+            return fromPixel;
+        }
+        if (Gdx.files.internal(path).exists()) {
+            return Gdx.files.internal(path);
+        }
+        if (Gdx.files.internal("assets/" + path).exists()) {
+            return Gdx.files.internal("assets/" + path);
+        }
+        return null;
+    }
+
+    private BitmapFont generate(int size, boolean bold) {
         FreeTypeFontGenerator.FreeTypeFontParameter p = new FreeTypeFontGenerator.FreeTypeFontParameter();
         p.size = size;
         p.characters = FreeTypeFontGenerator.DEFAULT_CHARS + CYRILLIC;
-        p.hinting = FreeTypeFontGenerator.Hinting.None;
-        p.magFilter = com.badlogic.gdx.graphics.Texture.TextureFilter.Nearest;
-        p.minFilter = com.badlogic.gdx.graphics.Texture.TextureFilter.Nearest;
+        p.hinting = FreeTypeFontGenerator.Hinting.Slight;
+        p.magFilter = com.badlogic.gdx.graphics.Texture.TextureFilter.Linear;
+        p.minFilter = com.badlogic.gdx.graphics.Texture.TextureFilter.Linear;
+        if (bold) {
+            p.borderWidth = 0.5f;
+            p.borderColor = new com.badlogic.gdx.graphics.Color(0.08f, 0.05f, 0.02f, 0.85f);
+        }
         BitmapFont font = generator.generateFont(p);
         font.getRegion().getTexture().setFilter(
-            com.badlogic.gdx.graphics.Texture.TextureFilter.Nearest,
-            com.badlogic.gdx.graphics.Texture.TextureFilter.Nearest);
+            com.badlogic.gdx.graphics.Texture.TextureFilter.Linear,
+            com.badlogic.gdx.graphics.Texture.TextureFilter.Linear);
         return font;
     }
 
@@ -86,8 +110,8 @@ public final class GameFonts implements Disposable {
         BitmapFont font = new BitmapFont();
         font.getData().setScale(scale);
         font.getRegion().getTexture().setFilter(
-            com.badlogic.gdx.graphics.Texture.TextureFilter.Nearest,
-            com.badlogic.gdx.graphics.Texture.TextureFilter.Nearest);
+            com.badlogic.gdx.graphics.Texture.TextureFilter.Linear,
+            com.badlogic.gdx.graphics.Texture.TextureFilter.Linear);
         return font;
     }
 

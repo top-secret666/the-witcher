@@ -16,22 +16,6 @@ if not exist "%JAVA_HOME%\bin\javac.exe" (
 if not exist "lib\gdx\gdx-1.12.1.jar" (
   echo === Pervyj zapusk: skachivayu LibGDX ===
   powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0setup-gdx-libs.ps1"
-  if errorlevel 1 (
-    echo Oshibka skachivaniya bibliotek.
-    pause
-    exit /b 1
-  )
-)
-
-if not exist "lib\gdx\gdx-jnigen-loader-2.3.1.jar" (
-  echo === Dokachivayu gdx-jnigen-loader ===
-  call "%~dp0fix-gdx-jnigen.bat"
-  if errorlevel 1 exit /b 1
-)
-
-if not exist "lib\gdx\gdx-freetype-platform-1.12.1-natives-desktop.jar" (
-  echo === Dokachivayu gdx-freetype ===
-  call "%~dp0fix-gdx-freetype.bat"
   if errorlevel 1 exit /b 1
 )
 
@@ -42,12 +26,41 @@ for %%J in ("%~dp0lib\gdx\*.jar") do (
 
 set "OUT_CORE=%~dp0core\build\classes\javac"
 set "OUT_DESK=%~dp0desktop\build\classes\javac"
+set "SHARED=%~dp0src\main\java"
 if not exist "%OUT_CORE%" mkdir "%OUT_CORE%"
 if not exist "%OUT_DESK%" mkdir "%OUT_DESK%"
 
-echo === Kompilyaciya core ===
+echo === Kompilyaciya shared (model + shop) ===
+(
+  dir /s /b "%SHARED%\com\witcher\model\*.java" 2>nul
+  dir /s /b "%SHARED%\com\witcher\repository\*.java" 2>nul
+  dir /s /b "%SHARED%\com\witcher\service\*.java" 2>nul
+  dir /s /b "%SHARED%\com\witcher\validation\*.java" 2>nul
+  dir /s /b "%SHARED%\com\witcher\exception\*.java" 2>nul
+  dir /s /b "%SHARED%\com\witcher\factory\*.java" 2>nul
+  dir /s /b "%SHARED%\com\witcher\ui\shop\DukeLines.java" 2>nul
+  dir /s /b "%SHARED%\com\witcher\ui\shop\ShopCatalogEntry.java" 2>nul
+  dir /s /b "%SHARED%\com\witcher\ui\shop\ShopCategory.java" 2>nul
+  dir /s /b "%SHARED%\com\witcher\ui\shop\ShopEntryIcons.java" 2>nul
+  dir /s /b "%SHARED%\com\witcher\ui\shop\ShopEquipSlot.java" 2>nul
+  dir /s /b "%SHARED%\com\witcher\ui\shop\ShopGearRules.java" 2>nul
+  dir /s /b "%SHARED%\com\witcher\ui\shop\ShopGearStats.java" 2>nul
+  dir /s /b "%SHARED%\com\witcher\ui\shop\ShopModel.java" 2>nul
+  dir /s /b "%SHARED%\com\witcher\ui\shop\ShopPricing.java" 2>nul
+  dir /s /b "%SHARED%\com\witcher\ui\shop\ShopRuntimeAssets.java" 2>nul
+  dir /s /b "%SHARED%\com\witcher\ui\shop\presenter\*.java" 2>nul
+  dir /s /b "%SHARED%\com\witcher\ui\shop\view\ShopLayout.java" 2>nul
+  dir /s /b "%SHARED%\com\witcher\ui\shop\view\ShopShowcaseItem.java" 2>nul
+  dir /s /b "%SHARED%\com\witcher\ui\shop\view\ShopUiMetrics.java" 2>nul
+  dir /s /b "%SHARED%\com\witcher\ui\shop\view\ShopViewConstants.java" 2>nul
+  dir /s /b "%SHARED%\com\witcher\ui\shop\view\anim\*.java" 2>nul
+) > "%TMP%\gdx-sources-shared.txt"
+"%JAVA_HOME%\bin\javac.exe" -encoding UTF-8 -cp "%LIB_CP%" -d "%OUT_CORE%" @"%TMP%\gdx-sources-shared.txt"
+if errorlevel 1 goto :fail
+
+echo === Kompilyaciya core (gdx) ===
 dir /s /b "%~dp0core\src\main\java\*.java" > "%TMP%\gdx-sources-core.txt"
-"%JAVA_HOME%\bin\javac.exe" -encoding UTF-8 -cp "%LIB_CP%" -d "%OUT_CORE%" @"%TMP%\gdx-sources-core.txt"
+"%JAVA_HOME%\bin\javac.exe" -encoding UTF-8 -cp "%LIB_CP%;%OUT_CORE%" -d "%OUT_CORE%" @"%TMP%\gdx-sources-core.txt"
 if errorlevel 1 goto :fail
 
 echo === Kompilyaciya desktop ===
@@ -63,5 +76,4 @@ exit /b 0
 :fail
 echo.
 echo [OSHIBKA] Kompilyaciya ne udalas.
-pause
 exit /b 1
