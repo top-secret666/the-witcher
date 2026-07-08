@@ -1,9 +1,8 @@
-package main.java.com.witcher.gdx.layout;
+package main.java.com.witcher.ui.menu.view;
 
 /**
  * Раскладка главного меню — сгенерировано tools/swing_to_gdx_layout.py.
  * Координаты в пространстве Swing: 480×360, Y сверху вниз.
- * Рендер через main.java.com.witcher.gdx.graphics.SwingCoords.
  */
 public final class MenuLayout {
 

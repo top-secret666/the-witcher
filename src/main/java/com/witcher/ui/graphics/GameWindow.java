@@ -10,6 +10,8 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 
+import main.java.com.witcher.ui.menu.MainMenuController;
+
 public class GameWindow {
 
     static {
@@ -557,19 +559,20 @@ public class GameWindow {
                     enterMainMenuMode();
                 }
             } else if (menuActive) {
-                mainMenu.update(mouseVX, mouseVY, mouseClickPending, menuNavDir, menuActivate);
+                mainMenu.update(renderer.getVirtualW(), renderer.getVirtualH(),
+                    mouseVX, mouseVY, mouseClickPending, menuNavDir, menuActivate);
                 mainMenu.render(renderer.screen, mouseVX, mouseVY);
                 renderer.present();
 
-                MainMenuScreen.Action action = mainMenu.consumeAction();
-                if (menuExitRequested || action == MainMenuScreen.Action.EXIT) {
+                MainMenuController.Action action = mainMenu.consumeAction();
+                if (menuExitRequested || action == MainMenuController.Action.EXIT) {
                     frame.dispatchEvent(new WindowEvent(frame, WindowEvent.WINDOW_CLOSING));
-                } else if (action == MainMenuScreen.Action.START) {
+                } else if (action == MainMenuController.Action.START) {
                     // Запуск пиксельной заставки-интро
                     menuActive = false;
                     introActive = true;
                     introScreen = loadBundle != null ? loadBundle.intro : new IntroScreen();
-                } else if (action == MainMenuScreen.Action.SETTINGS) {
+                } else if (action == MainMenuController.Action.SETTINGS) {
                     System.out.println("[MENU] Settings pressed (scene not implemented yet)");
                 }
 

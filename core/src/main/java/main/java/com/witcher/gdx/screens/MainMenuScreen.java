@@ -13,7 +13,6 @@ import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.FrameBuffer;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
-import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import main.java.com.witcher.gdx.WitcherGame;
 import main.java.com.witcher.gdx.graphics.GameFonts;
@@ -24,7 +23,8 @@ import main.java.com.witcher.gdx.graphics.GdxWindowAlign;
 import main.java.com.witcher.gdx.graphics.PixelTextures;
 import main.java.com.witcher.gdx.graphics.SwingCoords;
 import main.java.com.witcher.gdx.graphics.SwingViewport;
-import main.java.com.witcher.gdx.layout.MenuLayout;
+import main.java.com.witcher.ui.menu.MainMenuController;
+import main.java.com.witcher.ui.menu.view.MenuLayout;
 
 /**
  * LibGDX-меню: FBO {@code 480×360×scale} на GPU, ретро-оверлей без CPU readback.
@@ -246,7 +246,7 @@ public class MainMenuScreen implements Screen {
         }
         BitmapFont font = fonts.menuBold;
         for (int i = 0; i < controller.buttonCount(); i++) {
-            Rectangle r = controller.buttonRect(i);
+            MainMenuController.Rect r = controller.buttonRect(i);
             int state = controller.buttonState(i);
             TextureRegion frame = assets.buttonFrame(i, state);
             if (frame != null) {

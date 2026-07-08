@@ -17,6 +17,8 @@ sourceSets.main.java.srcDirs += [
     "${sharedRoot}/ui/shop",
     "${sharedRoot}/ui/shop/presenter",
     "${sharedRoot}/ui/shop/view/anim",
+    "${sharedRoot}/ui/menu",
+    "${sharedRoot}/ui/menu/view",
 ]
 sourceSets.main.java.exclude '**/ui/shop/view/ShopView.java'
 sourceSets.main.java.exclude '**/ArmourIconRegistry.java'

@@ -3,23 +3,16 @@ package main.java.com.witcher.ui.graphics;
 import java.awt.*;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
-import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Random;
 
 // Для поддержки спрайт-листа фона
 import main.java.com.witcher.ui.graphics.SpriteSheet;
+import main.java.com.witcher.ui.menu.MainMenuController;
 
 public class MainMenuScreen {
         // Табличка-борд для кнопок
         private final BufferedImage boardFrame;
-    public enum Action {
-        NONE,
-        START,
-        SETTINGS,
-        EXIT
-    }
+    private final MainMenuController controller = new MainMenuController();
 
     private final Sprite background;
     private final SpriteSheet boardSheet;
@@ -33,21 +26,7 @@ public class MainMenuScreen {
     private final BufferedImage titleLogo;
     private final BufferedImage logoSignData;
 
-    private final String[] buttonLabels = new String[]{"Играть", "Настройки", "Выход"};
-
-    // buttonRects — прямоугольники для размещения кнопок меню (Играть, Настройки, Выход)
-    private final Rectangle[] buttonRects = new Rectangle[]{new Rectangle(), new Rectangle(), new Rectangle()};
-
-    private int selectedIndex = -1;
-    private int pressedIndex = -1;
-    private int pressedTicks = 0;
-    private int tick = 0;
     private int transitionTick = 0;
-    private Action pendingAction = Action.NONE;
-
-    // Эмберы — тёплые парящие частицы
-    private final List<float[]> embers = new ArrayList<>();
-    private final Random rng = new Random();
 
     public MainMenuScreen() {
             boardFrame = loadTrimmed("/assets/sprites/menu/menu_board_single.png"); // путь к вашей табличке
@@ -65,86 +44,13 @@ public class MainMenuScreen {
         cursor = loadTrimmed("/assets/sprites/menu/menu_cursor.png");
     }
 
-    public void update(int mouseX, int mouseY, boolean mouseClicked, int navDir, boolean activate) {
-        tick++;
-
-        if (pressedTicks > 0) {
-            pressedTicks--;
-        }
+    public void update(int viewW, int viewH, int mouseX, int mouseY, boolean mouseClicked, int navDir, boolean activate) {
         transitionTick++;
-
-        // Спавн эмберов — тёплые парящие частицы поднимаются снизу
-        if (tick % 3 == 0 && embers.size() < 40) {
-            // x, y, vx, vy, age, maxAge, size, r, g, b
-            float x = rng.nextFloat() * 480;
-            float y = 360 + rng.nextFloat() * 20;
-            float vx = (rng.nextFloat() - 0.5f) * 0.3f;
-            float vy = -0.4f - rng.nextFloat() * 0.6f;
-            int maxAge = 120 + rng.nextInt(180);
-            float sz = 1 + rng.nextFloat() * 2;
-            int r = 200 + rng.nextInt(56);
-            int g = 80 + rng.nextInt(80);
-            int b = 10 + rng.nextInt(30);
-            embers.add(new float[]{x, y, vx, vy, 0, maxAge, sz, r, g, b});
-        }
-        // Обновление эмберов
-        Iterator<float[]> it = embers.iterator();
-        while (it.hasNext()) {
-            float[] e = it.next();
-            e[0] += e[2] + (float) Math.sin(e[4] * 0.03) * 0.15f; // drift
-            e[1] += e[3];
-            e[2] *= 0.995f;
-            e[4]++;
-            if (e[4] >= e[5] || e[1] < -10) it.remove();
-        }
-
-        // Mouse hover chooses currently focused button (исключаем стороны, точная вертикаль)
-        // По умолчанию — ни одна кнопка не выбрана
-        int hoveredIndex = -1;
-        for (int i = 0; i < buttonRects.length; i++) {
-            Rectangle r = buttonRects[i];
-            if (r.contains(mouseX, mouseY)) {
-                hoveredIndex = i;
-                break;
-            }
-        }
-        // Только если курсор на кнопке, выделяем её; иначе ничего не выделено
-        if (hoveredIndex != -1) {
-            selectedIndex = hoveredIndex;
-        } else {
-            selectedIndex = -1;  // Сбрасываем выделение, если курсор не на кнопке
-        }
-
-        if (navDir != 0) {
-            // При навигации клавиатурой активируем выделение кнопки
-            if (selectedIndex < 0) selectedIndex = 0; // Если ничего не выбрано, начиная с первой
-            selectedIndex = (selectedIndex + navDir) % buttonRects.length;
-            if (selectedIndex < 0) selectedIndex += buttonRects.length;
-        }
-
-        if (mouseClicked && selectedIndex >= 0 && buttonRects[selectedIndex].contains(mouseX, mouseY)) {
-            pressSelected();
-        } else if (activate && selectedIndex >= 0) {
-            pressSelected();
-        }
+        controller.update(viewW, viewH, mouseX, mouseY, mouseClicked, navDir, activate);
     }
 
-    private void pressSelected() {
-        pressedIndex = selectedIndex;
-        pressedTicks = 6;
-        if (selectedIndex == 0) {
-            pendingAction = Action.START;
-        } else if (selectedIndex == 1) {
-            pendingAction = Action.SETTINGS;
-        } else if (selectedIndex == 2) {
-            pendingAction = Action.EXIT;
-        }
-    }
-
-    public Action consumeAction() {
-        Action out = pendingAction;
-        pendingAction = Action.NONE;
-        return out;
+    public MainMenuController.Action consumeAction() {
+        return controller.consumeAction();
     }
 
     public void render(BufferedImage screen, int mouseX, int mouseY) {
@@ -214,49 +120,20 @@ public class MainMenuScreen {
     }
 
     private void layoutButtons(int sw, int sh) {
-        // layoutButtons — рассчитывает размеры и положение кнопок так,
-        // чтобы они четко помещались на доске с квестами и не налезали
-        // на логотип или выходили за пределы доски.
         BufferedImage ref = getButtonFrame(0, 0);
-        // Вычисляем нижнюю границу логотипа
-        int logoY = (int)(sh * 0.035f);
-        int logoReservedBottom = logoY;
-        if (logoSignData != null) {
-            int signW = (int)(sw * 0.45f);
-            int signH = Math.max(1, signW * logoSignData.getHeight() / logoSignData.getWidth());
-            logoReservedBottom = logoY + signH;
-        } else if (titleLogo != null) {
-            int logoW = (int)(sw * 0.31f);
-            int logoH = Math.max(1, logoW * titleLogo.getHeight() / titleLogo.getWidth());
-            logoReservedBottom = logoY + logoH;
-        }
-        logoReservedBottom += 16;
-
-        // Высота доступной области под кнопки
-        int availableH = sh - logoReservedBottom - 16;
-        int gap = (int) (availableH * 0.04f);
-        int slotH = (int) ((availableH - gap * (buttonRects.length - 1)) / buttonRects.length);
-
         float aspect = 1.9f;
         if (ref != null && ref.getHeight() > 0) {
             aspect = (float) ref.getWidth() / ref.getHeight();
         }
-
-        int plankW = (int) (sw * 0.62f);
-        int plankH = Math.round(plankW / aspect);
-        if (plankH > slotH) {
-            plankH = slotH;
-            plankW = Math.round(plankH * aspect);
+        float logoSignAspect = 0f;
+        float titleLogoAspect = 0f;
+        if (logoSignData != null && logoSignData.getWidth() > 0) {
+            logoSignAspect = (float) logoSignData.getHeight() / logoSignData.getWidth();
+        } else if (titleLogo != null && titleLogo.getWidth() > 0) {
+            titleLogoAspect = (float) titleLogo.getHeight() / titleLogo.getWidth();
         }
-
-        int startX = (sw - plankW) / 2;
-        int startY = logoReservedBottom;
-
-        for (int i = 0; i < buttonRects.length; i++) {
-            int slotY = startY + i * (slotH + gap);
-            int plankY = slotY + (slotH - plankH) / 2;
-            buttonRects[i].setBounds(startX, plankY, plankW, plankH);
-        }
+        controller.layoutButtons(sw, sh, aspect, logoSignAspect, titleLogoAspect,
+            logoSignData != null, titleLogo != null);
     }
 
     private void drawTitle(Graphics2D g, int sw, int sh) {
@@ -302,23 +179,17 @@ public class MainMenuScreen {
     }
 
     private void drawButtons(Graphics2D g) {
-        // drawButtons — рисует кнопки меню с нужным состоянием (обычная, hover, pressed)
-        for (int i = 0; i < buttonRects.length; i++) {
-            Rectangle r = buttonRects[i];
-            int state = 0;
-            if (pressedIndex == i && pressedTicks > 0) {
-                state = 2;
-            } else if (selectedIndex == i) {
-                state = 1;
-            }
+        for (int i = 0; i < controller.buttonCount(); i++) {
+            MainMenuController.Rect r = controller.buttonRect(i);
+            int state = controller.buttonState(i);
 
             BufferedImage frame = getButtonFrame(i, state);
             if (frame != null) {
-                g.drawImage(frame, r.x, r.y, r.width, r.height, null);
+                g.drawImage(frame, Math.round(r.x), Math.round(r.y),
+                    Math.round(r.width), Math.round(r.height), null);
             }
 
-            // Draw label on top to ensure readability (shadow + main color)
-            String label = buttonLabels.length > i ? buttonLabels[i] : "";
+            String label = controller.buttonLabel(i);
             if (!label.isEmpty()) {
                 int fontSize = Math.max(16, (int) (r.height * 0.36f));
                 Font font = GameFonts.get().bold(fontSize);
@@ -327,14 +198,8 @@ public class MainMenuScreen {
                 FontMetrics fm = g.getFontMetrics(font);
                 Rectangle2D bounds = fm.getStringBounds(label, g);
 
-                // Якорь текста на пергаменте (у каждой доски чуть свой центр)
-                float anchorRatioX = switch (i) {
-                    case 0 -> 0.43f; // «Играть» — короче, сдвигаем левее
-                    case 1 -> 0.47f;
-                    default -> 0.47f;
-                };
-                double anchorX = r.x + r.width * anchorRatioX;
-                double anchorY = r.y + r.height * 0.54;
+                float anchorX = r.x + r.width * 0.5f;
+                float anchorY = r.y + r.height * 0.5f;
                 int tx = (int) Math.round(anchorX - bounds.getWidth() / 2.0 - bounds.getX());
                 int ty = (int) Math.round(anchorY - bounds.getHeight() / 2.0 - bounds.getY());
 
@@ -350,7 +215,7 @@ public class MainMenuScreen {
     }
 
     private void drawAtmosphere(Graphics2D g, int sw, int sh) {
-        // Парящие тёплые эмберы
+        List<float[]> embers = controller.embers();
         for (float[] e : embers) {
             float life = e[4] / e[5];
             // Яркость = fade in -> stable -> fade out

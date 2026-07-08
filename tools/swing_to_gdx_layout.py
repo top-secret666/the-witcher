@@ -9,7 +9,7 @@ Java-классы раскладки для GDX. Запуск из корня:
     python tools/swing_to_gdx_layout.py --target 1920 1080 --scale 4
 
 Результат:
-  core/src/main/java/main/java/com/witcher/gdx/layout/MenuLayout.java
+  src/main/java/com/witcher/ui/menu/view/MenuLayout.java
   src/main/resources/gdx/layout/menu_layout.json
 """
 
@@ -23,7 +23,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SWING_MENU = ROOT / "src/main/java/com/witcher/ui/graphics/MainMenuScreen.java"
-OUT_JAVA = ROOT / "core/src/main/java/main/java/com/witcher/gdx/layout/MenuLayout.java"
+OUT_JAVA = ROOT / "src/main/java/com/witcher/ui/menu/view/MenuLayout.java"
 OUT_JSON = ROOT / "src/main/resources/gdx/layout/menu_layout.json"
 
 DESIGN_W, DESIGN_H = 480, 360
@@ -102,11 +102,10 @@ def emit_java() -> str:
     r = MENU_RATIOS
     anchors = ", ".join(f"{a}f" for a in r["textAnchorX"])
     return (
-        "package main.java.com.witcher.gdx.layout;\n\n"
+        "package main.java.com.witcher.ui.menu.view;\n\n"
         "/**\n"
         " * Раскладка главного меню — сгенерировано tools/swing_to_gdx_layout.py.\n"
         " * Координаты в пространстве Swing: 480×360, Y сверху вниз.\n"
-        " * Рендер через main.java.com.witcher.gdx.graphics.SwingCoords.\n"
         " */\n"
         "public final class MenuLayout {\n\n"
         f"    public static final float DESIGN_W = {DESIGN_W}f;\n"

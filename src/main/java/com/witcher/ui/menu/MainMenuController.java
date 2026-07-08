@@ -1,7 +1,6 @@
-package main.java.com.witcher.gdx.screens;
+package main.java.com.witcher.ui.menu;
 
-import com.badlogic.gdx.math.Rectangle;
-import main.java.com.witcher.gdx.layout.MenuLayout;
+import main.java.com.witcher.ui.menu.view.MenuLayout;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -9,7 +8,8 @@ import java.util.List;
 import java.util.Random;
 
 /**
- * Логика главного меню — полный порт Swing {@code MainMenuScreen.update}.
+ * Логика главного меню: hover, клавиатура (W/S, стрелки, Enter), эмберы, действия.
+ * Общая для Swing и LibGDX — только отрисовка различается.
  */
 public final class MainMenuController {
 
@@ -17,9 +17,27 @@ public final class MainMenuController {
         NONE, START, SETTINGS, EXIT
     }
 
+    public static final class Rect {
+        public float x;
+        public float y;
+        public float width;
+        public float height;
+
+        public void set(float x, float y, float width, float height) {
+            this.x = x;
+            this.y = y;
+            this.width = width;
+            this.height = height;
+        }
+
+        public boolean contains(float px, float py) {
+            return px >= x && px < x + width && py >= y && py < y + height;
+        }
+    }
+
     private static final String[] LABELS = {"Играть", "Настройки", "Выход"};
 
-    private final Rectangle[] buttons = new Rectangle[3];
+    private final Rect[] buttons = new Rect[3];
     private final List<float[]> embers = new ArrayList<>();
     private final Random rng = new Random();
     private Action pending = Action.NONE;
@@ -31,7 +49,7 @@ public final class MainMenuController {
 
     public MainMenuController() {
         for (int i = 0; i < buttons.length; i++) {
-            buttons[i] = new Rectangle();
+            buttons[i] = new Rect();
         }
     }
 
@@ -76,7 +94,7 @@ public final class MainMenuController {
      * @param navDir -1 вверх, 0 нет, 1 вниз (W/S, стрелки)
      * @param activate Enter / Space
      */
-    public void update(float viewW, float viewH, int mouseX, int mouseY,
+    public void update(float viewW, float viewH, float mouseX, float mouseY,
                        boolean mouseClicked, int navDir, boolean activate) {
         tick++;
         updateEmbers(viewW, viewH);
@@ -177,7 +195,7 @@ public final class MainMenuController {
         return buttons.length;
     }
 
-    public Rectangle buttonRect(int index) {
+    public Rect buttonRect(int index) {
         return buttons[index];
     }
 
