@@ -80,15 +80,18 @@ public class Renderer extends JPanel {
 
     public void present() {
         retro.apply(screen);
-        Graphics2D g = displayFrame.createGraphics();
-        try {
-            PixelDraw.applyNearest(g);
-            g.setColor(Color.BLACK);
-            g.fillRect(0, 0, getDisplayWidth(), getDisplayHeight());
-            g.drawImage(screen, 0, 0, getDisplayWidth(), getDisplayHeight(),
-                0, 0, virtualW, virtualH, null);
-        } finally {
-            g.dispose();
+        if (pixelScale <= 1) {
+            Graphics2D g = displayFrame.createGraphics();
+            try {
+                PixelDraw.applyNearest(g);
+                g.setColor(Color.BLACK);
+                g.fillRect(0, 0, getDisplayWidth(), getDisplayHeight());
+                g.drawImage(screen, 0, 0, null);
+            } finally {
+                g.dispose();
+            }
+        } else {
+            PixelDraw.blitIntegerScale(screen, displayFrame, pixelScale);
         }
         repaint();
     }

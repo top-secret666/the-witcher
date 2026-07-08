@@ -2346,11 +2346,13 @@ public class ShopScreen {
     }
 
     private static void drawCardText(Graphics2D g) {
-        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
-        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+        GameFonts.applyGothicHints(g);
     }
 
-    /** Подпись на витрине — одна строка, шрифт уже подогнан под ширину карточки. */
+    private static void drawCrispText(Graphics2D g) {
+        drawCardText(g);
+    }
+
     private static void drawCategoryGridLabel(Graphics2D g, String name, int x, int y, int w, int h,
                                               Color color, FontMetrics fm) {
         int nameY = y + h - 6;
@@ -2570,10 +2572,6 @@ public class ShopScreen {
         g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
         g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
         g.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_OFF);
-    }
-
-    private static void drawCrispText(Graphics2D g) {
-        GameFonts.applyGameHints(g);
     }
 
     private static void drawEquipText(Graphics2D g, Font font, String text, int x, int y, Color color) {

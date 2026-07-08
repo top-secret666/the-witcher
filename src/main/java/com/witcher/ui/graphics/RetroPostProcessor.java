@@ -24,9 +24,9 @@ public final class RetroPostProcessor {
             return;
         }
 
-        // Чёткость (не резкость): лёгкое отделение пикселей без «жёстких» контуров.
-        pixelClarity(frame, w, h, 0.14f);
-        brighten(frame, w, h, 1.05f, 12);
+        // Чёткие очертания: только на реальных границах пикселей, без «резкости» всего кадра.
+        pixelClarity(frame, w, h, 0.20f);
+        brighten(frame, w, h, 1.04f, 10);
         drawScanlines(frame, w, h, 0.11f, 2);
         drawVignette(frame, w, h, 0.22f);
         warmTint(frame, w, h, 0.03f);
@@ -196,11 +196,11 @@ public final class RetroPostProcessor {
             + ((src[i + w] >>> shift) & 0xFF);
         blur /= 4;
         int edge = c - blur;
-        if (Math.abs(edge) < 6) {
+        if (Math.abs(edge) < 4) {
             return c;
         }
         int delta = (int) (edge * amount);
-        delta = Math.max(-5, Math.min(5, delta));
+        delta = Math.max(-6, Math.min(6, delta));
         return clamp(c + delta);
     }
 

@@ -10,10 +10,16 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Шрифты Swing UI: диалоги (Serif) и HUD/лавка (SansSerif).
- * Опционально: положи свой game.ttf в assets/fonts/.
+ * Шрифты UI: готический TTF из assets/fonts (если есть) + чёткий рендер.
  */
 public final class GameFonts {
+
+    private static final String[] GOTHIC_PATHS = {
+        "/assets/fonts/MedievalSharp-Regular.ttf",
+        "/assets/fonts/gothic.ttf",
+        "/assets/fonts/witcher_ui.ttf",
+        "/assets/fonts/game.ttf"
+    };
 
     private static final GameFonts INSTANCE = new GameFonts();
 
@@ -22,21 +28,19 @@ public final class GameFonts {
     private final Map<String, Font> cache = new HashMap<>();
 
     private GameFonts() {
-        Font custom = tryLoad("/assets/fonts/game.ttf");
-        if (custom != null) {
-            dialogBase = custom;
-            uiBase = custom;
-        } else {
-            dialogBase = new Font("Serif", Font.PLAIN, 12);
-            uiBase = new Font(Font.SANS_SERIF, Font.PLAIN, 12);
+        Font gothic = loadFirst(GOTHIC_PATHS);
+        if (gothic == null) {
+            gothic = pickSystemGothic();
         }
+        dialogBase = gothic;
+        uiBase = gothic;
+        System.out.println("[GameFonts] UI: " + uiBase.getFontName());
     }
 
     public static GameFonts get() {
         return INSTANCE;
     }
 
-    /** Диалоги, интро, VN. */
     public Font plain(int size) {
         return derive(dialogBase, size, Font.PLAIN);
     }
@@ -49,7 +53,6 @@ public final class GameFonts {
         return derive(dialogBase, size, Font.ITALIC);
     }
 
-    /** Лавка, карточки, HUD. */
     public Font uiPlain(int size) {
         return derive(uiBase, size, Font.PLAIN);
     }
@@ -62,47 +65,65 @@ public final class GameFonts {
         return derive(uiBase, size, Font.ITALIC);
     }
 
+    /** Диалоги — тот же готический TTF. */
+    public static void applyDialogHints(Graphics2D g) {
+        applyGothicHints(g);
+    }
+
+    /** Мелкий пиксельный текст (иконки, счётчики). */
+    public static void applyPixelHints(Graphics2D g) {
+        applyGameHints(g);
+    }
+
+    /** Пиксель-арт / мелкие подписи на карточках. */
     public static void applyGameHints(Graphics2D g) {
         g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
         g.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_OFF);
     }
 
-    /** @deprecated use {@link #applyGameHints(Graphics2D)} */
-    @Deprecated
-    public static void applyDialogHints(Graphics2D g) {
-        applyGameHints(g);
+    /** Готический TTF — чёткие контуры без «мыла». */
+    public static void applyGothicHints(Graphics2D g) {
+        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+        g.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_OFF);
+        g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
     }
 
-    /** @deprecated use {@link #applyGameHints(Graphics2D)} */
-    @Deprecated
-    public static void applyPixelHints(Graphics2D g) {
-        applyGameHints(g);
-    }
-
-    /** Тёмная обводка — текст читается на любом фоне. */
     public static void drawOutlined(Graphics2D g, String text, int x, int y, Color fill) {
-        g.setColor(new Color(12, 8, 4, 200));
-        g.drawString(text, x + 1, y);
-        g.drawString(text, x - 1, y);
-        g.drawString(text, x, y + 1);
-        g.drawString(text, x, y - 1);
+        int tx = (x + 1) & ~1;
+        int ty = (y + 1) & ~1;
+        g.setColor(new Color(12, 8, 4, 220));
+        g.drawString(text, tx + 1, ty);
+        g.drawString(text, tx - 1, ty);
+        g.drawString(text, tx, ty + 1);
         g.setColor(fill);
-        g.drawString(text, x, y);
+        g.drawString(text, tx, ty);
     }
 
-    /** Мягкая тень для длинных диалогов. */
     public static void drawShadowed(Graphics2D g, String text, int x, int y, Color fill) {
+        int tx = (x + 1) & ~1;
+        int ty = (y + 1) & ~1;
         g.setColor(new Color(0, 0, 0, 140));
-        g.drawString(text, x + 1, y + 1);
+        g.drawString(text, tx + 1, ty + 1);
         g.setColor(fill);
-        g.drawString(text, x, y);
+        g.drawString(text, tx, ty);
     }
 
     private Font derive(Font base, int size, int style) {
         int safeSize = Math.max(6, size);
-        String key = base.getFamily() + ":" + safeSize + ":" + style;
+        String key = base.getFontName() + ":" + safeSize + ":" + style;
         return cache.computeIfAbsent(key, k -> base.deriveFont(style, (float) safeSize));
+    }
+
+    private static Font loadFirst(String[] paths) {
+        for (String path : paths) {
+            Font font = tryLoad(path);
+            if (font != null) {
+                return font;
+            }
+        }
+        return null;
     }
 
     private static Font tryLoad(String resourcePath) {
@@ -118,5 +139,26 @@ public final class GameFonts {
             System.err.println("[GameFonts] Oshibka " + resourcePath + ": " + e.getMessage());
             return null;
         }
+    }
+
+    private static Font pickSystemGothic() {
+        String[] names = {
+            "MedievalSharp",
+            "UnifrakturMaguntia",
+            "Old English Text MT",
+            "Times New Roman"
+        };
+        GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+        String[] available = ge.getAvailableFontFamilyNames();
+        for (String want : names) {
+            for (String have : available) {
+                if (have.equalsIgnoreCase(want)) {
+                    System.out.println("[GameFonts] Sistemnyj shrift: " + have);
+                    return new Font(have, Font.PLAIN, 12);
+                }
+            }
+        }
+        System.out.println("[GameFonts] Net gothic.ttf — polozhi MedievalSharp-Regular.ttf v assets/fonts/");
+        return new Font(Font.SERIF, Font.BOLD, 12);
     }
 }

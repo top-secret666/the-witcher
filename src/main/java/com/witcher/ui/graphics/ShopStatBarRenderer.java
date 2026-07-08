@@ -522,7 +522,6 @@ final class ShopStatBarRenderer {
     }
 
     private static void drawCardText(Graphics2D g) {
-        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
-        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+        GameFonts.applyGothicHints(g);
     }
 }
