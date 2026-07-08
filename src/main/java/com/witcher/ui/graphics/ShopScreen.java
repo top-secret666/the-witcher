@@ -7,6 +7,12 @@ import main.java.com.witcher.ui.shop.ShopCategory;
 import main.java.com.witcher.model.armour.Armour;
 import main.java.com.witcher.ui.shop.ShopEquipSlot;
 import main.java.com.witcher.ui.shop.ShopModel;
+import main.java.com.witcher.ui.shop.presenter.ShopScreenState;
+import main.java.com.witcher.ui.shop.view.ShopLayout;
+import main.java.com.witcher.ui.shop.view.ShopShowcaseItem;
+import main.java.com.witcher.ui.shop.view.ShopViewConstants;
+
+import static main.java.com.witcher.ui.shop.view.ShopViewConstants.*;
 
 import java.awt.*;
 import java.awt.geom.AffineTransform;
@@ -16,70 +22,12 @@ import java.util.List;
 import java.util.Random;
 
 /**
- * Пиксельный экран лавки Герцога.
+ * Экран лавки: view-слой (отрисовка + hit-test bounds).
+ * Логика — {@link main.java.com.witcher.ui.shop.ShopModel}, геометрия — {@link ShopLayout}.
  */
 public class ShopScreen {
 
-    private static final int VIRTUAL_W = 480;
-    private static final int VIRTUAL_H = 360;
-    private static final int DIALOG_TEXT_ZONE = 54;
-    /** Зазор между низом витрины и зоной диалога Герцога. */
-    private static final int PANEL_BOTTOM_MARGIN = 4;
-
-    private enum ShopState {
-        REVEAL,
-        IDLE,
-        WALLET_REVEAL,
-        PURCHASE_REVEAL,
-        CATEGORY_OPENING,
-        CATEGORY,
-        CATEGORY_CLOSING
-    }
-
-    /** ~3 с при 30 FPS — появление витрины. */
-    private static final int REVEAL_DURATION_TICKS = 84;
-    private static final int CATEGORY_OPEN_DURATION_TICKS = 28;
-    /** Сцена кошелька: появление → полёт в сумку → закрытие → счётчик. */
-    private static final int WALLET_APPEAR_TICKS = 30;
-    private static final int WALLET_FLY_TICKS = 40;
-    private static final int WALLET_FADE_TICKS = 10;
-    private static final int WALLET_CLOSE_TICKS = 8;
-    private static final int WALLET_BAG_CLOSE_TICKS = WALLET_FADE_TICKS + WALLET_CLOSE_TICKS;
-    private static final int WALLET_COUNT_TICKS = 28;
-    private static final int WALLET_REVEAL_TOTAL =
-        WALLET_APPEAR_TICKS + WALLET_FLY_TICKS + WALLET_BAG_CLOSE_TICKS + WALLET_COUNT_TICKS;
-    /** Сцена покупки: иконка товара → сумка. */
-    private static final int PURCHASE_APPEAR_TICKS = 24;
-    private static final int PURCHASE_FLY_TICKS = 34;
-    private static final int PURCHASE_FADE_TICKS = 10;
-    private static final int PURCHASE_CLOSE_TICKS = 10;
-    private static final int PURCHASE_TUCK_TICKS = PURCHASE_FADE_TICKS + PURCHASE_CLOSE_TICKS;
-    private static final int PURCHASE_REVEAL_TOTAL =
-        PURCHASE_APPEAR_TICKS + PURCHASE_FLY_TICKS + PURCHASE_TUCK_TICKS;
-    private static final int INVENTORY_BAG_SIZE = 40;
-    private static final int INVENTORY_BAG_MARGIN = 8;
-    /** Внутреннее «окно» shop_catalog_panel_detail — не золотая рамка PNG. */
-    private static final int CATALOG_PANEL_INSET_X = 14;
-    private static final int CATALOG_PANEL_INSET_TOP = 20;
-    private static final int CATALOG_PANEL_GAP_ABOVE_BUY = 10;
-    /** Тёмная «внутренность» shop_card_back — не золотая рамка. */
-    private static final int PRODUCT_CARD_INSET_X = 7;
-    private static final int PRODUCT_CARD_INSET_TOP = 10;
-    private static final int PRODUCT_CARD_INSET_BOTTOM = 24;
-    private static final int PRODUCT_CARD_ICON_TEXT_GAP = 5;
-    private static final int PRODUCT_CARD_NAME_PRICE_GAP = 5;
-    private static final int INVENTORY_PANEL_W = 280;
-    private static final int INVENTORY_PANEL_H = 238;
-    private static final int INVENTORY_POUCH_ICON = 32;
-    private static final int INVENTORY_POUCH_LARGE = 96;
-    private static final int EQUIP_MARGIN = 4;
-    private static final int GRID_COLS = 5;
-    private static final int TOP_ROW_COLS = 5;
-    private static final int BOTTOM_ROW_COLS = 2;
-
-    private static final BufferedImage MENU_CURSOR = loadMenuCursor();
-    /** Текст рисуется поверх CRT-фильтра в нативном ×2 — читаемость. */
-    private static final boolean DEFER_UI_TEXT_TO_OVERLAY = true;
+    private static final boolean DEFER_UI_TEXT_TO_OVERLAY = ShopViewConstants.DEFER_UI_TEXT_TO_OVERLAY;
     private static boolean uiTextOverlayOnly;
 
     private static boolean shouldDrawUiTextInScene() {
@@ -91,152 +39,23 @@ public class ShopScreen {
         return s != null ? s.getImage() : null;
     }
 
-    private static final class ShopLayout {
-        final int hudY;
-        final int hudH;
-        final int hudX;
-        final int hudW;
-        final int panelX;
-        final int panelY;
-        final int panelW;
-        final int panelH;
-        final int headerH;
-        final int btnX;
-        final int btnY;
-        final int btnW;
-        final int btnH;
-        final int cardW;
-        final int cardH;
-        final int cardGap;
-        final int cardsStartX;
-        final int cardsY;
-        final int gridCols;
-        final int gridRows;
-        final int dialogTop;
-        final int cardsStartXBottom;
-
-        ShopLayout(int sw, int sh, int itemCount, int hudX, int hudW, int hudH, int fixedPanelW,
-                   int panelHeaderH, int topRowCols, int bottomRowCols) {
-            this.hudX = hudX;
-            this.hudW = hudW;
-            hudY = 4;
-            this.hudH = hudH;
-            dialogTop = sh - DIALOG_TEXT_ZONE;
-            btnH = 30;
-            btnW = 100;
-            headerH = panelHeaderH;
-            cardW = 54;
-            cardH = 81;
-            cardGap = 6;
-            gridCols = GRID_COLS;
-            gridRows = itemCount > topRowCols ? 2 : 1;
-
-            int rowW = topRowCols * cardW + (topRowCols - 1) * cardGap;
-            panelW = fixedPanelW;
-            panelX = (sw - panelW) / 2;
-            panelY = hudY + hudH + 6;
-            cardsStartX = panelX + (panelW - rowW) / 2;
-
-            int bottomCount = Math.min(bottomRowCols, Math.max(0, itemCount - topRowCols));
-            int bottomRowW = bottomCount * cardW + Math.max(0, bottomCount - 1) * cardGap;
-            cardsStartXBottom = panelX + (panelW - bottomRowW) / 2;
-
-            int gridContentH = gridRows * cardH + (gridRows - 1) * cardGap;
-            panelH = dialogTop - panelY - PANEL_BOTTOM_MARGIN;
-            int innerTop = panelY + headerH;
-            int innerH = Math.max(gridContentH, panelH - headerH);
-            cardsY = innerTop + Math.max(4, (innerH - gridContentH) / 2);
-
-            int contentBottom = cardsY + gridContentH;
-            btnX = panelX + (panelW - btnW) / 2;
-            btnY = contentBottom + 6;
-        }
-
-        Point cardSlot(int index) {
-            if (index < TOP_ROW_COLS) {
-                int col = index;
-                int x = cardsStartX + col * (cardW + cardGap);
-                int y = cardsY;
-                return new Point(x, y);
-            }
-            int bottomIndex = index - TOP_ROW_COLS;
-            int x = cardsStartXBottom + bottomIndex * (cardW + cardGap);
-            int y = cardsY + cardH + cardGap;
-            return new Point(x, y);
-        }
-
-        /** Карточка категории — пропорции как у shop_card (54×81), ширина до панели списка. */
-        Rectangle leftCategoryCardSlot(int detailPanelW) {
-            int catalogX = VIRTUAL_W - detailPanelW - 8;
-            int gap = 10;
-            int x = 4;
-            int w = catalogX - gap - x;
-            int h = w * 81 / 54;
-            int maxH = dialogTop - 12;
-            if (h > maxH) {
-                h = maxH;
-                w = h * 54 / 81;
-            }
-            int y = 8;
-            return new Rectangle(x, y, w, h);
-        }
-
-        Rectangle detailListPanelSlot(int detailW, int detailH) {
-            int x = VIRTUAL_W - detailW - 8;
-            int y = 50;
-            return new Rectangle(x, y, detailW, detailH);
-        }
-
-        int categoryCounterY() {
-            return 6;
-        }
-
-        int categoryCounterH(int dialogTop) {
-            return dialogTop - categoryCounterY() - 4;
-        }
-    }
+    private static final BufferedImage MENU_CURSOR = loadMenuCursor();
 
     private static final ShopCategory[] GRID_CATEGORIES = {
         ShopCategory.CHEST, ShopCategory.LEGS, ShopCategory.GLOVES,
         ShopCategory.BOOTS, ShopCategory.POTION, ShopCategory.SETS, ShopCategory.WEAPON
     };
 
-    private static final class ShopItem {
-        final ItemKind kind;
-        final ShopCategory category;
-        String priceLabel;
-        final String dukeLine;
-        final String[] statLines;
-        final BufferedImage icon;
-        final BufferedImage cardArt;
-        Rectangle bounds = new Rectangle();
-
-        ShopItem(ItemKind kind, ShopCategory category, String priceLabel, String dukeLine,
-                 String[] statLines, BufferedImage icon, BufferedImage cardArt) {
-            this.kind = kind;
-            this.category = category;
-            this.priceLabel = priceLabel;
-            this.dukeLine = dukeLine;
-            this.statLines = statLines;
-            this.icon = icon;
-            this.cardArt = cardArt;
-        }
-
-        String displayName() {
-            return category.label;
-        }
-    }
-
     private final ShopModel model;
     private final ShopAssetCache assets = ShopAssetCache.get();
     private final ArmourIconRegistry armourIcons;
 
-    private final List<ShopItem> items = new ArrayList<>();
+    private final List<ShopShowcaseItem> items = new ArrayList<>();
     private final List<ShopCatalogEntry> catalogEntries = new ArrayList<>();
     private final List<float[]> ashParticles = new ArrayList<>();
     private final Random rng = new Random();
 
-    private ShopState state = ShopState.REVEAL;
+    private ShopScreenState state = ShopScreenState.REVEAL;
     private String currentDialog;
     private int selectedIndex = -1;
     private int hoveredIndex = -1;
@@ -295,9 +114,9 @@ public class ShopScreen {
     private void initShowcaseFromModel() {
         items.clear();
         for (ShopCategory cat : GRID_CATEGORIES) {
-            ItemKind kind = cat == ShopCategory.SETS ? ItemKind.SET_CATALOG : ItemKind.PIECE;
+            ShopShowcaseItem.Kind kind = cat == ShopCategory.SETS ? ShopShowcaseItem.Kind.SET_CATALOG : ShopShowcaseItem.Kind.PIECE;
             BufferedImage icon = iconForCategory(cat);
-            items.add(new ShopItem(
+            items.add(new ShopShowcaseItem(
                 kind, cat,
                 model.priceLabelForCategory(cat),
                 model.dukeLineForCategory(cat),
@@ -320,17 +139,12 @@ public class ShopScreen {
     }
 
     private void refreshShowcasePrices() {
-        for (ShopItem item : items) {
+        for (ShopShowcaseItem item : items) {
             item.priceLabel = model.priceLabelForCategory(item.category);
         }
     }
 
-    private enum ItemKind {
-        PIECE,
-        SET_CATALOG
-    }
-
-    private void buildCatalogRows(ShopItem category) {
+    private void buildCatalogRows(ShopShowcaseItem category) {
         catalogEntries.clear();
         hoveredRowIndex = -1;
         catalogScrollOffset = 0;
@@ -411,85 +225,85 @@ public class ShopScreen {
                 inventoryPouchFocused = true;
                 return;
             }
-            if (state == ShopState.WALLET_REVEAL) {
+            if (state == ShopScreenState.WALLET_REVEAL) {
                 walletRevealTicks = WALLET_REVEAL_TOTAL - 1;
                 return;
             }
-            if (state == ShopState.PURCHASE_REVEAL) {
+            if (state == ShopScreenState.PURCHASE_REVEAL) {
                 purchaseRevealTicks = PURCHASE_REVEAL_TOTAL - 1;
                 return;
             }
-            if (state == ShopState.CATEGORY || state == ShopState.CATEGORY_OPENING) {
+            if (state == ShopScreenState.CATEGORY || state == ShopScreenState.CATEGORY_OPENING) {
                 beginCategoryClose();
                 return;
             }
-            if (state == ShopState.CATEGORY_CLOSING) {
+            if (state == ShopScreenState.CATEGORY_CLOSING) {
                 return;
             }
             exitRequested = true;
             return;
         }
 
-        if (state == ShopState.REVEAL) {
+        if (state == ShopScreenState.REVEAL) {
             revealTicks++;
             if (revealTicks >= REVEAL_DURATION_TICKS) {
-                state = ShopState.IDLE;
+                state = ShopScreenState.IDLE;
                 currentDialog = IDLE_LINE;
             }
         }
 
-        if (state == ShopState.WALLET_REVEAL) {
+        if (state == ShopScreenState.WALLET_REVEAL) {
             walletRevealTicks++;
             if (walletRevealTicks >= WALLET_REVEAL_TOTAL) {
                 finishWalletReveal();
             }
         }
 
-        if (state == ShopState.PURCHASE_REVEAL) {
+        if (state == ShopScreenState.PURCHASE_REVEAL) {
             purchaseRevealTicks++;
             if (purchaseRevealTicks >= PURCHASE_REVEAL_TOTAL) {
                 finishPurchaseReveal();
             }
         }
 
-        if (state == ShopState.CATEGORY_OPENING || state == ShopState.CATEGORY_CLOSING) {
+        if (state == ShopScreenState.CATEGORY_OPENING || state == ShopScreenState.CATEGORY_CLOSING) {
             categoryTicks++;
             if (categoryClosing) {
                 if (categoryTicks >= CATEGORY_OPEN_DURATION_TICKS) {
                     finishCategoryClose();
                 }
             } else if (categoryTicks >= CATEGORY_OPEN_DURATION_TICKS) {
-                state = ShopState.CATEGORY;
+                state = ShopScreenState.CATEGORY;
             }
         }
 
         updateAshParticles();
 
         ShopRevealAnimator reveal = revealAnimator();
-        boolean showcaseInteractive = reveal.uiInteractive && state == ShopState.IDLE;
+        boolean showcaseInteractive = reveal.uiInteractive && state == ShopScreenState.IDLE;
 
         ShopLayout layout = new ShopLayout(VIRTUAL_W, VIRTUAL_H, items.size(),
             assets.hudX, assets.hudW, assets.hudH, assets.panelW,
             assets.panelHeaderH, assets.topRowCols, assets.bottomRowCols);
 
-        if (state == ShopState.WALLET_REVEAL && clicked) {
+        if (state == ShopScreenState.WALLET_REVEAL && clicked) {
             walletRevealTicks = WALLET_REVEAL_TOTAL - 1;
             return;
         }
 
-        if (state == ShopState.PURCHASE_REVEAL && clicked) {
+        if (state == ShopScreenState.PURCHASE_REVEAL && clicked) {
             purchaseRevealTicks = PURCHASE_REVEAL_TOTAL - 1;
             return;
         }
 
-        if ((state == ShopState.CATEGORY_OPENING || state == ShopState.CATEGORY_CLOSING) && clicked) {
+        if ((state == ShopScreenState.CATEGORY_OPENING || state == ShopScreenState.CATEGORY_CLOSING) && clicked) {
             skipCategoryAnimation();
             return;
         }
 
         boolean bagUnlocked = !model.needsWalletReveal()
-            && state != ShopState.WALLET_REVEAL
-            && state != ShopState.PURCHASE_REVEAL;
+            && state != ShopScreenState.WALLET_REVEAL
+            && state != ShopScreenState.PURCHASE_REVEAL;
         if (bagUnlocked) {
             updateInventoryInput(mouseX, mouseY, clicked);
         } else {
@@ -520,8 +334,8 @@ public class ShopScreen {
             }
         }
 
-        if (state == ShopState.CATEGORY || state == ShopState.CATEGORY_OPENING
-            || state == ShopState.CATEGORY_CLOSING) {
+        if (state == ShopScreenState.CATEGORY || state == ShopScreenState.CATEGORY_OPENING
+            || state == ShopScreenState.CATEGORY_CLOSING) {
             ShopCategoryAnimator catAnim = categoryAnimator(layout);
             if (wheelNotches != 0 && catAnim.listInteractive) {
                 Rectangle panel = layout.detailListPanelSlot(assets.detailPanelW, assets.detailPanelH);
@@ -539,9 +353,9 @@ public class ShopScreen {
 
         if (showcaseInteractive && clicked && hoveredIndex >= 0) {
             selectedIndex = hoveredIndex;
-            ShopItem item = items.get(hoveredIndex);
+            ShopShowcaseItem item = items.get(hoveredIndex);
             currentDialog = item.dukeLine;
-            state = ShopState.CATEGORY_OPENING;
+            state = ShopScreenState.CATEGORY_OPENING;
             categoryClosing = false;
             categoryTicks = 0;
             Point slot = layout.cardSlot(hoveredIndex);
@@ -549,7 +363,7 @@ public class ShopScreen {
             buildCatalogRows(item);
         }
 
-        if (state == ShopState.CATEGORY && clicked) {
+        if (state == ShopScreenState.CATEGORY && clicked) {
             ShopCategoryAnimator cat = categoryAnimator(layout);
             if (categoryBackBounds.contains(mouseX, mouseY) && cat.listInteractive) {
                 beginCategoryClose();
@@ -564,10 +378,10 @@ public class ShopScreen {
             }
         }
 
-        if (state == ShopState.CATEGORY && categoryBuyBounds.width > 0) {
+        if (state == ShopScreenState.CATEGORY && categoryBuyBounds.width > 0) {
             categoryBuyHovered = categoryBuyBounds.contains(mouseX, mouseY);
         }
-        if (state == ShopState.CATEGORY && categoryBackBounds.width > 0) {
+        if (state == ShopScreenState.CATEGORY && categoryBackBounds.width > 0) {
             categoryBackHovered = categoryBackBounds.contains(mouseX, mouseY);
         }
 
@@ -647,8 +461,8 @@ public class ShopScreen {
     }
 
     private void beginWalletReveal() {
-        walletRevealFromCategory = state == ShopState.CATEGORY;
-        state = ShopState.WALLET_REVEAL;
+        walletRevealFromCategory = state == ShopScreenState.CATEGORY;
+        state = ShopScreenState.WALLET_REVEAL;
         walletRevealTicks = 0;
         inventoryOpen = false;
         equipmentOpen = false;
@@ -658,7 +472,7 @@ public class ShopScreen {
     private void finishWalletReveal() {
         model.revealWallet();
         walletRevealTicks = 0;
-        state = walletRevealFromCategory ? ShopState.CATEGORY : ShopState.IDLE;
+        state = walletRevealFromCategory ? ShopScreenState.CATEGORY : ShopScreenState.IDLE;
         walletRevealFromCategory = false;
         currentDialog = DukeLines.walletRevealAfter();
     }
@@ -693,7 +507,7 @@ public class ShopScreen {
     private void beginPurchaseReveal(ShopCatalogEntry entry) {
         purchaseRevealKeepRow = selectedRowIndex;
         if (selectedIndex >= 0 && selectedIndex < items.size()) {
-            ShopItem cat = items.get(selectedIndex);
+            ShopShowcaseItem cat = items.get(selectedIndex);
             purchaseRevealIcon = armourIcons.iconForEntry(entry, cat.category);
             if (purchaseRevealIcon == null) {
                 purchaseRevealIcon = cat.cardArt != null ? cat.cardArt : cat.icon;
@@ -704,7 +518,7 @@ public class ShopScreen {
         purchaseRevealTicks = 0;
         inventoryOpen = false;
         equipmentOpen = false;
-        state = ShopState.PURCHASE_REVEAL;
+        state = ShopScreenState.PURCHASE_REVEAL;
     }
 
     private void finishPurchaseReveal() {
@@ -719,24 +533,24 @@ public class ShopScreen {
         }
         purchaseRevealKeepRow = -1;
         refreshShowcasePrices();
-        state = ShopState.CATEGORY;
+        state = ShopScreenState.CATEGORY;
     }
 
     private void beginCategoryClose() {
         categoryClosing = true;
         categoryTicks = 0;
-        state = ShopState.CATEGORY_CLOSING;
+        state = ShopScreenState.CATEGORY_CLOSING;
         hoveredRowIndex = -1;
     }
 
     private void skipCategoryAnimation() {
-        if (state == ShopState.CATEGORY_OPENING) {
+        if (state == ShopScreenState.CATEGORY_OPENING) {
             categoryTicks = CATEGORY_OPEN_DURATION_TICKS;
             categoryClosing = false;
-            state = ShopState.CATEGORY;
+            state = ShopScreenState.CATEGORY;
             return;
         }
-        if (state == ShopState.CATEGORY_CLOSING) {
+        if (state == ShopScreenState.CATEGORY_CLOSING) {
             categoryTicks = CATEGORY_OPEN_DURATION_TICKS;
             finishCategoryClose();
         }
@@ -749,7 +563,7 @@ public class ShopScreen {
         selectedRowIndex = -1;
         catalogEntries.clear();
         catalogScrollOffset = 0;
-        state = ShopState.IDLE;
+        state = ShopScreenState.IDLE;
         currentDialog = IDLE_LINE;
     }
 
@@ -798,10 +612,10 @@ public class ShopScreen {
 
         drawScaledBackground(g, assets.merchantBgScaled, sw, sh, 0.75f * brighten);
 
-        boolean categoryMode = state == ShopState.CATEGORY_OPENING
-            || state == ShopState.CATEGORY || state == ShopState.CATEGORY_CLOSING;
-        boolean walletScene = state == ShopState.WALLET_REVEAL;
-        boolean purchaseScene = state == ShopState.PURCHASE_REVEAL;
+        boolean categoryMode = state == ShopScreenState.CATEGORY_OPENING
+            || state == ShopScreenState.CATEGORY || state == ShopScreenState.CATEGORY_CLOSING;
+        boolean walletScene = state == ShopScreenState.WALLET_REVEAL;
+        boolean purchaseScene = state == ShopScreenState.PURCHASE_REVEAL;
 
         if (walletScene) {
             drawWalletRevealScene(g, sw, sh, layout, mouseX, mouseY);
@@ -890,10 +704,10 @@ public class ShopScreen {
                 assets.panelHeaderH, assets.topRowCols, assets.bottomRowCols);
             ShopRevealAnimator reveal = revealAnimator();
 
-            boolean categoryMode = state == ShopState.CATEGORY_OPENING
-                || state == ShopState.CATEGORY || state == ShopState.CATEGORY_CLOSING;
-            boolean walletScene = state == ShopState.WALLET_REVEAL;
-            boolean purchaseScene = state == ShopState.PURCHASE_REVEAL;
+            boolean categoryMode = state == ShopScreenState.CATEGORY_OPENING
+                || state == ShopScreenState.CATEGORY || state == ShopScreenState.CATEGORY_CLOSING;
+            boolean walletScene = state == ShopScreenState.WALLET_REVEAL;
+            boolean purchaseScene = state == ShopScreenState.PURCHASE_REVEAL;
 
             if (walletScene || purchaseScene) {
                 DialogBoxRenderer.drawCompactFramedSpeakerText(g, sw, sh, "Герцог", currentDialog,
@@ -1191,7 +1005,7 @@ public class ShopScreen {
         if (model.needsWalletReveal()) {
             return false;
         }
-        if (state == ShopState.PURCHASE_REVEAL || state == ShopState.WALLET_REVEAL) {
+        if (state == ShopScreenState.PURCHASE_REVEAL || state == ShopScreenState.WALLET_REVEAL) {
             return false;
         }
         return openT < 0.001f;
@@ -1206,7 +1020,7 @@ public class ShopScreen {
                 if (frames[frame] != null) {
                     return frames[frame];
                 }
-            } else if (state == ShopState.PURCHASE_REVEAL || state == ShopState.WALLET_REVEAL) {
+            } else if (state == ShopScreenState.PURCHASE_REVEAL || state == ShopScreenState.WALLET_REVEAL) {
                 return frames[0];
             }
         }
@@ -1299,6 +1113,8 @@ public class ShopScreen {
             g.drawImage(assets.crownIconScaled, textX, crownY, crownSize, crownSize, null);
             textX += crownSize + crownGap;
         } else if (assets.crownIconScaled != null) {
+            int crownY = blockY + (blockH - crownSize) / 2;
+            g.drawImage(assets.crownIconScaled, textX, crownY, crownSize, crownSize, null);
             textX += crownSize + crownGap;
         }
         int walletY = blockY + (blockH + fm.getAscent()) / 2 - 2;
@@ -1312,8 +1128,8 @@ public class ShopScreen {
         if (selectedIndex < 0 || selectedIndex >= items.size()) {
             return;
         }
-        ItemKind kind = items.get(selectedIndex).kind;
-        if (kind != ItemKind.PIECE && kind != ItemKind.SET_CATALOG) {
+        ShopShowcaseItem.Kind kind = items.get(selectedIndex).kind;
+        if (kind != ShopShowcaseItem.Kind.PIECE && kind != ShopShowcaseItem.Kind.SET_CATALOG) {
             return;
         }
         if (alpha <= 0.01f) {
@@ -1721,11 +1537,9 @@ public class ShopScreen {
         }
         int blockX = layout.hudX + (layout.hudW - blockW) / 2;
         int textX = blockX;
-        if (!uiTextOverlayOnly && assets.crownIconScaled != null) {
+        if (assets.crownIconScaled != null) {
             int crownY = hudY + (layout.hudH - crownSize) / 2;
             g.drawImage(assets.crownIconScaled, blockX, crownY, null);
-            textX = blockX + crownSize + crownGap;
-        } else if (assets.crownIconScaled != null) {
             textX = blockX + crownSize + crownGap;
         }
         int walletY = hudY + (layout.hudH + fm.getAscent()) / 2 - 2;
@@ -1735,7 +1549,7 @@ public class ShopScreen {
     }
 
     private String walletHudAmountText() {
-        if (state != ShopState.WALLET_REVEAL) {
+        if (state != ShopScreenState.WALLET_REVEAL) {
             return model.walletAmountText();
         }
         int countStart = WALLET_APPEAR_TICKS + WALLET_FLY_TICKS + WALLET_BAG_CLOSE_TICKS;
@@ -1874,7 +1688,7 @@ public class ShopScreen {
         }
 
         for (int i = 0; i < items.size(); i++) {
-            ShopItem item = items.get(i);
+            ShopShowcaseItem item = items.get(i);
             Point slot = layout.cardSlot(i);
             float cardA = i < reveal.cardAlpha.length ? reveal.cardAlpha[i] : 1f;
             float cardS = i < reveal.cardScale.length ? reveal.cardScale[i] : 1f;
@@ -1898,7 +1712,7 @@ public class ShopScreen {
     private void drawCategoryView(Graphics2D g, ShopLayout layout, ShopRevealAnimator reveal,
                                   ShopCategoryAnimator cat, int mouseX, int mouseY) {
         Composite layer = g.getComposite();
-        ShopItem item = items.get(selectedIndex);
+        ShopShowcaseItem item = items.get(selectedIndex);
 
         if (!uiTextOverlayOnly && assets.counterForeground != null && cat.counterAlpha > 0.02f) {
             g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, cat.counterAlpha));
@@ -1915,7 +1729,7 @@ public class ShopScreen {
                 items.get(i).bounds.setBounds(0, 0, 0, 0);
                 continue;
             }
-            ShopItem other = items.get(i);
+            ShopShowcaseItem other = items.get(i);
             Point slot = layout.cardSlot(i);
             float cardA = (i < reveal.cardAlpha.length ? reveal.cardAlpha[i] : 1f) * cat.gridCardsAlpha;
             items.get(i).bounds.setBounds(0, 0, 0, 0);
@@ -1947,7 +1761,7 @@ public class ShopScreen {
         g.setComposite(layer);
     }
 
-    private BufferedImage itemArtForEntry(ShopCatalogEntry entry, ShopItem categoryItem) {
+    private BufferedImage itemArtForEntry(ShopCatalogEntry entry, ShopShowcaseItem categoryItem) {
         if (categoryItem == null) {
             return null;
         }
@@ -1961,7 +1775,7 @@ public class ShopScreen {
     }
 
     /** Переворот категории → товар при открытии и обратно при закрытии. */
-    private void drawFlippingCategoryCard(Graphics2D g, ShopItem item, int x, int y, int w, int h,
+    private void drawFlippingCategoryCard(Graphics2D g, ShopShowcaseItem item, int x, int y, int w, int h,
                                           boolean smoothIconGrowth) {
         float flipT = categoryAnimProgress();
         float scaleX = Math.abs((float) Math.cos(flipT * Math.PI));
@@ -2054,7 +1868,7 @@ public class ShopScreen {
             return;
         }
         drawCrispText(g);
-        g.setFont(cardFont(11));
+        g.setFont(cardFont(9));
         String label = "Купить";
         FontMetrics fm = g.getFontMetrics();
         int tx = btnX + (btnW - fm.stringWidth(label)) / 2;
@@ -2092,7 +1906,7 @@ public class ShopScreen {
         g.clipRect(clipX, listTop, clipW, clipH);
 
         drawCardText(g);
-        g.setFont(GameFonts.get().uiBold(11));
+        g.setFont(GameFonts.get().uiBold(9));
 
         for (int i = 0; i < catalogEntries.size(); i++) {
             ShopCatalogEntry row = catalogEntries.get(i);
@@ -2121,7 +1935,7 @@ public class ShopScreen {
                 continue;
             }
 
-            g.setFont(GameFonts.get().uiBold(11));
+            g.setFont(GameFonts.get().uiBold(9));
             FontMetrics fm = g.getFontMetrics();
             String price = row.priceLabel();
             int priceW = fm.stringWidth(price);
@@ -2131,7 +1945,7 @@ public class ShopScreen {
             int priceX = x + rowW - priceW - 6;
 
             int[] deltas = catalogStatDeltas(row);
-            g.setFont(GameFonts.get().uiBold(9));
+            g.setFont(GameFonts.get().uiBold(8));
             FontMetrics statsFm = g.getFontMetrics();
             int statsW = ShopStatGlyphs.rowWidth(statsFm, deltas[0], deltas[1], deltas[2]);
             if (statsW > 0) {
@@ -2139,20 +1953,20 @@ public class ShopScreen {
             }
             int statsRight = priceX - 2;
 
-            g.setFont(GameFonts.get().uiBold(11));
-            fm = g.getFontMetrics();
             int nameMaxW = Math.max(20, statsRight - statsW - (x + 8));
+            g.setFont(fitUiFontToWidth(g, row.name, nameMaxW, 9, 7));
+            fm = g.getFontMetrics();
             String label = truncateToWidth(row.name, fm, nameMaxW);
             int textY = y + (assets.rowH + fm.getAscent()) / 2 - 1;
             drawOutlinedText(g, label, x + 8, textY, new Color(235, 215, 155));
 
             if (statsW > 0) {
-                g.setFont(GameFonts.get().uiBold(9));
+                g.setFont(GameFonts.get().uiBold(8));
                 statsFm = g.getFontMetrics();
                 ShopStatGlyphs.drawRow(g, statsRight, textY, statsFm, deltas[0], deltas[1], deltas[2]);
             }
 
-            if (assets.crownIconSmall != null && !price.equals("···") && !uiTextOverlayOnly) {
+            if (assets.crownIconSmall != null && !price.equals("···")) {
                 g.drawImage(assets.crownIconSmall, priceX, y + 6, null);
                 priceX += assets.crownIconSmall.getWidth() + 2;
             }
@@ -2187,38 +2001,38 @@ public class ShopScreen {
         g.drawImage(img, sx, sy, sw, sh, null);
     }
 
-    private void drawItemCard(Graphics2D g, ShopItem item, int x, int y, int w, int h, int index,
+    private void drawItemCard(Graphics2D g, ShopShowcaseItem item, int x, int y, int w, int h, int index,
                               boolean selected, boolean hovered, float revealAlpha) {
         drawItemCard(g, item, x, y, w, h, index, selected, hovered, revealAlpha, null);
     }
 
-    private void drawItemCard(Graphics2D g, ShopItem item, int x, int y, int w, int h, int index,
+    private void drawItemCard(Graphics2D g, ShopShowcaseItem item, int x, int y, int w, int h, int index,
                               boolean selected, boolean hovered, float revealAlpha, String priceOverride) {
         drawItemCard(g, item, x, y, w, h, index, selected, hovered, revealAlpha, priceOverride, false);
     }
 
-    private void drawItemCard(Graphics2D g, ShopItem item, int x, int y, int w, int h, int index,
+    private void drawItemCard(Graphics2D g, ShopShowcaseItem item, int x, int y, int w, int h, int index,
                               boolean selected, boolean hovered, float revealAlpha, String priceOverride,
                               boolean smoothIconGrowth) {
         drawItemCard(g, item, x, y, w, h, index, selected, hovered,
             revealAlpha, priceOverride, smoothIconGrowth, null);
     }
 
-    private void drawItemCard(Graphics2D g, ShopItem item, int x, int y, int w, int h, int index,
+    private void drawItemCard(Graphics2D g, ShopShowcaseItem item, int x, int y, int w, int h, int index,
                               boolean selected, boolean hovered, float revealAlpha, String priceOverride,
                               boolean smoothIconGrowth, BufferedImage cardArtOverride) {
         drawItemCard(g, item, x, y, w, h, index, selected, hovered,
             revealAlpha, priceOverride, smoothIconGrowth, cardArtOverride, null);
     }
 
-    private void drawItemCard(Graphics2D g, ShopItem item, int x, int y, int w, int h, int index,
+    private void drawItemCard(Graphics2D g, ShopShowcaseItem item, int x, int y, int w, int h, int index,
                               boolean selected, boolean hovered, float revealAlpha, String priceOverride,
                               boolean smoothIconGrowth, BufferedImage cardArtOverride, String nameOverride) {
         drawItemCard(g, item, x, y, w, h, index, selected, hovered,
             revealAlpha, priceOverride, smoothIconGrowth, cardArtOverride, nameOverride, null);
     }
 
-    private void drawItemCard(Graphics2D g, ShopItem item, int x, int y, int w, int h, int index,
+    private void drawItemCard(Graphics2D g, ShopShowcaseItem item, int x, int y, int w, int h, int index,
                               boolean selected, boolean hovered, float revealAlpha, String priceOverride,
                               boolean smoothIconGrowth, BufferedImage cardArtOverride, String nameOverride,
                               BufferedImage frameOverride) {
@@ -2253,9 +2067,7 @@ public class ShopScreen {
         } else {
             cardRect = new Rectangle(x, y, w, h);
         }
-        if (shouldDrawUiTextInScene()) {
-            drawCardFrontContent(g, item, cardRect, w, h, priceOverride, smoothIconGrowth, cardArtOverride, nameOverride);
-        }
+        drawCardFrontContent(g, item, cardRect, w, h, priceOverride, smoothIconGrowth, cardArtOverride, nameOverride);
 
         g.setComposite(savedComposite);
     }
@@ -2267,20 +2079,16 @@ public class ShopScreen {
         g.drawRoundRect(x + 1, y + 1, w - 2, h - 2, 6, 6);
     }
 
-    private void drawCardFrontContent(Graphics2D g, ShopItem item, Rectangle card, int w, int h,
+    private void drawCardFrontContent(Graphics2D g, ShopShowcaseItem item, Rectangle card, int w, int h,
                                     String priceOverride, boolean smoothIconGrowth,
                                     BufferedImage cardArtOverride, String nameOverride) {
         int x = card.x;
         int y = card.y;
         boolean categoryGrid = priceOverride == null;
 
-        if (!shouldDrawUiTextInScene()) {
-            return;
-        }
-
         drawCardText(g);
         String name = nameOverride != null ? nameOverride : item.displayName();
-        Color nameColor = item.kind == ItemKind.SET_CATALOG
+        Color nameColor = item.kind == ShopShowcaseItem.Kind.SET_CATALOG
             ? new Color(255, 210, 100) : new Color(245, 230, 190);
 
         int nameMaxW = categoryGrid ? w - 4 : w - 8;
@@ -2289,8 +2097,8 @@ public class ShopScreen {
             nameFontSize = w >= 50 ? 11 : Math.max(9, Math.round(11f * w / 54f));
             g.setFont(fitUiFontToWidth(g, name, nameMaxW, nameFontSize, 8));
         } else {
-            nameFontSize = h > 200 ? 11 : 10;
-            g.setFont(GameFonts.get().uiBold(nameFontSize));
+            nameFontSize = h > 200 ? 10 : 9;
+            g.setFont(fitUiFontToWidth(g, name, nameMaxW, nameFontSize, 7));
         }
         FontMetrics nameFm = g.getFontMetrics();
         List<String> nameLines = wrapCardNameLines(nameFm, name, nameMaxW, 2);
@@ -2303,7 +2111,7 @@ public class ShopScreen {
 
         int lineH = nameFm.getHeight();
         boolean showPrice = !categoryGrid && priceOverride != null
-            && !(item.kind == ItemKind.SET_CATALOG && "···".equals(priceOverride));
+            && !(item.kind == ShopShowcaseItem.Kind.SET_CATALOG && "···".equals(priceOverride));
         int priceBlockH = 0;
         if (showPrice) {
             g.setFont(cardFont(Math.max(7, nameFontSize)));
@@ -2355,23 +2163,27 @@ public class ShopScreen {
         if (categoryGrid) {
             int nameBlockBottom = y + h - 6;
             int baseline = nameBlockBottom;
-            for (int i = nameLines.size() - 1; i >= 0; i--) {
-                String line = nameLines.get(i);
-                int lineX = x + (w - nameFm.stringWidth(line)) / 2;
-                drawCategoryLabel(g, line, lineX, baseline, nameColor);
-                baseline -= lineH;
+            if (shouldDrawUiTextInScene()) {
+                for (int i = nameLines.size() - 1; i >= 0; i--) {
+                    String line = nameLines.get(i);
+                    int lineX = x + (w - nameFm.stringWidth(line)) / 2;
+                    drawCategoryLabel(g, line, lineX, baseline, nameColor);
+                    baseline -= lineH;
+                }
             }
         } else {
             int innerBottom = y + h - PRODUCT_CARD_INSET_BOTTOM;
             int labelTop = innerBottom - textBlockH;
-            int baseline = labelTop + nameFm.getAscent();
-            for (String line : nameLines) {
-                int lineX = x + (w - nameFm.stringWidth(line)) / 2;
-                drawCategoryLabel(g, line, lineX, baseline, nameColor);
-                baseline += lineH;
-            }
-            if (showPrice) {
-                drawProductCardPrice(g, x, w, priceOverride, labelTop + nameBlockH + PRODUCT_CARD_NAME_PRICE_GAP);
+            if (shouldDrawUiTextInScene()) {
+                int baseline = labelTop + nameFm.getAscent();
+                for (String line : nameLines) {
+                    int lineX = x + (w - nameFm.stringWidth(line)) / 2;
+                    drawCategoryLabel(g, line, lineX, baseline, nameColor);
+                    baseline += lineH;
+                }
+                if (showPrice) {
+                    drawProductCardPrice(g, x, w, priceOverride, labelTop + nameBlockH + PRODUCT_CARD_NAME_PRICE_GAP);
+                }
             }
         }
     }
@@ -2389,11 +2201,9 @@ public class ShopScreen {
         }
         int priceRowY = (priceTopY + priceFm.getAscent()) & ~1;
         int priceX = cardX + (cardW - priceW) / 2;
-        if (coin != null && !uiTextOverlayOnly) {
+        if (coin != null) {
             int coinY = (priceRowY - coinH + 1) & ~1;
             g.drawImage(coin, priceX, coinY, null);
-            priceX += coin.getWidth() + 2;
-        } else if (coin != null) {
             priceX += coin.getWidth() + 2;
         }
         drawCategoryLabel(g, priceLabel, priceX, priceRowY, new Color(255, 232, 120));
