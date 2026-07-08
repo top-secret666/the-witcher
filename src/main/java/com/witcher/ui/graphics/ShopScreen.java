@@ -78,6 +78,13 @@ public class ShopScreen {
     private static final int BOTTOM_ROW_COLS = 2;
 
     private static final BufferedImage MENU_CURSOR = loadMenuCursor();
+    /** Текст рисуется поверх CRT-фильтра в нативном ×2 — читаемость. */
+    private static final boolean DEFER_UI_TEXT_TO_OVERLAY = true;
+    private static boolean uiTextOverlayOnly;
+
+    private static boolean shouldDrawUiTextInScene() {
+        return !DEFER_UI_TEXT_TO_OVERLAY || uiTextOverlayOnly;
+    }
 
     private static BufferedImage loadMenuCursor() {
         Sprite s = Sprite.loadOptional("/assets/sprites/menu/menu_cursor.png");
@@ -798,18 +805,22 @@ public class ShopScreen {
 
         if (walletScene) {
             drawWalletRevealScene(g, sw, sh, layout, mouseX, mouseY);
-            DialogBoxRenderer.drawCompactFramedSpeakerText(g, sw, sh, "Герцог", currentDialog,
-                DialogBoxRenderer.DUKE_COLOR, 1f);
-            drawCursor(g, mouseX, mouseY);
+            if (shouldDrawUiTextInScene()) {
+                DialogBoxRenderer.drawCompactFramedSpeakerText(g, sw, sh, "Герцог", currentDialog,
+                    DialogBoxRenderer.DUKE_COLOR, 1f);
+                drawCursor(g, mouseX, mouseY);
+            }
             g.dispose();
             return;
         }
 
         if (purchaseScene) {
             drawPurchaseRevealScene(g, sw, sh, layout);
-            DialogBoxRenderer.drawCompactFramedSpeakerText(g, sw, sh, "Герцог", currentDialog,
-                DialogBoxRenderer.DUKE_COLOR, 1f);
-            drawCursor(g, mouseX, mouseY);
+            if (shouldDrawUiTextInScene()) {
+                DialogBoxRenderer.drawCompactFramedSpeakerText(g, sw, sh, "Герцог", currentDialog,
+                    DialogBoxRenderer.DUKE_COLOR, 1f);
+                drawCursor(g, mouseX, mouseY);
+            }
             g.dispose();
             return;
         }
@@ -843,8 +854,10 @@ public class ShopScreen {
             drawAshParticles(g);
         }
 
-        DialogBoxRenderer.drawCompactFramedSpeakerText(g, sw, sh, "Герцог", currentDialog,
-            DialogBoxRenderer.DUKE_COLOR, 1f);
+        if (shouldDrawUiTextInScene()) {
+            DialogBoxRenderer.drawCompactFramedSpeakerText(g, sw, sh, "Герцог", currentDialog,
+                DialogBoxRenderer.DUKE_COLOR, 1f);
+        }
 
         if (!model.needsWalletReveal()) {
             drawInventoryBag(g, 1f);
@@ -856,9 +869,66 @@ public class ShopScreen {
             drawInventoryOverlay(g, sw, sh);
         }
 
-        drawCursor(g, mouseX, mouseY);
+        if (shouldDrawUiTextInScene()) {
+            drawCursor(g, mouseX, mouseY);
+        }
 
         g.dispose();
+    }
+
+    /** Чёткий UI-текст поверх пост-обработки (координаты виртуального кадра 480×360). */
+    public void renderTextOverlay(Graphics2D g, int mouseX, int mouseY) {
+        if (!DEFER_UI_TEXT_TO_OVERLAY) {
+            return;
+        }
+        uiTextOverlayOnly = true;
+        try {
+            int sw = VIRTUAL_W;
+            int sh = VIRTUAL_H;
+            ShopLayout layout = new ShopLayout(sw, sh, items.size(),
+                assets.hudX, assets.hudW, assets.hudH, assets.panelW,
+                assets.panelHeaderH, assets.topRowCols, assets.bottomRowCols);
+            ShopRevealAnimator reveal = revealAnimator();
+
+            boolean categoryMode = state == ShopState.CATEGORY_OPENING
+                || state == ShopState.CATEGORY || state == ShopState.CATEGORY_CLOSING;
+            boolean walletScene = state == ShopState.WALLET_REVEAL;
+            boolean purchaseScene = state == ShopState.PURCHASE_REVEAL;
+
+            if (walletScene || purchaseScene) {
+                DialogBoxRenderer.drawCompactFramedSpeakerText(g, sw, sh, "Герцог", currentDialog,
+                    DialogBoxRenderer.DUKE_COLOR, 1f);
+                drawCursor(g, mouseX, mouseY);
+                return;
+            }
+
+            if (categoryMode && selectedIndex >= 0) {
+                ShopCategoryAnimator catAnim = categoryAnimator(layout);
+                drawCategoryView(g, layout, reveal, catAnim, mouseX, mouseY);
+                drawCornerWallet(g, 1f);
+            } else {
+                drawHud(g, layout, reveal.hudAlpha, reveal.hudSlideY);
+                drawCards(g, layout, reveal);
+            }
+
+            if (!model.needsWalletReveal()) {
+                int bagX = INVENTORY_BAG_MARGIN;
+                int bagY = sh - INVENTORY_BAG_MARGIN - INVENTORY_BAG_SIZE;
+                drawBagWalletAmount(g, bagX, bagY, INVENTORY_BAG_SIZE, 1f);
+            }
+
+            if (equipmentOpen) {
+                drawEquipmentOverlay(g, sw, sh);
+            } else if (inventoryOpen) {
+                drawInventoryOverlay(g, sw, sh);
+            }
+
+            DialogBoxRenderer.drawCompactFramedSpeakerText(g, sw, sh, "Герцог", currentDialog,
+                DialogBoxRenderer.DUKE_COLOR, 1f);
+            drawCursor(g, mouseX, mouseY);
+        } finally {
+            uiTextOverlayOnly = false;
+        }
     }
 
     private static void drawCursor(Graphics2D g, int mouseX, int mouseY) {
@@ -1153,6 +1223,9 @@ public class ShopScreen {
         if (model.needsWalletReveal()) {
             return;
         }
+        if (!shouldDrawUiTextInScene()) {
+            return;
+        }
         String wallet = walletHudAmountText();
         drawCrispText(g);
         g.setFont(GameFonts.get().uiBold( 11));
@@ -1206,25 +1279,31 @@ public class ShopScreen {
         int padX = 7;
 
         Rectangle block = cornerWalletBounds(g);
-        drawGoldHudChip(g, block, alpha);
+        if (!uiTextOverlayOnly) {
+            drawGoldHudChip(g, block, alpha);
+        }
 
         int blockX = block.x;
         int blockY = block.y;
-        int blockW = block.width;
         int blockH = block.height;
+
+        if (!shouldDrawUiTextInScene()) {
+            g.setComposite(prev);
+            return;
+        }
 
         FontMetrics fm = g.getFontMetrics();
         int textX = blockX + padX;
-        if (assets.crownIconScaled != null) {
+        if (!uiTextOverlayOnly && assets.crownIconScaled != null) {
             int crownY = blockY + (blockH - crownSize) / 2;
             g.drawImage(assets.crownIconScaled, textX, crownY, crownSize, crownSize, null);
             textX += crownSize + crownGap;
+        } else if (assets.crownIconScaled != null) {
+            textX += crownSize + crownGap;
         }
-        g.setColor(new Color(255, 230, 150));
         int walletY = blockY + (blockH + fm.getAscent()) / 2 - 2;
-        g.drawString(wallet, textX, walletY);
-        g.setColor(new Color(200, 180, 120));
-        g.drawString(suffix, textX + fm.stringWidth(wallet), walletY);
+        drawOutlinedText(g, wallet, textX, walletY, new Color(255, 230, 150));
+        drawOutlinedText(g, suffix, textX + fm.stringWidth(wallet), walletY, new Color(200, 180, 120));
 
         g.setComposite(prev);
     }
@@ -1244,7 +1323,7 @@ public class ShopScreen {
         Composite prev = g.getComposite();
         g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
         drawCrispText(g);
-        g.setFont(GameFonts.get().uiPlain(10));
+        g.setFont(GameFonts.get().uiBold(10));
         FontMetrics fm = g.getFontMetrics();
         Rectangle legendBox = ShopStatGlyphs.legendBounds(fm);
         int btnY = categoryBuyButtonY(panelY);
@@ -1608,18 +1687,25 @@ public class ShopScreen {
         g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
         int hudY = layout.hudY + Math.round(slideY);
 
-        if (assets.hudBar != null) {
-            g.drawImage(assets.hudBar, layout.hudX, hudY, null);
-        } else {
-            g.setColor(new Color(10, 8, 4, 220));
-            g.fillRect(layout.hudX, hudY, layout.hudW, layout.hudH);
+        if (!uiTextOverlayOnly) {
+            if (assets.hudBar != null) {
+                g.drawImage(assets.hudBar, layout.hudX, hudY, null);
+            } else {
+                g.setColor(new Color(10, 8, 4, 220));
+                g.fillRect(layout.hudX, hudY, layout.hudW, layout.hudH);
+            }
+
+            if (assets.dukeSealIconScaled != null) {
+                int seal = assets.dukeSealSize;
+                int sealX = layout.hudX + 12;
+                int sealY = hudY + (layout.hudH - seal) / 2;
+                drawCrispIcon(g, assets.dukeSealIconScaled, sealX, sealY, seal);
+            }
         }
 
-        if (assets.dukeSealIconScaled != null) {
-            int seal = assets.dukeSealSize;
-            int sealX = layout.hudX + 12;
-            int sealY = hudY + (layout.hudH - seal) / 2;
-            drawCrispIcon(g, assets.dukeSealIconScaled, sealX, sealY, seal);
+        if (!shouldDrawUiTextInScene()) {
+            g.setComposite(prev);
+            return;
         }
 
         String wallet = walletHudAmountText();
@@ -1635,16 +1721,16 @@ public class ShopScreen {
         }
         int blockX = layout.hudX + (layout.hudW - blockW) / 2;
         int textX = blockX;
-        if (assets.crownIconScaled != null) {
+        if (!uiTextOverlayOnly && assets.crownIconScaled != null) {
             int crownY = hudY + (layout.hudH - crownSize) / 2;
             g.drawImage(assets.crownIconScaled, blockX, crownY, null);
             textX = blockX + crownSize + crownGap;
+        } else if (assets.crownIconScaled != null) {
+            textX = blockX + crownSize + crownGap;
         }
-        g.setColor(new Color(255, 230, 150));
         int walletY = hudY + (layout.hudH + fm.getAscent()) / 2 - 2;
-        g.drawString(wallet, textX, walletY);
-        g.setColor(new Color(200, 180, 120));
-        g.drawString(suffix, textX + fm.stringWidth(wallet), walletY);
+        drawOutlinedText(g, wallet, textX, walletY, new Color(255, 230, 150));
+        drawOutlinedText(g, suffix, textX + fm.stringWidth(wallet), walletY, new Color(200, 180, 120));
         g.setComposite(prev);
     }
 
@@ -1780,7 +1866,7 @@ public class ShopScreen {
         int panelCx = layout.panelX + layout.panelW / 2;
         int panelCy = layout.panelY + layout.panelH / 2 + Math.round(reveal.panelSlideY);
 
-        if (assets.catalogPanelScaled != null) {
+        if (assets.catalogPanelScaled != null && !uiTextOverlayOnly) {
             g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, reveal.panelAlpha));
             drawScaledCentered(g, assets.catalogPanelScaled,
                 layout.panelX, layout.panelY + Math.round(reveal.panelSlideY),
@@ -1814,7 +1900,7 @@ public class ShopScreen {
         Composite layer = g.getComposite();
         ShopItem item = items.get(selectedIndex);
 
-        if (assets.counterForeground != null && cat.counterAlpha > 0.02f) {
+        if (!uiTextOverlayOnly && assets.counterForeground != null && cat.counterAlpha > 0.02f) {
             g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, cat.counterAlpha));
             int cy = layout.categoryCounterY();
             int ch = layout.categoryCounterH(layout.dialogTop);
@@ -1840,13 +1926,17 @@ public class ShopScreen {
         item.bounds.setBounds(cat.cardX, cat.cardY, cat.cardW, cat.cardH);
         drawFlippingCategoryCard(g, item, cat.cardX, cat.cardY, cat.cardW, cat.cardH, true);
 
-        if (cat.detailPanelAlpha > 0.02f) {
+        if (cat.detailPanelAlpha > 0.02f || uiTextOverlayOnly) {
             Rectangle panel = layout.detailListPanelSlot(assets.detailPanelW, assets.detailPanelH);
             int px = panel.x + Math.round(cat.detailPanelSlideX);
             int py = panel.y;
-            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, cat.detailPanelAlpha));
-            if (assets.catalogDetailPanel != null) {
-                g.drawImage(assets.catalogDetailPanel, px, py, null);
+            if (!uiTextOverlayOnly) {
+                g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, cat.detailPanelAlpha));
+                if (assets.catalogDetailPanel != null) {
+                    g.drawImage(assets.catalogDetailPanel, px, py, null);
+                }
+            } else {
+                g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, cat.detailPanelAlpha));
             }
             drawCatalogRows(g, px, py, cat.listInteractive);
             drawCategoryBackButton(g, px, cat.detailPanelAlpha, cat.listInteractive);
@@ -1956,11 +2046,15 @@ public class ShopScreen {
         if (btnImg == null) {
             btnImg = assets.btnBuyDisabled;
         }
-        if (btnImg != null) {
+        if (btnImg != null && !uiTextOverlayOnly) {
             g.drawImage(btnImg, btnX, btnY, null);
         }
+        if (!shouldDrawUiTextInScene()) {
+            g.setComposite(prev);
+            return;
+        }
         drawCrispText(g);
-        g.setFont(cardFont(10));
+        g.setFont(cardFont(11));
         String label = "Купить";
         FontMetrics fm = g.getFontMetrics();
         int tx = btnX + (btnW - fm.stringWidth(label)) / 2;
@@ -1998,7 +2092,7 @@ public class ShopScreen {
         g.clipRect(clipX, listTop, clipW, clipH);
 
         drawCardText(g);
-        g.setFont(GameFonts.get().uiPlain(9));
+        g.setFont(GameFonts.get().uiBold(11));
 
         for (int i = 0; i < catalogEntries.size(); i++) {
             ShopCatalogEntry row = catalogEntries.get(i);
@@ -2017,13 +2111,17 @@ public class ShopScreen {
             } else if (hovered && assets.rowHover != null) {
                 bg = assets.rowHover;
             }
-            if (bg != null) {
+            if (bg != null && !uiTextOverlayOnly) {
                 g.drawImage(bg, x, y, rowW, assets.rowH, null);
             }
 
             row.bounds.setBounds(interactive ? x : 0, interactive ? y : 0, rowW, assets.rowH);
 
-            g.setFont(GameFonts.get().uiPlain(9));
+            if (!shouldDrawUiTextInScene()) {
+                continue;
+            }
+
+            g.setFont(GameFonts.get().uiBold(11));
             FontMetrics fm = g.getFontMetrics();
             String price = row.priceLabel();
             int priceW = fm.stringWidth(price);
@@ -2033,7 +2131,7 @@ public class ShopScreen {
             int priceX = x + rowW - priceW - 6;
 
             int[] deltas = catalogStatDeltas(row);
-            g.setFont(GameFonts.get().uiPlain(8));
+            g.setFont(GameFonts.get().uiBold(9));
             FontMetrics statsFm = g.getFontMetrics();
             int statsW = ShopStatGlyphs.rowWidth(statsFm, deltas[0], deltas[1], deltas[2]);
             if (statsW > 0) {
@@ -2041,7 +2139,7 @@ public class ShopScreen {
             }
             int statsRight = priceX - 2;
 
-            g.setFont(GameFonts.get().uiPlain(9));
+            g.setFont(GameFonts.get().uiBold(11));
             fm = g.getFontMetrics();
             int nameMaxW = Math.max(20, statsRight - statsW - (x + 8));
             String label = truncateToWidth(row.name, fm, nameMaxW);
@@ -2049,12 +2147,12 @@ public class ShopScreen {
             drawOutlinedText(g, label, x + 8, textY, new Color(235, 215, 155));
 
             if (statsW > 0) {
-                g.setFont(GameFonts.get().uiPlain(8));
+                g.setFont(GameFonts.get().uiBold(9));
                 statsFm = g.getFontMetrics();
                 ShopStatGlyphs.drawRow(g, statsRight, textY, statsFm, deltas[0], deltas[1], deltas[2]);
             }
 
-            if (assets.crownIconSmall != null && !price.equals("···")) {
+            if (assets.crownIconSmall != null && !price.equals("···") && !uiTextOverlayOnly) {
                 g.drawImage(assets.crownIconSmall, priceX, y + 6, null);
                 priceX += assets.crownIconSmall.getWidth() + 2;
             }
@@ -2138,20 +2236,26 @@ public class ShopScreen {
         }
 
         Rectangle cardRect;
-        if (frame != null) {
-            Object prevInterp = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
-            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
-                RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
-            g.drawImage(frame, x, y, w, h, null);
-            if (prevInterp != null) {
-                g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, prevInterp);
+        if (!uiTextOverlayOnly) {
+            if (frame != null) {
+                Object prevInterp = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
+                g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+                    RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+                g.drawImage(frame, x, y, w, h, null);
+                if (prevInterp != null) {
+                    g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, prevInterp);
+                }
+                cardRect = new Rectangle(x, y, w, h);
+            } else {
+                drawFallbackCard(g, x, y, w, h, false);
+                cardRect = new Rectangle(x, y, w, h);
             }
-            cardRect = new Rectangle(x, y, w, h);
         } else {
-            drawFallbackCard(g, x, y, w, h, false);
             cardRect = new Rectangle(x, y, w, h);
         }
-        drawCardFrontContent(g, item, cardRect, w, h, priceOverride, smoothIconGrowth, cardArtOverride, nameOverride);
+        if (shouldDrawUiTextInScene()) {
+            drawCardFrontContent(g, item, cardRect, w, h, priceOverride, smoothIconGrowth, cardArtOverride, nameOverride);
+        }
 
         g.setComposite(savedComposite);
     }
@@ -2170,6 +2274,10 @@ public class ShopScreen {
         int y = card.y;
         boolean categoryGrid = priceOverride == null;
 
+        if (!shouldDrawUiTextInScene()) {
+            return;
+        }
+
         drawCardText(g);
         String name = nameOverride != null ? nameOverride : item.displayName();
         Color nameColor = item.kind == ItemKind.SET_CATALOG
@@ -2181,14 +2289,14 @@ public class ShopScreen {
             nameFontSize = w >= 50 ? 11 : Math.max(9, Math.round(11f * w / 54f));
             g.setFont(fitUiFontToWidth(g, name, nameMaxW, nameFontSize, 8));
         } else {
-            nameFontSize = h > 200 ? 10 : 9;
-            g.setFont(GameFonts.get().uiPlain(nameFontSize));
+            nameFontSize = h > 200 ? 11 : 10;
+            g.setFont(GameFonts.get().uiBold(nameFontSize));
         }
         FontMetrics nameFm = g.getFontMetrics();
         List<String> nameLines = wrapCardNameLines(nameFm, name, nameMaxW, 2);
         if (categoryGrid && nameLines.size() == 1
             && nameFm.stringWidth(nameLines.get(0)) > nameMaxW) {
-            g.setFont(GameFonts.get().uiPlain(8));
+            g.setFont(GameFonts.get().uiBold(9));
             nameFm = g.getFontMetrics();
             nameLines = wrapCardNameLines(nameFm, name, nameMaxW, 2);
         }
@@ -2213,7 +2321,7 @@ public class ShopScreen {
         BufferedImage art = cardArtOverride != null
             ? cardArtOverride
             : item.cardArt != null ? item.cardArt : item.icon;
-        if (art != null) {
+        if (art != null && !uiTextOverlayOnly) {
             int slotX;
             int slotW;
             int slotTop;
@@ -2271,7 +2379,7 @@ public class ShopScreen {
     private void drawProductCardPrice(Graphics2D g, int cardX, int cardW, String priceLabel,
                                       int priceTopY) {
         drawCardText(g);
-        g.setFont(GameFonts.get().uiPlain(9));
+        g.setFont(GameFonts.get().uiBold(10));
         FontMetrics priceFm = g.getFontMetrics();
         BufferedImage coin = assets.crownIconSmall != null ? assets.crownIconSmall : assets.crownIconScaled;
         int priceW = priceFm.stringWidth(priceLabel);
@@ -2281,9 +2389,11 @@ public class ShopScreen {
         }
         int priceRowY = (priceTopY + priceFm.getAscent()) & ~1;
         int priceX = cardX + (cardW - priceW) / 2;
-        if (coin != null) {
+        if (coin != null && !uiTextOverlayOnly) {
             int coinY = (priceRowY - coinH + 1) & ~1;
             g.drawImage(coin, priceX, coinY, null);
+            priceX += coin.getWidth() + 2;
+        } else if (coin != null) {
             priceX += coin.getWidth() + 2;
         }
         drawCategoryLabel(g, priceLabel, priceX, priceRowY, new Color(255, 232, 120));
@@ -2346,7 +2456,11 @@ public class ShopScreen {
     }
 
     private static void drawCardText(Graphics2D g) {
-        GameFonts.applyGothicHints(g);
+        if (uiTextOverlayOnly) {
+            GameFonts.applyUiOverlayHints(g);
+        } else {
+            GameFonts.applyGothicHints(g);
+        }
     }
 
     private static void drawCrispText(Graphics2D g) {
@@ -2362,13 +2476,13 @@ public class ShopScreen {
 
     private static Font fitUiFontToWidth(Graphics2D g, String text, int maxWidth, int startSize, int minSize) {
         for (int size = startSize; size >= minSize; size--) {
-            Font font = GameFonts.get().uiPlain(size);
+            Font font = GameFonts.get().uiBold(size);
             g.setFont(font);
             if (g.getFontMetrics().stringWidth(text) <= maxWidth) {
                 return font;
             }
         }
-        Font font = GameFonts.get().uiPlain(minSize);
+        Font font = GameFonts.get().uiBold(minSize);
         g.setFont(font);
         return font;
     }

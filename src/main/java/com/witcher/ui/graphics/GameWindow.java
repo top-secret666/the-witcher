@@ -595,7 +595,7 @@ public class GameWindow {
             } else if (shopActive) {
                 shopScreen.update(mouseVX, mouseVY, mouseClickPending, shopExitRequested, shopWheelPending);
                 shopScreen.render(renderer.screen, mouseVX, mouseVY);
-                renderer.present();
+                renderer.present(g -> shopScreen.renderTextOverlay(g, mouseVX, mouseVY));
 
                 mouseClickPending = false;
                 shopWheelPending = 0;

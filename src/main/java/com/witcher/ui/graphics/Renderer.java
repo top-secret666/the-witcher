@@ -9,6 +9,12 @@ import java.awt.image.BufferedImage;
  */
 public class Renderer extends JPanel {
 
+    @FunctionalInterface
+    public interface TextOverlay {
+        /** Рисует UI-текст в координатах виртуального кадра (уже с scale на displayFrame). */
+        void paint(Graphics2D g);
+    }
+
     private final int virtualW;
     private final int virtualH;
     private final int pixelScale;
@@ -79,6 +85,10 @@ public class Renderer extends JPanel {
     }
 
     public void present() {
+        present(null);
+    }
+
+    public void present(TextOverlay overlay) {
         retro.apply(screen);
         if (pixelScale <= 1) {
             Graphics2D g = displayFrame.createGraphics();
@@ -92,6 +102,16 @@ public class Renderer extends JPanel {
             }
         } else {
             PixelDraw.blitIntegerScale(screen, displayFrame, pixelScale);
+        }
+        if (overlay != null) {
+            Graphics2D g = displayFrame.createGraphics();
+            try {
+                GameFonts.applyUiOverlayHints(g);
+                g.scale(pixelScale, pixelScale);
+                overlay.paint(g);
+            } finally {
+                g.dispose();
+            }
         }
         repaint();
     }

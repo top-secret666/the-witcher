@@ -24,13 +24,12 @@ public final class RetroPostProcessor {
             return;
         }
 
-        // Чёткие очертания: только на реальных границах пикселей, без «резкости» всего кадра.
-        pixelClarity(frame, w, h, 0.20f);
-        brighten(frame, w, h, 1.04f, 10);
-        drawScanlines(frame, w, h, 0.11f, 2);
-        drawVignette(frame, w, h, 0.22f);
-        warmTint(frame, w, h, 0.03f);
-        drawGrain(frame, w, h, 0.045f);
+        // Мягкий CRT — без «дробления» текста сканлайнами.
+        brighten(frame, w, h, 1.03f, 8);
+        drawScanlines(frame, w, h, 0.03f, 3);
+        drawVignette(frame, w, h, 0.12f);
+        warmTint(frame, w, h, 0.02f);
+        drawGrain(frame, w, h, 0.01f);
     }
 
     private static void warmTint(BufferedImage frame, int w, int h, float amount) {
