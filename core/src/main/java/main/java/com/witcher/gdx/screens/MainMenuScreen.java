@@ -1,204 +1,232 @@
-package main.java.com.witcher.gdx.screens;
-
-import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Input;
-import com.badlogic.gdx.Screen;
-import com.badlogic.gdx.graphics.Color;
-import com.badlogic.gdx.graphics.OrthographicCamera;
-import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
-import com.badlogic.gdx.math.Rectangle;
-import com.badlogic.gdx.math.Vector2;
-import main.java.com.witcher.gdx.WitcherGame;
-import main.java.com.witcher.gdx.graphics.GameFonts;
-import main.java.com.witcher.gdx.graphics.GameFrameLayout;
-import main.java.com.witcher.gdx.graphics.GdxShopPointer;
-import main.java.com.witcher.gdx.graphics.SwingCoords;
-import main.java.com.witcher.gdx.graphics.GdxWindowAlign;
-import main.java.com.witcher.gdx.graphics.PixelTextures;
-
-/**
- * LibGDX-меню — графика; логика в {@link MainMenuController}.
- */
-public class MainMenuScreen implements Screen {
-
-    private static final float VW = WitcherGame.VIRTUAL_W;
-    private static final float VH = WitcherGame.VIRTUAL_H;
-    private static final Color BACKDROP = new Color(12f / 255f, 8f / 255f, 5f / 255f, 1f);
-
-    private final WitcherGame game;
-    private final MainMenuController controller = new MainMenuController();
-    private static final SwingCoords C = SwingCoords.forVirtualFrame();
-    private final GdxShopPointer pointer = new GdxShopPointer();
-    private final Vector2 virtualMouse = new Vector2();
-
-    private OrthographicCamera frameCamera;
-    private OrthographicCamera gameCamera;
-    private ShapeRenderer shapes;
-    private GameFonts fonts;
-    private GameFrameLayout layout;
-
-    private Texture background;
-    private Texture logoSign;
-    private Texture titleLogo;
-
-    public MainMenuScreen(WitcherGame game) {
-        this.game = game;
-    }
-
-    @Override
-    public void show() {
-        frameCamera = new OrthographicCamera();
-        gameCamera = new OrthographicCamera();
-        shapes = new ShapeRenderer();
-        fonts = new GameFonts();
-        fonts.load();
-
-        background = PixelTextures.loadOptional("sprites/menu/menu_bg_custom.jpg");
-        logoSign = PixelTextures.loadOptional("sprites/menu/menu_logo_sign.png");
-        titleLogo = PixelTextures.loadFirst("sprites/witcher_logo_new.png");
-
-        controller.layoutButtons(VW, VH);
-        GdxWindowAlign.ensureFramebuffer(WitcherGame.FRAME_W, WitcherGame.FRAME_H);
-    }
-
-    @Override
-    public void render(float delta) {
-        GdxWindowAlign.refreshFramebufferCache();
-        int bbw = GdxWindowAlign.backBufferW();
-        int bbh = GdxWindowAlign.backBufferH();
-        game.bindChromeFramebuffer(bbw, bbh);
-        layout = GameFrameLayout.fromFramebuffer(bbw, bbh);
-
-        layout.clearBackdrop(BACKDROP.r, BACKDROP.g, BACKDROP.b);
-
-        layout.bindFullFrame(frameCamera);
-        game.batch.setProjectionMatrix(frameCamera.combined);
-        shapes.setProjectionMatrix(frameCamera.combined);
-        game.frameChrome.drawBackground(shapes);
-
-        layout.bindGame(gameCamera);
-        game.batch.setProjectionMatrix(gameCamera.combined);
-        shapes.setProjectionMatrix(gameCamera.combined);
-        PixelTextures.resetBlend();
-
-        pointer.toVirtual(layout, Gdx.input.getX(), Gdx.input.getY(), virtualMouse);
-        int mouseX = Math.round(virtualMouse.x);
-        int mouseY = Math.round(VH - virtualMouse.y);
-        controller.update(mouseX, mouseY, Gdx.input.isButtonJustPressed(Input.Buttons.LEFT));
-
-        game.batch.begin();
-        drawBackground();
-        drawTitle();
-        game.batch.end();
-
-        drawButtonPlanks();
-        game.batch.begin();
-        drawButtonLabels();
-        game.batch.end();
-
-        layout.bindFullFrame(frameCamera);
-        game.batch.setProjectionMatrix(frameCamera.combined);
-        shapes.setProjectionMatrix(frameCamera.combined);
-        game.frameChrome.drawForeground(shapes, game.batch);
-
-        MainMenuController.Action action = controller.consumeAction();
-        if (action == MainMenuController.Action.START) {
-            game.setScreen(new IntroScreen(game));
-        } else if (action == MainMenuController.Action.EXIT) {
-            Gdx.app.exit();
-        }
-    }
-
-    private void drawBackground() {
-        if (background != null) {
-            PixelTextures.drawCover(game.batch, background, VW, VH, 1f);
-        }
-    }
-
-    private void drawTitle() {
-        float logoY = VH * 0.035f;
-        if (logoSign != null) {
-            float signW = VW * 0.45f;
-            float signH = signW * logoSign.getHeight() / logoSign.getWidth();
-            float signX = (VW - signW) * 0.5f;
-            float drawY = VH - logoY - signH;
-            game.batch.draw(logoSign, signX, drawY, signW, signH);
-            if (titleLogo != null) {
-                float logoW = signW * 0.7f;
-                float logoH = logoW * titleLogo.getHeight() / titleLogo.getWidth();
-                float logoX = (VW - logoW) * 0.5f;
-                float innerY = drawY + (signH - logoH) * 0.5f - signH * 0.05f;
-                game.batch.draw(titleLogo, logoX, innerY, logoW, logoH);
-            }
-        } else if (titleLogo != null) {
-            float logoW = VW * 0.31f;
-            float logoH = logoW * titleLogo.getHeight() / titleLogo.getWidth();
-            game.batch.draw(titleLogo, (VW - logoW) * 0.5f, VH - logoY - logoH, logoW, logoH);
-        }
-    }
-
-    private void drawButtonPlanks() {
-        shapes.begin(ShapeRenderer.ShapeType.Filled);
-        for (int i = 0; i < controller.buttonCount(); i++) {
-            Rectangle r = controller.buttonRect(i);
-            int state = controller.buttonState(i);
-            if (state == 2) {
-                shapes.setColor(0.45f, 0.32f, 0.12f, 0.95f);
-            } else if (state == 1) {
-                shapes.setColor(0.55f, 0.40f, 0.16f, 0.92f);
-            } else {
-                shapes.setColor(0.38f, 0.26f, 0.10f, 0.88f);
-            }
-            shapes.rect(r.x, C.rectY(r.y, r.height), r.width, r.height);
-        }
-        shapes.end();
-    }
-
-    private void drawButtonLabels() {
-        BitmapFont font = fonts.title;
-        for (int i = 0; i < controller.buttonCount(); i++) {
-            Rectangle r = controller.buttonRect(i);
-            font.setColor(0.96f, 0.86f, 0.47f, 1f);
-            float textY = C.textBaseline(r.y + r.height * 0.62f);
-            font.draw(game.batch, controller.buttonLabel(i), r.x + r.width * 0.34f, textY);
-        }
-    }
-
-    @Override
-    public void resize(int width, int height) {
-        GdxWindowAlign.refreshFramebufferCache();
-    }
-
-    @Override
-    public void pause() {
-    }
-
-    @Override
-    public void resume() {
-    }
-
-    @Override
-    public void hide() {
-    }
-
-    @Override
-    public void dispose() {
-        disposeTex(background);
-        disposeTex(logoSign);
-        disposeTex(titleLogo);
-        if (fonts != null) {
-            fonts.dispose();
-        }
-        if (shapes != null) {
-            shapes.dispose();
-        }
-    }
-
-    private static void disposeTex(Texture t) {
-        if (t != null) {
-            t.dispose();
-        }
-    }
-}
+package main.java.com.witcher.gdx.screens;
+
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
+import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.GlyphLayout;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.math.Rectangle;
+import com.badlogic.gdx.math.Vector2;
+import main.java.com.witcher.gdx.WitcherGame;
+import main.java.com.witcher.gdx.graphics.GameFonts;
+import main.java.com.witcher.gdx.graphics.GameFrameLayout;
+import main.java.com.witcher.gdx.graphics.GdxMenuAssets;
+import main.java.com.witcher.gdx.graphics.GdxWindowAlign;
+import main.java.com.witcher.gdx.graphics.PixelTextures;
+import main.java.com.witcher.gdx.graphics.SwingCoords;
+import main.java.com.witcher.gdx.graphics.SwingViewport;
+import main.java.com.witcher.gdx.layout.MenuLayout;
+
+/**
+ * LibGDX-меню — порт Swing {@code MainMenuScreen}.
+ * Виртуальный кадр 480×360 растягивается на весь framebuffer (любой монитор).
+ */
+public class MainMenuScreen implements Screen {
+
+    private static final float VW = WitcherGame.VIRTUAL_W;
+    private static final float VH = WitcherGame.VIRTUAL_H;
+
+    private final WitcherGame game;
+    private final MainMenuController controller = new MainMenuController();
+    private final SwingViewport viewport = new SwingViewport();
+    private final SwingCoords C = viewport.coords();
+    private final Vector2 swingMouse = new Vector2();
+    private final GlyphLayout glyph = new GlyphLayout();
+
+    private OrthographicCamera camera;
+    private ShapeRenderer shapes;
+    private GameFonts fonts;
+    private GameFrameLayout layout;
+    private GdxMenuAssets assets;
+
+    public MainMenuScreen(WitcherGame game) {
+        this.game = game;
+    }
+
+    @Override
+    public void show() {
+        camera = new OrthographicCamera();
+        shapes = new ShapeRenderer();
+        fonts = new GameFonts();
+        fonts.load();
+        assets = GdxMenuAssets.load();
+        relayoutButtons();
+    }
+
+    private void relayoutButtons() {
+        float buttonAspect = 1.9f;
+        float logoSignAspect = 0f;
+        float titleLogoAspect = 0f;
+        TextureRegion ref = assets != null ? assets.buttonFrame(0, 0) : null;
+        if (ref != null && ref.getRegionHeight() > 0) {
+            buttonAspect = (float) ref.getRegionWidth() / ref.getRegionHeight();
+        }
+        if (assets != null && assets.logoSignTex != null && assets.logoSignTex.getWidth() > 0) {
+            logoSignAspect = (float) assets.logoSignTex.getHeight() / assets.logoSignTex.getWidth();
+        }
+        if (assets != null && assets.titleLogoFrame != null && assets.titleLogoFrame.getRegionWidth() > 0) {
+            titleLogoAspect = (float) assets.titleLogoFrame.getRegionHeight()
+                / assets.titleLogoFrame.getRegionWidth();
+        }
+        controller.layoutButtons(VW, VH, buttonAspect, logoSignAspect, titleLogoAspect,
+            assets != null && assets.logoSignTex != null,
+            assets != null && assets.titleLogoFrame != null);
+    }
+
+    @Override
+    public void render(float delta) {
+        GdxWindowAlign.refreshFramebufferCache();
+        int bbw = GdxWindowAlign.backBufferW();
+        int bbh = GdxWindowAlign.backBufferH();
+        game.bindChromeFramebuffer(bbw, bbh);
+        layout = GameFrameLayout.fromFramebuffer(bbw, bbh);
+
+        Gdx.gl.glClearColor(0f, 0f, 0f, 1f);
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+
+        viewport.bindStretch(camera, bbw, bbh);
+        game.batch.setProjectionMatrix(camera.combined);
+        shapes.setProjectionMatrix(camera.combined);
+        PixelTextures.resetBlend();
+
+        viewport.screenToSwing(bbw, bbh, Gdx.input.getX(), Gdx.input.getY(), swingMouse);
+        int mouseX = Math.round(swingMouse.x);
+        int mouseY = Math.round(swingMouse.y);
+        controller.update(mouseX, mouseY, Gdx.input.isButtonJustPressed(Input.Buttons.LEFT));
+
+        game.batch.begin();
+        drawBackground();
+        drawTitle();
+        drawButtons();
+        drawHelpHint();
+        drawCursor(mouseX, mouseY);
+        game.batch.end();
+
+        layout.bindFullFrame(camera);
+        game.batch.setProjectionMatrix(camera.combined);
+        shapes.setProjectionMatrix(camera.combined);
+        game.frameChrome.drawForeground(shapes, game.batch);
+
+        MainMenuController.Action action = controller.consumeAction();
+        if (action == MainMenuController.Action.START) {
+            game.setScreen(new IntroScreen(game));
+        } else if (action == MainMenuController.Action.EXIT) {
+            Gdx.app.exit();
+        }
+    }
+
+    private void drawBackground() {
+        if (assets != null && assets.backgroundTex != null) {
+            PixelTextures.drawCover(game.batch, assets.backgroundTex, VW, VH, 1f);
+        }
+    }
+
+    private void drawTitle() {
+        if (assets == null) {
+            return;
+        }
+        float logoY = MenuLayout.logoY(VH);
+        if (assets.logoSignTex != null) {
+            float signW = MenuLayout.signW(VW);
+            float signH = signW * assets.logoSignTex.getHeight() / assets.logoSignTex.getWidth();
+            float signX = (VW - signW) * 0.5f;
+            game.batch.draw(assets.logoSignTex, signX, C.rectY(logoY, signH), signW, signH);
+            if (assets.titleLogoFrame != null) {
+                float logoW = signW * MenuLayout.INNER_LOGO_W_OF_SIGN;
+                float logoH = logoW * assets.titleLogoFrame.getRegionHeight()
+                    / assets.titleLogoFrame.getRegionWidth();
+                float logoX = (VW - logoW) * 0.5f;
+                float innerTop = logoY + (signH - logoH) * 0.5f + signH * MenuLayout.INNER_LOGO_OFFSET_Y_OF_SIGN;
+                game.batch.draw(assets.titleLogoFrame, logoX, C.rectY(innerTop, logoH), logoW, logoH);
+            }
+        } else if (assets.titleLogoFrame != null) {
+            float logoW = VW * MenuLayout.TITLE_LOGO_W_RATIO;
+            float logoH = logoW * assets.titleLogoFrame.getRegionHeight()
+                / assets.titleLogoFrame.getRegionWidth();
+            game.batch.draw(assets.titleLogoFrame, (VW - logoW) * 0.5f, C.rectY(logoY, logoH), logoW, logoH);
+        }
+    }
+
+    private void drawButtons() {
+        if (assets == null) {
+            return;
+        }
+        BitmapFont font = fonts.title;
+        for (int i = 0; i < controller.buttonCount(); i++) {
+            Rectangle r = controller.buttonRect(i);
+            int state = controller.buttonState(i);
+            TextureRegion frame = assets.buttonFrame(i, state);
+            if (frame != null) {
+                game.batch.draw(frame, r.x, C.rectY(r.y, r.height), r.width, r.height);
+            }
+            String label = controller.buttonLabel(i);
+            if (label.isEmpty()) {
+                continue;
+            }
+            float anchorX = i < MenuLayout.TEXT_ANCHOR_X.length ? MenuLayout.TEXT_ANCHOR_X[i] : 0.47f;
+            glyph.setText(font, label);
+            float tx = r.x + r.width * anchorX - glyph.width * 0.5f;
+            float ty = C.textBaseline(r.y + r.height * MenuLayout.TEXT_ANCHOR_Y);
+            font.setColor(0f, 0f, 0f, 0.7f);
+            font.draw(game.batch, label, tx + 1f, ty - 1f);
+            font.setColor(state == 2 ? 0.78f : 0.96f, state == 2 ? 0.67f : 0.86f, state == 2 ? 0.35f : 0.47f, 1f);
+            font.draw(game.batch, label, tx, ty);
+        }
+    }
+
+    private void drawHelpHint() {
+        BitmapFont small = fonts.uiSmall;
+        String help = "W/S или стрелки — Enter";
+        small.setColor(0.9f, 0.76f, 0.47f, 1f);
+        glyph.setText(small, help);
+        small.draw(game.batch, help, (VW - glyph.width) * 0.5f, C.textBaseline(VH - MenuLayout.HELP_Y_FROM_BOTTOM));
+    }
+
+    private void drawCursor(int mouseX, int mouseY) {
+        if (assets == null || assets.cursorTex == null) {
+            return;
+        }
+        float cw = MenuLayout.CURSOR_W;
+        float ch = cw * assets.cursorTex.getHeight() / assets.cursorTex.getWidth();
+        float topY = mouseY - MenuLayout.CURSOR_HOTSPOT_Y;
+        game.batch.draw(assets.cursorTex, mouseX - MenuLayout.CURSOR_HOTSPOT_X,
+            C.rectY(topY, ch), cw, ch);
+    }
+
+    @Override
+    public void resize(int width, int height) {
+        GdxWindowAlign.refreshFramebufferCache();
+        relayoutButtons();
+    }
+
+    @Override
+    public void pause() {
+    }
+
+    @Override
+    public void resume() {
+    }
+
+    @Override
+    public void hide() {
+    }
+
+    @Override
+    public void dispose() {
+        if (assets != null) {
+            assets.dispose();
+            assets = null;
+        }
+        if (fonts != null) {
+            fonts.dispose();
+        }
+        if (shapes != null) {
+            shapes.dispose();
+        }
+    }
+}
+

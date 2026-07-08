@@ -1,0 +1,48 @@
+{
+  "design": [
+    480,
+    360
+  ],
+  "target": [
+    1920,
+    1200
+  ],
+  "scaleUniform": 3.3333333333333335,
+  "scaleStretchX": 4.0,
+  "scaleStretchY": 3.3333333333333335,
+  "logoY": 42.00000000000001,
+  "signW": 864.0,
+  "helpBaselineSwingY": 1192,
+  "transforms": {
+    "rectGdxY": "viewH - swingTopY - height",
+    "textGdxY": "viewH - swingTopY",
+    "pointerSwingY": "(1 - screenY/fbH) * viewH → gdxToSwingY"
+  },
+  "source": "src\\main\\java\\com\\witcher\\ui\\graphics\\MainMenuScreen.java",
+  "ratios": {
+    "logoY": 0.035,
+    "signW": 0.45,
+    "titleLogoW": 0.31,
+    "innerLogoWOfSign": 0.7,
+    "innerLogoOffsetYOfSign": 0.05,
+    "logoMarginBottom": 16,
+    "contentMarginBottom": 16,
+    "buttonGapOfAvailable": 0.04,
+    "buttonW": 0.62,
+    "helpYFromBottom": 8,
+    "cursorW": 28,
+    "cursorHotspotX": 4,
+    "cursorHotspotY": 4,
+    "textAnchorX": [
+      0.43,
+      0.47,
+      0.47
+    ],
+    "textAnchorY": 0.54
+  },
+  "referenceFrame": {
+    "pixelScale": 3,
+    "frameW": 1460,
+    "frameH": 1130
+  }
+}

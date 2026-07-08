@@ -24,6 +24,14 @@ public final class GdxShopPointer {
         outSwing.y = COORDS.gdxToSwingY(tmp.y);
     }
 
+    /** Swing-Y на весь framebuffer (меню без inset game viewport). */
+    public void toSwingFullscreen(int fbW, int fbH, int screenX, int screenY, Vector2 outSwing) {
+        float nx = screenX / (float) Math.max(1, fbW);
+        float ny = 1f - screenY / (float) Math.max(1, fbH);
+        outSwing.x = nx * WitcherGame.VIRTUAL_W;
+        outSwing.y = COORDS.gdxToSwingY(ny * WitcherGame.VIRTUAL_H);
+    }
+
     public Vector2 toVirtual(GameFrameLayout layout, int screenX, int screenY) {
         toVirtual(layout, screenX, screenY, tmp);
         return tmp;

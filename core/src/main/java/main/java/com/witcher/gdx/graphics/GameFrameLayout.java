@@ -43,6 +43,13 @@ public final class GameFrameLayout {
         camera.update();
     }
 
+    public void bindFullscreenVirtual(OrthographicCamera camera) {
+        Gdx.gl.glViewport(0, 0, fbW, fbH);
+        camera.setToOrtho(false, WitcherGame.VIRTUAL_W, WitcherGame.VIRTUAL_H);
+        camera.position.set(WitcherGame.VIRTUAL_W * 0.5f, WitcherGame.VIRTUAL_H * 0.5f, 0f);
+        camera.update();
+    }
+
     public void bindGame(OrthographicCamera camera) {
         Gdx.gl.glViewport(gameX, gameY, gameW, gameH);
         camera.setToOrtho(false, WitcherGame.VIRTUAL_W, WitcherGame.VIRTUAL_H);

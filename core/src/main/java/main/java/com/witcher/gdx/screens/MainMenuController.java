@@ -1,6 +1,7 @@
 package main.java.com.witcher.gdx.screens;
 
 import com.badlogic.gdx.math.Rectangle;
+import main.java.com.witcher.gdx.layout.MenuLayout;
 
 /**
  * Логика главного меню (без отрисовки) — аналог Swing {@code MainMenuScreen.update}.
@@ -25,19 +26,39 @@ public final class MainMenuController {
         }
     }
 
-    public void layoutButtons(float viewW, float viewH) {
-        float logoBottom = viewH * 0.22f;
-        float availableH = viewH - logoBottom - 16f;
-        float gap = availableH * 0.04f;
+    /**
+     * Раскладка как в Swing {@code layoutButtons} — с реальным aspect таблички.
+     */
+    public void layoutButtons(float viewW, float viewH, float buttonAspect,
+                              float logoSignAspect, float titleLogoAspect,
+                              boolean hasLogoSign, boolean hasTitleLogo) {
+        float logoY = MenuLayout.logoY(viewH);
+        float logoReservedBottom = logoY;
+        if (hasLogoSign && logoSignAspect > 0f) {
+            float signW = MenuLayout.signW(viewW);
+            float signH = signW * logoSignAspect;
+            logoReservedBottom = logoY + signH;
+        } else if (hasTitleLogo && titleLogoAspect > 0f) {
+            float logoW = viewW * MenuLayout.TITLE_LOGO_W_RATIO;
+            float logoH = logoW * titleLogoAspect;
+            logoReservedBottom = logoY + logoH;
+        }
+        logoReservedBottom += MenuLayout.LOGO_MARGIN_BOTTOM;
+
+        float availableH = viewH - logoReservedBottom - MenuLayout.CONTENT_MARGIN_BOTTOM;
+        float gap = availableH * MenuLayout.BUTTON_GAP_OF_AVAILABLE;
         float slotH = (availableH - gap * (buttons.length - 1)) / buttons.length;
-        float plankW = viewW * 0.62f;
-        float plankH = plankW / 1.9f;
+
+        float plankW = viewW * MenuLayout.BUTTON_W_RATIO;
+        float plankH = plankW / buttonAspect;
         if (plankH > slotH) {
             plankH = slotH;
-            plankW = plankH * 1.9f;
+            plankW = plankH * buttonAspect;
         }
+
         float startX = (viewW - plankW) * 0.5f;
-        float startY = logoBottom;
+        float startY = logoReservedBottom;
+
         for (int i = 0; i < buttons.length; i++) {
             float slotY = startY + i * (slotH + gap);
             float plankY = slotY + (slotH - plankH) * 0.5f;
@@ -57,7 +78,7 @@ public final class MainMenuController {
                 hovered = i;
                 if (clicked) {
                     pressed = i;
-                    pressedTicks = 8;
+                    pressedTicks = 6;
                     pending = switch (i) {
                         case 0 -> Action.START;
                         case 1 -> Action.SETTINGS;

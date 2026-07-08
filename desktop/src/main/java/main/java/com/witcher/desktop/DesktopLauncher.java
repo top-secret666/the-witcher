@@ -1,11 +1,12 @@
 package main.java.com.witcher.desktop;
 
+import com.badlogic.gdx.Graphics;
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3ApplicationConfiguration;
 import com.badlogic.gdx.graphics.glutils.HdpiMode;
 import main.java.com.witcher.gdx.WitcherGame;
 
 /**
- * Окно = FRAME_W×FRAME_H в пикселях (HdpiMode.Pixels): 1:1 с макетом, без уменьшения под scale ОС.
+ * Borderless fullscreen на мониторе — framebuffer = разрешение дисплея (макс. чёткость).
  */
 public class DesktopLauncher {
 
@@ -22,15 +23,18 @@ public class DesktopLauncher {
             Lwjgl3ApplicationConfiguration config = new Lwjgl3ApplicationConfiguration();
             config.setTitle("The Witcher — LibGDX");
             config.setHdpiMode(HdpiMode.Pixels);
-            config.setWindowedMode(WitcherGame.FRAME_W, WitcherGame.FRAME_H);
             config.setDecorated(false);
-            config.setResizable(false);
+            config.setResizable(true);
             config.setForegroundFPS(60);
             config.useVsync(true);
             config.setWindowIcon("sprites/app_icon.png");
 
-            System.out.println("[DesktopLauncher] framebufferCel="
-                + WitcherGame.FRAME_W + 'x' + WitcherGame.FRAME_H);
+            Graphics.DisplayMode mode = Lwjgl3ApplicationConfiguration.getDisplayMode();
+            config.setFullscreenMode(mode);
+
+            System.out.println("[DesktopLauncher] fullscreen="
+                + mode.width + 'x' + mode.height
+                + " designFrame=" + WitcherGame.FRAME_W + 'x' + WitcherGame.FRAME_H);
 
             new WitcherLwjgl3Application(new WitcherGame(), config);
         } catch (Throwable error) {
