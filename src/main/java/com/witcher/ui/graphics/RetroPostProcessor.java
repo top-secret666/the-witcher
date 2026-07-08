@@ -5,49 +5,17 @@ import java.awt.image.DataBufferInt;
 import java.util.Random;
 
 /**
- * Пост-обработка кадра 480×360 «как фильтр сверху» — без LibGDX.
- * Вызывается из {@link Renderer#present()} после отрисовки сцены.
+ * Фиксированная пост-обработка всей игры: CRT + пиксельная резкость.
+ * Вызывается из {@link Renderer#present()} после каждого кадра 480×360.
  */
 public final class RetroPostProcessor {
 
-    public enum Preset {
-        OFF,
-        /** Мягко: виньетка + лёгкое зерно + чуть теплее. */
-        SNES,
-        /** PS1-вайб: меньше цветов, дизеринг, хроматика, виньетка. */
-        PS1,
-        /** CRT: резкость → сканлайны → виньетка → зерно. */
-        CRT,
-        /** Только пиксельная резкость, без сканлайнов (для сравнения). */
-        CRISP
-    }
-
-    private Preset preset = Preset.OFF;
     private final Random rng = new Random();
     private BufferedImage grainTile;
     private int grainTick;
 
-    public Preset preset() {
-        return preset;
-    }
-
-    public void setPreset(Preset preset) {
-        this.preset = preset != null ? preset : Preset.OFF;
-    }
-
-    public void cyclePreset() {
-        Preset[] all = Preset.values();
-        int next = (preset.ordinal() + 1) % all.length;
-        preset = all[next];
-        System.out.println("Retro filter: " + preset);
-    }
-
-    public boolean isEnabled() {
-        return preset != Preset.OFF;
-    }
-
     public void apply(BufferedImage frame) {
-        if (frame == null || preset == Preset.OFF) {
+        if (frame == null) {
             return;
         }
         int w = frame.getWidth();
@@ -56,41 +24,13 @@ public final class RetroPostProcessor {
             return;
         }
 
-        switch (preset) {
-            case SNES -> applySnes(frame, w, h);
-            case PS1 -> applyPs1(frame, w, h);
-            case CRT -> applyCrt(frame, w, h);
-            case CRISP -> applyCrisp(frame, w, h);
-            default -> { }
-        }
-    }
-
-    private void applySnes(BufferedImage frame, int w, int h) {
-        warmTint(frame, w, h, 0.06f);
-        quantizeRgb(frame, w, h, 6);
-        drawVignette(frame, w, h, 0.22f);
-        drawGrain(frame, w, h, 0.035f);
-    }
-
-    private void applyPs1(BufferedImage frame, int w, int h) {
-        quantizeRgb(frame, w, h, 5);
-        applyBayerDither(frame, w, h, 5);
-        chromaticAberration(frame, w, h, 1);
-        drawVignette(frame, w, h, 0.28f);
-        drawGrain(frame, w, h, 0.05f);
-    }
-
-    private void applyCrt(BufferedImage frame, int w, int h) {
-        pixelSharpen(frame, w, h, 0.42f);
+        // Резкость и контраст — до сканлайнов, чтобы пиксели читались чётче.
+        pixelSharpen(frame, w, h, 0.48f);
+        localContrast(frame, w, h, 1.08f);
         drawScanlines(frame, w, h, 0.18f, 2);
         drawVignette(frame, w, h, 0.35f);
         warmTint(frame, w, h, 0.04f);
         drawGrain(frame, w, h, 0.06f);
-    }
-
-    private void applyCrisp(BufferedImage frame, int w, int h) {
-        pixelSharpen(frame, w, h, 0.55f);
-        localContrast(frame, w, h, 1.06f);
     }
 
     private static void warmTint(BufferedImage frame, int w, int h, float amount) {
@@ -109,93 +49,6 @@ public final class RetroPostProcessor {
             b = clamp((int) (b - 40 * amount));
             buf[i] = (a << 24) | (r << 16) | (g << 8) | b;
         }
-    }
-
-    private static void quantizeRgb(BufferedImage frame, int w, int h, int bits) {
-        int levels = Math.max(2, 1 << bits);
-        int[] buf = ((DataBufferInt) frame.getRaster().getDataBuffer()).getData();
-        for (int i = 0; i < w * h; i++) {
-            int argb = buf[i];
-            int a = (argb >>> 24) & 0xFF;
-            if (a == 0) {
-                continue;
-            }
-            int r = quantizeChannel((argb >>> 16) & 0xFF, levels);
-            int g = quantizeChannel((argb >>> 8) & 0xFF, levels);
-            int b = quantizeChannel(argb & 0xFF, levels);
-            buf[i] = (a << 24) | (r << 16) | (g << 8) | b;
-        }
-    }
-
-    private static int quantizeChannel(int c, int levels) {
-        float t = c / 255f;
-        int q = Math.round(t * (levels - 1));
-        return clamp(q * 255 / (levels - 1));
-    }
-
-    private static final int[] BAYER_4X4 = {
-        0, 8, 2, 10,
-        12, 4, 14, 6,
-        3, 11, 1, 9,
-        15, 7, 13, 5
-    };
-
-    private static void applyBayerDither(BufferedImage frame, int w, int h, int bits) {
-        int levels = Math.max(2, 1 << bits);
-        int[] buf = ((DataBufferInt) frame.getRaster().getDataBuffer()).getData();
-        for (int y = 0; y < h; y++) {
-            int row = y * w;
-            for (int x = 0; x < w; x++) {
-                int i = row + x;
-                int argb = buf[i];
-                int a = (argb >>> 24) & 0xFF;
-                if (a == 0) {
-                    continue;
-                }
-                int threshold = BAYER_4X4[(y & 3) * 4 + (x & 3)] * 255 / 16;
-                int r = ditherChannel((argb >>> 16) & 0xFF, levels, threshold);
-                int g = ditherChannel((argb >>> 8) & 0xFF, levels, threshold);
-                int b = ditherChannel(argb & 0xFF, levels, threshold);
-                buf[i] = (a << 24) | (r << 16) | (g << 8) | b;
-            }
-        }
-    }
-
-    private static int ditherChannel(int c, int levels, int threshold) {
-        float t = (c + threshold - 128) / 255f;
-        t = Math.max(0f, Math.min(1f, t));
-        int q = Math.round(t * (levels - 1));
-        return clamp(q * 255 / (levels - 1));
-    }
-
-    private static void chromaticAberration(BufferedImage frame, int w, int h, int shift) {
-        if (shift <= 0) {
-            return;
-        }
-        int[] buf = ((DataBufferInt) frame.getRaster().getDataBuffer()).getData();
-        int[] copy = buf.clone();
-        for (int y = 0; y < h; y++) {
-            int row = y * w;
-            for (int x = 0; x < w; x++) {
-                int i = row + x;
-                int argb = copy[i];
-                int a = (argb >>> 24) & 0xFF;
-                if (a == 0) {
-                    continue;
-                }
-                int r = sampleChannel(copy, w, h, x - shift, y, 16);
-                int g = (argb >>> 8) & 0xFF;
-                int b = sampleChannel(copy, w, h, x + shift, y, 0);
-                buf[i] = (a << 24) | (r << 16) | (g << 8) | b;
-            }
-        }
-    }
-
-    private static int sampleChannel(int[] buf, int w, int h, int x, int y, int shift) {
-        if (x < 0 || y < 0 || x >= w || y >= h) {
-            return 0;
-        }
-        return (buf[y * w + x] >>> shift) & 0xFF;
     }
 
     private static void drawScanlines(BufferedImage frame, int w, int h, float strength, int step) {
@@ -275,8 +128,7 @@ public final class RetroPostProcessor {
         int strength = clamp((int) (alpha * 255));
         for (int y = 0; y < h; y++) {
             int row = y * w;
-            int gy = y % gh;
-            int grainRow = gy * gw;
+            int grainRow = (y % gh) * gw;
             for (int x = 0; x < w; x++) {
                 int i = row + x;
                 int argb = buf[i];
@@ -285,23 +137,15 @@ public final class RetroPostProcessor {
                     continue;
                 }
                 int gn = grain[grainRow + (x % gw)] & 0xFF;
-                int delta = gn - 128;
-                int mix = delta * strength / 255;
-                int r = clamp(((argb >>> 16) & 0xFF) + mix);
-                int g = clamp(((argb >>> 8) & 0xFF) + mix);
-                int b = clamp((argb & 0xFF) + mix);
+                int delta = (gn - 128) * strength / 255;
+                int r = clamp(((argb >>> 16) & 0xFF) + delta);
+                int g = clamp(((argb >>> 8) & 0xFF) + delta);
+                int b = clamp((argb & 0xFF) + delta);
                 buf[i] = (a << 24) | (r << 16) | (g << 8) | b;
             }
         }
     }
 
-    private static int clamp(int v) {
-        return Math.max(0, Math.min(255, v));
-    }
-
-    /**
-     * Unsharp 1px — подчёркивает границы пикселей без размытия всего кадра.
-     */
     private static void pixelSharpen(BufferedImage frame, int w, int h, float amount) {
         if (amount <= 0f) {
             return;
@@ -335,7 +179,6 @@ public final class RetroPostProcessor {
         return clamp((int) (c + (c - blur) * amount));
     }
 
-    /** Лёгкий контраст по центру — пиксели «собраннее», без мыла. */
     private static void localContrast(BufferedImage frame, int w, int h, float gain) {
         int[] buf = ((DataBufferInt) frame.getRaster().getDataBuffer()).getData();
         float mid = 128f;
@@ -354,5 +197,9 @@ public final class RetroPostProcessor {
 
     private static int contrastChannel(int c, float mid, float gain) {
         return clamp((int) (mid + (c - mid) * gain));
+    }
+
+    private static int clamp(int v) {
+        return Math.max(0, Math.min(255, v));
     }
 }

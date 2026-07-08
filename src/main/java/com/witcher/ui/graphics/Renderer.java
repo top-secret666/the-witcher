@@ -19,10 +19,6 @@ public class Renderer extends JPanel {
     private int spriteX, spriteY;
     private final RetroPostProcessor retro = new RetroPostProcessor();
 
-    public RetroPostProcessor retro() {
-        return retro;
-    }
-
     public Renderer(int virtualW, int virtualH, int scale) {
         if (scale < 1) {
             scale = 1;
