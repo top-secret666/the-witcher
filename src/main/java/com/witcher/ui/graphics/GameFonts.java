@@ -14,7 +14,17 @@ import java.util.Map;
  */
 public final class GameFonts {
 
+    private static final String CYRILLIC_PROBE = "АбвГдеЁжЗийКлмнопрстуфхцчшщъыьэюя";
+
+    private static final String[] GOTHIC_BOLD_PATHS = {
+        "/assets/fonts/Philosopher-Bold.ttf",
+        "/assets/fonts/gothic-bold.ttf"
+    };
+
     private static final String[] GOTHIC_PATHS = {
+        "/assets/fonts/Philosopher-Regular.ttf",
+        "/assets/fonts/Philosopher-Bold.ttf",
+        "/assets/fonts/lavka/MedievalSharp-Regular.ttf",
         "/assets/fonts/MedievalSharp-Regular.ttf",
         "/assets/fonts/gothic.ttf",
         "/assets/fonts/witcher_ui.ttf",
@@ -24,17 +34,26 @@ public final class GameFonts {
     private static final GameFonts INSTANCE = new GameFonts();
 
     private final Font dialogBase;
+    private final Font dialogBoldBase;
     private final Font uiBase;
+    private final Font uiBoldBase;
     private final Map<String, Font> cache = new HashMap<>();
 
     private GameFonts() {
         Font gothic = loadFirst(GOTHIC_PATHS);
         if (gothic == null) {
-            gothic = pickSystemGothic();
+            gothic = pickSystemCyrillic();
+        }
+        Font gothicBold = loadFirst(GOTHIC_BOLD_PATHS);
+        if (gothicBold == null) {
+            gothicBold = gothic;
         }
         dialogBase = gothic;
+        dialogBoldBase = gothicBold;
         uiBase = gothic;
-        System.out.println("[GameFonts] UI: " + uiBase.getFontName());
+        uiBoldBase = gothicBold;
+        System.out.println("[GameFonts] UI: " + uiBase.getFontName()
+            + (supportsCyrillic(uiBase) ? " (kirillica OK)" : " (NET kirillicy!)"));
     }
 
     public static GameFonts get() {
@@ -46,7 +65,7 @@ public final class GameFonts {
     }
 
     public Font bold(int size) {
-        return derive(dialogBase, size, Font.BOLD);
+        return derive(dialogBoldBase, size, Font.PLAIN);
     }
 
     public Font italic(int size) {
@@ -58,7 +77,7 @@ public final class GameFonts {
     }
 
     public Font uiBold(int size) {
-        return derive(uiBase, size, Font.BOLD);
+        return derive(uiBoldBase, size, Font.PLAIN);
     }
 
     public Font uiItalic(int size) {
@@ -119,8 +138,11 @@ public final class GameFonts {
     private static Font loadFirst(String[] paths) {
         for (String path : paths) {
             Font font = tryLoad(path);
-            if (font != null) {
+            if (font != null && supportsCyrillic(font)) {
                 return font;
+            }
+            if (font != null) {
+                System.err.println("[GameFonts] Propusk (net kirillicy): " + path);
             }
         }
         return null;
@@ -141,24 +163,41 @@ public final class GameFonts {
         }
     }
 
-    private static Font pickSystemGothic() {
+    private static boolean supportsCyrillic(Font font) {
+        Font probe = font.deriveFont(Font.PLAIN, 12f);
+        for (int i = 0; i < CYRILLIC_PROBE.length(); i++) {
+            if (!probe.canDisplay(CYRILLIC_PROBE.charAt(i))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /** Запасные системные шрифты — только с кириллицей. */
+    private static Font pickSystemCyrillic() {
         String[] names = {
             "MedievalSharp",
-            "UnifrakturMaguntia",
-            "Old English Text MT",
-            "Times New Roman"
+            "Cinzel",
+            "PT Serif",
+            "Times New Roman",
+            "Georgia",
+            "Palatino Linotype",
+            "Segoe UI"
         };
         GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
         String[] available = ge.getAvailableFontFamilyNames();
         for (String want : names) {
             for (String have : available) {
                 if (have.equalsIgnoreCase(want)) {
-                    System.out.println("[GameFonts] Sistemnyj shrift: " + have);
-                    return new Font(have, Font.PLAIN, 12);
+                    Font candidate = new Font(have, Font.PLAIN, 12);
+                    if (supportsCyrillic(candidate)) {
+                        System.out.println("[GameFonts] Sistemnyj shrift: " + have);
+                        return candidate;
+                    }
                 }
             }
         }
-        System.out.println("[GameFonts] Net gothic.ttf — polozhi MedievalSharp-Regular.ttf v assets/fonts/");
-        return new Font(Font.SERIF, Font.BOLD, 12);
+        System.out.println("[GameFonts] Zapasnoj: Times New Roman");
+        return new Font("Times New Roman", Font.PLAIN, 12);
     }
 }
