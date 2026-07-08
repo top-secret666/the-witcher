@@ -19,7 +19,7 @@ import main.java.com.witcher.gdx.WitcherGame;
 import main.java.com.witcher.gdx.graphics.GameFonts;
 import main.java.com.witcher.gdx.graphics.GdxMenuAssets;
 import main.java.com.witcher.gdx.graphics.GdxMenuCursor;
-import main.java.com.witcher.gdx.graphics.GdxRetroPostProcessor;
+import main.java.com.witcher.gdx.graphics.GdxRetroOverlay;
 import main.java.com.witcher.gdx.graphics.GdxWindowAlign;
 import main.java.com.witcher.gdx.graphics.PixelTextures;
 import main.java.com.witcher.gdx.graphics.SwingCoords;
@@ -27,7 +27,7 @@ import main.java.com.witcher.gdx.graphics.SwingViewport;
 import main.java.com.witcher.gdx.layout.MenuLayout;
 
 /**
- * LibGDX-меню: логика {@link MainMenuController}, рендер 480×360×scale + ретро → fullscreen.
+ * LibGDX-меню: FBO {@code 480×360×scale} на GPU, ретро-оверлей без CPU readback.
  */
 public class MainMenuScreen implements Screen {
 
@@ -43,14 +43,13 @@ public class MainMenuScreen implements Screen {
     private final SwingCoords C = viewport.coords();
     private final Vector2 swingMouse = new Vector2();
     private final GlyphLayout glyph = new GlyphLayout();
-    private final GdxRetroPostProcessor retro = new GdxRetroPostProcessor();
 
     private OrthographicCamera camera;
     private ShapeRenderer shapes;
     private GameFonts fonts;
     private GdxMenuAssets assets;
     private FrameBuffer fbo;
-    private Texture retroTexture;
+    private TextureRegion sceneRegion;
 
     public MainMenuScreen(WitcherGame game) {
         this.game = game;
@@ -64,8 +63,10 @@ public class MainMenuScreen implements Screen {
         fonts.load();
         assets = GdxMenuAssets.load();
         fbo = new FrameBuffer(Pixmap.Format.RGBA8888, FB_W, FB_H, false);
-        retroTexture = new Texture(FB_W, FB_H, Pixmap.Format.RGBA8888);
-        retroTexture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
+        Texture fboTex = fbo.getColorBufferTexture();
+        fboTex.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
+        sceneRegion = new TextureRegion(fboTex);
+        sceneRegion.flip(false, true);
         game.frameChrome.setVisible(false);
         GdxMenuCursor.hideForMenu();
         Gdx.input.setInputProcessor(new InputMultiplexer(game.frameChrome));
@@ -122,22 +123,20 @@ public class MainMenuScreen implements Screen {
         drawButtons();
         drawCursor(mouseX, mouseY);
         game.batch.end();
-
-        Pixmap frame = Pixmap.createFromFrameBuffer(0, 0, FB_W, FB_H);
         fbo.end();
-        PixelTextures.flipPixmapVertical(frame);
-        retro.apply(frame);
-        retroTexture.draw(frame, 0, 0);
-        frame.dispose();
 
         Gdx.gl.glViewport(0, 0, bbw, bbh);
         Gdx.gl.glClearColor(0f, 0f, 0f, 1f);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         viewport.bindStretch(camera, bbw, bbh);
         game.batch.setProjectionMatrix(camera.combined);
+        shapes.setProjectionMatrix(camera.combined);
         game.batch.begin();
-        game.batch.draw(retroTexture, 0f, 0f, VW, VH);
+        game.batch.setColor(1.03f, 1.02f, 0.98f, 1f);
+        game.batch.draw(sceneRegion, 0f, 0f, VW, VH);
+        game.batch.setColor(1f, 1f, 1f, 1f);
         game.batch.end();
+        drawRetroOverlay();
 
         MainMenuController.Action action = controller.consumeAction();
         if (action == MainMenuController.Action.START) {
@@ -146,6 +145,16 @@ public class MainMenuScreen implements Screen {
         } else if (action == MainMenuController.Action.EXIT) {
             Gdx.app.exit();
         }
+    }
+
+    private void drawRetroOverlay() {
+        Gdx.gl.glEnable(GL20.GL_BLEND);
+        Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
+        shapes.begin(ShapeRenderer.ShapeType.Filled);
+        GdxRetroOverlay.drawVignette(shapes, VW, VH);
+        GdxRetroOverlay.drawScanlines(shapes, VW, VH);
+        shapes.end();
+        PixelTextures.resetBlend();
     }
 
     private void pollInput(int mouseX, int mouseY) {
@@ -299,10 +308,7 @@ public class MainMenuScreen implements Screen {
         if (fbo != null) {
             fbo.dispose();
             fbo = null;
-        }
-        if (retroTexture != null) {
-            retroTexture.dispose();
-            retroTexture = null;
+            sceneRegion = null;
         }
         if (assets != null) {
             assets.dispose();
