@@ -1,22 +1,22 @@
-package main.java.com.witcher.ui.graphics;
+package main.java.com.witcher.ui.shop.view.anim;
 
 /**
  * Появление UI лавки — без GIF. HUD → панель снизу → карточки по очереди → кнопка.
  */
-final class ShopRevealAnimator {
+public final class ShopRevealAnimator {
 
-    final float sceneBrighten;
-    final float hudAlpha;
-    final float hudSlideY;
-    final float panelAlpha;
-    final float panelScale;
-    final float panelSlideY;
-    final float btnAlpha;
-    final float btnSlideY;
-    final float[] cardAlpha;
-    final float[] cardScale;
-    final float[] cardSlideY;
-    final boolean uiInteractive;
+    public final float sceneBrighten;
+    public final float hudAlpha;
+    public final float hudSlideY;
+    public final float panelAlpha;
+    public final float panelScale;
+    public final float panelSlideY;
+    public final float btnAlpha;
+    public final float btnSlideY;
+    public final float[] cardAlpha;
+    public final float[] cardScale;
+    public final float[] cardSlideY;
+    public final boolean uiInteractive;
 
     private ShopRevealAnimator(float sceneBrighten, float hudAlpha, float hudSlideY,
                                float panelAlpha, float panelScale, float panelSlideY,
@@ -37,15 +37,15 @@ final class ShopRevealAnimator {
         this.uiInteractive = uiInteractive;
     }
 
-    static ShopRevealAnimator hidden(int cardCount) {
+    public static ShopRevealAnimator hidden(int cardCount) {
         return forProgress(0f, cardCount, false);
     }
 
-    static ShopRevealAnimator complete(int cardCount) {
+    public static ShopRevealAnimator complete(int cardCount) {
         return forProgress(1f, cardCount, true);
     }
 
-    static ShopRevealAnimator forProgress(float progress, int cardCount, boolean interactiveWhenDone) {
+    public static ShopRevealAnimator forProgress(float progress, int cardCount, boolean interactiveWhenDone) {
         float t = clamp01(progress);
         boolean done = t >= 1f;
 

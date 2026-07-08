@@ -1,5 +1,8 @@
 package main.java.com.witcher.ui.graphics;
 
+import main.java.com.witcher.ui.shop.ShopCategory;
+import main.java.com.witcher.ui.shop.view.ShopUiMetrics;
+
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 
@@ -7,7 +10,7 @@ import java.awt.image.BufferedImage;
  * Ассеты лавки — один раз за сессию.
  * Сначала грузит готовые {@code lavka/1x/} (см. tools/bake_lavka_assets.py), иначе даунскейлит на лету.
  */
-final class ShopAssetCache {
+public final class ShopAssetCache implements ShopUiMetrics {
 
     private static final String BASE = "/assets/sprites/lavka/";
     private static final String BAKED = BASE + "1x/";
@@ -16,7 +19,7 @@ final class ShopAssetCache {
 
     private static ShopAssetCache instance;
 
-    static ShopAssetCache get() {
+    public static ShopAssetCache get() {
         if (instance == null) {
             instance = new ShopAssetCache();
         }
@@ -301,6 +304,90 @@ final class ShopAssetCache {
             if (img != null) {
                 return img;
             }
+        }
+        return null;
+    }
+
+    @Override
+    public int hudX() {
+        return hudX;
+    }
+
+    @Override
+    public int hudW() {
+        return hudW;
+    }
+
+    @Override
+    public int hudH() {
+        return hudH;
+    }
+
+    @Override
+    public int panelW() {
+        return panelW;
+    }
+
+    @Override
+    public int panelHeaderH() {
+        return panelHeaderH;
+    }
+
+    @Override
+    public int topRowCols() {
+        return topRowCols;
+    }
+
+    @Override
+    public int bottomRowCols() {
+        return bottomRowCols;
+    }
+
+    @Override
+    public int detailPanelW() {
+        return detailPanelW;
+    }
+
+    @Override
+    public int detailPanelH() {
+        return detailPanelH;
+    }
+
+    @Override
+    public int rowH() {
+        return rowH;
+    }
+
+    @Override
+    public int btnW() {
+        return btnW;
+    }
+
+    @Override
+    public int btnH() {
+        return btnH;
+    }
+
+    @Override
+    public int cardArtSize() {
+        return cardArtSize;
+    }
+
+    @Override
+    public int dukeSealSize() {
+        return dukeSealSize;
+    }
+
+    /** Иконка категории на витрине (для presenter без доступа к package-private полям). */
+    public BufferedImage iconForCategory(ShopCategory cat) {
+        if (cat == ShopCategory.SETS) {
+            return setsIcon;
+        }
+        if (cat == ShopCategory.WEAPON) {
+            return weaponIcon;
+        }
+        if (cat.iconIndex >= 0 && cat.iconIndex < itemIcons.length) {
+            return itemIcons[cat.iconIndex];
         }
         return null;
     }

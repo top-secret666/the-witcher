@@ -1,20 +1,20 @@
-package main.java.com.witcher.ui.graphics;
+package main.java.com.witcher.ui.shop.view.anim;
 
 /**
  * Анимация открытия категории: карточка уезжает влево и растёт, справа выезжает список.
  */
-final class ShopCategoryAnimator {
+public final class ShopCategoryAnimator {
 
-    final float progress;
-    final int cardX;
-    final int cardY;
-    final int cardW;
-    final int cardH;
-    final float gridCardsAlpha;
-    final float counterAlpha;
-    final float detailPanelAlpha;
-    final float detailPanelSlideX;
-    final boolean listInteractive;
+    public final float progress;
+    public final int cardX;
+    public final int cardY;
+    public final int cardW;
+    public final int cardH;
+    public final float gridCardsAlpha;
+    public final float counterAlpha;
+    public final float detailPanelAlpha;
+    public final float detailPanelSlideX;
+    public final boolean listInteractive;
 
     private ShopCategoryAnimator(float progress, int cardX, int cardY, int cardW, int cardH,
                                  float gridCardsAlpha, float counterAlpha,
@@ -32,8 +32,8 @@ final class ShopCategoryAnimator {
         this.listInteractive = listInteractive;
     }
 
-    static ShopCategoryAnimator opening(float t, int fromX, int fromY, int fromW, int fromH,
-                                        int toX, int toY, int toW, int toH) {
+    public static ShopCategoryAnimator opening(float t, int fromX, int fromY, int fromW, int fromH,
+                                               int toX, int toY, int toW, int toH) {
         float p = clamp01(t);
         float move = easeInOutCubic(p);
         int cardX = Math.round(lerp(fromX, toX, move));
@@ -53,7 +53,7 @@ final class ShopCategoryAnimator {
             gridFade, counterAlpha, detailAlpha, detailSlide, p >= 1f);
     }
 
-    static ShopCategoryAnimator open(int toX, int toY, int toW, int toH) {
+    public static ShopCategoryAnimator open(int toX, int toY, int toW, int toH) {
         return new ShopCategoryAnimator(1f, toX, toY, toW, toH,
             0f, 1f, 1f, 0f, true);
     }
@@ -87,12 +87,5 @@ final class ShopCategoryAnimator {
             return 4f * x * x * x;
         }
         return 1f - (float) Math.pow(-2f * x + 2f, 3) / 2f;
-    }
-
-    private static float easeOutBack(float t) {
-        float x = clamp01(t);
-        float c1 = 1.45f;
-        float c3 = c1 + 1f;
-        return 1f + c3 * (float) Math.pow(x - 1f, 3) + c1 * (float) Math.pow(x - 1f, 2);
     }
 }
