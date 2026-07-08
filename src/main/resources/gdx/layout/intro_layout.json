@@ -1,0 +1,59 @@
+{
+  "design": [
+    480,
+    360
+  ],
+  "ratios": {
+    "dialogHeightRatio": 0.3,
+    "dialogWidthRatio": 1.0,
+    "dialogBottomMarginRatio": 0.02,
+    "dialogFontSizeRatio": 0.04,
+    "dialogPadRatio": 0.02,
+    "dialogMinHeight": 52,
+    "dialogMinWidth": 200,
+    "characterHeightRatio": 0.85,
+    "dialogZoneRatio": 0.15,
+    "characterFeetInsetRatio": 0.15,
+    "characterMarginXRatio": 0.02,
+    "characterActiveShiftRatio": 0.03,
+    "characterLiftRatio": 0.06,
+    "characterRaiseRatio": 0.08,
+    "characterScaleBoost": 0.06,
+    "characterShopShrink": 0.92,
+    "vnFontSizeRatio": 0.031,
+    "vnFontMin": 10,
+    "vnButtonPadV": 8,
+    "vnButtonGapRatio": 0.09,
+    "vnButtonGapMin": 28,
+    "vnTextWidthFactor": 0.55,
+    "vnRowBottomMargin": 6,
+    "vnRowGapBelowDialog": 4,
+    "vnHistoryPanelWRatio": 0.82,
+    "vnHistoryPanelHRatio": 0.72,
+    "vnHistoryPanelMinW": 280,
+    "vnHistoryPanelMinH": 200,
+    "bgFadeMul": 0.82,
+    "cursorW": 14,
+    "cursorHotspotX": 3,
+    "cursorHotspotY": 3
+  },
+  "preview480x360": {
+    "dialogBox": {
+      "x": 0,
+      "y": 245,
+      "w": 480,
+      "h": 108
+    },
+    "vnRowY": 335,
+    "characterExample": {
+      "y": 45,
+      "h": 306,
+      "scale": 0.2391
+    },
+    "fontSize": 14
+  },
+  "gdxNotes": {
+    "rectY": "viewH - swingTopY - height",
+    "textBaseline": "viewH - swingY"
+  }
+}

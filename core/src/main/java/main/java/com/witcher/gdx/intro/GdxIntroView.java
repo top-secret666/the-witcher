@@ -6,11 +6,14 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import main.java.com.witcher.gdx.graphics.GameFonts;
 import main.java.com.witcher.gdx.graphics.GdxIntroAssets;
 import main.java.com.witcher.gdx.graphics.PixelTextures;
 import main.java.com.witcher.gdx.graphics.SwingCoords;
+import main.java.com.witcher.ui.intro.IntroAssetsInfo;
+import main.java.com.witcher.ui.intro.IntroDialogText;
 import main.java.com.witcher.ui.intro.IntroEasing;
 import main.java.com.witcher.ui.intro.IntroMorphAnimation;
 import main.java.com.witcher.ui.intro.IntroScript;
@@ -18,13 +21,17 @@ import main.java.com.witcher.ui.intro.IntroTheme;
 import main.java.com.witcher.ui.intro.presenter.IntroController;
 import main.java.com.witcher.ui.intro.view.IntroCharacterLayout;
 import main.java.com.witcher.ui.intro.view.IntroDialogLayout;
+import main.java.com.witcher.ui.intro.view.IntroLayout;
+import main.java.com.witcher.ui.intro.view.IntroTextLayout;
 
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import java.util.List;
 
 /**
  * Отрисовка интро-сцены LibGDX по состоянию {@link IntroController}.
  */
 public final class GdxIntroView {
+
+    private static final float DIALOG_FONT_BASE = 12f;
 
     private final GlyphLayout glyph = new GlyphLayout();
 
@@ -32,33 +39,51 @@ public final class GdxIntroView {
                        GdxIntroAssets assets, IntroController controller,
                        SwingCoords C, int sw, int sh, int mouseX, int mouseY) {
         float fade = controller.getFadeAlpha();
+        IntroAssetsInfo info = controller.getAssets();
 
         batch.begin();
         drawBackground(batch, assets, controller, sw, sh, fade);
         batch.end();
 
-        drawMorphParticles(shapes, controller, C, sw, sh, fade);
-        drawSwitchParticles(shapes, controller, C, sw, sh, fade);
+        if (controller.isRightMorphActive()) {
+            drawMorphAura(shapes, controller, C, fade);
+        }
+        drawMorphParticles(shapes, controller, C, fade);
+        drawSwitchParticles(shapes, controller, C, fade);
 
         batch.begin();
-        drawCharacters(batch, assets, controller, C, sw, sh, fade);
+        drawCharacters(batch, assets, info, controller, C, sw, sh, fade);
+        batch.end();
+
         if (controller.shouldShowDialogBox()) {
-            drawDialogBox(batch, shapes, fonts, controller, C, sw, sh, fade);
-        }
-        if (controller.shouldShowVnButtons()) {
-            drawVnButtons(batch, fonts.dialog, controller, C, mouseX, mouseY, fade);
+            drawDialogBoxShapes(shapes, controller, C, sw, sh, fade);
         }
         if (controller.isHistoryOpen()) {
-            drawHistoryOverlay(batch, shapes, fonts, controller, C, sw, sh, fade);
+            drawHistoryOverlayShapes(shapes, controller, C, sw, sh, fade);
+        }
+
+        batch.begin();
+        if (controller.shouldShowDialogBox()) {
+            drawDialogBoxText(batch, fonts, controller, C, sw, sh, fade);
+        }
+        if (controller.shouldShowVnButtons()) {
+            drawVnButtons(batch, fonts.dialog, controller, C, sh, mouseX, mouseY, fade);
+        }
+        if (controller.isHistoryOpen()) {
+            drawHistoryOverlayText(batch, fonts, controller, C, fade);
         }
         drawCursor(batch, assets, C, mouseX, mouseY);
         batch.end();
+
+        if (controller.isRightMorphActive()) {
+            drawMorphGoldenBurst(shapes, controller, C, fade);
+        }
     }
 
     private void drawBackground(SpriteBatch batch, GdxIntroAssets assets,
                                 IntroController controller, int sw, int sh, float fade) {
         if (assets.kaerMorhenBgTex != null) {
-            PixelTextures.drawCover(batch, assets.kaerMorhenBgTex, sw, sh, fade * 0.82f);
+            PixelTextures.drawCover(batch, assets.kaerMorhenBgTex, sw, sh, fade * IntroLayout.BG_FADE_MUL);
         }
 
         float shopReveal = controller.getShopReveal();
@@ -82,8 +107,8 @@ public final class GdxIntroView {
         }
     }
 
-    private void drawCharacters(SpriteBatch batch, GdxIntroAssets assets, IntroController controller,
-                                SwingCoords C, int sw, int sh, float fade) {
+    private void drawCharacters(SpriteBatch batch, GdxIntroAssets assets, IntroAssetsInfo info,
+                                IntroController controller, SwingCoords C, int sw, int sh, float fade) {
         if (controller.shouldHideCharactersForShopScene()) {
             return;
         }
@@ -97,15 +122,15 @@ public final class GdxIntroView {
         Texture geraltEmotion = pick(usingShop, assets.geraltEmotionShopTex, assets.geraltEmotionTex);
         Texture leftTex = ("left".equals(activeSide) && geraltEmotion != null) ? geraltEmotion : geraltBase;
         boolean leftForce = controller.isLeftForceOpaque();
-        drawCharacter(batch, C, leftTex, controller.getGeraltSlide(), true,
+        drawCharacter(batch, assets, info, C, leftTex, controller.getGeraltSlide(), true,
             "left".equals(activeSide), controller.getLeftActiveAnim(),
             leftForce, false, false, fade, tick, sw, sh);
 
         if (controller.isRightMorphActive()) {
-            drawMorphCharacters(batch, assets, controller, C, sw, sh, fade, activeSide);
+            drawMorphCharacters(batch, assets, info, controller, C, sw, sh, fade, activeSide);
         } else {
             if (controller.getStrangerSlide() > 0.001f && assets.strangerTex != null) {
-                drawCharacter(batch, C, assets.strangerTex, controller.getStrangerSlide(), false,
+                drawCharacter(batch, assets, info, C, assets.strangerTex, controller.getStrangerSlide(), false,
                     "right".equals(activeSide) && "stranger".equals(controller.getRightCharacter()),
                     controller.getRightActiveAnim(), false, false, false, fade, tick, sw, sh);
             }
@@ -113,56 +138,58 @@ public final class GdxIntroView {
                 Texture dukeBase = pick(usingShop, assets.dukeShopTex, assets.dukeTex);
                 Texture dukeEmotion = pick(usingShop, assets.dukeLaughShopTex, assets.dukeLaughTex);
                 Texture rightTex = ("right".equals(activeSide) && dukeEmotion != null) ? dukeEmotion : dukeBase;
-                boolean lift = controller.shouldLiftDukeForShop();
-                boolean raise = controller.shouldRaiseDukeForShop();
-                drawCharacter(batch, C, rightTex, controller.getDukeSlide(), false,
+                drawCharacter(batch, assets, info, C, rightTex, controller.getDukeSlide(), false,
                     "right".equals(activeSide) && "duke".equals(controller.getRightCharacter()),
                     controller.getRightActiveAnim(), controller.isRightForceOpaque(),
-                    lift, raise, fade, tick, sw, sh);
+                    controller.shouldLiftDukeForShop(), controller.shouldRaiseDukeForShop(),
+                    fade, tick, sw, sh);
             }
         }
     }
 
-    private void drawMorphCharacters(SpriteBatch batch, GdxIntroAssets assets, IntroController controller,
-                                     SwingCoords C, int sw, int sh, float fade, String activeSide) {
+    private void drawMorphCharacters(SpriteBatch batch, GdxIntroAssets assets, IntroAssetsInfo info,
+                                     IntroController controller, SwingCoords C, int sw, int sh,
+                                     float fade, String activeSide) {
         float t = IntroEasing.easeInOutCubic(controller.getRightMorphT());
-        IntroMorphAnimation.IntroRect anchor = controller.getMorphAnchorBounds();
-        IntroCharacterLayout.Rect bounds = anchor != null
-            ? morphRectToLayout(anchor)
-            : IntroCharacterLayout.estimateRightCharacterBounds(sw, sh,
-                assets.strangerTex != null ? assets.strangerTex.getWidth() : 0,
-                assets.strangerTex != null ? assets.strangerTex.getHeight() : 0);
+        boolean usingShop = controller.isUsingShopSprites();
 
         float dissolve = 1f - IntroEasing.smoothstep(0f, 0.58f, t);
         float manifest = IntroEasing.smoothstep(0.36f, 1f, t);
 
+        int[] strangerSize = logicalSize(assets.strangerTex, assets, info);
         if (assets.strangerTex != null && dissolve > 0.02f) {
             IntroCharacterLayout.Rect strangerRect = IntroCharacterLayout.computeCharacterRect(
-                sw, sh, assets.strangerTex.getWidth(), assets.strangerTex.getHeight(),
+                sw, sh, strangerSize[0], strangerSize[1],
                 1f, false, false, 0f, controller.getTick(), false, false);
             drawSpriteAt(batch, C, assets.strangerTex, strangerRect, fade * dissolve);
         }
-        Texture dukeBase = controller.isUsingShopSprites() && assets.dukeShopTex != null
-            ? assets.dukeShopTex : assets.dukeTex;
+
+        Texture dukeBase = pick(usingShop, assets.dukeShopTex, assets.dukeTex);
         if (dukeBase != null && manifest > 0.02f) {
             boolean dukeActive = "right".equals(activeSide);
+            int[] dukeSize = logicalSize(dukeBase, assets, info);
             IntroCharacterLayout.Rect dukeRect = IntroCharacterLayout.computeCharacterRect(
-                sw, sh, dukeBase.getWidth(), dukeBase.getHeight(),
+                sw, sh, dukeSize[0], dukeSize[1],
                 1f, false, dukeActive, controller.getRightActiveAnim(),
                 controller.getTick(), false, false);
             drawSpriteAt(batch, C, dukeBase, dukeRect, fade * manifest);
+            if (controller.isRightForceOpaque() && dukeActive && manifest > 0.85f) {
+                drawSpriteAt(batch, C, dukeBase, dukeRect, fade * manifest);
+            }
         }
     }
 
-    private void drawCharacter(SpriteBatch batch, SwingCoords C, Texture sprite, float slide,
+    private void drawCharacter(SpriteBatch batch, GdxIntroAssets assets, IntroAssetsInfo info,
+                               SwingCoords C, Texture sprite, float slide,
                                boolean isLeft, boolean isActive, float activeAnim,
                                boolean forceOpaque, boolean liftForShop, boolean raiseAbove,
                                float fadeAlpha, int tick, int sw, int sh) {
         if (sprite == null || slide <= 0.001f) {
             return;
         }
+        int[] size = logicalSize(sprite, assets, info);
         IntroCharacterLayout.Rect rect = IntroCharacterLayout.computeCharacterRect(
-            sw, sh, sprite.getWidth(), sprite.getHeight(), slide, isLeft, isActive, activeAnim,
+            sw, sh, size[0], size[1], slide, isLeft, isActive, activeAnim,
             tick, liftForShop, raiseAbove);
         float alpha = fadeAlpha * Math.min(1f, 0.2f + slide * 0.9f);
         if (forceOpaque && isActive) {
@@ -178,8 +205,61 @@ public final class GdxIntroView {
         batch.setColor(1f, 1f, 1f, 1f);
     }
 
+    private void drawMorphAura(ShapeRenderer shapes, IntroController controller,
+                               SwingCoords C, float fade) {
+        IntroMorphAnimation.IntroRect anchor = controller.getMorphAnchorBounds();
+        if (anchor == null) {
+            return;
+        }
+        float t = controller.getRightMorphT();
+        float peak = (float) Math.sin(t * Math.PI);
+        if (peak <= 0.08f) {
+            return;
+        }
+        float cx = anchor.x + anchor.width * 0.5f;
+        float cy = C.centerY(anchor.y + anchor.height * 0.5f, 0f);
+        float w = anchor.width * 1.05f;
+        float h = anchor.height * 0.72f;
+        Gdx.gl.glEnable(GL20.GL_BLEND);
+        Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
+        shapes.begin(ShapeRenderer.ShapeType.Filled);
+        shapes.setColor(0.16f, 0.1f, 0.06f, peak * 0.22f * fade);
+        shapes.ellipse(cx - w * 0.5f, cy - h * 0.5f, w, h);
+        shapes.setColor(0.55f, 0.38f, 0.12f, peak * 0.14f * fade);
+        shapes.ellipse(cx - w * 0.42f, cy - h * 0.38f, w * 0.84f, h * 0.76f);
+        shapes.end();
+        PixelTextures.resetBlend();
+    }
+
+    private void drawMorphGoldenBurst(ShapeRenderer shapes, IntroController controller,
+                                      SwingCoords C, float fade) {
+        IntroMorphAnimation.IntroRect anchor = controller.getMorphAnchorBounds();
+        if (anchor == null) {
+            return;
+        }
+        float morphT = controller.getRightMorphT();
+        float peak = (float) Math.sin(morphT * Math.PI);
+        if (peak <= 0.35f) {
+            return;
+        }
+        float burst = (peak - 0.35f) / 0.65f;
+        float cx = anchor.x + anchor.width * 0.5f;
+        float cy = C.centerY(anchor.y + anchor.height * 0.5f, 0f);
+        float flashW = anchor.width * 1.1f;
+        float flashH = anchor.height * 0.55f;
+        Gdx.gl.glEnable(GL20.GL_BLEND);
+        Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
+        shapes.begin(ShapeRenderer.ShapeType.Filled);
+        shapes.setColor(1f, 0.88f, 0.47f, burst * 0.18f * fade);
+        shapes.ellipse(cx - flashW * 0.5f, cy - flashH * 0.5f, flashW, flashH);
+        shapes.setColor(0.16f, 0.11f, 0.07f, burst * 0.12f * fade);
+        shapes.ellipse(cx - flashW * 0.5f, cy - flashH * 0.25f, flashW, flashH);
+        shapes.end();
+        PixelTextures.resetBlend();
+    }
+
     private void drawMorphParticles(ShapeRenderer shapes, IntroController controller,
-                                    SwingCoords C, int sw, int sh, float fade) {
+                                    SwingCoords C, float fade) {
         if (!controller.isRightMorphActive()) {
             return;
         }
@@ -223,7 +303,7 @@ public final class GdxIntroView {
     }
 
     private void drawSwitchParticles(ShapeRenderer shapes, IntroController controller,
-                                     SwingCoords C, int sw, int sh, float fade) {
+                                     SwingCoords C, float fade) {
         float switchFlash = controller.getSwitchFlash();
         if (switchFlash <= 0.01f && controller.getSwitchParticles().isEmpty()) {
             return;
@@ -258,50 +338,68 @@ public final class GdxIntroView {
         PixelTextures.resetBlend();
     }
 
-    private void drawDialogBox(SpriteBatch batch, ShapeRenderer shapes, GameFonts fonts,
-                               IntroController controller, SwingCoords C, int sw, int sh, float fade) {
-        IntroScript.DialogEntry entry = controller.getCurrentDialogEntry();
-        if (entry == null) {
+    private void drawDialogBoxShapes(ShapeRenderer shapes, IntroController controller,
+                                     SwingCoords C, int sw, int sh, float fade) {
+        if (controller.getCurrentDialogEntry() == null) {
             return;
         }
         IntroDialogLayout.Layout layout = IntroDialogLayout.computeLayout(sw, sh);
         float boxAlpha = fade * 0.92f;
-
         Gdx.gl.glEnable(GL20.GL_BLEND);
-        shapes.setProjectionMatrix(batch.getProjectionMatrix());
+        Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
         shapes.begin(ShapeRenderer.ShapeType.Filled);
         shapes.setColor(0.06f, 0.05f, 0.04f, boxAlpha * 0.88f);
         shapes.rect(layout.boxX, C.rectY(layout.boxY, layout.boxH), layout.boxW, layout.boxH);
         shapes.setColor(0.45f, 0.35f, 0.18f, boxAlpha * 0.6f);
         shapes.rect(layout.boxX, C.rectY(layout.boxY, 2), layout.boxW, 2);
         shapes.end();
+        PixelTextures.resetBlend();
+    }
 
+    private void drawDialogBoxText(SpriteBatch batch, GameFonts fonts, IntroController controller,
+                                   SwingCoords C, int sw, int sh, float fade) {
+        IntroScript.DialogEntry entry = controller.getCurrentDialogEntry();
+        if (entry == null) {
+            return;
+        }
+        IntroDialogLayout.Layout layout = IntroDialogLayout.computeLayout(sw, sh);
         BitmapFont font = fonts.dialog;
+        float scale = IntroTextLayout.dialogFontScale(layout.fontSize, DIALOG_FONT_BASE);
+        font.getData().setScale(scale);
+
         String visible = entry.text().substring(0,
             Math.min(controller.getCharIndex(), entry.text().length()));
         Color speakerColor = speakerGdxColor(entry);
         font.setColor(speakerColor.r, speakerColor.g, speakerColor.b, fade);
 
-        float textY = layout.textY + layout.fontSize;
+        float lineY = layout.textY;
         if (entry.speaker() != null) {
-            font.draw(batch, entry.speaker(), layout.textX, C.textBaseline(textY));
-            textY += layout.fontSize + 4;
+            float baseline = IntroTextLayout.dialogLineBaselineSwingY(lineY, font.getCapHeight());
+            font.draw(batch, entry.speaker(), layout.textX, C.textBaseline(baseline));
+            lineY += layout.fontSize + 4;
         }
-        for (String line : visible.split("\n", -1)) {
-            font.draw(batch, line, layout.textX, C.textBaseline(textY));
-            textY += layout.fontSize + 2;
+        List<String> lines = IntroDialogText.buildVisibleLines(visible, layout.textMaxW, layout.fontSize);
+        for (String line : lines) {
+            float baseline = IntroTextLayout.dialogLineBaselineSwingY(lineY, font.getCapHeight());
+            font.draw(batch, line, layout.textX, C.textBaseline(baseline));
+            lineY += IntroDialogText.lineHeight(layout.fontSize);
         }
 
         if (controller.isWaitingForAdvance()) {
             String hint = controller.isAutoMode() ? "Авто ▶" : "▶ Enter";
             font.setColor(speakerColor.r, speakerColor.g, speakerColor.b, fade * 0.85f);
-            font.draw(batch, hint, layout.textX + layout.textMaxW - 60f,
-                C.textBaseline(layout.boxY + layout.boxH - 8));
+            float hintY = layout.boxY + layout.boxH - layout.pad;
+            float baseline = IntroTextLayout.dialogLineBaselineSwingY(hintY, font.getCapHeight());
+            font.draw(batch, hint, layout.textX + layout.textMaxW - 60f, C.textBaseline(baseline));
         }
+        font.getData().setScale(1f);
     }
 
     private void drawVnButtons(SpriteBatch batch, BitmapFont font, IntroController controller,
-                               SwingCoords C, int mouseX, int mouseY, float fade) {
+                               SwingCoords C, int sh, int mouseX, int mouseY, float fade) {
+        float vnSize = IntroTextLayout.vnFontSize(sh);
+        float scale = IntroTextLayout.dialogFontScale(Math.round(vnSize), DIALOG_FONT_BASE);
+        font.getData().setScale(scale);
         drawVnButton(batch, font, controller.getBackButtonBounds(), "Назад",
             controller.isBackEnabled(), false,
             controller.isBackEnabled() && controller.getBackButtonBounds().contains(mouseX, mouseY),
@@ -312,6 +410,7 @@ public final class GdxIntroView {
         drawVnButton(batch, font, controller.getAutoButtonBounds(), "Авто",
             true, controller.isAutoMode(),
             controller.getAutoButtonBounds().contains(mouseX, mouseY), C, fade);
+        font.getData().setScale(1f);
     }
 
     private void drawVnButton(SpriteBatch batch, BitmapFont font,
@@ -330,31 +429,30 @@ public final class GdxIntroView {
         }
         glyph.setText(font, label);
         float tx = r.x + (r.width - glyph.width) * 0.5f;
-        float ty = r.y + (r.height + glyph.height) * 0.5f;
-        font.draw(batch, label, tx, C.textBaseline(ty));
+        float baselineY = IntroTextLayout.vnLabelBaselineSwingY(toVnRect(r), font.getCapHeight());
+        font.draw(batch, label, tx, C.textBaseline(baselineY));
     }
 
-    private void drawHistoryOverlay(SpriteBatch batch, ShapeRenderer shapes, GameFonts fonts,
-                                    IntroController controller, SwingCoords C,
-                                    int sw, int sh, float fade) {
-        shapes.setProjectionMatrix(batch.getProjectionMatrix());
+    private void drawHistoryOverlayShapes(ShapeRenderer shapes, IntroController controller,
+                                          SwingCoords C, int sw, int sh, float fade) {
         Gdx.gl.glEnable(GL20.GL_BLEND);
+        Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
         shapes.begin(ShapeRenderer.ShapeType.Filled);
         shapes.setColor(0f, 0f, 0f, fade * 0.62f);
         shapes.rect(0f, 0f, sw, sh);
-        shapes.end();
-
         IntroController.IntroRect panel = controller.getHistoryPanelBounds();
-        float px = panel.x;
-        float py = C.rectY(panel.y, panel.height);
-        shapes.begin(ShapeRenderer.ShapeType.Filled);
         shapes.setColor(0.08f, 0.06f, 0.04f, fade * 0.95f);
-        shapes.rect(px, py, panel.width, panel.height);
+        shapes.rect(panel.x, C.rectY(panel.y, panel.height), panel.width, panel.height);
         shapes.end();
+        PixelTextures.resetBlend();
+    }
 
+    private void drawHistoryOverlayText(SpriteBatch batch, GameFonts fonts, IntroController controller,
+                                        SwingCoords C, float fade) {
+        IntroController.IntroRect panel = controller.getHistoryPanelBounds();
         BitmapFont font = fonts.dialog;
         font.setColor(0.85f, 0.65f, 0.12f, fade);
-        font.draw(batch, "История", px + 12f, C.textBaseline(panel.y + 20f));
+        font.draw(batch, "История", panel.x + 12f, C.textBaseline(panel.y + 20f));
 
         float lineY = panel.y + 36f;
         for (String line : controller.buildHistoryLogLines()) {
@@ -364,18 +462,39 @@ public final class GdxIntroView {
             } else {
                 font.setColor(0.82f, 0.76f, 0.61f, fade);
             }
-            font.draw(batch, line, px + 12f, C.textBaseline(lineY));
+            font.draw(batch, line, panel.x + 12f, C.textBaseline(lineY));
             lineY += 16f;
         }
     }
 
     private void drawCursor(SpriteBatch batch, GdxIntroAssets assets, SwingCoords C,
                             int mouseX, int mouseY) {
-        if (assets.cursorTex != null) {
-            float cw = 16f;
-            float ch = cw * assets.cursorTex.getHeight() / assets.cursorTex.getWidth();
-            batch.draw(assets.cursorTex, mouseX - 4f, C.rectY(mouseY - 4f, ch), cw, ch);
+        if (assets.cursorTex == null) {
+            return;
         }
+        float cw = IntroLayout.CURSOR_W;
+        float ch = cw * assets.cursorTex.getHeight() / assets.cursorTex.getWidth();
+        float topY = mouseY - IntroLayout.CURSOR_HOTSPOT_Y;
+        batch.draw(assets.cursorTex, mouseX - IntroLayout.CURSOR_HOTSPOT_X,
+            C.rectY(topY, ch), cw, ch);
+    }
+
+    private static int[] logicalSize(Texture tex, GdxIntroAssets assets, IntroAssetsInfo info) {
+        if (tex == null) {
+            return new int[]{0, 0};
+        }
+        if (info != null) {
+            if (tex == assets.strangerTex) {
+                return new int[]{info.strangerW, info.strangerH};
+            }
+            if (tex == assets.geraltTex || tex == assets.geraltEmotionTex) {
+                return new int[]{info.geraltW, info.geraltH};
+            }
+            if (tex == assets.dukeTex || tex == assets.dukeLaughTex) {
+                return new int[]{info.dukeW, info.dukeH};
+            }
+        }
+        return new int[]{tex.getWidth(), tex.getHeight()};
     }
 
     private static Color speakerGdxColor(IntroScript.DialogEntry entry) {
@@ -390,9 +509,12 @@ public final class GdxIntroView {
         return shop && shopTex != null ? shopTex : normalTex;
     }
 
-    private static IntroCharacterLayout.Rect morphRectToLayout(IntroMorphAnimation.IntroRect r) {
-        IntroCharacterLayout.Rect out = new IntroCharacterLayout.Rect();
-        out.set(Math.round(r.x), Math.round(r.y), Math.round(r.width), Math.round(r.height));
+    private static main.java.com.witcher.ui.intro.IntroVnUi.Rect toVnRect(IntroController.IntroRect r) {
+        main.java.com.witcher.ui.intro.IntroVnUi.Rect out = new main.java.com.witcher.ui.intro.IntroVnUi.Rect();
+        out.x = r.x;
+        out.y = r.y;
+        out.width = r.width;
+        out.height = r.height;
         return out;
     }
 }

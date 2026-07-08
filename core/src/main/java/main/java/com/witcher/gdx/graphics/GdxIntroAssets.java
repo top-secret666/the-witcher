@@ -34,6 +34,13 @@ public final class GdxIntroAssets implements Disposable {
     public Texture[] shopMaterializeFrames;
     public int[] shopMaterializeDelaysMs;
 
+    public int geraltLogicalW;
+    public int geraltLogicalH;
+    public int dukeLogicalW;
+    public int dukeLogicalH;
+    public int strangerLogicalW;
+    public int strangerLogicalH;
+
     public static GdxIntroAssets load() {
         GdxIntroAssets a = new GdxIntroAssets();
         a.kaerMorhenBgTex = loadFirst(
@@ -41,25 +48,28 @@ public final class GdxIntroAssets implements Disposable {
             "sprites/kaer_morhen_bg.png",
             "sprites/menu/menu_bg_custom.jpg",
             "sprites/menu/1x/menu_bg_custom.jpg");
-        a.geraltTex = loadPortrait(
+        PortraitLoad geralt = loadIntroPortrait(
             "sprites/screen saver/geralt_portrait.png",
-            "sprites/lavka/1x/geralt_portrait_shop.png",
             "sprites/lavka/geralt_portrait_shop.png");
-        a.dukeTex = loadPortrait(
+        a.geraltTex = geralt.texture;
+        a.geraltLogicalW = geralt.w;
+        a.geraltLogicalH = geralt.h;
+        PortraitLoad duke = loadIntroPortrait(
             "sprites/screen saver/duke_portrait.png",
-            "sprites/lavka/1x/duke_portrait_shop.png",
             "sprites/lavka/duke_portrait_shop.png");
-        a.strangerTex = loadPortrait(
-            "sprites/screen saver/stranger_shadow.png",
-            "sprites/lavka/1x/stranger.png",
-            "sprites/lavka/stranger.png");
+        a.dukeTex = duke.texture;
+        a.dukeLogicalW = duke.w;
+        a.dukeLogicalH = duke.h;
+        PortraitLoad stranger = loadIntroPortrait(
+            "sprites/screen saver/stranger_shadow.png");
+        a.strangerTex = stranger.texture;
+        a.strangerLogicalW = stranger.w;
+        a.strangerLogicalH = stranger.h;
         a.geraltEmotionTex = loadPortrait(
             "sprites/screen saver/geralt_emotion.png",
-            "sprites/lavka/1x/geralt_emotion_shop.png",
             "sprites/lavka/geralt_emotion_shop.png");
         a.dukeLaughTex = loadPortrait(
             "sprites/screen saver/duke_portrait_fun.png",
-            "sprites/lavka/1x/duke_portrait_fun_shop.png",
             "sprites/lavka/duke_portrait_fun_shop.png");
         a.geraltShopTex = PixelTextures.loadLavka("geralt_portrait_shop.png");
         a.dukeShopTex = PixelTextures.loadLavka("duke_portrait_shop.png");
@@ -69,6 +79,87 @@ public final class GdxIntroAssets implements Disposable {
         a.cursorTex = PixelTextures.loadMenu("menu_cursor.png");
         loadShopMaterializeGif(a);
         return a;
+    }
+
+    private static final class PortraitLoad {
+        final Texture texture;
+        final int w;
+        final int h;
+
+        PortraitLoad(Texture texture, int w, int h) {
+            this.texture = texture;
+            this.w = w;
+            this.h = h;
+        }
+    }
+
+    private static PortraitLoad loadIntroPortrait(String... paths) {
+        for (String path : paths) {
+            FileHandle file = PixelTextures.resolve(path);
+            if (file == null || !file.exists()) {
+                continue;
+            }
+            Pixmap source = new Pixmap(file);
+            try {
+                Pixmap trimmed = trimTransparent(removeNearBlack(source));
+                Texture texture = new Texture(trimmed);
+                RenderQuality.apply(texture);
+                trimmed.dispose();
+                com.badlogic.gdx.Gdx.app.log("GdxIntroAssets", "Portrait OK " + path
+                    + " -> " + texture.getWidth() + "x" + texture.getHeight());
+                return new PortraitLoad(texture, texture.getWidth(), texture.getHeight());
+            } finally {
+                source.dispose();
+            }
+        }
+        return new PortraitLoad(null, 0, 0);
+    }
+
+    private static Pixmap removeNearBlack(Pixmap src) {
+        Pixmap out = new Pixmap(src.getWidth(), src.getHeight(), Pixmap.Format.RGBA8888);
+        for (int y = 0; y < src.getHeight(); y++) {
+            for (int x = 0; x < src.getWidth(); x++) {
+                int rgba = src.getPixel(x, y);
+                int a = (rgba >>> 24) & 0xFF;
+                int r = (rgba >>> 16) & 0xFF;
+                int g = (rgba >>> 8) & 0xFF;
+                int b = rgba & 0xFF;
+                if (a == 0 || (r < 18 && g < 18 && b < 18)) {
+                    out.drawPixel(x, y, 0);
+                } else {
+                    out.drawPixel(x, y, (rgba & 0x00FFFFFF) | 0xFF000000);
+                }
+            }
+        }
+        return out;
+    }
+
+    private static Pixmap trimTransparent(Pixmap src) {
+        int w = src.getWidth();
+        int h = src.getHeight();
+        int minX = w;
+        int minY = h;
+        int maxX = -1;
+        int maxY = -1;
+        for (int y = 0; y < h; y++) {
+            for (int x = 0; x < w; x++) {
+                int a = (src.getPixel(x, y) >>> 24) & 0xFF;
+                if (a > 4) {
+                    minX = Math.min(minX, x);
+                    minY = Math.min(minY, y);
+                    maxX = Math.max(maxX, x);
+                    maxY = Math.max(maxY, y);
+                }
+            }
+        }
+        if (maxX < minX || maxY < minY) {
+            return src;
+        }
+        int tw = maxX - minX + 1;
+        int th = maxY - minY + 1;
+        Pixmap out = new Pixmap(tw, th, Pixmap.Format.RGBA8888);
+        out.drawPixmap(src, 0, 0, minX, minY, tw, th);
+        return out;
     }
 
     private static Texture loadFirst(String... paths) {
@@ -209,9 +300,9 @@ public final class GdxIntroAssets implements Disposable {
 
     public IntroAssetsInfo buildAssetsInfo() {
         return new IntroAssetsInfo(
-            texW(strangerTex), texH(strangerTex),
-            texW(geraltTex), texH(geraltTex),
-            texW(dukeTex), texH(dukeTex),
+            strangerLogicalW, strangerLogicalH,
+            geraltLogicalW, geraltLogicalH,
+            dukeLogicalW, dukeLogicalH,
             shopMaterializeFrames != null ? shopMaterializeFrames.length : 0,
             shopMaterializeDelaysMs,
             shopMaterializeFrames != null && shopMaterializeFrames.length > 0,

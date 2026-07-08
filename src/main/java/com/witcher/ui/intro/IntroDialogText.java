@@ -1,0 +1,68 @@
+package main.java.com.witcher.ui.intro;
+
+import main.java.com.witcher.ui.intro.view.IntroDialogLayout;
+import main.java.com.witcher.ui.intro.view.IntroLayout;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/** Перенос строк диалога интро — общий для Swing и LibGDX. */
+public final class IntroDialogText {
+
+    public static final int SPEECH_R = 220;
+    public static final int SPEECH_G = 190;
+    public static final int SPEECH_B = 100;
+
+    private IntroDialogText() {
+    }
+
+    public static int speechRgb() {
+        return IntroTheme.packRgb(SPEECH_R, SPEECH_G, SPEECH_B);
+    }
+
+    public static int textColorRgb(String speaker, int speakerColorRgb) {
+        return speaker == null ? speakerColorRgb : speechRgb();
+    }
+
+    public static List<String> buildVisibleLines(String visibleText, int maxWidthPx, int fontSize) {
+        List<String> lines = new ArrayList<>();
+        if (visibleText == null || visibleText.isEmpty()) {
+            lines.add("");
+            return lines;
+        }
+        for (String rawLine : visibleText.split("\n", -1)) {
+            lines.addAll(wrapLine(rawLine, maxWidthPx, fontSize));
+        }
+        return lines;
+    }
+
+    public static List<String> wrapLine(String line, int maxWidthPx, int fontSize) {
+        List<String> result = new ArrayList<>();
+        if (line == null || line.isEmpty()) {
+            result.add("");
+            return result;
+        }
+        float charW = Math.max(4f, fontSize * IntroLayout.VN_TEXT_WIDTH_FACTOR);
+        int maxChars = Math.max(8, Math.round(maxWidthPx / charW));
+        StringBuilder current = new StringBuilder();
+        for (String word : line.split("(?<=\\s)")) {
+            if (current.length() > 0 && current.length() + word.length() > maxChars) {
+                result.add(current.toString());
+                current = new StringBuilder();
+            }
+            current.append(word);
+        }
+        if (current.length() > 0) {
+            result.add(current.toString());
+        }
+        return result;
+    }
+
+    public static float lineHeight(int fontSize) {
+        return fontSize + 2f;
+    }
+
+    public static float maxLineSwingY(IntroDialogLayout.Layout layout) {
+        return layout.boxY + layout.boxH - layout.pad;
+    }
+}
