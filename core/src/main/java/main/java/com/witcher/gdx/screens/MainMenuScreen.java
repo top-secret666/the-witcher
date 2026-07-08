@@ -33,7 +33,6 @@ public class MainMenuScreen implements Screen {
 
     private static final float VW = WitcherGame.VIRTUAL_W;
     private static final float VH = WitcherGame.VIRTUAL_H;
-    private static final float TITLE_FONT_BASE = 15f;
     private static final int FB_W = (int) (VW * WitcherGame.PIXEL_SCALE);
     private static final int FB_H = (int) (VH * WitcherGame.PIXEL_SCALE);
 
@@ -245,7 +244,7 @@ public class MainMenuScreen implements Screen {
         if (assets == null) {
             return;
         }
-        BitmapFont font = fonts.title;
+        BitmapFont font = fonts.menuBold;
         for (int i = 0; i < controller.buttonCount(); i++) {
             Rectangle r = controller.buttonRect(i);
             int state = controller.buttonState(i);
@@ -257,16 +256,19 @@ public class MainMenuScreen implements Screen {
             if (label.isEmpty()) {
                 continue;
             }
-            float anchorX = i < MenuLayout.TEXT_ANCHOR_X.length ? MenuLayout.TEXT_ANCHOR_X[i] : 0.47f;
             float fontSize = Math.max(MenuLayout.TEXT_FONT_MIN, r.height * MenuLayout.TEXT_FONT_HEIGHT_RATIO);
-            float fontScale = fontSize / TITLE_FONT_BASE;
+            float fontScale = fontSize / fonts.menuBoldBaseSize();
             font.getData().setScale(fontScale);
             glyph.setText(font, label);
-            float tx = r.x + r.width * anchorX - glyph.width * 0.5f;
-            float ty = C.textBaseline(r.y + r.height * MenuLayout.TEXT_ANCHOR_Y);
+            float tx = r.x + (r.width - glyph.width) * 0.5f;
+            float ty = C.textBaseline(r.y + (r.height + font.getCapHeight()) * 0.5f - 1f);
             font.setColor(0f, 0f, 0f, 0.7f);
             font.draw(game.batch, label, tx + 1f, ty - 1f);
-            font.setColor(state == 2 ? 0.78f : 0.96f, state == 2 ? 0.67f : 0.86f, state == 2 ? 0.35f : 0.47f, 1f);
+            if (state == 2) {
+                font.setColor(200 / 255f, 170 / 255f, 90 / 255f, 1f);
+            } else {
+                font.setColor(245 / 255f, 220 / 255f, 120 / 255f, 1f);
+            }
             font.draw(game.batch, label, tx, ty);
             font.getData().setScale(1f);
         }
