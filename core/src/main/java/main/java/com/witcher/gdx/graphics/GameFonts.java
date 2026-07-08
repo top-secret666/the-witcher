@@ -92,26 +92,22 @@ public final class GameFonts implements Disposable {
         FreeTypeFontGenerator.FreeTypeFontParameter p = new FreeTypeFontGenerator.FreeTypeFontParameter();
         p.size = size;
         p.characters = FreeTypeFontGenerator.DEFAULT_CHARS + CYRILLIC;
-        p.hinting = FreeTypeFontGenerator.Hinting.Slight;
-        p.magFilter = com.badlogic.gdx.graphics.Texture.TextureFilter.Linear;
-        p.minFilter = com.badlogic.gdx.graphics.Texture.TextureFilter.Linear;
+        p.hinting = FreeTypeFontGenerator.Hinting.Full;
+        p.magFilter = RenderQuality.MAG;
+        p.minFilter = RenderQuality.MIN;
         if (bold) {
             p.borderWidth = 0.5f;
             p.borderColor = new com.badlogic.gdx.graphics.Color(0.08f, 0.05f, 0.02f, 0.85f);
         }
         BitmapFont font = generator.generateFont(p);
-        font.getRegion().getTexture().setFilter(
-            com.badlogic.gdx.graphics.Texture.TextureFilter.Linear,
-            com.badlogic.gdx.graphics.Texture.TextureFilter.Linear);
+        font.getRegion().getTexture().setFilter(RenderQuality.MIN, RenderQuality.MAG);
         return font;
     }
 
     private static BitmapFont fallback(float scale) {
         BitmapFont font = new BitmapFont();
         font.getData().setScale(scale);
-        font.getRegion().getTexture().setFilter(
-            com.badlogic.gdx.graphics.Texture.TextureFilter.Linear,
-            com.badlogic.gdx.graphics.Texture.TextureFilter.Linear);
+        font.getRegion().getTexture().setFilter(RenderQuality.MIN, RenderQuality.MAG);
         return font;
     }
 

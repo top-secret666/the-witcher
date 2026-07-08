@@ -196,7 +196,7 @@ public final class GdxArmourIconRegistry implements ShopEntryIcons {
         }
         BufferedImage dst = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = dst.createGraphics();
-        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
         g.drawImage(src, 0, 0, size, size, null);
         g.dispose();
         return dst;

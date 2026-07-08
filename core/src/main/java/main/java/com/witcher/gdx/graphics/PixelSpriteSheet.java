@@ -8,7 +8,7 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.utils.Disposable;
 
 /**
- * Пиксельный спрайт-лист — кадры с {@link Texture.TextureFilter#Nearest}.
+ * Сглаженный спрайт-лист — кадры с {@link RenderQuality}.
  * Загрузка только через {@link Pixmap} с диска (без consumePixmap у GPU-текстуры).
  */
 public final class PixelSpriteSheet implements Disposable {
@@ -47,7 +47,7 @@ public final class PixelSpriteSheet implements Disposable {
                 stripNearBlackInPlace(pixmap);
             }
             Texture texture = new Texture(pixmap);
-            texture.setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest);
+            RenderQuality.apply(texture);
 
             int fw = texture.getWidth() / cols;
             int fh = texture.getHeight() / rows;
@@ -128,7 +128,7 @@ public final class PixelSpriteSheet implements Disposable {
         }
         float prev = batch.getColor().a;
         batch.setColor(1f, 1f, 1f, alpha);
-        batch.draw(frames[currentFrame], Math.round(x), Math.round(y), Math.round(w), Math.round(h));
+        batch.draw(frames[currentFrame], x, y, w, h);
         batch.setColor(1f, 1f, 1f, prev);
     }
 

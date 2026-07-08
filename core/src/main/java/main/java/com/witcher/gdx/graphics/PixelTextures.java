@@ -14,7 +14,7 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
- * Загрузка и отрисовка пиксель-арт спрайтов без размытия.
+ * Загрузка и отрисовка спрайтов — сглаженный масштаб ({@link RenderQuality}).
  * Ищет файлы в рабочей папке (assets), в src/main/resources и в out/production.
  */
 public final class PixelTextures {
@@ -40,30 +40,30 @@ public final class PixelTextures {
     }
 
     /**
-     * Сначала {@code sprites/lavka/1x/…} (нарезка bake_lavka_assets.py), потом полный PNG.
+     * Сначала полный PNG ({@code sprites/lavka/…}), затем 1x-запасник — для сглаженного масштаба.
      */
     public static Texture loadLavka(String relativePath, String... extraFallbacks) {
-        String baked = "sprites/lavka/1x/" + relativePath;
         String full = "sprites/lavka/" + relativePath;
+        String baked = "sprites/lavka/1x/" + relativePath;
         if (extraFallbacks == null || extraFallbacks.length == 0) {
-            return loadFirst(baked, full);
+            return loadFirst(full, baked);
         }
         String[] all = new String[2 + extraFallbacks.length];
-        all[0] = baked;
-        all[1] = full;
+        all[0] = full;
+        all[1] = baked;
         System.arraycopy(extraFallbacks, 0, all, 2, extraFallbacks.length);
         return loadFirst(all);
     }
 
     public static BufferedImage loadLavkaBufferedImage(String relativePath, String... extraFallbacks) {
-        String baked = "sprites/lavka/1x/" + relativePath;
         String full = "sprites/lavka/" + relativePath;
+        String baked = "sprites/lavka/1x/" + relativePath;
         if (extraFallbacks == null || extraFallbacks.length == 0) {
-            return loadFirstBufferedImage(baked, full);
+            return loadFirstBufferedImage(full, baked);
         }
         String[] all = new String[2 + extraFallbacks.length];
-        all[0] = baked;
-        all[1] = full;
+        all[0] = full;
+        all[1] = baked;
         System.arraycopy(extraFallbacks, 0, all, 2, extraFallbacks.length);
         return loadFirstBufferedImage(all);
     }
@@ -113,14 +113,14 @@ public final class PixelTextures {
     }
 
     public static LoadedTexture loadLavkaMeta(String relativePath, String... extraFallbacks) {
-        String baked = "sprites/lavka/1x/" + relativePath;
         String full = "sprites/lavka/" + relativePath;
+        String baked = "sprites/lavka/1x/" + relativePath;
         if (extraFallbacks == null || extraFallbacks.length == 0) {
-            return loadFirstMeta(baked, full);
+            return loadFirstMeta(full, baked);
         }
         String[] all = new String[2 + extraFallbacks.length];
-        all[0] = baked;
-        all[1] = full;
+        all[0] = full;
+        all[1] = baked;
         System.arraycopy(extraFallbacks, 0, all, 2, extraFallbacks.length);
         return loadFirstMeta(all);
     }
@@ -149,6 +149,7 @@ public final class PixelTextures {
         }
         try {
             Texture texture = loadTextureFromFile(file);
+            RenderQuality.apply(texture);
             Gdx.app.log("PixelTextures", "OK " + path + " -> " + file.path()
                 + " (" + texture.getWidth() + "x" + texture.getHeight() + ")");
             return new LoadedTexture(texture, path, file.path());
@@ -168,7 +169,7 @@ public final class PixelTextures {
                 pixmap = rgba;
             }
             Texture texture = new Texture(pixmap);
-            texture.setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest);
+            RenderQuality.apply(texture);
             return texture;
         } finally {
             pixmap.dispose();
@@ -203,7 +204,7 @@ public final class PixelTextures {
         }
         Texture texture = new Texture(pixmap);
         pixmap.dispose();
-        texture.setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest);
+        RenderQuality.apply(texture);
         Gdx.app.log("PixelTextures", "Sozdan zapasnoj fon lavki " + width + "x" + height);
         return texture;
     }

@@ -34,6 +34,7 @@ public final class GdxShopView {
     private static final float VW = WitcherGame.VIRTUAL_W;
     private static final float VH = WitcherGame.VIRTUAL_H;
     private static final float DIALOG_BOTTOM_MARGIN = 18f;
+    private static final int SMALL_CROWN = 10;
 
     private static final Color DUKE_GOLD = new Color(218f / 255f, 165f / 255f, 32f / 255f, 1f);
     private static final Color SPEECH = new Color(220f / 255f, 190f / 255f, 100f / 255f, 1f);
@@ -153,7 +154,7 @@ public final class GdxShopView {
 
     private void drawBackground(SpriteBatch batch, float alpha) {
         if (assets.merchantBgScaled != null) {
-            PixelTextures.drawCoverBottom(batch, assets.merchantBgScaled, VW, VH, alpha);
+            PixelTextures.drawCover(batch, assets.merchantBgScaled, VW, VH, alpha);
         }
     }
 
@@ -204,17 +205,17 @@ public final class GdxShopView {
         if (sprite == null) {
             return;
         }
-        int targetH = Math.round(VH * 0.82f);
-        int scale = Math.max(1, targetH / sprite.getHeight());
-        int cw = sprite.getWidth() * scale;
-        int ch = sprite.getHeight() * scale;
+        float targetH = VH * 0.82f;
+        float scale = targetH / sprite.getHeight();
+        float cw = sprite.getWidth() * scale;
+        float ch = sprite.getHeight() * scale;
         float breathe = (float) Math.sin(ui.tick * 0.04 + (left ? 0 : 2)) * 1.5f;
         float top = dialogTop - ch + ch * 0.12f + breathe;
         float x = left ? -cw * 0.12f : VW - cw + cw * 0.12f;
         float y = bottomFromTop(top, ch);
         float prev = batch.getColor().a;
         batch.setColor(1f, 1f, 1f, 0.92f * alpha);
-        batch.draw(sprite, Math.round(x), Math.round(y), cw, ch);
+        batch.draw(sprite, x, y, cw, ch);
         batch.setColor(1f, 1f, 1f, prev);
     }
 
@@ -228,8 +229,7 @@ public final class GdxShopView {
         batch.setColor(1f, 1f, 1f, alpha);
 
         if (assets.hudBar != null) {
-            batch.draw(assets.hudBar, Math.round(layout.hudX), Math.round(hudBottom),
-                assets.hudBar.getWidth(), assets.hudBar.getHeight());
+            batch.draw(assets.hudBar, layout.hudX, hudBottom, layout.hudW, layout.hudH);
         }
 
         if (assets.dukeSealIconScaled != null) {
@@ -279,8 +279,8 @@ public final class GdxShopView {
         if (assets.catalogPanelScaled != null) {
             float panelY = bottomFromTop(layout.panelY + Math.round(reveal.panelSlideY), layout.panelH);
             batch.draw(assets.catalogPanelScaled,
-                Math.round(layout.panelX), Math.round(panelY),
-                assets.catalogPanelScaled.getWidth(), assets.catalogPanelScaled.getHeight());
+                layout.panelX, panelY,
+                layout.panelW, layout.panelH);
         }
         batch.setColor(1f, 1f, 1f, prev);
 
@@ -342,8 +342,8 @@ public final class GdxShopView {
             float prev = batch.getColor().a;
             batch.setColor(1f, 1f, 1f, cat.detailPanelAlpha);
             if (assets.catalogDetailPanel != null) {
-                batch.draw(assets.catalogDetailPanel, Math.round(px), Math.round(drawY),
-                    assets.catalogDetailPanel.getWidth(), assets.catalogDetailPanel.getHeight());
+                batch.draw(assets.catalogDetailPanel, px, drawY,
+                    assets.detailPanelW, assets.detailPanelH);
             }
             batch.setColor(1f, 1f, 1f, prev);
             drawCatalogRows(batch, shapes, px, py, cat.listInteractive);
@@ -537,7 +537,7 @@ public final class GdxShopView {
             glyph.setText(rowFont, price);
             float priceW = glyph.width;
             if (assets.crownIconSmall != null && !"···".equals(price)) {
-                priceW += assets.crownIconSmall.getWidth() + 2f;
+                priceW += SMALL_CROWN + 2f;
             }
             float priceX = x + rowW - priceW - 6f;
 
@@ -547,10 +547,9 @@ public final class GdxShopView {
             rowFont.draw(batch, label, x + 8f, textY);
 
             if (assets.crownIconSmall != null && !"···".equals(price)) {
-                float crownY = bottomFromTop(y + 6, assets.crownIconSmall.getHeight());
-                batch.draw(assets.crownIconSmall, Math.round(priceX), Math.round(crownY),
-                    assets.crownIconSmall.getWidth(), assets.crownIconSmall.getHeight());
-                priceX += assets.crownIconSmall.getWidth() + 2f;
+                float crownY = bottomFromTop(y + 6, SMALL_CROWN);
+                batch.draw(assets.crownIconSmall, priceX, crownY, SMALL_CROWN, SMALL_CROWN);
+                priceX += SMALL_CROWN + 2f;
             }
             rowFont.setColor(ROW_PRICE);
             rowFont.draw(batch, price, priceX, textY);

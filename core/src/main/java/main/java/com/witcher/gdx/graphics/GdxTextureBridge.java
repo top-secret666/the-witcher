@@ -75,7 +75,7 @@ public final class GdxTextureBridge {
                 }
             }
             Texture texture = new Texture(pixmap);
-            texture.setFilter(TextureFilter.Nearest, TextureFilter.Nearest);
+            texture.setFilter(RenderQuality.MIN, RenderQuality.MAG);
             IMAGE_TO_TEXTURE.put(image, texture);
             return texture;
         } finally {
