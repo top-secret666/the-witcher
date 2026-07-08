@@ -7,7 +7,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import main.java.com.witcher.gdx.graphics.DisplayMetrics;
 import main.java.com.witcher.gdx.graphics.GdxWindowAlign;
 import main.java.com.witcher.gdx.graphics.PixelFrameChrome;
-import main.java.com.witcher.gdx.screens.SplashScreen;
+import main.java.com.witcher.gdx.screens.MainMenuScreen;
 
 /**
  * Корневой класс LibGDX-версии. Постепенно заменит Swing {@code GameWindow}.
@@ -16,7 +16,7 @@ public class WitcherGame extends Game {
 
     public static final float VIRTUAL_W = 480f;
     public static final float VIRTUAL_H = 360f;
-    public static final int PIXEL_SCALE = 2;
+    public static final int PIXEL_SCALE = 3;
     public static final int WINDOW_W = (int) (VIRTUAL_W * PIXEL_SCALE);
     public static final int WINDOW_H = (int) (VIRTUAL_H * PIXEL_SCALE);
 
@@ -42,7 +42,7 @@ public class WitcherGame extends Game {
         GdxWindowAlign.ensureFramebuffer(FRAME_W, FRAME_H);
         DisplayMetrics.log("game-create");
         Gdx.input.setInputProcessor(frameChrome);
-        setScreen(new SplashScreen(this));
+        setScreen(new MainMenuScreen(this));
     }
 
     public void bindChromeFramebuffer(int width, int height) {

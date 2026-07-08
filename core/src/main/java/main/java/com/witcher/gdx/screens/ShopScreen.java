@@ -112,7 +112,7 @@ public class ShopScreen implements Screen {
 
         if (presenter.exitRequested()) {
             presenter.clearExitRequest();
-            game.setScreen(new BootScreen(game));
+            game.setScreen(new MainMenuScreen(game));
         }
     }
 

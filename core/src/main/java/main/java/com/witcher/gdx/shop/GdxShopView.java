@@ -371,8 +371,7 @@ public final class GdxShopView {
         int cx = x + w / 2;
         int drawW = Math.round(w * scaleX);
         int drawX = cx - drawW / 2;
-        float drawY = bottomFromTop(y, h);
-        drawItemCard(batch, item, drawX, (int) drawY, drawW, h, false, false, 1f,
+        drawItemCard(batch, item, drawX, y, drawW, h, false, false, 1f,
             priceForCard, cardArt, nameOverride, frame);
     }
 
