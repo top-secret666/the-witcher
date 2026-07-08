@@ -2,6 +2,7 @@ package main.java.com.witcher.gdx.graphics;
 
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.TextureData;
 import com.badlogic.gdx.graphics.Texture.TextureFilter;
 
 import java.awt.image.BufferedImage;
@@ -21,8 +22,11 @@ public final class GdxTextureBridge {
         if (texture == null) {
             return null;
         }
-        texture.getTextureData().prepare();
-        Pixmap pixmap = texture.getTextureData().consumePixmap();
+        TextureData data = texture.getTextureData();
+        if (!data.isPrepared()) {
+            data.prepare();
+        }
+        Pixmap pixmap = data.consumePixmap();
         try {
             int w = pixmap.getWidth();
             int h = pixmap.getHeight();

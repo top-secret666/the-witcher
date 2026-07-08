@@ -1,14 +1,12 @@
 package main.java.com.witcher.gdx.shop;
 
 import com.badlogic.gdx.graphics.Texture;
-import main.java.com.witcher.gdx.graphics.GdxTextureBridge;
 import main.java.com.witcher.gdx.graphics.PixelTextures;
 import main.java.com.witcher.ui.shop.ShopCategory;
 import main.java.com.witcher.ui.shop.ShopRuntimeAssets;
 
 import java.awt.image.BufferedImage;
 import java.util.EnumMap;
-import java.util.HashMap;
 import java.util.Map;
 
 import static main.java.com.witcher.ui.shop.view.ShopViewConstants.DIALOG_TEXT_ZONE;
@@ -95,7 +93,6 @@ public final class GdxShopRuntimeAssets implements ShopRuntimeAssets {
     public Texture walletPouch;
 
     private final Map<ShopCategory, BufferedImage> categoryIconCache = new EnumMap<>(ShopCategory.class);
-    private final Map<String, BufferedImage> textureIconCache = new HashMap<>();
 
     private GdxShopRuntimeAssets() {
         long t0 = System.currentTimeMillis();
@@ -132,9 +129,19 @@ public final class GdxShopRuntimeAssets implements ShopRuntimeAssets {
         for (int i = 0; i < 5; i++) {
             itemIcons[i] = loadLavka("icons/" + iconNames[i]);
         }
+        for (ShopCategory cat : ShopCategory.values()) {
+            if (cat.iconIndex >= 0 && cat.iconIndex < iconNames.length) {
+                categoryIconCache.put(cat,
+                    PixelTextures.loadLavkaBufferedImage("icons/" + iconNames[cat.iconIndex]));
+            }
+        }
 
         weaponIcon = loadLavka("icons/icon_weapon.png");
         setsIcon = loadLavka("icons/icon_armor_set.png");
+        categoryIconCache.put(ShopCategory.WEAPON,
+            PixelTextures.loadLavkaBufferedImage("icons/icon_weapon.png"));
+        categoryIconCache.put(ShopCategory.SETS,
+            PixelTextures.loadLavkaBufferedImage("icons/icon_armor_set.png"));
 
         int bagSize = 40;
         inventoryBagIcon = loadLavka("icons/icon_inventory_bag.png");
@@ -273,38 +280,7 @@ public final class GdxShopRuntimeAssets implements ShopRuntimeAssets {
 
     @Override
     public BufferedImage iconForCategory(ShopCategory cat) {
-        BufferedImage cached = categoryIconCache.get(cat);
-        if (cached != null) {
-            return cached;
-        }
-        Texture tex;
-        if (cat == ShopCategory.SETS) {
-            tex = setsIcon;
-        } else if (cat == ShopCategory.WEAPON) {
-            tex = weaponIcon;
-        } else if (cat.iconIndex >= 0 && cat.iconIndex < itemIcons.length) {
-            tex = itemIcons[cat.iconIndex];
-        } else {
-            return null;
-        }
-        BufferedImage img = tex != null ? cachedBufferedImage(tex) : null;
-        if (img != null) {
-            categoryIconCache.put(cat, img);
-        }
-        return img;
-    }
-
-    private BufferedImage cachedBufferedImage(Texture texture) {
-        String key = texture.toString();
-        BufferedImage cached = textureIconCache.get(key);
-        if (cached != null) {
-            return cached;
-        }
-        BufferedImage img = GdxTextureBridge.toBufferedImage(texture);
-        if (img != null) {
-            textureIconCache.put(key, img);
-        }
-        return img;
+        return categoryIconCache.get(cat);
     }
 
     public void dispose() {
@@ -347,7 +323,6 @@ public final class GdxShopRuntimeAssets implements ShopRuntimeAssets {
         disposeTex(statVialEndCap);
         disposeTex(walletPouch);
         categoryIconCache.clear();
-        textureIconCache.clear();
         if (instance == this) {
             instance = null;
         }

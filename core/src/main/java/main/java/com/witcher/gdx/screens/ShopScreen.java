@@ -75,17 +75,17 @@ public class ShopScreen implements Screen {
 
     @Override
     public void render(float delta) {
-        simAccumulator += delta;
-        while (simAccumulator >= SIM_STEP) {
-            simAccumulator -= SIM_STEP;
-            updateInput();
-        }
-
         GdxWindowAlign.refreshFramebufferCache();
         int bbw = GdxWindowAlign.backBufferW();
         int bbh = GdxWindowAlign.backBufferH();
         game.bindChromeFramebuffer(bbw, bbh);
         layout = GameFrameLayout.fromFramebuffer(bbw, bbh);
+
+        simAccumulator += delta;
+        while (simAccumulator >= SIM_STEP) {
+            simAccumulator -= SIM_STEP;
+            updateInput();
+        }
 
         layout.clearBackdrop(SHOP_BACKDROP.r, SHOP_BACKDROP.g, SHOP_BACKDROP.b);
 

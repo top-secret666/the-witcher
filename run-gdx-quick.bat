@@ -32,7 +32,7 @@ if exist "%ASSETS_SRC%" (
     "Copy-Item -Path '%ASSETS_SRC%\*' -Destination '%ASSETS_OUT%' -Recurse -Force -ErrorAction SilentlyContinue"
 )
 
-set "GDX_CP=%ROOT%desktop\build\classes\javac;%ROOT%core\build\classes\javac"
+set "GDX_CP=%ROOT%desktop\build\classes\javac;%ROOT%core\build\classes\javac;%ROOT%src\main\resources"
 for %%J in ("%ROOT%lib\gdx\*.jar") do set "GDX_CP=!GDX_CP!;%%~fJ"
 
 if not exist "%ASSETS_SRC%" (

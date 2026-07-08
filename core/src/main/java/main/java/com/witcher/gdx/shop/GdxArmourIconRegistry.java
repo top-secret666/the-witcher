@@ -1,7 +1,5 @@
 package main.java.com.witcher.gdx.shop;
 
-import com.badlogic.gdx.graphics.Texture;
-import main.java.com.witcher.gdx.graphics.GdxTextureBridge;
 import main.java.com.witcher.gdx.graphics.PixelTextures;
 import main.java.com.witcher.ui.shop.ShopCatalogEntry;
 import main.java.com.witcher.ui.shop.ShopCategory;
@@ -28,8 +26,6 @@ import java.util.Set;
 public final class GdxArmourIconRegistry implements ShopEntryIcons {
 
     private static final String MAP_PATH = "/armor_icon_map.properties";
-    private static final String BAKED_PREFIX = "icons/items/";
-    private static final String SRC_PREFIX = "icons/items/";
 
     private static GdxArmourIconRegistry instance;
 
@@ -177,28 +173,18 @@ public final class GdxArmourIconRegistry implements ShopEntryIcons {
     }
 
     private BufferedImage loadIcon(String fileName, int size) {
-        Texture baked = PixelTextures.loadLavka(BAKED_PREFIX + fileName);
-        if (baked != null) {
-            BufferedImage img = GdxTextureBridge.toBufferedImage(baked);
-            baked.dispose();
-            if (img != null) {
-                return scaleIfNeeded(img, size);
-            }
-        }
-        Texture src = PixelTextures.loadLavka(SRC_PREFIX + fileName);
-        if (src == null) {
+        BufferedImage img = PixelTextures.loadLavkaBufferedImage("icons/items/" + fileName);
+        if (img == null) {
             if (loggedMissing.add(fileName)) {
                 System.err.println("GdxArmourIconRegistry: missing file " + fileName);
             }
             return null;
         }
-        BufferedImage img = GdxTextureBridge.toBufferedImage(src);
-        src.dispose();
-        if (img == null) {
-            return null;
-        }
-        int[] bounds = PixelTextures.computeOpaqueBounds("sprites/lavka/" + SRC_PREFIX + fileName);
-        if (bounds != null) {
+        int[] bounds = PixelTextures.computeOpaqueBounds("sprites/lavka/icons/items/" + fileName);
+        if (bounds != null
+            && bounds[0] >= 0 && bounds[1] >= 0
+            && bounds[0] + bounds[2] <= img.getWidth()
+            && bounds[1] + bounds[3] <= img.getHeight()) {
             img = img.getSubimage(bounds[0], bounds[1], bounds[2], bounds[3]);
         }
         return scaleIfNeeded(img, size);

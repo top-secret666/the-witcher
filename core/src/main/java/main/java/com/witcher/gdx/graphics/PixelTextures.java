@@ -8,6 +8,8 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 
+import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferInt;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -51,6 +53,63 @@ public final class PixelTextures {
         all[1] = full;
         System.arraycopy(extraFallbacks, 0, all, 2, extraFallbacks.length);
         return loadFirst(all);
+    }
+
+    public static BufferedImage loadLavkaBufferedImage(String relativePath, String... extraFallbacks) {
+        String baked = "sprites/lavka/1x/" + relativePath;
+        String full = "sprites/lavka/" + relativePath;
+        if (extraFallbacks == null || extraFallbacks.length == 0) {
+            return loadFirstBufferedImage(baked, full);
+        }
+        String[] all = new String[2 + extraFallbacks.length];
+        all[0] = baked;
+        all[1] = full;
+        System.arraycopy(extraFallbacks, 0, all, 2, extraFallbacks.length);
+        return loadFirstBufferedImage(all);
+    }
+
+    public static BufferedImage loadFirstBufferedImage(String... paths) {
+        for (String path : paths) {
+            BufferedImage image = loadBufferedImageOptional(path);
+            if (image != null && image.getWidth() > 4 && image.getHeight() > 4) {
+                return image;
+            }
+        }
+        return null;
+    }
+
+    public static BufferedImage loadBufferedImageOptional(String path) {
+        FileHandle file = resolve(path);
+        if (file == null) {
+            return null;
+        }
+        Pixmap pixmap = new Pixmap(file);
+        try {
+            return pixmapToBufferedImage(pixmap);
+        } catch (Exception e) {
+            Gdx.app.error("PixelTextures", "Ne udalos prochitat PNG: " + path, e);
+            return null;
+        } finally {
+            pixmap.dispose();
+        }
+    }
+
+    public static BufferedImage pixmapToBufferedImage(Pixmap pixmap) {
+        int w = pixmap.getWidth();
+        int h = pixmap.getHeight();
+        BufferedImage image = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+        int[] pixels = ((DataBufferInt) image.getRaster().getDataBuffer()).getData();
+        for (int y = 0; y < h; y++) {
+            for (int x = 0; x < w; x++) {
+                int rgba = pixmap.getPixel(x, y);
+                int a = (rgba >>> 24) & 0xff;
+                int r = (rgba >>> 16) & 0xff;
+                int g = (rgba >>> 8) & 0xff;
+                int b = rgba & 0xff;
+                pixels[y * w + x] = (a << 24) | (r << 16) | (g << 8) | b;
+            }
+        }
+        return image;
     }
 
     public static LoadedTexture loadLavkaMeta(String relativePath, String... extraFallbacks) {

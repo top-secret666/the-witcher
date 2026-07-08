@@ -153,7 +153,7 @@ public final class GdxShopView {
 
     private void drawBackground(SpriteBatch batch, float alpha) {
         if (assets.merchantBgScaled != null) {
-            PixelTextures.drawContainInteger(batch, assets.merchantBgScaled, VW, VH, alpha, 0.94f);
+            PixelTextures.drawCoverBottom(batch, assets.merchantBgScaled, VW, VH, alpha);
         }
     }
 

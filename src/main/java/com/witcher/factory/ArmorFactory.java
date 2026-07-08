@@ -22,15 +22,55 @@ public class ArmorFactory {
     private static final Properties armorNames = new Properties();
 
     static {
-        try {
-            File file = new File("src/main/resources/armor_names.properties");
-            try (BufferedReader reader = new BufferedReader(
-                    new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
-                armorNames.load(reader);
+        try (InputStream in = openArmorNamesStream()) {
+            if (in == null) {
+                throw new FileNotFoundException("armor_names.properties not found");
             }
+            armorNames.load(new InputStreamReader(in, StandardCharsets.UTF_8));
         } catch (IOException e) {
             throw new RuntimeException("Failed to load armor names", e);
         }
+    }
+
+    private static InputStream openArmorNamesStream() throws IOException {
+        String assetsRoot = System.getProperty("witcher.assets", "").replace('\\', '/').trim();
+        if (assetsRoot.endsWith("/")) {
+            assetsRoot = assetsRoot.substring(0, assetsRoot.length() - 1);
+        }
+
+        String[] candidates = {
+            "armor_names.properties",
+            "../armor_names.properties",
+            "../../armor_names.properties",
+            "src/main/resources/armor_names.properties",
+        };
+
+        if (!assetsRoot.isEmpty()) {
+            File parent = new File(assetsRoot).getParentFile();
+            if (parent != null) {
+                File inResources = new File(parent, "armor_names.properties");
+                if (inResources.isFile()) {
+                    return new FileInputStream(inResources);
+                }
+            }
+            File inAssets = new File(assetsRoot, "armor_names.properties");
+            if (inAssets.isFile()) {
+                return new FileInputStream(inAssets);
+            }
+        }
+
+        for (String path : candidates) {
+            File file = new File(path);
+            if (file.isFile()) {
+                return new FileInputStream(file);
+            }
+        }
+
+        InputStream classpath = ArmorFactory.class.getResourceAsStream("/armor_names.properties");
+        if (classpath != null) {
+            return classpath;
+        }
+        return null;
     }
 
 
