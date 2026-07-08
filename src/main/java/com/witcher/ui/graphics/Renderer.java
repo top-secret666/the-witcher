@@ -17,6 +17,11 @@ public class Renderer extends JPanel {
 
     private Sprite sprite;
     private int spriteX, spriteY;
+    private final RetroPostProcessor retro = new RetroPostProcessor();
+
+    public RetroPostProcessor retro() {
+        return retro;
+    }
 
     public Renderer(int virtualW, int virtualH, int scale) {
         if (scale < 1) {
@@ -78,6 +83,7 @@ public class Renderer extends JPanel {
     }
 
     public void present() {
+        retro.apply(screen);
         Graphics2D g = displayFrame.createGraphics();
         try {
             PixelDraw.applyNearest(g);

@@ -138,6 +138,11 @@ public class GameWindow {
         renderer.addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_F8) {
+                    renderer.retro().cyclePreset();
+                    return;
+                }
+
                 if (introActive) {
                     int code = e.getKeyCode();
                     if (code == KeyEvent.VK_ENTER || code == KeyEvent.VK_SPACE) {
@@ -590,6 +595,7 @@ public class GameWindow {
                     introActive = false;
                     shopActive = true;
                     shopScreen = new ShopScreen();
+                    renderer.retro().setPreset(RetroPostProcessor.Preset.SNES);
                     useHiddenCursor();
                 }
             } else if (shopActive) {
