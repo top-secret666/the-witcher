@@ -20,11 +20,12 @@ public final class GdxRetroPostProcessor {
         if (w <= 0 || h <= 0) {
             return;
         }
-        brighten(frame, w, h, 1.02f, 4);
-        drawScanlines(frame, w, h, 0.02f, 3);
-        drawVignette(frame, w, h, 0.08f);
-        warmTint(frame, w, h, 0.012f);
-        drawGrain(frame, w, h, 0.006f);
+        brighten(frame, w, h, 1.025f, 5);
+        drawScanlines(frame, w, h, 0.015f, 4);
+        drawVignette(frame, w, h, 0.06f);
+        warmTint(frame, w, h, 0.01f);
+        drawGrain(frame, w, h, 0.004f);
+        pixelClarity(frame, w, h, 0.38f);
     }
 
     private static void warmTint(Pixmap frame, int w, int h, float amount) {
@@ -113,6 +114,56 @@ public final class GdxRetroPostProcessor {
                 write(frame, x, y, c);
             }
         }
+    }
+
+    /** Чёткость пиксель-арта — порт Swing {@code RetroPostProcessor.pixelClarity}. */
+    private static void pixelClarity(Pixmap frame, int w, int h, float amount) {
+        if (amount <= 0f || w < 3 || h < 3) {
+            return;
+        }
+        int[] src = new int[w * h];
+        int[] dst = new int[w * h];
+        for (int y = 0; y < h; y++) {
+            for (int x = 0; x < w; x++) {
+                src[y * w + x] = frame.getPixel(x, y);
+            }
+        }
+        for (int y = 1; y < h - 1; y++) {
+            for (int x = 1; x < w - 1; x++) {
+                int i = y * w + x;
+                int rgba = src[i];
+                if (!visible(rgba)) {
+                    dst[i] = rgba;
+                    continue;
+                }
+                int r = clarityChannel(src, i, w, 24, amount);
+                int g = clarityChannel(src, i, w, 16, amount);
+                int b = clarityChannel(src, i, w, 8, amount);
+                int a = rgba & 0xff;
+                dst[i] = rgba(r, g, b, a < 4 ? 255 : a);
+            }
+        }
+        for (int y = 1; y < h - 1; y++) {
+            for (int x = 1; x < w - 1; x++) {
+                frame.drawPixel(x, y, dst[y * w + x]);
+            }
+        }
+    }
+
+    private static int clarityChannel(int[] src, int i, int w, int shift, float amount) {
+        int c = (src[i] >>> shift) & 0xff;
+        int blur = ((src[i - 1] >>> shift) & 0xff)
+            + ((src[i + 1] >>> shift) & 0xff)
+            + ((src[i - w] >>> shift) & 0xff)
+            + ((src[i + w] >>> shift) & 0xff);
+        blur /= 4;
+        int edge = c - blur;
+        if (Math.abs(edge) < 4) {
+            return c;
+        }
+        int delta = (int) (edge * amount);
+        delta = Math.max(-8, Math.min(8, delta));
+        return clamp(c + delta);
     }
 
     private static void brighten(Pixmap frame, int w, int h, float gain, int lift) {

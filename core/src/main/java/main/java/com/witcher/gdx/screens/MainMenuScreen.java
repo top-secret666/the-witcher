@@ -22,21 +22,20 @@ import main.java.com.witcher.gdx.graphics.GdxMenuCursor;
 import main.java.com.witcher.gdx.graphics.GdxRetroPostProcessor;
 import main.java.com.witcher.gdx.graphics.GdxWindowAlign;
 import main.java.com.witcher.gdx.graphics.PixelTextures;
-import main.java.com.witcher.gdx.graphics.RenderQuality;
 import main.java.com.witcher.gdx.graphics.SwingCoords;
 import main.java.com.witcher.gdx.graphics.SwingViewport;
 import main.java.com.witcher.gdx.layout.MenuLayout;
 
 /**
- * LibGDX-меню: логика {@link MainMenuController}, рендер 480×360 + ретро-фильтр → fullscreen.
+ * LibGDX-меню: логика {@link MainMenuController}, рендер 480×360×scale + ретро → fullscreen.
  */
 public class MainMenuScreen implements Screen {
 
     private static final float VW = WitcherGame.VIRTUAL_W;
     private static final float VH = WitcherGame.VIRTUAL_H;
     private static final float TITLE_FONT_BASE = 15f;
-    private static final int FB_W = (int) VW;
-    private static final int FB_H = (int) VH;
+    private static final int FB_W = (int) (VW * WitcherGame.PIXEL_SCALE);
+    private static final int FB_H = (int) (VH * WitcherGame.PIXEL_SCALE);
 
     private final WitcherGame game;
     private final MainMenuController controller = new MainMenuController();
@@ -66,7 +65,7 @@ public class MainMenuScreen implements Screen {
         assets = GdxMenuAssets.load();
         fbo = new FrameBuffer(Pixmap.Format.RGBA8888, FB_W, FB_H, false);
         retroTexture = new Texture(FB_W, FB_H, Pixmap.Format.RGBA8888);
-        RenderQuality.apply(retroTexture);
+        retroTexture.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
         game.frameChrome.setVisible(false);
         GdxMenuCursor.hideForMenu();
         Gdx.input.setInputProcessor(new InputMultiplexer(game.frameChrome));
