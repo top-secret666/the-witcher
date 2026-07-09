@@ -59,7 +59,7 @@ public final class IntroDialogText {
     }
 
     public static float lineHeight(int fontSize) {
-        return fontSize + 2f;
+        return fontSize + 3f;
     }
 
     public static float maxLineSwingY(IntroDialogLayout.Layout layout) {
