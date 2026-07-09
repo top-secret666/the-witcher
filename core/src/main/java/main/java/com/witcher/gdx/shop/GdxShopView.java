@@ -249,15 +249,19 @@ public final class GdxShopView {
         }
 
         if (assets.dukeSealIconScaled != null) {
-            int seal = assets.dukeSealSize;
-            int sealX = layout.hudX + 12;
-            float sealY = C.rectY(hudY + (layout.hudH - seal) / 2f, seal);
-            batch.draw(assets.dukeSealIconScaled, sealX, Math.round(sealY), seal, seal);
+            int sealW = main.java.com.witcher.ui.shop.view.ShopViewConstants.HUD_DUKE_SEAL_W;
+            int sealH = main.java.com.witcher.ui.shop.view.ShopViewConstants.HUD_DUKE_SEAL_H;
+            int margin = main.java.com.witcher.ui.shop.view.ShopViewConstants.HUD_SEAL_MARGIN;
+            float sealY = C.rectY(hudY + (layout.hudH - sealH) / 2f, sealH);
+            batch.draw(assets.dukeSealIconScaled, layout.hudX + margin, Math.round(sealY), sealW, sealH);
+            batch.draw(assets.dukeSealIconScaled,
+                layout.hudX + layout.hudW - sealW - margin, Math.round(sealY), sealW, sealH);
         }
 
         String wallet = presenter.walletHudAmountText();
         String suffix = presenter.model().walletSuffix();
-        int crownSize = 18;
+        int crownW = main.java.com.witcher.ui.shop.view.ShopViewConstants.HUD_CROWN_W;
+        int crownH = main.java.com.witcher.ui.shop.view.ShopViewConstants.HUD_CROWN_H;
         BitmapFont wFont = fonts.ui;
         glyph.setText(wFont, wallet);
         float walletW = glyph.width;
@@ -265,14 +269,14 @@ public final class GdxShopView {
         float suffixW = glyph.width;
         float blockW = walletW + suffixW;
         if (assets.crownIconScaled != null) {
-            blockW += crownSize + 4f;
+            blockW += crownW + 4f;
         }
         float blockX = layout.hudX + (layout.hudW - blockW) * 0.5f;
         float textX = blockX;
         if (assets.crownIconScaled != null) {
-            float crownY = C.rectY(hudY + (layout.hudH - crownSize) * 0.5f, crownSize);
-            batch.draw(assets.crownIconScaled, blockX, Math.round(crownY), crownSize, crownSize);
-            textX = blockX + crownSize + 4f;
+            float crownY = C.rectY(hudY + (layout.hudH - crownH) * 0.5f, crownH);
+            batch.draw(assets.crownIconScaled, blockX, Math.round(crownY), crownW, crownH);
+            textX = blockX + crownW + 4f;
         }
         float walletY = C.textBaseline(hudY + (layout.hudH + glyph.height) * 0.5f - 2f);
         wFont.setColor(WALLET.r, WALLET.g, WALLET.b, alpha);

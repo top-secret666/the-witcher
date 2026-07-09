@@ -51,12 +51,16 @@ public final class ShopViewConstants {
     public static final int TOP_ROW_COLS = 5;
     public static final int BOTTOM_ROW_COLS = 2;
 
-    /** Минимальная высота HUD; фактическая — по пропорциям арта (≈82 при ширине 380). */
+    /** Минимальная высота HUD; фактическая — по пропорциям арта. */
     public static final int HUD_H = 72;
-    public static final int HUD_CROWN_W = 26;
-    public static final int HUD_CROWN_H = 30;
-    public static final int HUD_DUKE_SEAL_W = 42;
-    public static final int HUD_DUKE_SEAL_H = 50;
+    /** Чуть меньше полной ширины панели (380). */
+    public static final float HUD_BAR_SCALE = 0.90f;
+    public static final int HUD_SEAL_MARGIN = 10;
+
+    public static final int HUD_CROWN_W = 24;
+    public static final int HUD_CROWN_H = 28;
+    public static final int HUD_DUKE_SEAL_W = 38;
+    public static final int HUD_DUKE_SEAL_H = 46;
 
     /** Запекание LibGDX: 2× слота (Renderer pixelScale=2). */
     public static int hudIconBakePx(int slotW, int slotH) {

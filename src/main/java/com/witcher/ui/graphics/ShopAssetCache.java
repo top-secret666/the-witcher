@@ -118,7 +118,7 @@ public final class ShopAssetCache implements ShopRuntimeAssets {
         long t0 = System.currentTimeMillis();
         boolean baked = probeBaked();
 
-        hudW = panelW;
+        hudW = Math.round(panelW * ShopViewConstants.HUD_BAR_SCALE);
         hudX = (480 - hudW) / 2;
         hudBar = loadHudBarUniform(hudW);
         hudH = hudBar != null ? hudBar.getHeight() : ShopViewConstants.HUD_H;

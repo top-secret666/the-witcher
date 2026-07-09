@@ -955,11 +955,7 @@ public final class ShopSwingView implements ShopView {
         }
 
         if (assets.dukeSealIconScaled != null) {
-            int sealW = ShopViewConstants.HUD_DUKE_SEAL_W;
-            int sealH = ShopViewConstants.HUD_DUKE_SEAL_H;
-            int sealX = (layout.hudX + 10) & ~1;
-            int sealY = (hudY + (layout.hudH - sealH) / 2) & ~1;
-            drawHudPlaqueIcon(g, assets.dukeSealIconScaled, sealX, sealY, sealW, sealH);
+            drawHudDukeSeals(g, layout, hudY, assets.dukeSealIconScaled);
         }
 
         String wallet = presenter.walletHudAmountText();
@@ -985,7 +981,31 @@ public final class ShopSwingView implements ShopView {
         int walletY = hudY + (layout.hudH + fm.getAscent()) / 2 - 2;
         ShopUiDraw.drawOutlinedText(g, wallet, textX, walletY, new Color(255, 230, 150));
         ShopUiDraw.drawOutlinedText(g, suffix, textX + fm.stringWidth(wallet), walletY, new Color(200, 180, 120));
+
+        if (assets.dukeSealIconScaled != null) {
+            drawHudDukeSealRight(g, layout, hudY, assets.dukeSealIconScaled);
+        }
         g.setComposite(prev);
+    }
+
+    /** Печать герцога слева. */
+    private static void drawHudDukeSeals(Graphics2D g, ShopLayout layout, int hudY, BufferedImage seal) {
+        int sealW = ShopViewConstants.HUD_DUKE_SEAL_W;
+        int sealH = ShopViewConstants.HUD_DUKE_SEAL_H;
+        int margin = ShopViewConstants.HUD_SEAL_MARGIN;
+        int sealY = (hudY + (layout.hudH - sealH) / 2) & ~1;
+        int sealX = (layout.hudX + margin) & ~1;
+        drawHudPlaqueIcon(g, seal, sealX, sealY, sealW, sealH);
+    }
+
+    /** Печать справа — перекрывает декоративную корону на арте плашки. */
+    private static void drawHudDukeSealRight(Graphics2D g, ShopLayout layout, int hudY, BufferedImage seal) {
+        int sealW = ShopViewConstants.HUD_DUKE_SEAL_W;
+        int sealH = ShopViewConstants.HUD_DUKE_SEAL_H;
+        int margin = ShopViewConstants.HUD_SEAL_MARGIN;
+        int sealY = (hudY + (layout.hudH - sealH) / 2) & ~1;
+        int sealX = (layout.hudX + layout.hudW - sealW - margin) & ~1;
+        drawHudPlaqueIcon(g, seal, sealX, sealY, sealW, sealH);
     }
 
     private void drawWalletRevealPouch(Graphics2D g, ShopLayout layout) {

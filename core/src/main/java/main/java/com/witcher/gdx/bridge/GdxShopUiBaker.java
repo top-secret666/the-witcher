@@ -18,8 +18,8 @@ import java.util.Map;
 public final class GdxShopUiBaker {
 
     public static final String KEY_CARD_BACK = "shop_card_back@166x249";
-    public static final String KEY_HUD_CROWN = "hud.icon_crown@60";
-    public static final String KEY_HUD_DUKE_SEAL = "hud.icon_duke_seal@100";
+    public static final String KEY_HUD_CROWN = "hud.icon_crown@56";
+    public static final String KEY_HUD_DUKE_SEAL = "hud.icon_duke_seal@92";
 
     /** Запекание в 2× виртуального размера (Renderer pixelScale=2 → 1:1 на displayFrame). */
     public static final int HUD_CROWN_PX = hudIconBakePx(HUD_CROWN_W, HUD_CROWN_H);

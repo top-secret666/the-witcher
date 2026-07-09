@@ -11,8 +11,8 @@ public final class ShopUiAssetsFactory {
 
     public static final String KEY_CARD_BACK = "shop_card_back@166x249";
     /** Только HUD-плашка. */
-    public static final String KEY_HUD_CROWN = "hud.icon_crown@60";
-    public static final String KEY_HUD_DUKE_SEAL = "hud.icon_duke_seal@100";
+    public static final String KEY_HUD_CROWN = "hud.icon_crown@56";
+    public static final String KEY_HUD_DUKE_SEAL = "hud.icon_duke_seal@92";
 
     private ShopUiAssetsFactory() {
     }
