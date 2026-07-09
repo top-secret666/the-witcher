@@ -30,6 +30,12 @@ public class SplashScreen {
     private int holdTimer = 0;
     private int tick = 0;
 
+    /** Прямоугольник логотипа (для дымка). */
+    private int logoX;
+    private int logoY;
+    private int logoDrawW;
+    private int logoDrawH;
+
     // Атмосфера
     private final List<SmokePuff> smokePuffs = new ArrayList<>();
     private BufferedImage grain;
@@ -97,14 +103,28 @@ public class SplashScreen {
         particles.removeIf(p -> !p.alive);
         for (Particle p : particles) p.update();
 
-        // Дымок от стойки (центр-низ), небольшой
-        if (tick % 8 == 0 && alpha > 0.25f && smokePuffs.size() < 12) {
-            float px = VIRTUAL_W * 0.40f + rng.nextFloat() * VIRTUAL_W * 0.20f;
-            float py = VIRTUAL_H * 0.60f + rng.nextFloat() * VIRTUAL_H * 0.10f;
-            float vx = (rng.nextFloat() - 0.5f) * 0.14f;
-            float vy = -0.12f - rng.nextFloat() * 0.20f;
-            int life = 90 + rng.nextInt(70);
-            int r = 4 + rng.nextInt(5);
+        updateLogoLayout(VIRTUAL_W, VIRTUAL_H);
+
+        // Небольшой дымок у логотипа (снизу и по бокам)
+        if (tick % 6 == 0 && alpha > 0.2f && logoDrawW > 0 && smokePuffs.size() < 10) {
+            boolean leftSide = rng.nextBoolean();
+            float px = leftSide
+                ? logoX - 6f - rng.nextFloat() * 14f
+                : logoX + logoDrawW + 6f + rng.nextFloat() * 14f;
+            float py = logoY + logoDrawH * 0.55f + rng.nextFloat() * logoDrawH * 0.42f;
+            float vx = leftSide ? 0.04f + rng.nextFloat() * 0.06f : -(0.04f + rng.nextFloat() * 0.06f);
+            float vy = -0.06f - rng.nextFloat() * 0.12f;
+            int life = 80 + rng.nextInt(60);
+            float r = 3f + rng.nextFloat() * 4f;
+            smokePuffs.add(new SmokePuff(px, py, vx, vy, life, r));
+        }
+        if (tick % 9 == 0 && alpha > 0.2f && logoDrawW > 0 && smokePuffs.size() < 10) {
+            float px = logoX + logoDrawW * 0.30f + rng.nextFloat() * logoDrawW * 0.40f;
+            float py = logoY + logoDrawH + 2f + rng.nextFloat() * 8f;
+            float vx = (rng.nextFloat() - 0.5f) * 0.08f;
+            float vy = -0.10f - rng.nextFloat() * 0.14f;
+            int life = 90 + rng.nextInt(50);
+            float r = 4f + rng.nextFloat() * 5f;
             smokePuffs.add(new SmokePuff(px, py, vx, vy, life, r));
         }
         smokePuffs.removeIf(p -> !p.alive);
@@ -164,7 +184,7 @@ public class SplashScreen {
 
         // === ЛОГОТИП СВЕРХУ ПО ЦЕНТРУ (анимированный) ===
         if (logoAnim != null && alpha > 0.05f) {
-            // Тайл ~1024×682. Масштаб: ширина до 75% экрана, но не больше 28% высоты
+            updateLogoLayout(sw, sh);
             float s = Math.min((float)(sw * 0.75f) / logoAnim.getFrameWidth(), (float)(sh * 0.28f) / logoAnim.getFrameHeight());
             int drawW = Math.max(1, Math.round(logoAnim.getFrameWidth() * s));
             int drawH = Math.max(1, Math.round(logoAnim.getFrameHeight() * s));
@@ -178,6 +198,9 @@ public class SplashScreen {
             g.setComposite(prev);
             // Анимированный логотип
             logoAnim.draw(g, lx, ly, drawW, drawH, alpha);
+
+            // Дымок сразу у логотипа (поверх фона, рядом с табличкой)
+            drawSmokePuffs(g, alpha);
         }
 
         // === УТОПЕЦ СЛЕВА (выглядывает из-за края, покачивается) ===
@@ -225,9 +248,6 @@ public class SplashScreen {
 
         // === ЧАСТИЦЫ ===
         for (Particle p : particles) p.draw(g);
-
-        // === ДЫМ ===
-        for (SmokePuff p : smokePuffs) p.draw(g);
 
         // === ТЁМНАЯ ПОЛОСА ВНИЗУ (только для прогресс-бара) ===
         int barZoneH = 28;
@@ -321,6 +341,30 @@ public class SplashScreen {
         loadProgress = 100;
     }
 
+    private void updateLogoLayout(int sw, int sh) {
+        if (logoAnim == null) {
+            logoDrawW = 0;
+            logoDrawH = 0;
+            return;
+        }
+        float s = Math.min((sw * 0.75f) / logoAnim.getFrameWidth(), (sh * 0.28f) / logoAnim.getFrameHeight());
+        logoDrawW = Math.max(1, Math.round(logoAnim.getFrameWidth() * s));
+        logoDrawH = Math.max(1, Math.round(logoAnim.getFrameHeight() * s));
+        logoX = (sw - logoDrawW) / 2;
+        logoY = (int) (sh * 0.02f);
+    }
+
+    private void drawSmokePuffs(Graphics2D g, float sceneAlpha) {
+        if (smokePuffs.isEmpty() || sceneAlpha <= 0.05f) {
+            return;
+        }
+        Composite scene = g.getComposite();
+        for (SmokePuff p : smokePuffs) {
+            p.draw(g, sceneAlpha);
+        }
+        g.setComposite(scene);
+    }
+
     private static float clamp(float v, float min, float max) {
         return Math.max(min, Math.min(max, v));
     }
@@ -379,10 +423,10 @@ public class SplashScreen {
             if (life <= 0) alive = false;
         }
 
-        void draw(Graphics2D g) {
+        void draw(Graphics2D g, float sceneAlpha) {
             float t = 1f - (life / (float) maxLife);
-            float a = (float) (Math.sin(t * Math.PI));
-            if (a <= 0.02f) {
+            float a = (float) (Math.sin(t * Math.PI)) * sceneAlpha;
+            if (a <= 0.03f) {
                 return;
             }
 
@@ -394,16 +438,17 @@ public class SplashScreen {
             Object prevAa = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
             g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, a * 0.10f));
-            g.setColor(new Color(220, 210, 195));
-            g.fillOval(cx - rr - 3, cy - rr - 1, (rr + 3) * 2, (rr + 1) * 2);
+            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, a * 0.22f));
+            g.setColor(new Color(235, 225, 210));
+            g.fillOval(cx - rr - 4, cy - rr - 2, (rr + 4) * 2, (rr + 2) * 2);
 
-            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, a * 0.18f));
-            g.setColor(SMOKE);
+            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, a * 0.32f));
+            g.setColor(new Color(200, 190, 175));
             g.fillOval(cx - rr, cy - rr, rr * 2, rr * 2);
 
-            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, a * 0.09f));
-            g.fillOval(cx - rr + 4, cy - rr - 2, Math.max(4, rr + rr - 2), Math.max(4, rr + rr - 4));
+            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, a * 0.14f));
+            g.setColor(new Color(180, 170, 155));
+            g.fillOval(cx - rr + 3, cy - rr - 3, Math.max(4, rr + rr - 1), Math.max(4, rr + rr - 3));
 
             g.setComposite(prevC);
             if (prevAa != null) {

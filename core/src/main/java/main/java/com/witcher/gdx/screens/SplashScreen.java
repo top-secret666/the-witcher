@@ -224,14 +224,30 @@ public class SplashScreen implements Screen {
             }
         }
 
-        if (tick % 10 == 0 && DRAW_SMOKE && alpha > 0.25f) {
-            float px = 35 + rng.nextFloat() * 410;
-            float py = VH - (90 + rng.nextFloat() * 70);
-            float vx = (rng.nextFloat() - 0.5f) * 0.18f;
-            float vy = -(0.12f + rng.nextFloat() * 0.22f);
-            int life = 120 + rng.nextInt(120);
-            float r = 4 + rng.nextInt(6);
-            smokePuffs.add(new SmokePuff(px, py, vx, vy, life, r));
+        if (tick % 6 == 0 && DRAW_SMOKE && alpha > 0.2f && logoAnim != null && smokePuffs.size < 10) {
+            float s = Math.min((VW * 0.75f) / logoAnim.getFrameWidth(), (VH * 0.28f) / logoAnim.getFrameHeight());
+            float drawW = Math.max(1f, logoAnim.getFrameWidth() * s);
+            float drawH = Math.max(1f, logoAnim.getFrameHeight() * s);
+            float logoLeft = (VW - drawW) * 0.5f;
+            float logoBottom = VH - VH * 0.02f - drawH;
+            boolean leftSide = rng.nextBoolean();
+            float px = leftSide ? logoLeft - 8f - rng.nextFloat() * 12f : logoLeft + drawW + 8f + rng.nextFloat() * 12f;
+            float py = logoBottom + drawH * 0.45f + rng.nextFloat() * drawH * 0.35f;
+            float vx = leftSide ? 0.05f + rng.nextFloat() * 0.07f : -(0.05f + rng.nextFloat() * 0.07f);
+            float vy = 0.08f + rng.nextFloat() * 0.14f;
+            smokePuffs.add(new SmokePuff(px, py, vx, vy, 80 + rng.nextInt(60), 3f + rng.nextFloat() * 4f));
+        }
+        if (tick % 9 == 0 && DRAW_SMOKE && alpha > 0.2f && logoAnim != null && smokePuffs.size < 10) {
+            float s = Math.min((VW * 0.75f) / logoAnim.getFrameWidth(), (VH * 0.28f) / logoAnim.getFrameHeight());
+            float drawW = Math.max(1f, logoAnim.getFrameWidth() * s);
+            float drawH = Math.max(1f, logoAnim.getFrameHeight() * s);
+            float logoLeft = (VW - drawW) * 0.5f;
+            float logoBottom = VH - VH * 0.02f - drawH;
+            float px = logoLeft + drawW * 0.30f + rng.nextFloat() * drawW * 0.40f;
+            float py = logoBottom - 2f - rng.nextFloat() * 8f;
+            float vx = (rng.nextFloat() - 0.5f) * 0.08f;
+            float vy = 0.10f + rng.nextFloat() * 0.16f;
+            smokePuffs.add(new SmokePuff(px, py, vx, vy, 90 + rng.nextInt(50), 4f + rng.nextFloat() * 5f));
         }
         for (int i = smokePuffs.size - 1; i >= 0; i--) {
             SmokePuff p = smokePuffs.get(i);
