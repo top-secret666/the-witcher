@@ -34,7 +34,7 @@ public class SplashScreen implements Screen {
     private static final Color BAR_BORDER = new Color(140f / 255f, 100f / 255f, 35f / 255f, 1f);
     private static final Color WARM_LIGHT = new Color(1f, 170f / 255f, 85f / 255f, 1f);
     private static final Color SPLASH_BACKDROP = new Color(18f / 255f, 12f / 255f, 8f / 255f, 1f);
-    private static final Color SMOKE = new Color(190f / 255f, 180f / 255f, 165f / 255f, 1f);
+    private static final Color SMOKE = new Color(210f / 255f, 205f / 255f, 195f / 255f, 1f);
     private static final boolean DRAW_SMOKE = true;
 
     /** Скорость загрузки (медленнее, чем было). */
@@ -70,6 +70,11 @@ public class SplashScreen implements Screen {
 
     private final Array<Particle> particles = new Array<>();
     private final Array<SmokePuff> smokePuffs = new Array<>();
+    private BgGutters smokeGutters = BgGutters.none();
+
+    private int logoDrawW;
+    private int logoDrawH;
+    private float logoTopY;
 
     private boolean metricsLoggedAfterDraw;
 
@@ -224,34 +229,15 @@ public class SplashScreen implements Screen {
             }
         }
 
-        if (tick % 6 == 0 && DRAW_SMOKE && alpha > 0.2f && logoAnim != null && smokePuffs.size < 10) {
-            float s = Math.min((VW * 0.75f) / logoAnim.getFrameWidth(), (VH * 0.28f) / logoAnim.getFrameHeight());
-            float drawW = Math.max(1f, logoAnim.getFrameWidth() * s);
-            float drawH = Math.max(1f, logoAnim.getFrameHeight() * s);
-            float logoLeft = (VW - drawW) * 0.5f;
-            float logoBottom = VH - VH * 0.02f - drawH;
-            boolean leftSide = rng.nextBoolean();
-            float px = leftSide ? logoLeft - 8f - rng.nextFloat() * 12f : logoLeft + drawW + 8f + rng.nextFloat() * 12f;
-            float py = logoBottom + drawH * 0.45f + rng.nextFloat() * drawH * 0.35f;
-            float vx = leftSide ? 0.05f + rng.nextFloat() * 0.07f : -(0.05f + rng.nextFloat() * 0.07f);
-            float vy = 0.08f + rng.nextFloat() * 0.14f;
-            smokePuffs.add(new SmokePuff(px, py, vx, vy, 80 + rng.nextInt(60), 3f + rng.nextFloat() * 4f));
-        }
-        if (tick % 9 == 0 && DRAW_SMOKE && alpha > 0.2f && logoAnim != null && smokePuffs.size < 10) {
-            float s = Math.min((VW * 0.75f) / logoAnim.getFrameWidth(), (VH * 0.28f) / logoAnim.getFrameHeight());
-            float drawW = Math.max(1f, logoAnim.getFrameWidth() * s);
-            float drawH = Math.max(1f, logoAnim.getFrameHeight() * s);
-            float logoLeft = (VW - drawW) * 0.5f;
-            float logoBottom = VH - VH * 0.02f - drawH;
-            float px = logoLeft + drawW * 0.30f + rng.nextFloat() * drawW * 0.40f;
-            float py = logoBottom - 2f - rng.nextFloat() * 8f;
-            float vx = (rng.nextFloat() - 0.5f) * 0.08f;
-            float vy = 0.10f + rng.nextFloat() * 0.16f;
-            smokePuffs.add(new SmokePuff(px, py, vx, vy, 90 + rng.nextInt(50), 4f + rng.nextFloat() * 5f));
+        updateLogoLayout();
+        smokeGutters = buildSmokeZone();
+
+        if (tick % 2 == 0 && DRAW_SMOKE && alpha > 0.15f && smokeGutters.hasSides && smokePuffs.size < 20) {
+            smokePuffs.add(createSmokePuff());
         }
         for (int i = smokePuffs.size - 1; i >= 0; i--) {
             SmokePuff p = smokePuffs.get(i);
-            p.update();
+            p.update(smokeGutters);
             if (!p.alive) {
                 smokePuffs.removeIndex(i);
             }
@@ -328,6 +314,99 @@ public class SplashScreen implements Screen {
         }
     }
 
+    private void updateLogoLayout() {
+        if (logoAnim == null) {
+            logoDrawW = 0;
+            logoDrawH = 0;
+            logoTopY = VH * 0.02f;
+            return;
+        }
+        float s = Math.min((VW * 0.75f) / logoAnim.getFrameWidth(), (VH * 0.28f) / logoAnim.getFrameHeight());
+        logoDrawW = Math.max(1, Math.round(logoAnim.getFrameWidth() * s));
+        logoDrawH = Math.max(1, Math.round(logoAnim.getFrameHeight() * s));
+        logoTopY = VH * 0.02f;
+    }
+
+    private BgGutters buildSmokeZone() {
+        if (background == null) {
+            return BgGutters.none();
+        }
+        BgGutters gutters = BgGutters.fromCover(VW, VH, background.getWidth(), background.getHeight());
+        if (!gutters.hasSides) {
+            return gutters;
+        }
+        float top = logoAnim != null ? Math.max(0f, logoTopY - 6f) : VH * 0.02f;
+        float bottom = logoAnim != null ? Math.min(VH, logoTopY + logoDrawH + 18f) : VH * 0.30f;
+        return gutters.withVerticalBand(top, bottom);
+    }
+
+    private SmokePuff createSmokePuff() {
+        float px = smokeGutters.randomX(rng, VW);
+        float visualY = smokeGutters.randomVisualY(rng);
+        float py = VH - visualY;
+        float vx = px < smokeGutters.leftEnd * 0.5f
+            ? -0.01f - rng.nextFloat() * 0.04f
+            : 0.01f + rng.nextFloat() * 0.04f;
+        float vy = 0.01f + rng.nextFloat() * 0.04f;
+        int life = 90 + rng.nextInt(70);
+        float r = 5f + rng.nextFloat() * 7f;
+        return new SmokePuff(px, py, vx, vy, life, r);
+    }
+
+    /** Боковые полосы + верхняя зона у логотипа (Y сверху вниз). */
+    private static final class BgGutters {
+        final float leftEnd;
+        final float rightStart;
+        final float visualTop;
+        final float visualBottom;
+        final boolean hasSides;
+
+        private BgGutters(float leftEnd, float rightStart, float visualTop, float visualBottom, boolean hasSides) {
+            this.leftEnd = leftEnd;
+            this.rightStart = rightStart;
+            this.visualTop = visualTop;
+            this.visualBottom = visualBottom;
+            this.hasSides = hasSides;
+        }
+
+        static BgGutters none() {
+            return new BgGutters(0f, 0f, 0f, 0f, false);
+        }
+
+        BgGutters withVerticalBand(float top, float bottom) {
+            return new BgGutters(leftEnd, rightStart, top, bottom, hasSides);
+        }
+
+        static BgGutters fromCover(float sw, float sh, float srcW, float srcH) {
+            float cover = Math.max(sw / srcW, sh / srcH);
+            float drawW = srcW * cover;
+            float dx = (sw - drawW) * 0.5f;
+            float left = dx;
+            float right = dx + drawW;
+            boolean sides = left >= 6f && (sw - right) >= 6f;
+            return new BgGutters(left, right, 0f, sh, sides);
+        }
+
+        boolean contains(float x, float visualY) {
+            return hasSides
+                && (x < leftEnd || x >= rightStart)
+                && visualY >= visualTop
+                && visualY <= visualBottom;
+        }
+
+        float randomX(Random rng, float sw) {
+            float margin = 4f;
+            if (rng.nextBoolean()) {
+                return margin + rng.nextFloat() * Math.max(2f, leftEnd - margin * 2f);
+            }
+            return rightStart + margin + rng.nextFloat() * Math.max(2f, sw - rightStart - margin * 2f);
+        }
+
+        float randomVisualY(Random rng) {
+            return visualTop + rng.nextFloat() * Math.max(2f, visualBottom - visualTop);
+        }
+    }
+
     private void drawTexture(Texture texture, float x, float y, float w, float h, float a) {
         float prev = game.batch.getColor().a;
         game.batch.setColor(1f, 1f, 1f, a);
@@ -340,7 +419,7 @@ public class SplashScreen implements Screen {
             p.draw(shapes);
         }
         for (SmokePuff p : smokePuffs) {
-            if (DRAW_SMOKE) {
+            if (DRAW_SMOKE && smokeGutters.contains(p.x, VH - p.y)) {
                 p.draw(shapes);
             }
         }
@@ -511,10 +590,16 @@ public class SplashScreen implements Screen {
             this.r = r;
         }
 
-        void update() {
+        void update(BgGutters gutters) {
             x += vx;
             y += vy;
-            r += 0.03f;
+            r += 0.04f;
+            if (r > 22f) {
+                r = 22f;
+            }
+            if (gutters.hasSides && !gutters.contains(x, VH - y)) {
+                alive = false;
+            }
             life--;
             if (life <= 0) {
                 alive = false;
@@ -523,15 +608,15 @@ public class SplashScreen implements Screen {
 
         void draw(ShapeRenderer shapes) {
             float t = 1f - (life / (float) maxLife);
-            float a = (float) (Math.sin(t * Math.PI) * 0.22f);
+            float a = (float) (Math.sin(t * Math.PI) * 0.20f);
             if (a <= 0f) {
                 return;
             }
-            shapes.setColor(SMOKE.r, SMOKE.g, SMOKE.b, a * 0.45f);
+            shapes.setColor(SMOKE.r, SMOKE.g, SMOKE.b, a * 0.32f);
             shapes.circle(x, y, r);
-            shapes.setColor(SMOKE.r, SMOKE.g, SMOKE.b, a * 0.25f);
-            shapes.circle(x - 4f, y + 2f, r * 0.85f);
-            shapes.circle(x + 6f, y - 1f, r * 0.85f);
+            shapes.setColor(SMOKE.r, SMOKE.g, SMOKE.b, a * 0.18f);
+            shapes.circle(x - 6f, y + 3f, r * 0.9f);
+            shapes.circle(x + 8f, y - 2f, r * 0.85f);
         }
     }
 }

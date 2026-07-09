@@ -38,6 +38,7 @@ public class SplashScreen {
 
     // Атмосфера
     private final List<SmokePuff> smokePuffs = new ArrayList<>();
+    private BgGutters smokeGutters = BgGutters.none();
     private BufferedImage grain;
     private float flicker = 1f;
 
@@ -104,31 +105,16 @@ public class SplashScreen {
         for (Particle p : particles) p.update();
 
         updateLogoLayout(VIRTUAL_W, VIRTUAL_H);
+        smokeGutters = buildSmokeZone(VIRTUAL_W, VIRTUAL_H);
 
-        // Небольшой дымок у логотипа (снизу и по бокам)
-        if (tick % 6 == 0 && alpha > 0.2f && logoDrawW > 0 && smokePuffs.size() < 10) {
-            boolean leftSide = rng.nextBoolean();
-            float px = leftSide
-                ? logoX - 6f - rng.nextFloat() * 14f
-                : logoX + logoDrawW + 6f + rng.nextFloat() * 14f;
-            float py = logoY + logoDrawH * 0.55f + rng.nextFloat() * logoDrawH * 0.42f;
-            float vx = leftSide ? 0.04f + rng.nextFloat() * 0.06f : -(0.04f + rng.nextFloat() * 0.06f);
-            float vy = -0.06f - rng.nextFloat() * 0.12f;
-            int life = 80 + rng.nextInt(60);
-            float r = 3f + rng.nextFloat() * 4f;
-            smokePuffs.add(new SmokePuff(px, py, vx, vy, life, r));
-        }
-        if (tick % 9 == 0 && alpha > 0.2f && logoDrawW > 0 && smokePuffs.size() < 10) {
-            float px = logoX + logoDrawW * 0.30f + rng.nextFloat() * logoDrawW * 0.40f;
-            float py = logoY + logoDrawH + 2f + rng.nextFloat() * 8f;
-            float vx = (rng.nextFloat() - 0.5f) * 0.08f;
-            float vy = -0.10f - rng.nextFloat() * 0.14f;
-            int life = 90 + rng.nextInt(50);
-            float r = 4f + rng.nextFloat() * 5f;
-            smokePuffs.add(new SmokePuff(px, py, vx, vy, life, r));
+        // Дымок — боковые полосы, только сверху у логотипа
+        if (tick % 2 == 0 && alpha > 0.15f && smokeGutters.hasSides && smokePuffs.size() < 20) {
+            smokePuffs.add(createSmokePuff());
         }
         smokePuffs.removeIf(p -> !p.alive);
-        for (SmokePuff p : smokePuffs) p.update();
+        for (SmokePuff p : smokePuffs) {
+            p.update(smokeGutters);
+        }
 
         // Анимация спрайт-листов
         if (witcherBar != null) witcherBar.update();
@@ -198,10 +184,10 @@ public class SplashScreen {
             g.setComposite(prev);
             // Анимированный логотип
             logoAnim.draw(g, lx, ly, drawW, drawH, alpha);
-
-            // Дымок сразу у логотипа (поверх фона, рядом с табличкой)
-            drawSmokePuffs(g, alpha);
         }
+
+        // === ДЫМ — горизонтальная полоса сверху (до боковых анимаций) ===
+        drawSmokePuffs(g, alpha, smokeGutters);
 
         // === УТОПЕЦ СЛЕВА (выглядывает из-за края, покачивается) ===
         if (drownerSprite != null && alpha > 0.2f) {
@@ -248,6 +234,9 @@ public class SplashScreen {
 
         // === ЧАСТИЦЫ ===
         for (Particle p : particles) p.draw(g);
+
+        // === ДЫМ (только чёрные боковые полосы) ===
+        drawSmokePuffs(g, alpha, smokeGutters);
 
         // === ТЁМНАЯ ПОЛОСА ВНИЗУ (только для прогресс-бара) ===
         int barZoneH = 28;
@@ -341,6 +330,87 @@ public class SplashScreen {
         loadProgress = 100;
     }
 
+    private BgGutters buildSmokeZone(float sw, float sh) {
+        if (background == null) {
+            return BgGutters.none();
+        }
+        BgGutters gutters = BgGutters.fromContain(sw, sh,
+            background.getWidth(), background.getHeight(), 0.94f);
+        if (!gutters.hasSides) {
+            return gutters;
+        }
+        float top = logoAnim != null ? Math.max(0f, logoY - 6f) : sh * 0.02f;
+        float bottom = logoAnim != null ? Math.min(sh, logoY + logoDrawH + 18f) : sh * 0.30f;
+        return gutters.withVerticalBand(top, bottom);
+    }
+
+    private SmokePuff createSmokePuff() {
+        float px = smokeGutters.randomX(rng, VIRTUAL_W);
+        float py = smokeGutters.randomVisualY(rng);
+        float vx = px < smokeGutters.leftEnd * 0.5f
+            ? -0.01f - rng.nextFloat() * 0.04f
+            : 0.01f + rng.nextFloat() * 0.04f;
+        float vy = -0.01f - rng.nextFloat() * 0.04f;
+        int life = 90 + rng.nextInt(70);
+        float r = 5f + rng.nextFloat() * 7f;
+        return new SmokePuff(px, py, vx, vy, life, r);
+    }
+
+    /** Боковые полосы + верхняя зона у логотипа (Y сверху вниз). */
+    private static final class BgGutters {
+        final float leftEnd;
+        final float rightStart;
+        final float visualTop;
+        final float visualBottom;
+        final boolean hasSides;
+
+        private BgGutters(float leftEnd, float rightStart, float visualTop, float visualBottom, boolean hasSides) {
+            this.leftEnd = leftEnd;
+            this.rightStart = rightStart;
+            this.visualTop = visualTop;
+            this.visualBottom = visualBottom;
+            this.hasSides = hasSides;
+        }
+
+        static BgGutters none() {
+            return new BgGutters(0f, 0f, 0f, 0f, false);
+        }
+
+        BgGutters withVerticalBand(float top, float bottom) {
+            return new BgGutters(leftEnd, rightStart, top, bottom, hasSides);
+        }
+
+        static BgGutters fromContain(float sw, float sh, float srcW, float srcH, float shrink) {
+            float contain = Math.min(sw / srcW, sh / srcH);
+            float scale = contain * shrink;
+            float drawW = srcW * scale;
+            float dx = (sw - drawW) * 0.5f;
+            float left = dx;
+            float right = dx + drawW;
+            boolean sides = left >= 6f && (sw - right) >= 6f;
+            return new BgGutters(left, right, 0f, sh, sides);
+        }
+
+        boolean contains(float x, float visualY) {
+            return hasSides
+                && (x < leftEnd || x >= rightStart)
+                && visualY >= visualTop
+                && visualY <= visualBottom;
+        }
+
+        float randomX(Random rng, float sw) {
+            float margin = 4f;
+            if (rng.nextBoolean()) {
+                return margin + rng.nextFloat() * Math.max(2f, leftEnd - margin * 2f);
+            }
+            return rightStart + margin + rng.nextFloat() * Math.max(2f, sw - rightStart - margin * 2f);
+        }
+
+        float randomVisualY(Random rng) {
+            return visualTop + rng.nextFloat() * Math.max(2f, visualBottom - visualTop);
+        }
+    }
+
     private void updateLogoLayout(int sw, int sh) {
         if (logoAnim == null) {
             logoDrawW = 0;
@@ -354,13 +424,15 @@ public class SplashScreen {
         logoY = (int) (sh * 0.02f);
     }
 
-    private void drawSmokePuffs(Graphics2D g, float sceneAlpha) {
-        if (smokePuffs.isEmpty() || sceneAlpha <= 0.05f) {
+    private void drawSmokePuffs(Graphics2D g, float sceneAlpha, BgGutters gutters) {
+        if (smokePuffs.isEmpty() || sceneAlpha <= 0.05f || !gutters.hasSides) {
             return;
         }
         Composite scene = g.getComposite();
         for (SmokePuff p : smokePuffs) {
-            p.draw(g, sceneAlpha);
+            if (gutters.contains(p.x, p.y)) {
+                p.draw(g, sceneAlpha);
+            }
         }
         g.setComposite(scene);
     }
@@ -411,13 +483,16 @@ public class SplashScreen {
             this.r = r;
         }
 
-        void update() {
+        void update(BgGutters gutters) {
             x += vx;
             y += vy;
             vx *= 0.98f;
-            r += 0.04f;
-            if (r > 16f) {
-                r = 16f;
+            r += 0.045f;
+            if (r > 22f) {
+                r = 22f;
+            }
+            if (gutters.hasSides && !gutters.contains(x, y)) {
+                alive = false;
             }
             life--;
             if (life <= 0) alive = false;
@@ -438,17 +513,17 @@ public class SplashScreen {
             Object prevAa = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
             g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, a * 0.22f));
-            g.setColor(new Color(235, 225, 210));
-            g.fillOval(cx - rr - 4, cy - rr - 2, (rr + 4) * 2, (rr + 2) * 2);
+            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, a * 0.11f));
+            g.setColor(new Color(210, 205, 195));
+            g.fillOval(cx - rr - 6, cy - rr - 3, (rr + 6) * 2, (rr + 3) * 2);
 
-            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, a * 0.32f));
-            g.setColor(new Color(200, 190, 175));
+            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, a * 0.17f));
+            g.setColor(new Color(185, 180, 170));
             g.fillOval(cx - rr, cy - rr, rr * 2, rr * 2);
 
-            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, a * 0.14f));
-            g.setColor(new Color(180, 170, 155));
-            g.fillOval(cx - rr + 3, cy - rr - 3, Math.max(4, rr + rr - 1), Math.max(4, rr + rr - 3));
+            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, a * 0.08f));
+            g.setColor(new Color(165, 160, 152));
+            g.fillOval(cx - rr + 4, cy - rr - 4, Math.max(5, rr + rr - 2), Math.max(5, rr + rr - 4));
 
             g.setComposite(prevC);
             if (prevAa != null) {
