@@ -53,8 +53,15 @@ public final class ShopViewConstants {
 
     /** Минимальная высота HUD; фактическая — по пропорциям арта (≈82 при ширине 380). */
     public static final int HUD_H = 72;
-    public static final int HUD_CROWN_W = 18;
-    public static final int HUD_CROWN_H = 20;
+    public static final int HUD_CROWN_W = 26;
+    public static final int HUD_CROWN_H = 30;
+    public static final int HUD_DUKE_SEAL_W = 42;
+    public static final int HUD_DUKE_SEAL_H = 50;
+
+    /** Запекание LibGDX: 2× слота (Renderer pixelScale=2). */
+    public static int hudIconBakePx(int slotW, int slotH) {
+        return Math.max(slotW, slotH) * 2;
+    }
 
     /** Текст поверх CRT-фильтра — читаемость без «дробления». */
     public static final boolean DEFER_UI_TEXT_TO_OVERLAY = true;

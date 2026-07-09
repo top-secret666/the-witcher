@@ -44,7 +44,9 @@ public final class GdxShopRuntimeAssets implements ShopRuntimeAssets {
     public final int btnW = 100;
     public final int btnH = 30;
     public final int panelW = 380;
-    public final int dukeSealSize = 32;
+    public final int dukeSealSize = Math.max(
+        main.java.com.witcher.ui.shop.view.ShopViewConstants.HUD_DUKE_SEAL_W,
+        main.java.com.witcher.ui.shop.view.ShopViewConstants.HUD_DUKE_SEAL_H);
 
     public Texture merchantBgScaled;
     public Texture geraltScaled;

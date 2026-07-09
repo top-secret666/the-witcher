@@ -5,6 +5,12 @@ import main.java.com.witcher.ui.shop.ShopRuntimeAssets;
 import main.java.com.witcher.ui.shop.view.ShopUiMetrics;
 import main.java.com.witcher.ui.shop.view.ShopViewConstants;
 
+import static main.java.com.witcher.ui.shop.view.ShopViewConstants.HUD_CROWN_H;
+import static main.java.com.witcher.ui.shop.view.ShopViewConstants.HUD_CROWN_W;
+import static main.java.com.witcher.ui.shop.view.ShopViewConstants.HUD_DUKE_SEAL_H;
+import static main.java.com.witcher.ui.shop.view.ShopViewConstants.HUD_DUKE_SEAL_W;
+import static main.java.com.witcher.ui.shop.view.ShopViewConstants.hudIconBakePx;
+
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 
@@ -88,7 +94,7 @@ public final class ShopAssetCache implements ShopRuntimeAssets {
     final int catalogCoinSize = 8;
     /** Печать герцога на HUD-плашке (LibGDX). */
     final BufferedImage dukeSealIconScaled;
-    final int dukeSealSize = 32;
+    final int dukeSealSize = Math.max(HUD_DUKE_SEAL_W, HUD_DUKE_SEAL_H);
     final BufferedImage merchantBgScaled;
     final BufferedImage geraltScaled;
     final BufferedImage dukeScaled;
@@ -131,10 +137,10 @@ public final class ShopAssetCache implements ShopRuntimeAssets {
             BASE + "ui/shop_btn_buy_disabled.png", false);
 
         crownIconScaled = loadGdxUi(ShopUiAssetsFactory.KEY_HUD_CROWN,
-            loadHudIconFallback("icon_crown.png", 36));
+            loadHudIconFallback("icon_crown.png", hudIconBakePx(HUD_CROWN_W, HUD_CROWN_H)));
         crownIconSmall = loadCatalogCoinIcon();
         dukeSealIconScaled = loadGdxUi(ShopUiAssetsFactory.KEY_HUD_DUKE_SEAL,
-            loadHudIconFallback("icon_duke_seal.png", 64));
+            loadHudIconFallback("icon_duke_seal.png", hudIconBakePx(HUD_DUKE_SEAL_W, HUD_DUKE_SEAL_H)));
         logHudIconSource();
 
         merchantBgScaled = loadBackground();
@@ -294,12 +300,13 @@ public final class ShopAssetCache implements ShopRuntimeAssets {
         if (crownIconScaled != null) {
             boolean gdx = ShopUiAssetsFactory.get(ShopUiAssetsFactory.KEY_HUD_CROWN) != null;
             System.out.println("HUD crown: baked " + crownIconScaled.getWidth() + "x" + crownIconScaled.getHeight()
-                + " draw@18" + (gdx ? " [GDX]" : " [fallback]"));
+                + " draw@" + HUD_CROWN_W + "x" + HUD_CROWN_H + (gdx ? " [GDX]" : " [fallback]"));
         }
         if (dukeSealIconScaled != null) {
             boolean gdx = ShopUiAssetsFactory.get(ShopUiAssetsFactory.KEY_HUD_DUKE_SEAL) != null;
             System.out.println("HUD duke seal: baked " + dukeSealIconScaled.getWidth() + "x"
-                + dukeSealIconScaled.getHeight() + " draw@32" + (gdx ? " [GDX]" : " [fallback]"));
+                + dukeSealIconScaled.getHeight() + " draw@" + HUD_DUKE_SEAL_W + "x" + HUD_DUKE_SEAL_H
+                + (gdx ? " [GDX]" : " [fallback]"));
         }
     }
 

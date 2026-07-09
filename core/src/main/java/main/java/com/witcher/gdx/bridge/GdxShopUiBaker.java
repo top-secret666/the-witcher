@@ -4,6 +4,12 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import main.java.com.witcher.gdx.graphics.PixelTextures;
 
+import static main.java.com.witcher.ui.shop.view.ShopViewConstants.HUD_CROWN_H;
+import static main.java.com.witcher.ui.shop.view.ShopViewConstants.HUD_CROWN_W;
+import static main.java.com.witcher.ui.shop.view.ShopViewConstants.HUD_DUKE_SEAL_H;
+import static main.java.com.witcher.ui.shop.view.ShopViewConstants.HUD_DUKE_SEAL_W;
+import static main.java.com.witcher.ui.shop.view.ShopViewConstants.hudIconBakePx;
+
 import java.awt.image.BufferedImage;
 import java.util.HashMap;
 import java.util.Map;
@@ -12,12 +18,12 @@ import java.util.Map;
 public final class GdxShopUiBaker {
 
     public static final String KEY_CARD_BACK = "shop_card_back@166x249";
-    public static final String KEY_HUD_CROWN = "hud.icon_crown@36";
-    public static final String KEY_HUD_DUKE_SEAL = "hud.icon_duke_seal@64";
+    public static final String KEY_HUD_CROWN = "hud.icon_crown@60";
+    public static final String KEY_HUD_DUKE_SEAL = "hud.icon_duke_seal@100";
 
     /** Запекание в 2× виртуального размера (Renderer pixelScale=2 → 1:1 на displayFrame). */
-    public static final int HUD_CROWN_PX = 36;
-    public static final int HUD_DUKE_SEAL_PX = 64;
+    public static final int HUD_CROWN_PX = hudIconBakePx(HUD_CROWN_W, HUD_CROWN_H);
+    public static final int HUD_DUKE_SEAL_PX = hudIconBakePx(HUD_DUKE_SEAL_W, HUD_DUKE_SEAL_H);
 
     /** Размер карточки в режиме категории (как {@code ShopLayout#leftCategoryCardSlot}). */
     public static final int CATEGORY_CARD_W = 166;

@@ -955,10 +955,11 @@ public final class ShopSwingView implements ShopView {
         }
 
         if (assets.dukeSealIconScaled != null) {
-            int seal = assets.dukeSealSize;
-            int sealX = (layout.hudX + 12) & ~1;
-            int sealY = (hudY + (layout.hudH - seal) / 2) & ~1;
-            drawHudPlaqueIcon(g, assets.dukeSealIconScaled, sealX, sealY, seal, seal);
+            int sealW = ShopViewConstants.HUD_DUKE_SEAL_W;
+            int sealH = ShopViewConstants.HUD_DUKE_SEAL_H;
+            int sealX = (layout.hudX + 10) & ~1;
+            int sealY = (hudY + (layout.hudH - sealH) / 2) & ~1;
+            drawHudPlaqueIcon(g, assets.dukeSealIconScaled, sealX, sealY, sealW, sealH);
         }
 
         String wallet = presenter.walletHudAmountText();
