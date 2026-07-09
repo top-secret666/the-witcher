@@ -17,7 +17,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Запекание иконок товаров через LibGDX (nearest-neighbor) → {@link BufferedImage} для Swing.
+ * Запекание иконок товаров через LibGDX (bilinear) → {@link BufferedImage} для Swing.
  */
 public final class GdxIconBaker {
 
@@ -84,12 +84,12 @@ public final class GdxIconBaker {
     }
 
     private static BufferedImage bakeFile(String fileName, int size, SpriteBatch batch, FrameBuffer fbo) {
-        PixelTextures.LoadedTexture loaded = PixelTextures.loadLavkaMeta("icons/items/" + fileName);
+        PixelTextures.LoadedTexture loaded = PixelTextures.loadLavkaItemIconMeta(fileName);
         if (loaded == null || loaded.texture == null) {
             return null;
         }
         Texture texture = loaded.texture;
-        texture.setFilter(TextureFilter.Nearest, TextureFilter.Nearest);
+        texture.setFilter(TextureFilter.Linear, TextureFilter.Linear);
 
         int[] bounds = PixelTextures.computeOpaqueBounds("sprites/lavka/icons/items/" + fileName);
         TextureRegion region;

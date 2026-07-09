@@ -90,7 +90,7 @@ public final class GdxArmourIconRegistry implements ShopEntryIcons {
         if (file == null || !matchesCategory(file, category)) {
             return null;
         }
-        String cacheKey = file + "@" + size;
+        String cacheKey = size > 0 && size < iconSize ? file + "@" + size : file + "@full";
         BufferedImage cached = cache.get(cacheKey);
         if (cached != null) {
             return cached == MISSING_ICON ? null : cached;
@@ -186,7 +186,7 @@ public final class GdxArmourIconRegistry implements ShopEntryIcons {
     }
 
     private BufferedImage loadIcon(String fileName, int size) {
-        BufferedImage img = PixelTextures.loadLavkaBufferedImage("icons/items/" + fileName);
+        BufferedImage img = PixelTextures.loadLavkaItemIcon(fileName);
         if (img == null) {
             if (loggedMissing.add(fileName)) {
                 System.err.println("GdxArmourIconRegistry: missing file " + fileName);
@@ -200,17 +200,29 @@ public final class GdxArmourIconRegistry implements ShopEntryIcons {
             && bounds[1] + bounds[3] <= img.getHeight()) {
             img = img.getSubimage(bounds[0], bounds[1], bounds[2], bounds[3]);
         }
-        return scaleIfNeeded(img, size);
+        if (size > 0 && size < iconSize) {
+            return scaleUniform(img, size);
+        }
+        return img;
     }
 
-    private static BufferedImage scaleIfNeeded(BufferedImage src, int size) {
-        if (src.getWidth() == size && src.getHeight() == size) {
+    private static BufferedImage scaleUniform(BufferedImage src, int maxSize) {
+        int w = src.getWidth();
+        int h = src.getHeight();
+        if (w <= maxSize && h <= maxSize) {
             return src;
         }
-        BufferedImage dst = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
+        float scale = Math.min((float) maxSize / w, (float) maxSize / h);
+        int dstW = Math.max(1, Math.round(w * scale));
+        int dstH = Math.max(1, Math.round(h * scale));
+        return scaleTo(src, dstW, dstH);
+    }
+
+    private static BufferedImage scaleTo(BufferedImage src, int dstW, int dstH) {
+        BufferedImage dst = new BufferedImage(dstW, dstH, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = dst.createGraphics();
         g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-        g.drawImage(src, 0, 0, size, size, null);
+        g.drawImage(src, 0, 0, dstW, dstH, null);
         g.dispose();
         return dst;
     }

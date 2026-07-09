@@ -136,6 +136,15 @@ public final class PixelTextures {
         return loadFirstMeta(all);
     }
 
+    /** Только полноразмерный PNG товара из {@code sprites/lavka/icons/items/}. */
+    public static BufferedImage loadLavkaItemIcon(String fileName) {
+        return loadBufferedImageOptional("sprites/lavka/icons/items/" + fileName);
+    }
+
+    public static LoadedTexture loadLavkaItemIconMeta(String fileName) {
+        return loadOptionalMeta("sprites/lavka/icons/items/" + fileName);
+    }
+
     public static LoadedTexture loadFirstMeta(String... paths) {
         for (String path : paths) {
             LoadedTexture loaded = loadOptionalMeta(path);

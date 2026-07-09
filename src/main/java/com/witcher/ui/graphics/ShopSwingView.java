@@ -1539,7 +1539,7 @@ public final class ShopSwingView implements ShopView {
                 drawItemArtGoldContour(g, artBounds);
             }
             drawCroppedScaledSprite(g, art, crop, artBounds.x, artBounds.y,
-                artBounds.width, artBounds.height, true);
+                artBounds.width, artBounds.height, false);
         }
 
         if (categoryGrid) {

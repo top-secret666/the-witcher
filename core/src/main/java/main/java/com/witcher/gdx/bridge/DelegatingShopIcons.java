@@ -9,7 +9,7 @@ import main.java.com.witcher.ui.shop.ShopEntryIcons;
 import java.awt.image.BufferedImage;
 
 /**
- * GDX-иконки с откатом на Swing для каждого товара — если GPU-запекание пустое/прозрачное.
+ * Оригиналы из {@code icons/items} с откатом на GDX-запекание, если файла нет.
  */
 public final class DelegatingShopIcons implements ShopEntryIcons {
 
@@ -23,19 +23,21 @@ public final class DelegatingShopIcons implements ShopEntryIcons {
 
     @Override
     public BufferedImage iconForEntry(ShopCatalogEntry entry, ShopCategory category) {
-        BufferedImage icon = gdx != null ? gdx.iconForEntry(entry, category) : null;
-        if (GdxIconBaker.isUsable(icon)) {
+        BufferedImage icon = swing.iconForEntry(entry, category);
+        if (icon != null) {
             return icon;
         }
-        return swing.iconForEntry(entry, category);
+        icon = gdx != null ? gdx.iconForEntry(entry, category) : null;
+        return GdxIconBaker.isUsable(icon) ? icon : null;
     }
 
     @Override
     public BufferedImage iconForArmour(Armour armour, ShopCategory category, int size) {
-        BufferedImage icon = gdx != null ? gdx.iconForArmour(armour, category, size) : null;
-        if (GdxIconBaker.isUsable(icon)) {
+        BufferedImage icon = swing.iconForArmour(armour, category, size);
+        if (icon != null) {
             return icon;
         }
-        return swing.iconForArmour(armour, category, size);
+        icon = gdx != null ? gdx.iconForArmour(armour, category, size) : null;
+        return GdxIconBaker.isUsable(icon) ? icon : null;
     }
 }

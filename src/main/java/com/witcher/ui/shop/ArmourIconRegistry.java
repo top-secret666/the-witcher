@@ -16,7 +16,6 @@ import java.util.Set;
 /** Иконки доспехов по ключевым словам в названии (чистый Swing). */
 public final class ArmourIconRegistry implements ShopEntryIcons {
 
-    private static final String BAKED = "/assets/sprites/lavka/1x/icons/items/";
     private static final String SRC = "/assets/sprites/lavka/icons/items/";
 
     private static ArmourIconRegistry instance;
@@ -26,6 +25,7 @@ public final class ArmourIconRegistry implements ShopEntryIcons {
     private final int iconSize;
     private final List<ArmourIconMap.Rule> rules;
     private final Map<String, BufferedImage> cache = new HashMap<>();
+    private final Map<String, BufferedImage> originalCache = new HashMap<>();
     private final Set<String> loggedMissing = new HashSet<>();
 
     private ArmourIconRegistry(int iconSize) {
@@ -114,7 +114,7 @@ public final class ArmourIconRegistry implements ShopEntryIcons {
         if (file == null || !ArmourIconMap.matchesCategory(file, category)) {
             return null;
         }
-        String cacheKey = file + "@" + size;
+        String cacheKey = size > 0 && size < iconSize ? file + "@" + size : file + "@full";
         BufferedImage cached = cache.get(cacheKey);
         if (cached != null) {
             return cached == MISSING_ICON ? null : cached;
@@ -125,22 +125,35 @@ public final class ArmourIconRegistry implements ShopEntryIcons {
     }
 
     private BufferedImage loadIcon(String fileName, int size) {
-        BufferedImage baked = loadRaw(BAKED + fileName);
-        if (baked != null) {
-            if (baked.getWidth() == size && baked.getHeight() == size) {
-                return baked;
-            }
-            return PixelScaler.crispScale(baked, size, size);
+        BufferedImage src = loadCroppedOriginal(fileName);
+        if (src == null) {
+            return null;
+        }
+        if (size > 0 && size < iconSize) {
+            return PixelScaler.smoothScaleUniform(src, size);
+        }
+        return src;
+    }
+
+    private BufferedImage loadCroppedOriginal(String fileName) {
+        BufferedImage cached = originalCache.get(fileName);
+        if (cached != null) {
+            return cached == MISSING_ICON ? null : cached;
         }
         BufferedImage src = loadRaw(SRC + fileName);
         if (src == null) {
             if (loggedMissing.add(fileName)) {
                 System.err.println("Armour icons: missing file " + fileName);
             }
+            originalCache.put(fileName, MISSING_ICON);
             return null;
         }
         Rectangle box = ShopImageBounds.compute(src);
-        return PixelScaler.crispScaleRegion(src, box, size, size);
+        BufferedImage cropped = box != null && box.width > 0 && box.height > 0
+            ? src.getSubimage(box.x, box.y, box.width, box.height)
+            : src;
+        originalCache.put(fileName, cropped);
+        return cropped;
     }
 
     private static BufferedImage loadRaw(String path) {
