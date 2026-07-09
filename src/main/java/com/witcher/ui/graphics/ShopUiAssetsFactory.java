@@ -10,9 +10,9 @@ public final class ShopUiAssetsFactory {
     private static final String BRIDGE = "main.java.com.witcher.gdx.bridge.HybridShopUiAssets";
 
     public static final String KEY_CARD_BACK = "shop_card_back@166x249";
-    public static final String KEY_CROWN_18 = "icon_crown@18";
-    public static final String KEY_CROWN_10 = "icon_crown@10";
-    public static final String KEY_DUKE_SEAL = "icon_duke_seal@32";
+    /** Только HUD-плашка. */
+    public static final String KEY_HUD_CROWN = "hud.icon_crown@18";
+    public static final String KEY_HUD_DUKE_SEAL = "hud.icon_duke_seal@32";
 
     private ShopUiAssetsFactory() {
     }

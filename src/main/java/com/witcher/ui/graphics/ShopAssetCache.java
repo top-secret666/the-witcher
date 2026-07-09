@@ -77,8 +77,10 @@ public final class ShopAssetCache implements ShopRuntimeAssets {
     final BufferedImage btnBuyNormal;
     final BufferedImage btnBuyDisabled;
     final BufferedImage crownIconScaled;
+    /** Монетка в списке товаров и на карточках — без LibGDX. */
     final BufferedImage crownIconSmall;
-    /** Печать герцога вместо текста «Лавка Герцога» в шапке. */
+    final int catalogCoinSize = 8;
+    /** Печать герцога на HUD-плашке (LibGDX). */
     final BufferedImage dukeSealIconScaled;
     final int dukeSealSize = 32;
     final BufferedImage merchantBgScaled;
@@ -122,11 +124,9 @@ public final class ShopAssetCache implements ShopRuntimeAssets {
         btnBuyDisabled = loadSized(UI + "shop_btn_buy_disabled.png", btnW, btnH,
             BASE + "ui/shop_btn_buy_disabled.png", false);
 
-        crownIconScaled = loadGdxUi(ShopUiAssetsFactory.KEY_CROWN_18, loadBakedIcon("icon_crown.png"));
-        crownIconSmall = loadGdxUi(ShopUiAssetsFactory.KEY_CROWN_10,
-            loadBakedIcon(load(ICONS_SRC + "icon_crown_small.png") != null
-                ? "icon_crown_small.png" : "icon_crown.png"));
-        dukeSealIconScaled = loadGdxUi(ShopUiAssetsFactory.KEY_DUKE_SEAL, loadBakedIcon("icon_duke_seal.png"));
+        crownIconScaled = loadGdxUi(ShopUiAssetsFactory.KEY_HUD_CROWN, loadBakedIcon("icon_crown.png"));
+        crownIconSmall = loadCatalogCoinIcon();
+        dukeSealIconScaled = loadGdxUi(ShopUiAssetsFactory.KEY_HUD_DUKE_SEAL, loadBakedIcon("icon_duke_seal.png"));
 
         merchantBgScaled = loadBackground();
         int charH = Math.round(360 * 0.82f);
@@ -233,13 +233,32 @@ public final class ShopAssetCache implements ShopRuntimeAssets {
         return frames;
     }
 
+    private BufferedImage loadBakedIcon(String fileName) {
+        return load(ICONS_BAKED + fileName);
+    }
+
+    private BufferedImage loadCatalogCoinIcon() {
+        BufferedImage baked = loadBakedIcon("icon_crown_small.png");
+        if (baked == null) {
+            baked = loadBakedIcon("icon_crown.png");
+        }
+        if (baked != null) {
+            return PixelScaler.sharpScaleUniform(baked, catalogCoinSize);
+        }
+        BufferedImage src = load(ICONS_SRC + "icon_crown.png");
+        if (src == null) {
+            return null;
+        }
+        Rectangle box = ShopImageBounds.compute(src);
+        BufferedImage cropped = box != null && box.width > 0 && box.height > 0
+            ? src.getSubimage(box.x, box.y, box.width, box.height)
+            : src;
+        return PixelScaler.sharpScaleUniform(cropped, catalogCoinSize);
+    }
+
     private BufferedImage loadGdxUi(String key, BufferedImage fallback) {
         BufferedImage gdx = ShopUiAssetsFactory.get(key);
         return gdx != null ? gdx : fallback;
-    }
-
-    private BufferedImage loadBakedIcon(String fileName) {
-        return load(ICONS_BAKED + fileName);
     }
 
     private BufferedImage loadLavkaIcon(String fileName, int maxSize) {

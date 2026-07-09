@@ -12,9 +12,11 @@ import java.util.Map;
 public final class GdxShopUiBaker {
 
     public static final String KEY_CARD_BACK = "shop_card_back@166x249";
-    public static final String KEY_CROWN_18 = "icon_crown@18";
-    public static final String KEY_CROWN_10 = "icon_crown@10";
-    public static final String KEY_DUKE_SEAL = "icon_duke_seal@32";
+    public static final String KEY_HUD_CROWN = "hud.icon_crown@18";
+    public static final String KEY_HUD_DUKE_SEAL = "hud.icon_duke_seal@32";
+
+    public static final int HUD_CROWN_PX = 18;
+    public static final int HUD_DUKE_SEAL_PX = 32;
 
     /** Размер карточки в режиме категории (как {@code ShopLayout#leftCategoryCardSlot}). */
     public static final int CATEGORY_CARD_W = 166;
@@ -29,9 +31,8 @@ public final class GdxShopUiBaker {
         try {
             putIfUsable(out, KEY_CARD_BACK,
                 bakeUi(batch, "ui/shop_card_back.png", CATEGORY_CARD_W, CATEGORY_CARD_H));
-            putIfUsable(out, KEY_CROWN_18, bakeIcon(batch, "icon_crown.png", 18));
-            putIfUsable(out, KEY_CROWN_10, bakeIcon(batch, "icon_crown.png", 10));
-            putIfUsable(out, KEY_DUKE_SEAL, bakeIcon(batch, "icon_duke_seal.png", 32));
+            putIfUsable(out, KEY_HUD_CROWN, bakeIcon(batch, "icon_crown.png", HUD_CROWN_PX));
+            putIfUsable(out, KEY_HUD_DUKE_SEAL, bakeIcon(batch, "icon_duke_seal.png", HUD_DUKE_SEAL_PX));
         } finally {
             batch.dispose();
         }

@@ -952,7 +952,7 @@ public final class ShopSwingView implements ShopView {
                 int seal = assets.dukeSealSize;
                 int sealX = (layout.hudX + 12) & ~1;
                 int sealY = (hudY + (layout.hudH - seal) / 2) & ~1;
-                g.drawImage(assets.dukeSealIconScaled, sealX, sealY, seal, seal, null);
+                drawHudPlaqueIcon(g, assets.dukeSealIconScaled, sealX, sealY, seal, seal);
             }
         }
 
@@ -977,7 +977,7 @@ public final class ShopSwingView implements ShopView {
         if (assets.crownIconScaled != null) {
             int crownY = (hudY + (layout.hudH - crownSize) / 2) & ~1;
             int crownX = blockX & ~1;
-            g.drawImage(assets.crownIconScaled, crownX, crownY, crownSize, crownSize, null);
+            drawHudPlaqueIcon(g, assets.crownIconScaled, crownX, crownY, crownSize, crownSize);
             textX = blockX + crownSize + crownGap;
         }
         int walletY = hudY + (layout.hudH + fm.getAscent()) / 2 - 2;
@@ -1323,7 +1323,7 @@ public final class ShopSwingView implements ShopView {
             String price = row.priceLabel();
             int priceW = fm.stringWidth(price);
             if (assets.crownIconSmall != null && !price.equals("···")) {
-                priceW += assets.crownIconSmall.getWidth() + 2;
+                priceW += assets.catalogCoinSize + 2;
             }
             int priceX = x + rowW - priceW - 6;
 
@@ -1350,8 +1350,10 @@ public final class ShopSwingView implements ShopView {
             }
 
             if (assets.crownIconSmall != null && !price.equals("···")) {
-                g.drawImage(assets.crownIconSmall, priceX, y + 6, null);
-                priceX += assets.crownIconSmall.getWidth() + 2;
+                int coin = assets.catalogCoinSize;
+                int coinY = y + (assets.rowH - coin) / 2;
+                g.drawImage(assets.crownIconSmall, priceX, coinY, coin, coin, null);
+                priceX += coin + 2;
             }
             ShopUiDraw.drawOutlinedText(g, price, priceX, textY, new Color(255, 220, 100));
         }
@@ -1510,9 +1512,8 @@ public final class ShopSwingView implements ShopView {
         if (showPrice) {
             g.setFont(cardFont(Math.max(7, nameFontSize)));
             FontMetrics priceFmPreview = g.getFontMetrics();
-            BufferedImage coinPreview = assets.crownIconSmall != null
-                ? assets.crownIconSmall : assets.crownIconScaled;
-            int coinH = coinPreview != null ? coinPreview.getHeight() : priceFmPreview.getHeight();
+            BufferedImage coinPreview = assets.crownIconSmall;
+            int coinH = coinPreview != null ? assets.catalogCoinSize : priceFmPreview.getHeight();
             priceBlockH = Math.max(priceFmPreview.getHeight(), coinH) + 2;
         }
 
@@ -1587,8 +1588,8 @@ public final class ShopSwingView implements ShopView {
         drawCardText(g);
         g.setFont(GameFonts.get().uiBold(10));
         FontMetrics priceFm = g.getFontMetrics();
-        BufferedImage coin = assets.crownIconSmall != null ? assets.crownIconSmall : assets.crownIconScaled;
-        int coinSize = 12;
+        BufferedImage coin = assets.crownIconSmall;
+        int coinSize = assets.catalogCoinSize;
         int priceW = priceFm.stringWidth(priceLabel);
         if (coin != null) {
             priceW += coinSize + 2;
@@ -1829,6 +1830,23 @@ public final class ShopSwingView implements ShopView {
         Rectangle bounds = aspectFitCroppedBounds(crop, x, y, w, h, pixelArt ? maxPixelSize : 0);
         drawCroppedScaledSprite(g, img, crop, bounds.x, bounds.y, bounds.width, bounds.height, pixelArt);
         return bounds;
+    }
+
+    /** LibGDX-иконка HUD-плашки — пиксель в пиксель. */
+    private static void drawHudPlaqueIcon(Graphics2D g, BufferedImage icon, int x, int y, int w, int h) {
+        if (icon == null || w <= 0 || h <= 0) {
+            return;
+        }
+        Object prev = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
+        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+        if (icon.getWidth() == w && icon.getHeight() == h) {
+            g.drawImage(icon, x, y, null);
+        } else {
+            g.drawImage(icon, x, y, w, h, null);
+        }
+        if (prev != null) {
+            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, prev);
+        }
     }
 
     /** Отрисовка иконки без размытия — nearest-neighbor, целые координаты. */
