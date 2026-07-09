@@ -1,5 +1,7 @@
 package main.java.com.witcher.ui.graphics;
 
+import main.java.com.witcher.ui.intro.view.IntroSpeakerPlateLayout;
+
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -132,20 +134,18 @@ public final class DialogBoxRenderer {
         int nameW = nfm.stringWidth(speaker);
         int nameH = nfm.getHeight();
 
-        int nameBoxX = boxX + pad - 4;
-        int nameBoxY = boxY - nameH - 2;
-        int nameBoxW = nameW + 12;
-        int nameBoxH = nameH + 4;
+        IntroSpeakerPlateLayout.Plate plate = IntroSpeakerPlateLayout.compute(
+            boxX, boxY, pad, nameW, nameH, nfm.getAscent());
 
         Composite prevN = g.getComposite();
         g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha * 0.9f));
         g.setColor(BOX_BG);
-        g.fillRect(nameBoxX, nameBoxY, nameBoxW, nameBoxH);
+        g.fillRect(plate.boxX, plate.boxY, plate.boxW, plate.boxH);
         g.setComposite(prevN);
         g.setColor(BOX_BORDER);
-        g.drawRect(nameBoxX, nameBoxY, nameBoxW, nameBoxH);
+        g.drawRect(plate.boxX, plate.boxY, plate.boxW, plate.boxH);
         g.setColor(speakerColor);
-        GameFonts.drawOutlined(g, speaker, nameBoxX + 6, nameBoxY + nfm.getAscent() + 2, speakerColor);
+        GameFonts.drawOutlined(g, speaker, plate.textX, plate.textBaselineY, speakerColor);
     }
 
     public static int drawSpeakerText(Graphics2D g, String speaker, String text, Color speakerColor,

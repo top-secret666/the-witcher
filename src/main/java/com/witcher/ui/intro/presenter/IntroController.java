@@ -581,7 +581,7 @@ public final class IntroController {
     }
 
     public boolean shouldShowDialogBox() {
-        return !isFinalShopScene() && currentEntry < entries.size() && fadeAlpha > 0.2f;
+        return !historyOpen && !isFinalShopScene() && currentEntry < entries.size() && fadeAlpha > 0.2f;
     }
 
     public boolean shouldShowVnButtons() {

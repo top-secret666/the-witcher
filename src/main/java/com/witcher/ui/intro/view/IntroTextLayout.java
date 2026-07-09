@@ -23,4 +23,18 @@ public final class IntroTextLayout {
     public static float vnFontSize(int viewH) {
         return Math.max(IntroLayout.VN_FONT_MIN, viewH * IntroLayout.VN_FONT_SIZE_RATIO);
     }
+
+    /** Приближение FontMetrics.getAscent() для кириллического диалогового шрифта. */
+    public static int fontAscent(int fontSize) {
+        return Math.round(fontSize * 0.82f);
+    }
+
+    /** Приближение FontMetrics.getDescent() для кириллического диалогового шрифта. */
+    public static int fontDescent(int fontSize) {
+        return Math.round(fontSize * 0.22f);
+    }
+
+    public static int fontHeight(int fontSize) {
+        return fontAscent(fontSize) + fontDescent(fontSize);
+    }
 }

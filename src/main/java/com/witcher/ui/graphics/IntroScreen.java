@@ -15,7 +15,10 @@ import main.java.com.witcher.ui.intro.IntroScript;
 import main.java.com.witcher.ui.intro.IntroSwingBridge;
 import main.java.com.witcher.ui.intro.IntroTheme;
 import main.java.com.witcher.ui.intro.presenter.IntroController;
+import main.java.com.witcher.ui.intro.IntroHistoryText;
 import main.java.com.witcher.ui.intro.view.IntroCharacterLayout;
+import main.java.com.witcher.ui.intro.view.IntroHistoryLayout;
+import main.java.com.witcher.ui.intro.view.IntroHistoryTheme;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -844,84 +847,57 @@ public class IntroScreen {
         UiChrome.drawCloseButton(g, closeBounds, controller.isHistoryCloseHovered(), controller.getFadeAlpha());
 
         g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-        int fontSize = Math.max(11, (int) (sh * 0.034f));
-        int lineH = fontSize + 4;
-        int pad = Math.max(10, (int) (sw * 0.022f));
-        int textX = panel.x + pad;
-        int textMaxW = panel.width - pad * 2;
+        IntroHistoryLayout.Metrics m = IntroHistoryLayout.compute(sw, sh, panel.x, panel.y, panel.width, panel.height);
 
-        int titleSize = fontSize + 1;
-        Font titleFont = GameFonts.get().bold(titleSize);
-        g.setFont(titleFont);
-        FontMetrics titleFm = g.getFontMetrics();
-        int titleBaseline = panel.y + pad + titleFm.getAscent();
-        int headerBottom = titleBaseline + titleFm.getDescent() + 8;
-
-        int hintSize = Math.max(10, fontSize - 1);
-        Font hintFont = GameFonts.get().italic(hintSize);
-        g.setFont(hintFont);
-        FontMetrics hintFm = g.getFontMetrics();
-        int hintBaseline = panel.y + panel.height - pad;
-        int footerTop = hintBaseline - hintFm.getHeight() - 6;
-
-        int contentTop = headerBottom;
-        int contentBottom = footerTop;
-        int contentH = Math.max(0, contentBottom - contentTop);
-
-        Font bodyFont = GameFonts.get().plain(fontSize);
+        Font titleFont = GameFonts.get().bold(m.titleSize);
+        Font hintFont = GameFonts.get().italic(m.hintSize);
+        Font bodyFont = GameFonts.get().plain(m.fontSize);
         g.setFont(bodyFont);
         FontMetrics fm = g.getFontMetrics();
-        List<String> renderedLines = buildHistoryRenderedLines(fm, textMaxW);
-        int totalHeight = renderedLines.size() * lineH;
-        int maxScroll = Math.max(0, totalHeight - contentH);
-        int historyScroll = Math.min(controller.getHistoryScroll(), maxScroll);
+        List<String> renderedLines = IntroHistoryText.buildRenderedLines(
+            controller.buildHistoryLogLines(), Math.round(m.textMaxW), m.fontSize);
+        int maxScroll = IntroHistoryLayout.maxScroll(renderedLines.size(), m.lineH, m.contentH);
+        int historyScroll = IntroHistoryLayout.clampScroll(controller.getHistoryScroll(), maxScroll);
         float fadeAlpha = controller.getFadeAlpha();
 
         g.setFont(titleFont);
-        g.setColor(new Color(218, 165, 32, Math.max(0, Math.min(255, (int) (fadeAlpha * 255)))));
-        g.drawString("История", textX, titleBaseline);
+        g.setColor(new Color(IntroHistoryTheme.TITLE_R, IntroHistoryTheme.TITLE_G, IntroHistoryTheme.TITLE_B,
+            Math.max(0, Math.min(255, (int) (fadeAlpha * 255)))));
+        g.drawString("История", Math.round(m.textX), m.titleBaseline);
 
-        g.setColor(new Color(100, 80, 45, Math.max(0, Math.min(255, (int) (fadeAlpha * 160)))));
-        g.drawLine(textX, headerBottom - 4, textX + textMaxW, headerBottom - 4);
-        g.drawLine(textX, footerTop, textX + textMaxW, footerTop);
+        g.setColor(new Color(IntroHistoryTheme.DIVIDER_R, IntroHistoryTheme.DIVIDER_G, IntroHistoryTheme.DIVIDER_B,
+            Math.max(0, Math.min(255, (int) (fadeAlpha * IntroHistoryTheme.DIVIDER_A / 255f)))));
+        g.drawLine(Math.round(m.textX), m.headerBottom - 4, Math.round(m.textX + m.textMaxW), m.headerBottom - 4);
+        g.drawLine(Math.round(m.textX), m.footerTop, Math.round(m.textX + m.textMaxW), m.footerTop);
 
         Shape oldClip = g.getClip();
-        g.clipRect(textX, contentTop, textMaxW, contentH);
+        g.clipRect(Math.round(m.textX), m.contentTop, Math.round(m.textMaxW), m.contentH);
 
         g.setFont(bodyFont);
-        int y = contentTop + fm.getAscent() - historyScroll;
+        int y = m.contentTop + fm.getAscent() - historyScroll;
         for (String line : renderedLines) {
-            if (y > contentBottom) {
+            if (y > m.contentBottom) {
                 break;
             }
-            if (y + fm.getDescent() >= contentTop) {
-                boolean isSpeaker = line.startsWith("[") && line.endsWith("]");
+            if (y + fm.getDescent() >= m.contentTop) {
+                boolean isSpeaker = IntroHistoryText.isSpeakerLine(line);
                 g.setColor(isSpeaker
-                    ? new Color(180, 150, 90, Math.max(0, Math.min(255, (int) (fadeAlpha * 255))))
-                    : new Color(210, 195, 155, Math.max(0, Math.min(255, (int) (fadeAlpha * 255)))));
-                g.drawString(line, textX, y);
+                    ? new Color(IntroHistoryTheme.SPEAKER_R, IntroHistoryTheme.SPEAKER_G, IntroHistoryTheme.SPEAKER_B,
+                        Math.max(0, Math.min(255, (int) (fadeAlpha * 255))))
+                    : new Color(IntroHistoryTheme.BODY_R, IntroHistoryTheme.BODY_G, IntroHistoryTheme.BODY_B,
+                        Math.max(0, Math.min(255, (int) (fadeAlpha * 255)))));
+                g.drawString(line, Math.round(m.textX), y);
             }
-            y += lineH;
+            y += m.lineH;
         }
         g.setClip(oldClip);
 
         g.setFont(hintFont);
-        g.setColor(new Color(150, 130, 95, Math.max(0, Math.min(255, (int) (fadeAlpha * 200)))));
-        g.drawString("Колёсико — прокрутка", textX, hintBaseline);
+        g.setColor(new Color(IntroHistoryTheme.HINT_R, IntroHistoryTheme.HINT_G, IntroHistoryTheme.HINT_B,
+            Math.max(0, Math.min(255, (int) (fadeAlpha * IntroHistoryTheme.HINT_A / 255f)))));
+        g.drawString("Колёсико — прокрутка", Math.round(m.textX), m.hintBaseline);
 
         g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
-    }
-
-    private List<String> buildHistoryRenderedLines(FontMetrics fm, int textMaxW) {
-        List<String> rendered = new ArrayList<>();
-        for (String raw : controller.buildHistoryLogLines()) {
-            if (raw.isEmpty()) {
-                rendered.add("");
-                continue;
-            }
-            rendered.addAll(DialogBoxRenderer.wrapLine(raw, fm, textMaxW));
-        }
-        return rendered;
     }
 
     public boolean isFinished() {

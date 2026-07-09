@@ -15,6 +15,7 @@ import main.java.com.witcher.ui.intro.IntroScript;
 import main.java.com.witcher.ui.intro.presenter.IntroController;
 import main.java.com.witcher.ui.intro.view.IntroDialogLayout;
 import main.java.com.witcher.ui.intro.view.IntroDialogTheme;
+import main.java.com.witcher.ui.intro.view.IntroSpeakerPlateLayout;
 import main.java.com.witcher.ui.intro.view.IntroTextLayout;
 
 import java.util.List;
@@ -108,19 +109,18 @@ public final class GdxDialogBoxRenderer {
         glyph.setText(nameFont, speaker);
         float nameW = glyph.width;
         float nameH = glyph.height;
-        int nameBoxX = layout.boxX + layout.pad - 4;
-        int nameBoxY = speakerPlateSwingTop(layout, Math.round(nameH));
-        int nameBoxW = Math.round(nameW) + IntroDialogTheme.SPEAKER_NAME_BOX_PAD;
-        int nameBoxH = Math.round(nameH) + 4;
+        IntroSpeakerPlateLayout.Plate plate = IntroSpeakerPlateLayout.compute(
+            layout.boxX, layout.boxY, layout.pad, Math.round(nameW), Math.round(nameH),
+            Math.round(nameFont.getCapHeight()));
 
         beginShapes(shapes);
-        fillRect(shapes, C, nameBoxX, nameBoxY, nameBoxW, nameBoxH,
+        fillRect(shapes, C, plate.boxX, plate.boxY, plate.boxW, plate.boxH,
             c(IntroDialogTheme.BOX_BG_R, IntroDialogTheme.BOX_BG_G, IntroDialogTheme.BOX_BG_B),
             alpha * 0.9f * (IntroDialogTheme.BOX_BG_A / 255f));
         shapes.end();
 
         beginLines(shapes);
-        strokeRect(shapes, C, nameBoxX, nameBoxY, nameBoxW, nameBoxH,
+        strokeRect(shapes, C, plate.boxX, plate.boxY, plate.boxW, plate.boxH,
             c(IntroDialogTheme.BOX_BORDER_R, IntroDialogTheme.BOX_BORDER_G,
                 IntroDialogTheme.BOX_BORDER_B, alpha));
         shapes.end();
@@ -204,16 +204,11 @@ public final class GdxDialogBoxRenderer {
                                         SwingCoords C, IntroDialogLayout.Layout layout,
                                         String speaker, Color color, float alpha) {
         glyph.setText(font, speaker);
-        int nameBoxX = layout.boxX + layout.pad - 4 + IntroDialogTheme.SPEAKER_NAME_PAD_H;
-        int nameBoxY = speakerPlateSwingTop(layout, Math.round(glyph.height));
-        float baseline = IntroTextLayout.dialogLineBaselineSwingY(
-            nameBoxY + glyph.height + IntroDialogTheme.SPEAKER_NAME_PAD_V, font.getCapHeight());
-        drawOutlined(batch, font, speaker, nameBoxX, baseline, C, color);
-    }
-
-    private static int speakerPlateSwingTop(IntroDialogLayout.Layout layout, int nameH) {
-        return layout.boxY - nameH - IntroDialogTheme.SPEAKER_NAME_OFFSET_Y
-            - IntroDialogTheme.SPEAKER_NAME_LIFT_EXTRA - IntroDialogTheme.FRAME_OUTER_OFFSET;
+        IntroSpeakerPlateLayout.Plate plate = IntroSpeakerPlateLayout.compute(
+            layout.boxX, layout.boxY, layout.pad, Math.round(glyph.width), Math.round(glyph.height),
+            Math.round(font.getCapHeight()));
+        float baseline = IntroTextLayout.dialogLineBaselineSwingY(plate.textBaselineY, font.getCapHeight());
+        drawOutlined(batch, font, speaker, plate.textX, baseline, C, color);
     }
 
     private static Color speakerColor(IntroScript.DialogEntry entry) {
