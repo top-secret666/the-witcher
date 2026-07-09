@@ -2,6 +2,7 @@ package main.java.com.witcher.ui.graphics;
 
 import main.java.com.witcher.ui.shop.ShopCategory;
 import main.java.com.witcher.ui.shop.ShopRuntimeAssets;
+import main.java.com.witcher.ui.shop.view.LavkaAssetPaths;
 import main.java.com.witcher.ui.shop.view.ShopUiMetrics;
 import main.java.com.witcher.ui.shop.view.ShopViewConstants;
 
@@ -23,12 +24,12 @@ import java.awt.image.BufferedImage;
  */
 public final class ShopAssetCache implements ShopRuntimeAssets {
 
-    private static final String BASE = "/assets/sprites/lavka/";
-    private static final String BAKED = BASE + "1x/";
-    private static final String UI = BAKED + "ui/";
-    private static final String ICONS_SRC = BASE + "icons/";
-    private static final String ICONS_BAKED = BAKED + "icons/";
-    private static final String UI_SRC = BASE + "ui/";
+    private static final String BASE = LavkaAssetPaths.SWING_ROOT;
+    private static final String BAKED = LavkaAssetPaths.SWING_1X;
+    private static final String UI = LavkaAssetPaths.SWING_UI_BAKED;
+    private static final String ICONS_SRC = LavkaAssetPaths.SWING_ICONS_SRC;
+    private static final String ICONS_BAKED = LavkaAssetPaths.SWING_ICONS_BAKED;
+    private static final String UI_SRC = LavkaAssetPaths.SWING_UI_SRC;
     /** Размер оборота карточки в режиме категории (см. {@code ShopLayout#leftCategoryCardSlot}). */
     private static final int CATEGORY_CARD_W = 166;
     private static final int CATEGORY_CARD_H = 249;
