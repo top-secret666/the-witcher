@@ -42,7 +42,7 @@ public final class GdxIconBaker {
                 }
                 for (String file : files) {
                     BufferedImage baked = bakeFile(file, size, batch, fbo);
-                    if (baked != null) {
+                    if (isUsable(baked)) {
                         out.put(cacheKey(file, size), baked);
                     }
                 }
@@ -59,6 +59,28 @@ public final class GdxIconBaker {
 
     public static String cacheKey(String fileName, int size) {
         return fileName + "@" + size;
+    }
+
+    public static boolean isUsable(BufferedImage image) {
+        if (image == null || image.getWidth() <= 0 || image.getHeight() <= 0) {
+            return false;
+        }
+        int w = image.getWidth();
+        int h = image.getHeight();
+        int step = Math.max(1, Math.min(w, h) / 16);
+        for (int y = 0; y < h; y += step) {
+            for (int x = 0; x < w; x += step) {
+                int argb = image.getRGB(x, y);
+                int a = (argb >>> 24) & 0xff;
+                int r = (argb >>> 16) & 0xff;
+                int g = (argb >>> 8) & 0xff;
+                int b = argb & 0xff;
+                if (a > 20 && (r > 24 || g > 24 || b > 24)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private static BufferedImage bakeFile(String fileName, int size, SpriteBatch batch, FrameBuffer fbo) {
@@ -91,10 +113,30 @@ public final class GdxIconBaker {
         Pixmap pixmap = Pixmap.createFromFrameBuffer(0, 0, size, size);
         try {
             PixelTextures.flipPixmapVertical(pixmap);
-            return PixelTextures.pixmapToBufferedImage(pixmap);
+            BufferedImage image = PixelTextures.pixmapToBufferedImage(pixmap);
+            repairAlpha(image);
+            return image;
         } finally {
             pixmap.dispose();
             PixelTextures.dispose(texture);
+        }
+    }
+
+    /** После FBO readback альфа иногда 0 при ненулевом RGB — чиним для Swing. */
+    private static void repairAlpha(BufferedImage image) {
+        int w = image.getWidth();
+        int h = image.getHeight();
+        for (int y = 0; y < h; y++) {
+            for (int x = 0; x < w; x++) {
+                int argb = image.getRGB(x, y);
+                int a = (argb >>> 24) & 0xff;
+                int r = (argb >>> 16) & 0xff;
+                int g = (argb >>> 8) & 0xff;
+                int b = argb & 0xff;
+                if (a < 16 && (r > 8 || g > 8 || b > 8)) {
+                    image.setRGB(x, y, (255 << 24) | (r << 16) | (g << 8) | b);
+                }
+            }
         }
     }
 }

@@ -29,11 +29,12 @@ public final class HybridShopIcons {
     }
 
     public static ShopEntryIcons create(int iconSize) {
+        GdxIconBakeSession.ensureBaked(iconSize, EQUIP_ICON_SIZE);
         if (GdxIconBakeSession.isReady()) {
-            System.out.println("[HybridShopIcons] GDX icons for shop (size " + iconSize + ")");
-            return GdxBakedArmourIconRegistry.get(iconSize);
+            System.out.println("[HybridShopIcons] GDX+Swing icons (size " + iconSize + ")");
+            return new DelegatingShopIcons(iconSize);
         }
-        System.out.println("[HybridShopIcons] Swing fallback icons");
+        System.out.println("[HybridShopIcons] Swing-only icons");
         return ArmourIconRegistry.get(iconSize);
     }
 
