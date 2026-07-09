@@ -145,6 +145,15 @@ public final class PixelTextures {
         return loadOptionalMeta("sprites/lavka/icons/items/" + fileName);
     }
 
+    /** Иконка категории / HUD из {@code sprites/lavka/icons/} — только оригинал. */
+    public static BufferedImage loadLavkaCategoryIcon(String fileName) {
+        return loadBufferedImageOptional("sprites/lavka/icons/" + fileName);
+    }
+
+    public static Texture loadLavkaCategoryIconTexture(String fileName) {
+        return loadFirst("sprites/lavka/icons/" + fileName);
+    }
+
     public static LoadedTexture loadFirstMeta(String... paths) {
         for (String path : paths) {
             LoadedTexture loaded = loadOptionalMeta(path);

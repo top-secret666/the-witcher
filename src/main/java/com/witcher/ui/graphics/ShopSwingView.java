@@ -952,7 +952,7 @@ public final class ShopSwingView implements ShopView {
                 int seal = assets.dukeSealSize;
                 int sealX = layout.hudX + 12;
                 int sealY = hudY + (layout.hudH - seal) / 2;
-                drawCrispIcon(g, assets.dukeSealIconScaled, sealX, sealY, seal);
+                drawScaledSprite(g, assets.dukeSealIconScaled, sealX, sealY, seal, seal, false);
             }
         }
 
@@ -1434,9 +1434,11 @@ public final class ShopSwingView implements ShopView {
         Rectangle cardRect;
         if (!uiTextOverlayOnly) {
             if (frame != null) {
+                boolean smoothFrame = frame == assets.cardBackScaled;
                 Object prevInterp = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
                 g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
-                    RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+                    smoothFrame ? RenderingHints.VALUE_INTERPOLATION_BILINEAR
+                                : RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
                 g.drawImage(frame, x, y, w, h, null);
                 if (prevInterp != null) {
                     g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, prevInterp);

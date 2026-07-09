@@ -1,6 +1,7 @@
 package main.java.com.witcher.gdx.shop;
 
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.Texture.TextureFilter;
 import main.java.com.witcher.gdx.graphics.PixelTextures;
 import main.java.com.witcher.ui.shop.ShopCategory;
 import main.java.com.witcher.ui.shop.ShopRuntimeAssets;
@@ -103,15 +104,17 @@ public final class GdxShopRuntimeAssets implements ShopRuntimeAssets {
 
         hudBar = loadLavka("ui/shop_hud_bar.png");
         cardFrontScaled = loadLavka("ui/shop_card_front.png");
-        cardBackScaled = loadLavka("ui/shop_card_back.png");
+        cardBackScaled = loadLavkaUiOriginal("shop_card_back.png");
         cardHoverScaled = loadLavka("ui/shop_card_hover.png");
         cardSelectedScaled = loadLavka("ui/shop_card_selected.png");
         btnBuyNormal = loadLavka("ui/shop_btn_buy_normal.png");
         btnBuyDisabled = loadLavka("ui/shop_btn_buy_disabled.png");
 
-        crownIconScaled = loadLavka("icons/icon_crown.png");
-        crownIconSmall = loadLavka("icons/icon_crown_small.png", "icons/icon_crown.png");
-        dukeSealIconScaled = loadLavka("icons/icon_duke_seal.png");
+        crownIconScaled = loadCategoryIcon("icon_crown.png");
+        crownIconSmall = loadCategoryIcon(
+            PixelTextures.loadLavkaCategoryIcon("icon_crown_small.png") != null
+                ? "icon_crown_small.png" : "icon_crown.png");
+        dukeSealIconScaled = loadCategoryIcon("icon_duke_seal.png");
 
         merchantBgScaled = loadLavka("merchant_bg_lavka.png", "lavka.png");
         if (merchantBgScaled == null) {
@@ -127,24 +130,24 @@ public final class GdxShopRuntimeAssets implements ShopRuntimeAssets {
             "icon_armor_boots.png", "icon_potion.png"
         };
         for (int i = 0; i < 5; i++) {
-            itemIcons[i] = loadLavka("icons/" + iconNames[i]);
+            itemIcons[i] = loadCategoryIcon(iconNames[i]);
         }
         for (ShopCategory cat : ShopCategory.values()) {
             if (cat.iconIndex >= 0 && cat.iconIndex < iconNames.length) {
                 categoryIconCache.put(cat,
-                    PixelTextures.loadLavkaBufferedImage("icons/" + iconNames[cat.iconIndex]));
+                    PixelTextures.loadLavkaCategoryIcon(iconNames[cat.iconIndex]));
             }
         }
 
-        weaponIcon = loadLavka("icons/icon_weapon.png");
-        setsIcon = loadLavka("icons/icon_armor_set.png");
+        weaponIcon = loadCategoryIcon("icon_weapon.png");
+        setsIcon = loadCategoryIcon("icon_armor_set.png");
         categoryIconCache.put(ShopCategory.WEAPON,
-            PixelTextures.loadLavkaBufferedImage("icons/icon_weapon.png"));
+            PixelTextures.loadLavkaCategoryIcon("icon_weapon.png"));
         categoryIconCache.put(ShopCategory.SETS,
-            PixelTextures.loadLavkaBufferedImage("icons/icon_armor_set.png"));
+            PixelTextures.loadLavkaCategoryIcon("icon_armor_set.png"));
 
         int bagSize = 40;
-        inventoryBagIcon = loadLavka("icons/icon_inventory_bag.png");
+        inventoryBagIcon = loadCategoryIcon("icon_inventory_bag.png");
         inventoryBagClosed = loadLavka("ui/inventory_bag_closed.png");
         inventoryBagOpen = loadLavka("ui/inventory_bag_open.png");
         inventoryBagHover = loadLavka("ui/inventory_bag_hover.png");
@@ -176,6 +179,22 @@ public final class GdxShopRuntimeAssets implements ShopRuntimeAssets {
 
     private static Texture loadLavka(String relativePath, String... extraFallbacks) {
         return PixelTextures.loadLavka(relativePath, extraFallbacks);
+    }
+
+    private static Texture loadLavkaUiOriginal(String fileName) {
+        Texture texture = PixelTextures.loadFirst("sprites/lavka/ui/" + fileName);
+        if (texture != null) {
+            texture.setFilter(TextureFilter.Linear, TextureFilter.Linear);
+        }
+        return texture;
+    }
+
+    private static Texture loadCategoryIcon(String fileName) {
+        Texture texture = PixelTextures.loadLavkaCategoryIconTexture(fileName);
+        if (texture != null) {
+            texture.setFilter(TextureFilter.Linear, TextureFilter.Linear);
+        }
+        return texture;
     }
 
     private Texture[] loadBagOpenFrames(int size) {

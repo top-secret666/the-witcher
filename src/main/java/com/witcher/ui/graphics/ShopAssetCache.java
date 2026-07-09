@@ -9,14 +9,16 @@ import java.awt.image.BufferedImage;
 
 /**
  * Ассеты лавки — один раз за сессию.
- * Сначала грузит готовые {@code lavka/1x/} (см. tools/bake_lavka_assets.py), иначе даунскейлит на лету.
+ * Иконки товаров/категорий — оригиналы {@code lavka/icons/} (bilinear).
+ * UI-карточки — приоритет {@code lavka/1x/ui/}, иначе даунскейл с оригинала.
  */
 public final class ShopAssetCache implements ShopRuntimeAssets {
 
     private static final String BASE = "/assets/sprites/lavka/";
     private static final String BAKED = BASE + "1x/";
     private static final String UI = BAKED + "ui/";
-    private static final String ICONS = BAKED + "icons/";
+    private static final String ICONS_SRC = BASE + "icons/";
+    private static final String UI_SRC = BASE + "ui/";
 
     private static ShopAssetCache instance;
 
@@ -105,8 +107,7 @@ public final class ShopAssetCache implements ShopRuntimeAssets {
 
         cardFrontScaled = loadSized(UI + "shop_card_front.png", cardW, cardH,
             BASE + "ui/shop_card_front.png", false);
-        cardBackScaled = loadSized(UI + "shop_card_back.png", cardW, cardH,
-            BASE + "ui/shop_card_back.png", false);
+        cardBackScaled = loadSmoothUi("shop_card_back.png", cardW, cardH, false);
         cardHoverScaled = loadSized(UI + "shop_card_hover.png", cardW, cardH,
             BASE + "ui/shop_card_hover.png", false);
         cardSelectedScaled = loadSized(UI + "shop_card_selected.png", cardW, cardH,
@@ -116,12 +117,10 @@ public final class ShopAssetCache implements ShopRuntimeAssets {
         btnBuyDisabled = loadSized(UI + "shop_btn_buy_disabled.png", btnW, btnH,
             BASE + "ui/shop_btn_buy_disabled.png", false);
 
-        crownIconScaled = loadSized(ICONS + "icon_crown.png", 18, 18,
-            BASE + "icons/icon_crown.png", true);
-        crownIconSmall = loadSized(ICONS + "icon_crown_small.png", 10, 10,
-            BASE + "icons/icon_crown.png", true);
-        dukeSealIconScaled = loadSized(ICONS + "icon_duke_seal.png", dukeSealSize, dukeSealSize,
-            BASE + "icons/icon_duke_seal.png", true);
+        crownIconScaled = loadLavkaIcon("icon_crown.png", 18);
+        crownIconSmall = loadLavkaIcon(
+            load(ICONS_SRC + "icon_crown_small.png") != null ? "icon_crown_small.png" : "icon_crown.png", 10);
+        dukeSealIconScaled = loadLavkaIcon("icon_duke_seal.png", dukeSealSize);
 
         merchantBgScaled = loadBackground();
         int charH = Math.round(360 * 0.82f);
@@ -134,18 +133,14 @@ public final class ShopAssetCache implements ShopRuntimeAssets {
             "icon_armor_boots.png", "icon_potion.png"
         };
         for (int i = 0; i < 5; i++) {
-            itemIcons[i] = loadSized(ICONS + iconNames[i], cardArtSize, cardArtSize,
-                BASE + "icons/" + iconNames[i], true);
+            itemIcons[i] = loadLavkaIcon(iconNames[i], 0);
             itemArts[i] = itemIcons[i];
         }
 
-        weaponIcon = loadSized(ICONS + "icon_weapon.png", cardArtSize, cardArtSize,
-            BASE + "icons/icon_weapon.png", true);
-        setsIcon = loadSized(ICONS + "icon_armor_set.png", cardArtSize, cardArtSize,
-            BASE + "icons/icon_armor_set.png", true);
+        weaponIcon = loadLavkaIcon("icon_weapon.png", 0);
+        setsIcon = loadLavkaIcon("icon_armor_set.png", 0);
         int bagSize = 40;
-        inventoryBagIcon = loadSized(ICONS + "icon_inventory_bag.png", bagSize, bagSize,
-            BASE + "icons/icon_inventory_bag.png", true);
+        inventoryBagIcon = loadLavkaIcon("icon_inventory_bag.png", 0);
         inventoryBagClosed = loadSized(UI + "inventory_bag_closed.png", bagSize, bagSize,
             BASE + "ui/inventory_bag_closed.png", true);
         inventoryBagOpen = loadSized(UI + "inventory_bag_open.png", bagSize, bagSize,
@@ -230,6 +225,36 @@ public final class ShopAssetCache implements ShopRuntimeAssets {
             }
         }
         return frames;
+    }
+
+    private BufferedImage loadLavkaIcon(String fileName, int maxSize) {
+        BufferedImage src = load(ICONS_SRC + fileName);
+        if (src == null) {
+            return null;
+        }
+        Rectangle box = ShopImageBounds.compute(src);
+        BufferedImage cropped = box != null && box.width > 0 && box.height > 0
+            ? src.getSubimage(box.x, box.y, box.width, box.height)
+            : src;
+        if (maxSize > 0 && (cropped.getWidth() > maxSize || cropped.getHeight() > maxSize)) {
+            return PixelScaler.smoothScaleUniform(cropped, maxSize);
+        }
+        return cropped;
+    }
+
+    /** Оригинал UI без 1x — bilinear до целевого размера. */
+    private BufferedImage loadSmoothUi(String fileName, int w, int h, boolean crop) {
+        BufferedImage src = load(UI_SRC + fileName);
+        if (src == null) {
+            return null;
+        }
+        if (crop) {
+            Rectangle box = ShopImageBounds.compute(src);
+            if (box != null && box.width > 0 && box.height > 0) {
+                return PixelScaler.smoothScaleRegion(src, box, w, h);
+            }
+        }
+        return PixelScaler.smoothScale(src, w, h);
     }
 
     private BufferedImage loadSized(String bakedPath, int w, int h, String fallbackPath, boolean crop) {
