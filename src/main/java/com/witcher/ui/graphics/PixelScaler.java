@@ -82,6 +82,52 @@ public final class PixelScaler {
         return smoothScale(src, dstW, dstH);
     }
 
+    /**
+     * Чёткий даунскейл крупных оригиналов: ступенчатое /2, финал — bicubic.
+     * Для HUD-иконок и UI-рамок карточек (корона, печать, shop_card_*).
+     */
+    public static BufferedImage sharpScale(BufferedImage src, int dstW, int dstH) {
+        if (src == null || dstW <= 0 || dstH <= 0) {
+            return src;
+        }
+        if (src.getWidth() == dstW && src.getHeight() == dstH) {
+            return src;
+        }
+        BufferedImage work = src;
+        while (work.getWidth() > dstW * 2 && work.getHeight() > dstH * 2) {
+            work = halfQuality(work);
+        }
+        BufferedImage out = new BufferedImage(dstW, dstH, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = out.createGraphics();
+        applyBicubic(g);
+        g.drawImage(work, 0, 0, dstW, dstH, null);
+        g.dispose();
+        return out;
+    }
+
+    public static BufferedImage sharpScaleRegion(BufferedImage src, Rectangle crop, int dstW, int dstH) {
+        if (src == null || crop == null || crop.width <= 0 || crop.height <= 0) {
+            return sharpScale(src, dstW, dstH);
+        }
+        BufferedImage region = src.getSubimage(crop.x, crop.y, crop.width, crop.height);
+        return sharpScale(region, dstW, dstH);
+    }
+
+    public static BufferedImage sharpScaleUniform(BufferedImage src, int maxSize) {
+        if (src == null || maxSize <= 0) {
+            return src;
+        }
+        int w = src.getWidth();
+        int h = src.getHeight();
+        if (w <= maxSize && h <= maxSize) {
+            return src;
+        }
+        float scale = Math.min((float) maxSize / w, (float) maxSize / h);
+        int dstW = Math.max(1, Math.round(w * scale));
+        int dstH = Math.max(1, Math.round(h * scale));
+        return sharpScale(src, dstW, dstH);
+    }
+
     /** Целочисленный даунскейл: crop / scaleFactor. */
     public static BufferedImage crispScaleInteger(BufferedImage src, Rectangle crop, int scaleFactor) {
         if (src == null || crop == null || scaleFactor < 1) {
@@ -106,6 +152,19 @@ public final class PixelScaler {
         return scale;
     }
 
+    private static BufferedImage halfQuality(BufferedImage src) {
+        int w = src.getWidth();
+        int h = src.getHeight();
+        int nw = Math.max(1, w / 2);
+        int nh = Math.max(1, h / 2);
+        BufferedImage out = new BufferedImage(nw, nh, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = out.createGraphics();
+        applyBicubic(g);
+        g.drawImage(src, 0, 0, nw, nh, 0, 0, w, h, null);
+        g.dispose();
+        return out;
+    }
+
     private static BufferedImage half(BufferedImage src) {
         int w = src.getWidth();
         int h = src.getHeight();
@@ -127,6 +186,12 @@ public final class PixelScaler {
 
     private static void applyBilinear(Graphics2D g) {
         g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+        g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+    }
+
+    private static void applyBicubic(Graphics2D g) {
+        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
         g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
     }

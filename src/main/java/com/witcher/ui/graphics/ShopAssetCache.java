@@ -105,9 +105,8 @@ public final class ShopAssetCache implements ShopRuntimeAssets {
         hudH = 58;
         hudBar = loadSized(UI + "shop_hud_bar.png", hudW, hudH, BASE + "ui/shop_hud_bar.png", true);
 
-        cardFrontScaled = loadSized(UI + "shop_card_front.png", cardW, cardH,
-            BASE + "ui/shop_card_front.png", false);
-        cardBackScaled = loadSmoothUi("shop_card_back.png", cardW, cardH, false);
+        cardFrontScaled = loadSharpUi("shop_card_front.png", cardW, cardH);
+        cardBackScaled = loadSharpUi("shop_card_back.png", cardW, cardH);
         cardHoverScaled = loadSized(UI + "shop_card_hover.png", cardW, cardH,
             BASE + "ui/shop_card_hover.png", false);
         cardSelectedScaled = loadSized(UI + "shop_card_selected.png", cardW, cardH,
@@ -117,10 +116,10 @@ public final class ShopAssetCache implements ShopRuntimeAssets {
         btnBuyDisabled = loadSized(UI + "shop_btn_buy_disabled.png", btnW, btnH,
             BASE + "ui/shop_btn_buy_disabled.png", false);
 
-        crownIconScaled = loadLavkaIcon("icon_crown.png", 18);
-        crownIconSmall = loadLavkaIcon(
+        crownIconScaled = loadSharpIcon("icon_crown.png", 18);
+        crownIconSmall = loadSharpIcon(
             load(ICONS_SRC + "icon_crown_small.png") != null ? "icon_crown_small.png" : "icon_crown.png", 10);
-        dukeSealIconScaled = loadLavkaIcon("icon_duke_seal.png", dukeSealSize);
+        dukeSealIconScaled = loadSharpIcon("icon_duke_seal.png", dukeSealSize);
 
         merchantBgScaled = loadBackground();
         int charH = Math.round(360 * 0.82f);
@@ -242,19 +241,26 @@ public final class ShopAssetCache implements ShopRuntimeAssets {
         return cropped;
     }
 
-    /** Оригинал UI без 1x — bilinear до целевого размера. */
-    private BufferedImage loadSmoothUi(String fileName, int w, int h, boolean crop) {
+    /** Мелкие HUD-иконки: ступенчатый bicubic-даунскейл из оригинала. */
+    private BufferedImage loadSharpIcon(String fileName, int size) {
+        BufferedImage src = load(ICONS_SRC + fileName);
+        if (src == null) {
+            return null;
+        }
+        Rectangle box = ShopImageBounds.compute(src);
+        if (box != null && box.width > 0 && box.height > 0) {
+            return PixelScaler.sharpScaleRegion(src, box, size, size);
+        }
+        return PixelScaler.sharpScale(src, size, size);
+    }
+
+    /** Рамка карточки из оригинала ui/ — чёткий даунскейл до 54×81. */
+    private BufferedImage loadSharpUi(String fileName, int w, int h) {
         BufferedImage src = load(UI_SRC + fileName);
         if (src == null) {
             return null;
         }
-        if (crop) {
-            Rectangle box = ShopImageBounds.compute(src);
-            if (box != null && box.width > 0 && box.height > 0) {
-                return PixelScaler.smoothScaleRegion(src, box, w, h);
-            }
-        }
-        return PixelScaler.smoothScale(src, w, h);
+        return PixelScaler.sharpScale(src, w, h);
     }
 
     private BufferedImage loadSized(String bakedPath, int w, int h, String fallbackPath, boolean crop) {

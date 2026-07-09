@@ -950,9 +950,9 @@ public final class ShopSwingView implements ShopView {
 
             if (assets.dukeSealIconScaled != null) {
                 int seal = assets.dukeSealSize;
-                int sealX = layout.hudX + 12;
-                int sealY = hudY + (layout.hudH - seal) / 2;
-                drawScaledSprite(g, assets.dukeSealIconScaled, sealX, sealY, seal, seal, false);
+                int sealX = (layout.hudX + 12) & ~1;
+                int sealY = (hudY + (layout.hudH - seal) / 2) & ~1;
+                g.drawImage(assets.dukeSealIconScaled, sealX, sealY, seal, seal, null);
             }
         }
 
@@ -975,8 +975,9 @@ public final class ShopSwingView implements ShopView {
         int blockX = layout.hudX + (layout.hudW - blockW) / 2;
         int textX = blockX;
         if (assets.crownIconScaled != null) {
-            int crownY = hudY + (layout.hudH - crownSize) / 2;
-            g.drawImage(assets.crownIconScaled, blockX, crownY, null);
+            int crownY = (hudY + (layout.hudH - crownSize) / 2) & ~1;
+            int crownX = blockX & ~1;
+            g.drawImage(assets.crownIconScaled, crownX, crownY, crownSize, crownSize, null);
             textX = blockX + crownSize + crownGap;
         }
         int walletY = hudY + (layout.hudH + fm.getAscent()) / 2 - 2;
@@ -1434,11 +1435,11 @@ public final class ShopSwingView implements ShopView {
         Rectangle cardRect;
         if (!uiTextOverlayOnly) {
             if (frame != null) {
-                boolean smoothFrame = frame == assets.cardBackScaled;
+                boolean scaled = w != frame.getWidth() || h != frame.getHeight();
                 Object prevInterp = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
                 g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
-                    smoothFrame ? RenderingHints.VALUE_INTERPOLATION_BILINEAR
-                                : RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+                    scaled ? RenderingHints.VALUE_INTERPOLATION_BICUBIC
+                           : RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
                 g.drawImage(frame, x, y, w, h, null);
                 if (prevInterp != null) {
                     g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, prevInterp);
