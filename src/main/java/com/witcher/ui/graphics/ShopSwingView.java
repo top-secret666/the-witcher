@@ -1435,11 +1435,20 @@ public final class ShopSwingView implements ShopView {
         Rectangle cardRect;
         if (!uiTextOverlayOnly) {
             if (frame != null) {
-                boolean scaled = w != frame.getWidth() || h != frame.getHeight();
+                boolean cardBack = frame == assets.cardBackScaled;
+                boolean nativeSize = Math.abs(w - frame.getWidth()) <= 1
+                    && Math.abs(h - frame.getHeight()) <= 1;
                 Object prevInterp = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
-                g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
-                    scaled ? RenderingHints.VALUE_INTERPOLATION_BICUBIC
-                           : RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+                if (cardBack && nativeSize) {
+                    g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+                        RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+                } else if (w != frame.getWidth() || h != frame.getHeight()) {
+                    g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+                        RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+                } else {
+                    g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+                        RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+                }
                 g.drawImage(frame, x, y, w, h, null);
                 if (prevInterp != null) {
                     g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, prevInterp);
@@ -1579,17 +1588,23 @@ public final class ShopSwingView implements ShopView {
         g.setFont(GameFonts.get().uiBold(10));
         FontMetrics priceFm = g.getFontMetrics();
         BufferedImage coin = assets.crownIconSmall != null ? assets.crownIconSmall : assets.crownIconScaled;
+        int coinSize = 12;
         int priceW = priceFm.stringWidth(priceLabel);
-        int coinH = coin != null ? coin.getHeight() : 0;
         if (coin != null) {
-            priceW += coin.getWidth() + 2;
+            priceW += coinSize + 2;
         }
         int priceRowY = (priceTopY + priceFm.getAscent()) & ~1;
         int priceX = cardX + (cardW - priceW) / 2;
         if (coin != null) {
-            int coinY = (priceRowY - coinH + 1) & ~1;
-            g.drawImage(coin, priceX, coinY, null);
-            priceX += coin.getWidth() + 2;
+            int coinY = (priceRowY - coinSize + 1) & ~1;
+            Object prevInterp = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
+            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+                RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+            g.drawImage(coin, priceX, coinY, coinSize, coinSize, null);
+            if (prevInterp != null) {
+                g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, prevInterp);
+            }
+            priceX += coinSize + 2;
         }
         drawCategoryLabel(g, priceLabel, priceX, priceRowY, new Color(255, 232, 120));
     }

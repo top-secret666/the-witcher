@@ -53,8 +53,8 @@ final class GameAssetLoader {
             IntroScreen intro = new IntroScreen();
 
             report(85);
-            ShopAssetCache.get();
             ShopIconsFactory.warmupHybridIcons();
+            ShopAssetCache.get();
             UiChrome.warmup();
 
             report(100);

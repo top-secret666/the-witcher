@@ -40,6 +40,9 @@ if errorlevel 1 (
 
 echo === Kompilyaciya GDX bridge (ikonki) ===
 (
+  echo %CORE%\main\java\com\witcher\gdx\bridge\GdxShopUiBaker.java
+  echo %CORE%\main\java\com\witcher\gdx\bridge\GdxTextureDownscaler.java
+  echo %CORE%\main\java\com\witcher\gdx\bridge\HybridShopUiAssets.java
   echo %CORE%\main\java\com\witcher\gdx\bridge\DelegatingShopIcons.java
   echo %CORE%\main\java\com\witcher\gdx\bridge\GdxIconBaker.java
   echo %CORE%\main\java\com\witcher\gdx\bridge\GdxIconBakeSession.java

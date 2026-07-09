@@ -18,7 +18,11 @@ public final class ShopAssetCache implements ShopRuntimeAssets {
     private static final String BAKED = BASE + "1x/";
     private static final String UI = BAKED + "ui/";
     private static final String ICONS_SRC = BASE + "icons/";
+    private static final String ICONS_BAKED = BAKED + "icons/";
     private static final String UI_SRC = BASE + "ui/";
+    /** Размер оборота карточки в режиме категории (см. {@code ShopLayout#leftCategoryCardSlot}). */
+    private static final int CATEGORY_CARD_W = 166;
+    private static final int CATEGORY_CARD_H = 249;
 
     private static ShopAssetCache instance;
 
@@ -105,8 +109,10 @@ public final class ShopAssetCache implements ShopRuntimeAssets {
         hudH = 58;
         hudBar = loadSized(UI + "shop_hud_bar.png", hudW, hudH, BASE + "ui/shop_hud_bar.png", true);
 
-        cardFrontScaled = loadSharpUi("shop_card_front.png", cardW, cardH);
-        cardBackScaled = loadSharpUi("shop_card_back.png", cardW, cardH);
+        cardFrontScaled = loadSized(UI + "shop_card_front.png", cardW, cardH,
+            BASE + "ui/shop_card_front.png", false);
+        cardBackScaled = loadGdxUi(ShopUiAssetsFactory.KEY_CARD_BACK,
+            loadSharpUi("shop_card_back.png", CATEGORY_CARD_W, CATEGORY_CARD_H));
         cardHoverScaled = loadSized(UI + "shop_card_hover.png", cardW, cardH,
             BASE + "ui/shop_card_hover.png", false);
         cardSelectedScaled = loadSized(UI + "shop_card_selected.png", cardW, cardH,
@@ -116,10 +122,11 @@ public final class ShopAssetCache implements ShopRuntimeAssets {
         btnBuyDisabled = loadSized(UI + "shop_btn_buy_disabled.png", btnW, btnH,
             BASE + "ui/shop_btn_buy_disabled.png", false);
 
-        crownIconScaled = loadSharpIcon("icon_crown.png", 18);
-        crownIconSmall = loadSharpIcon(
-            load(ICONS_SRC + "icon_crown_small.png") != null ? "icon_crown_small.png" : "icon_crown.png", 10);
-        dukeSealIconScaled = loadSharpIcon("icon_duke_seal.png", dukeSealSize);
+        crownIconScaled = loadGdxUi(ShopUiAssetsFactory.KEY_CROWN_18, loadBakedIcon("icon_crown.png"));
+        crownIconSmall = loadGdxUi(ShopUiAssetsFactory.KEY_CROWN_10,
+            loadBakedIcon(load(ICONS_SRC + "icon_crown_small.png") != null
+                ? "icon_crown_small.png" : "icon_crown.png"));
+        dukeSealIconScaled = loadGdxUi(ShopUiAssetsFactory.KEY_DUKE_SEAL, loadBakedIcon("icon_duke_seal.png"));
 
         merchantBgScaled = loadBackground();
         int charH = Math.round(360 * 0.82f);
@@ -226,6 +233,15 @@ public final class ShopAssetCache implements ShopRuntimeAssets {
         return frames;
     }
 
+    private BufferedImage loadGdxUi(String key, BufferedImage fallback) {
+        BufferedImage gdx = ShopUiAssetsFactory.get(key);
+        return gdx != null ? gdx : fallback;
+    }
+
+    private BufferedImage loadBakedIcon(String fileName) {
+        return load(ICONS_BAKED + fileName);
+    }
+
     private BufferedImage loadLavkaIcon(String fileName, int maxSize) {
         BufferedImage src = load(ICONS_SRC + fileName);
         if (src == null) {
@@ -241,20 +257,6 @@ public final class ShopAssetCache implements ShopRuntimeAssets {
         return cropped;
     }
 
-    /** Мелкие HUD-иконки: ступенчатый bicubic-даунскейл из оригинала. */
-    private BufferedImage loadSharpIcon(String fileName, int size) {
-        BufferedImage src = load(ICONS_SRC + fileName);
-        if (src == null) {
-            return null;
-        }
-        Rectangle box = ShopImageBounds.compute(src);
-        if (box != null && box.width > 0 && box.height > 0) {
-            return PixelScaler.sharpScaleRegion(src, box, size, size);
-        }
-        return PixelScaler.sharpScale(src, size, size);
-    }
-
-    /** Рамка карточки из оригинала ui/ — чёткий даунскейл до 54×81. */
     private BufferedImage loadSharpUi(String fileName, int w, int h) {
         BufferedImage src = load(UI_SRC + fileName);
         if (src == null) {

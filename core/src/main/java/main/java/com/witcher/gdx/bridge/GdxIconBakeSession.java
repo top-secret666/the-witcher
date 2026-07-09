@@ -7,6 +7,7 @@ import com.badlogic.gdx.backends.lwjgl3.Lwjgl3ApplicationConfiguration;
 
 import java.awt.image.BufferedImage;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -56,7 +57,10 @@ public final class GdxIconBakeSession {
                             @Override
                             public void create() {
                                 try {
-                                    result.set(GdxIconBaker.bakeDistinctIcons(sizes));
+                                    Map<String, BufferedImage> resultMap = new HashMap<>();
+                                    resultMap.putAll(GdxIconBaker.bakeDistinctIcons(sizes));
+                                    resultMap.putAll(GdxShopUiBaker.bake());
+                                    result.set(resultMap);
                                     success = !result.get().isEmpty();
                                 } catch (Throwable error) {
                                     success = false;

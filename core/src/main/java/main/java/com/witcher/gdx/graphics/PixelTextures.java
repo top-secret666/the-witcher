@@ -154,6 +154,10 @@ public final class PixelTextures {
         return loadFirst("sprites/lavka/icons/" + fileName);
     }
 
+    public static LoadedTexture loadLavkaCategoryIconMeta(String fileName) {
+        return loadOptionalMeta("sprites/lavka/icons/" + fileName);
+    }
+
     public static LoadedTexture loadFirstMeta(String... paths) {
         for (String path : paths) {
             LoadedTexture loaded = loadOptionalMeta(path);
