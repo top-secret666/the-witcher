@@ -1,5 +1,8 @@
 package main.java.com.witcher.ui.graphics;
 
+import main.java.com.witcher.ui.shop.bridge.ShopBakeKeys;
+import main.java.com.witcher.ui.shop.bridge.ShopGdxBridge;
+
 import java.awt.image.BufferedImage;
 
 /**
@@ -7,27 +10,17 @@ import java.awt.image.BufferedImage;
  */
 public final class ShopUiAssetsFactory {
 
-    private static final String BRIDGE = "main.java.com.witcher.gdx.bridge.HybridShopUiAssets";
-
-    public static final String KEY_CARD_BACK = "shop_card_back@166x249";
+    public static final String KEY_CARD_BACK = ShopBakeKeys.CARD_BACK;
     /** Только HUD-плашка. */
-    public static final String KEY_HUD_CROWN = "hud.icon_crown@56";
-    public static final String KEY_HUD_DUKE_SEAL = "hud.icon_duke_seal@92";
+    public static final String KEY_HUD_CROWN = ShopBakeKeys.HUD_CROWN;
+    public static final String KEY_HUD_DUKE_SEAL = ShopBakeKeys.HUD_DUKE_SEAL;
     /** Монетка у цены товара (каталог, карточка). */
-    public static final String KEY_CATALOG_COIN = "catalog.icon_crown_small@16";
+    public static final String KEY_CATALOG_COIN = ShopBakeKeys.CATALOG_COIN;
 
     private ShopUiAssetsFactory() {
     }
 
     public static BufferedImage get(String key) {
-        try {
-            Object result = Class.forName(BRIDGE).getMethod("get", String.class).invoke(null, key);
-            if (result instanceof BufferedImage image && image.getWidth() > 0 && image.getHeight() > 0) {
-                return image;
-            }
-        } catch (Throwable ignored) {
-            // GDX bridge недоступен
-        }
-        return null;
+        return ShopGdxBridge.getUiAsset(key);
     }
 }

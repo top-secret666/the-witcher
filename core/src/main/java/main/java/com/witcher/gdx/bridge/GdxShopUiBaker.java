@@ -3,6 +3,8 @@ package main.java.com.witcher.gdx.bridge;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import main.java.com.witcher.gdx.graphics.PixelTextures;
+import main.java.com.witcher.ui.shop.bridge.ShopBakeKeys;
+import main.java.com.witcher.ui.shop.view.LavkaAssetPaths;
 
 import static main.java.com.witcher.ui.shop.view.ShopViewConstants.HUD_CROWN_H;
 import static main.java.com.witcher.ui.shop.view.ShopViewConstants.HUD_CROWN_W;
@@ -18,10 +20,10 @@ import java.util.Map;
 /** LibGDX-запекание HUD и оборота карточки лавки. */
 public final class GdxShopUiBaker {
 
-    public static final String KEY_CARD_BACK = "shop_card_back@166x249";
-    public static final String KEY_HUD_CROWN = "hud.icon_crown@56";
-    public static final String KEY_HUD_DUKE_SEAL = "hud.icon_duke_seal@92";
-    public static final String KEY_CATALOG_COIN = "catalog.icon_crown_small@16";
+    public static final String KEY_CARD_BACK = ShopBakeKeys.CARD_BACK;
+    public static final String KEY_HUD_CROWN = ShopBakeKeys.HUD_CROWN;
+    public static final String KEY_HUD_DUKE_SEAL = ShopBakeKeys.HUD_DUKE_SEAL;
+    public static final String KEY_CATALOG_COIN = ShopBakeKeys.CATALOG_COIN;
 
     /** Запекание в 2× виртуального размера (Renderer pixelScale=2 → 1:1 на displayFrame). */
     public static final int HUD_CROWN_PX = hudIconBakePx(HUD_CROWN_W, HUD_CROWN_H);
@@ -57,7 +59,7 @@ public final class GdxShopUiBaker {
     }
 
     private static BufferedImage bakeUi(SpriteBatch batch, String relativePath, int dstW, int dstH) {
-        PixelTextures.LoadedTexture loaded = PixelTextures.loadFirstMeta("sprites/lavka/" + relativePath);
+        PixelTextures.LoadedTexture loaded = PixelTextures.loadFirstMeta(LavkaAssetPaths.GDX_ROOT + relativePath);
         if (loaded == null || loaded.texture == null) {
             return null;
         }
@@ -75,7 +77,7 @@ public final class GdxShopUiBaker {
             return null;
         }
         try {
-            int[] bounds = PixelTextures.computeOpaqueBounds("sprites/lavka/icons/" + fileName);
+            int[] bounds = PixelTextures.computeOpaqueBounds(LavkaAssetPaths.gdxIcons(fileName));
             TextureRegion region;
             if (bounds != null
                 && bounds[0] >= 0 && bounds[1] >= 0
