@@ -10,9 +10,9 @@ import com.badlogic.gdx.math.Rectangle;
 import main.java.com.witcher.gdx.WitcherGame;
 import main.java.com.witcher.gdx.graphics.GameFonts;
 import main.java.com.witcher.gdx.graphics.GameFrameLayout;
-import main.java.com.witcher.gdx.graphics.GdxTextureBridge;
 import main.java.com.witcher.gdx.graphics.PixelTextures;
 import main.java.com.witcher.gdx.graphics.SwingCoords;
+import main.java.com.witcher.ui.shop.ShopIcon;
 import main.java.com.witcher.ui.shop.ShopCatalogEntry;
 import main.java.com.witcher.ui.shop.presenter.ShopPresenter;
 import main.java.com.witcher.ui.shop.presenter.ShopScreenState;
@@ -65,7 +65,7 @@ public final class GdxShopView {
     }
 
     public void dispose() {
-        GdxTextureBridge.disposeCachedTextures();
+        GdxShopIcons.disposeAll();
     }
 
     public void render(SpriteBatch batch, ShapeRenderer shapes, GameFrameLayout layout,
@@ -419,7 +419,7 @@ public final class GdxShopView {
 
         BufferedImage art = cardArtOverride != null ? cardArtOverride : item.icon;
         if (art != null) {
-            Texture artTex = GdxTextureBridge.toTexture(art);
+            Texture artTex = GdxShopIcons.textureFor(ShopIcon.of(art));
             int artSize = assets.cardArtSize;
             float artX = x + (w - artSize) * 0.5f;
             float artTop = topY + 8;
@@ -835,7 +835,7 @@ public final class GdxShopView {
         if (alpha <= 0.02f) {
             return;
         }
-        Texture icon = GdxTextureBridge.toTexture(ui.purchaseRevealIcon);
+        Texture icon = GdxShopIcons.textureFor(ShopIcon.of(ui.purchaseRevealIcon));
         int ipw = Math.round(pw);
         float drawY = C.rectY(py, ipw);
         float prev = batch.getColor().a;

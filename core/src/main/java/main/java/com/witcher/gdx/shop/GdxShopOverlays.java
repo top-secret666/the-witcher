@@ -6,8 +6,8 @@ import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import main.java.com.witcher.gdx.graphics.GameFonts;
-import main.java.com.witcher.gdx.graphics.GdxTextureBridge;
 import main.java.com.witcher.gdx.graphics.SwingCoords;
+import main.java.com.witcher.ui.shop.ShopIcon;
 import main.java.com.witcher.model.armour.Armour;
 import main.java.com.witcher.ui.shop.ShopCatalogEntry;
 import main.java.com.witcher.ui.shop.ShopCategory;
@@ -241,7 +241,7 @@ public final class GdxShopOverlays {
                 int iconSz = equipped != null ? 30 : 26;
                 float alpha = equipped != null ? 1f : 0.35f;
                 batch.setColor(1f, 1f, 1f, alpha);
-                batch.draw(GdxTextureBridge.toTexture(icon),
+                batch.draw(GdxShopIcons.textureFor(ShopIcon.of(icon)),
                     slotX + (slotSize - iconSz) / 2f, c.rectY(sy + 7, iconSz), iconSz, iconSz);
                 batch.setColor(1f, 1f, 1f, 1f);
             }
