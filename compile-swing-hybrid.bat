@@ -39,20 +39,8 @@ if errorlevel 1 (
 )
 
 echo === Kompilyaciya GDX bridge (ikonki) ===
-(
-  echo %CORE%\main\java\com\witcher\gdx\bridge\IconBakeService.java
-  echo %CORE%\main\java\com\witcher\gdx\bridge\GdxShopUiBaker.java
-  echo %CORE%\main\java\com\witcher\gdx\bridge\GdxTextureDownscaler.java
-  echo %CORE%\main\java\com\witcher\gdx\bridge\HybridShopUiAssets.java
-  echo %CORE%\main\java\com\witcher\gdx\bridge\DelegatingShopIcons.java
-  echo %CORE%\main\java\com\witcher\gdx\bridge\GdxIconBaker.java
-  echo %CORE%\main\java\com\witcher\gdx\bridge\GdxIconBakeSession.java
-  echo %CORE%\main\java\com\witcher\gdx\bridge\GdxBakedArmourIconRegistry.java
-  echo %CORE%\main\java\com\witcher\gdx\bridge\HybridShopIcons.java
-  echo %CORE%\main\java\com\witcher\gdx\graphics\PixelTextures.java
-  echo %CORE%\main\java\com\witcher\gdx\graphics\RenderQuality.java
-  echo %CORE%\main\java\com\witcher\gdx\graphics\GdxTextureBridge.java
-) > "%TMP%\swing-gdx-bridge.txt"
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0tools\gen-swing-gdx-bridge.ps1" -CoreRoot "%CORE%" -OutFile "%TMP%\swing-gdx-bridge.txt"
+if errorlevel 1 exit /b 1
 "%JAVA_HOME%\bin\javac.exe" -encoding UTF-8 -cp "%LIB_CP%;%OUT%" -d "%OUT%" @"%TMP%\swing-gdx-bridge.txt"
 if errorlevel 1 (
   echo Oshibka kompilyacii GDX bridge.
