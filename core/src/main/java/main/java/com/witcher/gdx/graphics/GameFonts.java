@@ -21,6 +21,12 @@ public final class GameFonts implements Disposable {
     public BitmapFont menuBold;
 
     private static final int MENU_BOLD_BASE_SIZE = 18;
+    private static final int DIALOG_BASE_SIZE = 12;
+
+    private final com.badlogic.gdx.utils.IntMap<BitmapFont> dialogBySize =
+        new com.badlogic.gdx.utils.IntMap<>();
+    private final com.badlogic.gdx.utils.IntMap<BitmapFont> dialogBoldBySize =
+        new com.badlogic.gdx.utils.IntMap<>();
 
     private FreeTypeFontGenerator generator;
     private FreeTypeFontGenerator menuGenerator;
@@ -161,6 +167,43 @@ public final class GameFonts implements Disposable {
         return MENU_BOLD_BASE_SIZE;
     }
 
+    public float dialogBaseSize() {
+        return DIALOG_BASE_SIZE;
+    }
+
+    /** Чёткий диалоговый шрифт ровно в целевом размере (без дробного scale). */
+    public BitmapFont dialogAt(int pixelSize) {
+        int size = Math.max(8, pixelSize);
+        BitmapFont cached = dialogBySize.get(size);
+        if (cached != null) {
+            return cached;
+        }
+        BitmapFont font = generator != null
+            ? generate(size, false)
+            : fallback(1f);
+        dialogBySize.put(size, font);
+        return font;
+    }
+
+    /** Жирное имя спикера — Philosopher-Bold. */
+    public BitmapFont dialogBoldAt(int pixelSize) {
+        int size = Math.max(8, pixelSize);
+        BitmapFont cached = dialogBoldBySize.get(size);
+        if (cached != null) {
+            return cached;
+        }
+        BitmapFont font;
+        if (menuGenerator != null) {
+            font = generateFrom(menuGenerator, size, false, 0f);
+        } else if (generator != null) {
+            font = generate(size, true);
+        } else {
+            font = fallback(1f);
+        }
+        dialogBoldBySize.put(size, font);
+        return font;
+    }
+
     private static BitmapFont fallback(float scale) {
         BitmapFont font = new BitmapFont();
         font.getData().setScale(scale);
@@ -174,6 +217,8 @@ public final class GameFonts implements Disposable {
         disposeFont(ui);
         disposeFont(uiSmall);
         disposeFont(dialog);
+        disposeFontMap(dialogBySize);
+        disposeFontMap(dialogBoldBySize);
         if (menuBold != null && menuBold != title) {
             disposeFont(menuBold);
         }
@@ -200,5 +245,12 @@ public final class GameFonts implements Disposable {
         if (font != null) {
             font.dispose();
         }
+    }
+
+    private static void disposeFontMap(com.badlogic.gdx.utils.IntMap<BitmapFont> map) {
+        for (com.badlogic.gdx.utils.IntMap.Entry<BitmapFont> e : map) {
+            disposeFont(e.value);
+        }
+        map.clear();
     }
 }

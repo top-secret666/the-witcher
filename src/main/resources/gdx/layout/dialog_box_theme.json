@@ -1,0 +1,139 @@
+{
+  "design": [
+    480,
+    360
+  ],
+  "theme": {
+    "boxBg": [
+      10,
+      8,
+      4,
+      220
+    ],
+    "boxBorder": [
+      140,
+      100,
+      35,
+      255
+    ],
+    "speech": [
+      220,
+      190,
+      100,
+      255
+    ],
+    "hint": [
+      180,
+      160,
+      120,
+      180
+    ],
+    "narrator": [
+      160,
+      145,
+      120,
+      255
+    ],
+    "geralt": [
+      160,
+      205,
+      235,
+      255
+    ],
+    "duke": [
+      218,
+      165,
+      32,
+      255
+    ],
+    "gradientTop": [
+      20,
+      16,
+      8,
+      80
+    ],
+    "gradientBottom": [
+      5,
+      4,
+      2,
+      0
+    ],
+    "frameOuter": [
+      235,
+      200,
+      110,
+      255
+    ],
+    "frameInner": [
+      218,
+      165,
+      32,
+      255
+    ],
+    "frameDark": [
+      60,
+      45,
+      15,
+      200
+    ],
+    "cornerGold": [
+      255,
+      215,
+      0,
+      220
+    ],
+    "innerStroke": [
+      255,
+      245,
+      160,
+      255
+    ],
+    "boxFillAlphaMul": 0.9,
+    "cornerSize": 12,
+    "frameOuterOffset": 2,
+    "frameInnerThickness": 2,
+    "frameDarkInset": 4,
+    "innerStrokeAlphaMul": [
+      0.65,
+      0.45,
+      0.25
+    ],
+    "speakerNamePadH": 6,
+    "speakerNamePadV": 2,
+    "speakerNameBoxPad": 12,
+    "speakerNameOffsetY": 2,
+    "shadowRgb": [
+      0,
+      0,
+      0,
+      140
+    ],
+    "outlineRgb": [
+      12,
+      8,
+      4,
+      220
+    ],
+    "dialogHeightRatio": 0.3,
+    "dialogBottomMarginRatio": 0.02,
+    "dialogFontSizeRatio": 0.04,
+    "dialogPadRatio": 0.02,
+    "dialogMinHeight": 52,
+    "dialogMinWidth": 200
+  },
+  "preview480x360": {
+    "box": {
+      "x": 0,
+      "y": 245,
+      "w": 480,
+      "h": 108
+    },
+    "text": {
+      "x": 9,
+      "y": 254,
+      "maxW": 462
+    },
+    "fontSize": 14,
+    "speakerPlateY": 229
+  }
+}
