@@ -12,6 +12,7 @@ import static main.java.com.witcher.ui.shop.view.ShopViewConstants.HUD_DUKE_SEAL
 import static main.java.com.witcher.ui.shop.view.ShopViewConstants.HUD_DUKE_SEAL_W;
 import static main.java.com.witcher.ui.shop.view.ShopViewConstants.catalogCoinBakePx;
 import static main.java.com.witcher.ui.shop.view.ShopViewConstants.hudIconBakePx;
+import static main.java.com.witcher.ui.shop.view.ShopViewConstants.statIconBakePx;
 
 import java.awt.image.BufferedImage;
 import java.util.HashMap;
@@ -24,11 +25,15 @@ public final class GdxShopUiBaker {
     public static final String KEY_HUD_CROWN = ShopBakeKeys.HUD_CROWN;
     public static final String KEY_HUD_DUKE_SEAL = ShopBakeKeys.HUD_DUKE_SEAL;
     public static final String KEY_CATALOG_COIN = ShopBakeKeys.CATALOG_COIN;
+    public static final String KEY_CATALOG_STAT_SHIELD = ShopBakeKeys.CATALOG_STAT_SHIELD;
+    public static final String KEY_CATALOG_STAT_STAMINA = ShopBakeKeys.CATALOG_STAT_STAMINA;
+    public static final String KEY_CATALOG_STAT_SIGNS = ShopBakeKeys.CATALOG_STAT_SIGNS;
 
     /** Запекание в 2× виртуального размера (Renderer pixelScale=2 → 1:1 на displayFrame). */
     public static final int HUD_CROWN_PX = hudIconBakePx(HUD_CROWN_W, HUD_CROWN_H);
     public static final int HUD_DUKE_SEAL_PX = hudIconBakePx(HUD_DUKE_SEAL_W, HUD_DUKE_SEAL_H);
     public static final int CATALOG_COIN_PX = catalogCoinBakePx();
+    public static final int STAT_ICON_PX = statIconBakePx();
 
     /** Размер карточки в режиме категории (как {@code ShopLayout#leftCategoryCardSlot}). */
     public static final int CATEGORY_CARD_W = 166;
@@ -46,6 +51,9 @@ public final class GdxShopUiBaker {
             putIfUsable(out, KEY_HUD_CROWN, bakeIcon(batch, "icon_crown.png", HUD_CROWN_PX));
             putIfUsable(out, KEY_HUD_DUKE_SEAL, bakeIcon(batch, "icon_duke_seal.png", HUD_DUKE_SEAL_PX));
             putIfUsable(out, KEY_CATALOG_COIN, bakeIcon(batch, "icon_crown_small.png", CATALOG_COIN_PX));
+            putIfUsable(out, KEY_CATALOG_STAT_SHIELD, bakeIcon(batch, "icon_stat_shield.png", STAT_ICON_PX));
+            putIfUsable(out, KEY_CATALOG_STAT_STAMINA, bakeIcon(batch, "icon_stat_stamina.png", STAT_ICON_PX));
+            putIfUsable(out, KEY_CATALOG_STAT_SIGNS, bakeIcon(batch, "icon_stat_signs.png", STAT_ICON_PX));
         } finally {
             batch.dispose();
         }

@@ -13,6 +13,7 @@ import static main.java.com.witcher.ui.shop.view.ShopViewConstants.HUD_DUKE_SEAL
 import static main.java.com.witcher.ui.shop.view.ShopViewConstants.HUD_DUKE_SEAL_W;
 import static main.java.com.witcher.ui.shop.view.ShopViewConstants.catalogCoinBakePx;
 import static main.java.com.witcher.ui.shop.view.ShopViewConstants.hudIconBakePx;
+import static main.java.com.witcher.ui.shop.view.ShopViewConstants.statIconBakePx;
 
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
@@ -116,6 +117,17 @@ public final class ShopAssetCache implements ShopRuntimeAssets {
     final BufferedImage statVialOverlay;
     final BufferedImage statVialEndCap;
     final BufferedImage walletPouch;
+    /** LibGDX: защита, выносливость, знаки — строки каталога и легенда. */
+    final BufferedImage[] statIcons = new BufferedImage[3];
+
+    private static final String[] STAT_ICON_FILES = {
+        "icon_stat_shield.png", "icon_stat_stamina.png", "icon_stat_signs.png"
+    };
+    private static final String[] STAT_ICON_GDX_KEYS = {
+        ShopUiAssetsFactory.KEY_CATALOG_STAT_SHIELD,
+        ShopUiAssetsFactory.KEY_CATALOG_STAT_STAMINA,
+        ShopUiAssetsFactory.KEY_CATALOG_STAT_SIGNS
+    };
 
     private ShopAssetCache() {
         long t0 = System.currentTimeMillis();
@@ -176,6 +188,9 @@ public final class ShopAssetCache implements ShopRuntimeAssets {
         statVialOverlay = loadFirst(BASE + "ui/stat_vial_glass_overlay.png");
         statVialEndCap = loadFirst(BAKED + "ui/stat_vial_end_cap.png", BASE + "ui/stat_vial_end_cap.png");
         walletPouch = loadFirst(BASE + "wallet_pouch_gold.png");
+        for (int i = 0; i < statIcons.length; i++) {
+            statIcons[i] = loadGdxUi(STAT_ICON_GDX_KEYS[i], loadStatIconFallback(STAT_ICON_FILES[i]));
+        }
 
         int headerH = panelHeaderH;
         int panelY = hudY + hudH + 6;
@@ -299,6 +314,19 @@ public final class ShopAssetCache implements ShopRuntimeAssets {
         return PixelScaler.smoothScaleUniform(cropped, catalogCoinBakePx());
     }
 
+    private BufferedImage loadStatIconFallback(String fileName) {
+        BufferedImage src = load(ICONS_SRC + fileName);
+        if (src == null) {
+            BufferedImage baked = loadBakedIcon(fileName);
+            return baked != null ? PixelScaler.smoothScaleUniform(baked, statIconBakePx()) : null;
+        }
+        Rectangle box = ShopImageBounds.compute(src);
+        BufferedImage cropped = box != null && box.width > 0 && box.height > 0
+            ? src.getSubimage(box.x, box.y, box.width, box.height)
+            : src;
+        return PixelScaler.smoothScaleUniform(cropped, statIconBakePx());
+    }
+
     private void logHudIconSource() {
         if (crownIconScaled != null) {
             boolean gdx = ShopUiAssetsFactory.get(ShopUiAssetsFactory.KEY_HUD_CROWN) != null;
@@ -315,6 +343,13 @@ public final class ShopAssetCache implements ShopRuntimeAssets {
             boolean gdx = ShopUiAssetsFactory.get(ShopUiAssetsFactory.KEY_CATALOG_COIN) != null;
             System.out.println("Catalog coin: baked " + crownIconSmall.getWidth() + "x" + crownIconSmall.getHeight()
                 + " draw@" + catalogCoinSize + (gdx ? " [GDX]" : " [fallback]"));
+        }
+        for (int i = 0; i < statIcons.length; i++) {
+            if (statIcons[i] != null) {
+                boolean gdx = ShopUiAssetsFactory.get(STAT_ICON_GDX_KEYS[i]) != null;
+                System.out.println("Catalog stat[" + i + "]: baked " + statIcons[i].getWidth() + "x"
+                    + statIcons[i].getHeight() + (gdx ? " [GDX]" : " [fallback]"));
+            }
         }
     }
 

@@ -4,12 +4,17 @@ import java.awt.Color;
 import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
+import java.awt.RenderingHints;
+import java.awt.image.BufferedImage;
 
-/** Пиксельные значки мини-статов в строках каталога. */
+import static main.java.com.witcher.ui.shop.view.ShopViewConstants.STAT_LEGEND_ICON_SIZE;
+import static main.java.com.witcher.ui.shop.view.ShopViewConstants.STAT_ROW_ICON_SIZE;
+
+/** Мини-иконки статов в строках каталога (LibGDX bake + fallback). */
 public final class ShopStatGlyphs {
 
-    public static final int ROW_ICON_SIZE = 9;
-    public static final int LEGEND_ICON_SIZE = 13;
+    public static final int ROW_ICON_SIZE = STAT_ROW_ICON_SIZE;
+    public static final int LEGEND_ICON_SIZE = STAT_LEGEND_ICON_SIZE;
     public static final int ROW_GAP = 5;
     public static final int LEGEND_GAP = 12;
 
@@ -59,7 +64,8 @@ public final class ShopStatGlyphs {
         return width;
     }
 
-    public static void drawLegend(Graphics2D g, int x, int y, FontMetrics fm, float alpha) {
+    public static void drawLegend(Graphics2D g, int x, int y, FontMetrics fm, float alpha,
+                                  BufferedImage[] statIcons) {
         Rectangle box = legendBounds(fm);
         box.x = x;
         box.y = y;
@@ -71,7 +77,7 @@ public final class ShopStatGlyphs {
             if (i > 0) {
                 cx += LEGEND_GAP;
             }
-            drawIcon(g, i, cx, iconY, LEGEND_ICON_SIZE);
+            drawIcon(g, i, cx, iconY, LEGEND_ICON_SIZE, statIcons);
             cx += LEGEND_ICON_SIZE + 4;
             int labelX = (cx + 1) & ~1;
             ShopUiDraw.drawOutlinedText(g, LEGEND_LABELS[i], labelX, baselineY, LABEL_COLOR);
@@ -94,7 +100,7 @@ public final class ShopStatGlyphs {
     }
 
     public static void drawRow(Graphics2D g, int rightX, int baselineY, FontMetrics fm,
-                               int prot, int stamina, int signs) {
+                               int prot, int stamina, int signs, BufferedImage[] statIcons) {
         if (!hasAnyDelta(prot, stamina, signs)) {
             return;
         }
@@ -106,7 +112,7 @@ public final class ShopStatGlyphs {
             if (i > 0) {
                 cx += ROW_GAP;
             }
-            drawIcon(g, i, cx, iconY, ROW_ICON_SIZE);
+            drawIcon(g, i, cx, iconY, ROW_ICON_SIZE, statIcons);
             cx += ROW_ICON_SIZE + 1;
             String text = formatValue(values[i]);
             Color color = values[i] > 0 ? POS_VALUE : values[i] < 0 ? NEG_VALUE : ZERO_VALUE;
@@ -119,11 +125,52 @@ public final class ShopStatGlyphs {
         return delta > 0 ? "+" + delta : String.valueOf(delta);
     }
 
-    private static void drawIcon(Graphics2D g, int kind, int x, int y, int size) {
+    private static void drawIcon(Graphics2D g, int kind, int x, int y, int size, BufferedImage[] statIcons) {
+        BufferedImage baked = statIcons != null && kind >= 0 && kind < statIcons.length
+            ? statIcons[kind] : null;
+        if (baked != null) {
+            drawBakedIcon(g, baked, x, y, size, size);
+            return;
+        }
         switch (kind) {
             case 0 -> drawShield(g, x, y, size);
             case 1 -> drawLightning(g, x, y, size);
             default -> drawSign(g, x, y, size);
+        }
+    }
+
+    /** LibGDX bake → aspect-fit, nearest-neighbor (как монетка каталога). */
+    private static void drawBakedIcon(Graphics2D g, BufferedImage icon, int x, int y, int w, int h) {
+        if (icon == null || w <= 0 || h <= 0) {
+            return;
+        }
+        Rectangle crop = ShopImageBounds.compute(icon);
+        if (crop == null || crop.width <= 0 || crop.height <= 0) {
+            crop = new Rectangle(0, 0, icon.getWidth(), icon.getHeight());
+        }
+        float scale = Math.min((float) w / crop.width, (float) h / crop.height);
+        int dw = Math.max(1, Math.round(crop.width * scale));
+        int dh = Math.max(1, Math.round(crop.height * scale));
+        int dx = x + (w - dw) / 2;
+        int dy = y + (h - dh) / 2;
+        Object prevInterp = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
+        Object prevRender = g.getRenderingHint(RenderingHints.KEY_RENDERING);
+        Object prevAa = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
+        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+        g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+        g.drawImage(icon,
+            dx, dy, dx + dw, dy + dh,
+            crop.x, crop.y, crop.x + crop.width, crop.y + crop.height,
+            null);
+        if (prevInterp != null) {
+            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, prevInterp);
+        }
+        if (prevRender != null) {
+            g.setRenderingHint(RenderingHints.KEY_RENDERING, prevRender);
+        }
+        if (prevAa != null) {
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, prevAa);
         }
     }
 

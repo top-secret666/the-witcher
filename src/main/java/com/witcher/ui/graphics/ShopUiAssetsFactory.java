@@ -16,6 +16,10 @@ public final class ShopUiAssetsFactory {
     public static final String KEY_HUD_DUKE_SEAL = ShopBakeKeys.HUD_DUKE_SEAL;
     /** Монетка у цены товара (каталог, карточка). */
     public static final String KEY_CATALOG_COIN = ShopBakeKeys.CATALOG_COIN;
+    /** Мини-иконки статов (защита, выносливость, знаки). */
+    public static final String KEY_CATALOG_STAT_SHIELD = ShopBakeKeys.CATALOG_STAT_SHIELD;
+    public static final String KEY_CATALOG_STAT_STAMINA = ShopBakeKeys.CATALOG_STAT_STAMINA;
+    public static final String KEY_CATALOG_STAT_SIGNS = ShopBakeKeys.CATALOG_STAT_SIGNS;
 
     private ShopUiAssetsFactory() {
     }

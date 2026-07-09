@@ -599,7 +599,7 @@ public final class ShopSwingView implements ShopView {
         int btnY = presenter.categoryBuyButtonY(panelY);
         int legendX = panelX + (assets.detailPanelW - legendBox.width) / 2;
         int legendY = btnY + assets.btnH + 3;
-        ShopStatGlyphs.drawLegend(g, legendX, legendY, fm, alpha);
+        ShopStatGlyphs.drawLegend(g, legendX, legendY, fm, alpha, assets.statIcons);
         g.setComposite(prev);
     }
 
@@ -1146,7 +1146,8 @@ public final class ShopSwingView implements ShopView {
             if (statsW > 0) {
                 g.setFont(GameFonts.get().uiBold(8));
                 statsFm = g.getFontMetrics();
-                ShopStatGlyphs.drawRow(g, statsRight, textY, statsFm, deltas[0], deltas[1], deltas[2]);
+                ShopStatGlyphs.drawRow(g, statsRight, textY, statsFm, deltas[0], deltas[1], deltas[2],
+                    assets.statIcons);
             }
 
             if (assets.crownIconSmall != null && !price.equals("···")) {
