@@ -1,6 +1,5 @@
 package main.java.com.witcher.gdx.bridge;
 
-import main.java.com.witcher.ui.graphics.ShopAssetCache;
 import main.java.com.witcher.ui.shop.ArmourIconRegistry;
 import main.java.com.witcher.ui.shop.ShopEntryIcons;
 
@@ -20,9 +19,8 @@ public final class HybridShopIcons {
 
     public static void warmup() {
         configureAssetsRoot();
-        int cardSize = ShopAssetCache.get().cardArtSize();
         try {
-            GdxIconBakeSession.ensureBaked(cardSize, EQUIP_ICON_SIZE);
+            GdxIconBakeSession.ensureBaked(38, 30);
         } catch (Throwable error) {
             System.err.println("[HybridShopIcons] bake failed: " + error.getMessage());
         }

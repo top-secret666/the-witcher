@@ -559,11 +559,11 @@ public final class ShopSwingView implements ShopView {
         int textX = blockX + padX;
         if (!uiTextOverlayOnly && assets.crownIconScaled != null) {
             int crownY = blockY + (blockH - crownSize) / 2;
-            g.drawImage(assets.crownIconScaled, textX, crownY, crownSize, crownSize, null);
+            drawHudPlaqueIcon(g, assets.crownIconScaled, textX, crownY, crownSize, crownSize);
             textX += crownSize + crownGap;
         } else if (assets.crownIconScaled != null) {
             int crownY = blockY + (blockH - crownSize) / 2;
-            g.drawImage(assets.crownIconScaled, textX, crownY, crownSize, crownSize, null);
+            drawHudPlaqueIcon(g, assets.crownIconScaled, textX, crownY, crownSize, crownSize);
             textX += crownSize + crownGap;
         }
         int walletY = blockY + (blockH + fm.getAscent()) / 2 - 2;
@@ -947,18 +947,18 @@ public final class ShopSwingView implements ShopView {
                 g.setColor(new Color(10, 8, 4, 220));
                 g.fillRect(layout.hudX, hudY, layout.hudW, layout.hudH);
             }
-
-            if (assets.dukeSealIconScaled != null) {
-                int seal = assets.dukeSealSize;
-                int sealX = (layout.hudX + 12) & ~1;
-                int sealY = (hudY + (layout.hudH - seal) / 2) & ~1;
-                drawHudPlaqueIcon(g, assets.dukeSealIconScaled, sealX, sealY, seal, seal);
-            }
         }
 
         if (!shouldDrawUiTextInScene()) {
             g.setComposite(prev);
             return;
+        }
+
+        if (assets.dukeSealIconScaled != null) {
+            int seal = assets.dukeSealSize;
+            int sealX = (layout.hudX + 12) & ~1;
+            int sealY = (hudY + (layout.hudH - seal) / 2) & ~1;
+            drawHudPlaqueIcon(g, assets.dukeSealIconScaled, sealX, sealY, seal, seal);
         }
 
         String wallet = presenter.walletHudAmountText();
@@ -1832,20 +1832,26 @@ public final class ShopSwingView implements ShopView {
         return bounds;
     }
 
-    /** LibGDX-иконка HUD-плашки — пиксель в пиксель. */
+    /** LibGDX-иконка HUD-плашки: 2× bake → виртуальный размер, overlay ×2 = 1:1 на экране. */
     private static void drawHudPlaqueIcon(Graphics2D g, BufferedImage icon, int x, int y, int w, int h) {
         if (icon == null || w <= 0 || h <= 0) {
             return;
         }
-        Object prev = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
+        Object prevInterp = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
+        Object prevRender = g.getRenderingHint(RenderingHints.KEY_RENDERING);
+        Object prevAa = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
         g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
-        if (icon.getWidth() == w && icon.getHeight() == h) {
-            g.drawImage(icon, x, y, null);
-        } else {
-            g.drawImage(icon, x, y, w, h, null);
+        g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+        g.drawImage(icon, x, y, w, h, null);
+        if (prevInterp != null) {
+            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, prevInterp);
         }
-        if (prev != null) {
-            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, prev);
+        if (prevRender != null) {
+            g.setRenderingHint(RenderingHints.KEY_RENDERING, prevRender);
+        }
+        if (prevAa != null) {
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, prevAa);
         }
     }
 

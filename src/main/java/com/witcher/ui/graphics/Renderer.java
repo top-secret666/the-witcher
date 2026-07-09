@@ -106,6 +106,7 @@ public class Renderer extends JPanel {
         if (overlay != null) {
             Graphics2D g = displayFrame.createGraphics();
             try {
+                PixelDraw.applyNearest(g);
                 GameFonts.applyUiOverlayHints(g);
                 g.scale(pixelScale, pixelScale);
                 overlay.paint(g);

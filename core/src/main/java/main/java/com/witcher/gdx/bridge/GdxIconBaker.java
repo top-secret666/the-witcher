@@ -103,6 +103,8 @@ public final class GdxIconBaker {
         }
 
         fbo.begin();
+        Gdx.gl.glViewport(0, 0, size, size);
+        batch.setProjectionMatrix(batch.getProjectionMatrix().setToOrtho2D(0, 0, size, size));
         Gdx.gl.glClearColor(0f, 0f, 0f, 0f);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         batch.begin();
@@ -110,6 +112,7 @@ public final class GdxIconBaker {
         batch.end();
         fbo.end();
 
+        Gdx.gl.glFinish();
         Pixmap pixmap = Pixmap.createFromFrameBuffer(0, 0, size, size);
         try {
             PixelTextures.flipPixmapVertical(pixmap);

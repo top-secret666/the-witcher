@@ -61,6 +61,8 @@ final class GdxTextureDownscaler {
 
     private static void drawToFbo(SpriteBatch batch, FrameBuffer fbo, TextureRegion region, int w, int h) {
         fbo.begin();
+        Gdx.gl.glViewport(0, 0, w, h);
+        batch.setProjectionMatrix(batch.getProjectionMatrix().setToOrtho2D(0, 0, w, h));
         Gdx.gl.glClearColor(0f, 0f, 0f, 0f);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         batch.begin();
@@ -69,7 +71,12 @@ final class GdxTextureDownscaler {
         fbo.end();
     }
 
+    static void drawRegionToFbo(SpriteBatch batch, FrameBuffer fbo, TextureRegion region, int w, int h) {
+        drawToFbo(batch, fbo, region, w, h);
+    }
+
     private static BufferedImage readFbo(FrameBuffer fbo, int w, int h) {
+        Gdx.gl.glFinish();
         Pixmap pixmap = Pixmap.createFromFrameBuffer(0, 0, w, h);
         try {
             PixelTextures.flipPixmapVertical(pixmap);

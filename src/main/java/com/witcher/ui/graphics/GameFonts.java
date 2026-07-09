@@ -92,6 +92,7 @@ public final class GameFonts {
     }
 
     public static void applyUiOverlayHints(Graphics2D g) {
+        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
         applyGothicHints(g);
     }
 

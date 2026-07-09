@@ -33,6 +33,11 @@ public final class ShopAssetCache implements ShopRuntimeAssets {
         return instance;
     }
 
+    /** После GDX bake — пересоздать кэш, чтобы подтянуть GPU-иконки плашки. */
+    public static void resetAfterGdxBake() {
+        instance = null;
+    }
+
     final int hudX;
     final int hudY = 4;
     final int hudW;
@@ -124,9 +129,12 @@ public final class ShopAssetCache implements ShopRuntimeAssets {
         btnBuyDisabled = loadSized(UI + "shop_btn_buy_disabled.png", btnW, btnH,
             BASE + "ui/shop_btn_buy_disabled.png", false);
 
-        crownIconScaled = loadGdxUi(ShopUiAssetsFactory.KEY_HUD_CROWN, loadBakedIcon("icon_crown.png"));
+        crownIconScaled = loadGdxUi(ShopUiAssetsFactory.KEY_HUD_CROWN,
+            loadHudIconFallback("icon_crown.png", 36));
         crownIconSmall = loadCatalogCoinIcon();
-        dukeSealIconScaled = loadGdxUi(ShopUiAssetsFactory.KEY_HUD_DUKE_SEAL, loadBakedIcon("icon_duke_seal.png"));
+        dukeSealIconScaled = loadGdxUi(ShopUiAssetsFactory.KEY_HUD_DUKE_SEAL,
+            loadHudIconFallback("icon_duke_seal.png", 64));
+        logHudIconSource();
 
         merchantBgScaled = loadBackground();
         int charH = Math.round(360 * 0.82f);
@@ -237,6 +245,20 @@ public final class ShopAssetCache implements ShopRuntimeAssets {
         return load(ICONS_BAKED + fileName);
     }
 
+    /** Fallback HUD: оригинал {@code lavka/icons/} → сглаженный даунскейл (не 1x). */
+    private BufferedImage loadHudIconFallback(String fileName, int bakePx) {
+        BufferedImage src = load(ICONS_SRC + fileName);
+        if (src == null) {
+            BufferedImage baked = loadBakedIcon(fileName);
+            return baked != null ? PixelScaler.smoothScaleUniform(baked, bakePx) : null;
+        }
+        Rectangle box = ShopImageBounds.compute(src);
+        BufferedImage cropped = box != null && box.width > 0 && box.height > 0
+            ? src.getSubimage(box.x, box.y, box.width, box.height)
+            : src;
+        return PixelScaler.smoothScaleUniform(cropped, bakePx);
+    }
+
     private BufferedImage loadCatalogCoinIcon() {
         BufferedImage baked = loadBakedIcon("icon_crown_small.png");
         if (baked == null) {
@@ -254,6 +276,19 @@ public final class ShopAssetCache implements ShopRuntimeAssets {
             ? src.getSubimage(box.x, box.y, box.width, box.height)
             : src;
         return PixelScaler.sharpScaleUniform(cropped, catalogCoinSize);
+    }
+
+    private void logHudIconSource() {
+        if (crownIconScaled != null) {
+            boolean gdx = ShopUiAssetsFactory.get(ShopUiAssetsFactory.KEY_HUD_CROWN) != null;
+            System.out.println("HUD crown: baked " + crownIconScaled.getWidth() + "x" + crownIconScaled.getHeight()
+                + " draw@18" + (gdx ? " [GDX]" : " [fallback]"));
+        }
+        if (dukeSealIconScaled != null) {
+            boolean gdx = ShopUiAssetsFactory.get(ShopUiAssetsFactory.KEY_HUD_DUKE_SEAL) != null;
+            System.out.println("HUD duke seal: baked " + dukeSealIconScaled.getWidth() + "x"
+                + dukeSealIconScaled.getHeight() + " draw@32" + (gdx ? " [GDX]" : " [fallback]"));
+        }
     }
 
     private BufferedImage loadGdxUi(String key, BufferedImage fallback) {

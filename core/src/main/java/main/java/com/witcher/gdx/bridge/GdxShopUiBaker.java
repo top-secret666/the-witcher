@@ -12,11 +12,12 @@ import java.util.Map;
 public final class GdxShopUiBaker {
 
     public static final String KEY_CARD_BACK = "shop_card_back@166x249";
-    public static final String KEY_HUD_CROWN = "hud.icon_crown@18";
-    public static final String KEY_HUD_DUKE_SEAL = "hud.icon_duke_seal@32";
+    public static final String KEY_HUD_CROWN = "hud.icon_crown@36";
+    public static final String KEY_HUD_DUKE_SEAL = "hud.icon_duke_seal@64";
 
-    public static final int HUD_CROWN_PX = 18;
-    public static final int HUD_DUKE_SEAL_PX = 32;
+    /** Запекание в 2× виртуального размера (Renderer pixelScale=2 → 1:1 на displayFrame). */
+    public static final int HUD_CROWN_PX = 36;
+    public static final int HUD_DUKE_SEAL_PX = 64;
 
     /** Размер карточки в режиме категории (как {@code ShopLayout#leftCategoryCardSlot}). */
     public static final int CATEGORY_CARD_W = 166;

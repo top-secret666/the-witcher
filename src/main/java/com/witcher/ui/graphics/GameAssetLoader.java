@@ -54,6 +54,7 @@ final class GameAssetLoader {
 
             report(85);
             ShopIconsFactory.warmupHybridIcons();
+            ShopAssetCache.resetAfterGdxBake();
             ShopAssetCache.get();
             UiChrome.warmup();
 
