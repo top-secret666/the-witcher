@@ -506,4 +506,15 @@ public final class ShopAssetCache implements ShopRuntimeAssets {
         }
         return null;
     }
+
+    public BufferedImage geraltPortraitShop() {
+        return geraltScaled;
+    }
+
+    public BufferedImage equipSlotPlaceholder(int iconIndex) {
+        if (iconIndex >= 0 && iconIndex < itemIcons.length) {
+            return itemIcons[iconIndex];
+        }
+        return null;
+    }
 }

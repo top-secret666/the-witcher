@@ -9,6 +9,9 @@ import main.java.com.witcher.ui.shop.ShopModel;
 import main.java.com.witcher.ui.shop.presenter.ShopPresenter;
 import main.java.com.witcher.ui.shop.presenter.ShopScreenState;
 import main.java.com.witcher.ui.shop.presenter.ShopSessionState;
+import main.java.com.witcher.ui.graphics.overlay.ShopEquipmentOverlay;
+import main.java.com.witcher.ui.graphics.overlay.ShopInventoryOverlay;
+import main.java.com.witcher.ui.graphics.overlay.ShopOverlayContext;
 import main.java.com.witcher.ui.shop.view.ShopLayout;
 import main.java.com.witcher.ui.shop.view.ShopShowcaseItem;
 import main.java.com.witcher.ui.shop.view.ShopView;
@@ -45,12 +48,14 @@ public final class ShopSwingView implements ShopView {
     private final ShopSessionState ui;
     private final ShopAssetCache assets;
     private final ShopEntryIcons armourIcons;
+    private final ShopOverlayContext overlayContext;
 
     public ShopSwingView(ShopPresenter presenter) {
         this.presenter = presenter;
         this.ui = presenter.ui();
         this.assets = ShopAssetCache.get();
         this.armourIcons = presenter.armourIcons();
+        this.overlayContext = new ShopOverlayContext(presenter, ui, assets, armourIcons);
     }
 
     @Override
@@ -599,249 +604,22 @@ public final class ShopSwingView implements ShopView {
     }
 
     private void drawInventoryOverlay(Graphics2D g, int sw, int sh) {
-        Composite prev = g.getComposite();
-        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.55f));
-        g.setColor(Color.BLACK);
-        g.fillRect(0, 0, sw, sh);
-
-        int px = (sw - INVENTORY_PANEL_W) / 2;
-        int py = (sh - INVENTORY_PANEL_H) / 2 - 16;
-        ui.inventoryPanelBounds.setBounds(px, py, INVENTORY_PANEL_W, INVENTORY_PANEL_H);
-
-        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.96f));
-        g.setColor(new Color(18, 12, 8, 245));
-        g.fillRoundRect(px, py, INVENTORY_PANEL_W, INVENTORY_PANEL_H, 8, 8);
-        g.setColor(new Color(150, 110, 50));
-        g.drawRoundRect(px, py, INVENTORY_PANEL_W, INVENTORY_PANEL_H, 8, 8);
-
-        drawCrispText(g);
-        g.setFont(GameFonts.get().uiBold( 13));
-        g.setColor(new Color(255, 220, 140));
-        g.drawString("Инвентарь", px + 12, py + 20);
-
-        ui.inventoryCloseBounds.setBounds(UiChrome.closeButtonRect(px, py, INVENTORY_PANEL_W));
-        UiChrome.drawCloseButton(g, ui.inventoryCloseBounds, ui.inventoryCloseHovered, 1f);
-
-        int iconX = px + 12;
-        int iconY = py + 34;
-        ui.inventoryPouchIconBounds.setBounds(iconX, iconY, INVENTORY_POUCH_ICON, INVENTORY_POUCH_ICON);
-        drawInventoryPouchIcon(g, iconX, iconY, INVENTORY_POUCH_ICON,
-            ui.inventoryPouchFocused, ui.inventoryPouchIconHovered);
-
-        int detailX = px + 56;
-        int detailY = py + 28;
-        int detailW = INVENTORY_PANEL_W - 68;
-        int detailBottom = iconY + INVENTORY_POUCH_ICON;
-        if (ui.inventoryPouchFocused) {
-            detailBottom = drawInventoryPouchDetail(g, detailX, detailY, detailW);
-        }
-
-        int listY = detailBottom + 12;
-        g.setColor(new Color(100, 75, 40, 140));
-        g.drawLine(px + 10, listY - 4, px + INVENTORY_PANEL_W - 10, listY - 4);
-        g.setFont(GameFonts.get().uiBold( 10));
-        g.setColor(new Color(180, 140, 80));
-        g.drawString("Куплено:", px + 12, listY + 10);
-        listY += 24;
-
-        g.setFont(GameFonts.get().uiPlain( 11));
-        g.setColor(new Color(200, 180, 130));
-        List<String> items = presenter.model().inventoryItemNames();
-        if (ui.showcaseItems.isEmpty()) {
-            g.drawString("Пока пусто…", px + 12, listY);
-        } else {
-            for (String name : items) {
-                if (listY > py + INVENTORY_PANEL_H - 20) {
-                    g.drawString("…", px + 12, listY);
-                    break;
-                }
-                g.drawString("• " + truncateToWidth(name, g.getFontMetrics(), INVENTORY_PANEL_W - 24),
-                    px + 12, listY);
-                listY += 14;
+        ShopInventoryOverlay.draw(g, overlayContext, new ShopInventoryOverlay.PouchCallbacks() {
+            @Override
+            public void drawIcon(Graphics2D gg, int x, int y, int size, boolean focused, boolean hovered) {
+                drawInventoryPouchIcon(gg, x, y, size, focused, hovered);
             }
-        }
 
-        int equipBtnW = 108;
-        int equipBtnH = 22;
-        int equipBtnX = px + INVENTORY_PANEL_W - equipBtnW - 10;
-        int equipBtnY = py + INVENTORY_PANEL_H - equipBtnH - 8;
-        ui.inventoryEquipButtonBounds.setBounds(equipBtnX, equipBtnY, equipBtnW, equipBtnH);
-        g.setFont(GameFonts.get().uiBold( 10));
-        g.setColor(new Color(28, 18, 8, 220));
-        g.fillRoundRect(equipBtnX, equipBtnY, equipBtnW, equipBtnH, 5, 5);
-        g.setColor(new Color(170, 125, 55));
-        g.drawRoundRect(equipBtnX, equipBtnY, equipBtnW, equipBtnH, 5, 5);
-        g.setColor(new Color(255, 225, 150));
-        String equipLabel = "Экипировка";
-        FontMetrics efm = g.getFontMetrics();
-        g.drawString(equipLabel, equipBtnX + (equipBtnW - efm.stringWidth(equipLabel)) / 2,
-            equipBtnY + 15);
-
-        g.setComposite(prev);
+            @Override
+            public int drawDetail(Graphics2D gg, int x, int y, int maxW) {
+                return drawInventoryPouchDetail(gg, x, y, maxW);
+            }
+        }, sw, sh);
     }
 
     private void drawEquipmentOverlay(Graphics2D g, int sw, int sh) {
-        Composite prev = g.getComposite();
-        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.55f));
-        g.setColor(Color.BLACK);
-        g.fillRect(0, 0, sw, sh);
-
-        int px = EQUIP_MARGIN;
-        int py = EQUIP_MARGIN;
-        int panelW = sw - EQUIP_MARGIN * 2;
-        int panelH = sh - EQUIP_MARGIN * 2;
-        ui.equipmentPanelBounds.setBounds(px, py, panelW, panelH);
-        ui.equipmentRowBounds.clear();
-
-        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.97f));
-        g.setColor(new Color(14, 10, 6, 248));
-        g.fillRoundRect(px, py, panelW, panelH, 6, 6);
-        g.setColor(new Color(155, 115, 50));
-        g.drawRoundRect(px, py, panelW, panelH, 6, 6);
-
-        drawEquipText(g, GameFonts.get().uiBold(15), "Экипировка", px + 14 + UiChrome.BTN_SIZE + 6, py + 24,
-            new Color(255, 220, 140));
-
-        int backX = px + 10;
-        int backY = py + 10;
-        ui.equipmentBackButtonBounds.setBounds(backX, backY, UiChrome.BTN_SIZE, UiChrome.BTN_SIZE);
-        UiChrome.drawArrowBackButton(g, ui.equipmentBackButtonBounds, ui.equipmentBackHovered, 1f);
-
-        int listX = px + 10;
-        int listY = py + 34;
-        int listW = 168;
-        int listH = panelH - 48;
-        g.setColor(new Color(8, 6, 4, 180));
-        g.fillRoundRect(listX, listY, listW, listH, 4, 4);
-        g.setColor(new Color(100, 75, 40));
-        g.drawRoundRect(listX, listY, listW, listH, 4, 4);
-
-        drawEquipText(g, GameFonts.get().uiBold(11), "Куплено", listX + 8, listY + 14,
-            new Color(180, 140, 80));
-        int itemsTop = listY + 22;
-        g.setColor(new Color(90, 68, 36, 160));
-        g.drawLine(listX + 6, itemsTop, listX + listW - 6, itemsTop);
-
-        List<Armour> owned = presenter.model().ownedArmour();
-        int rowH = 18;
-        int rowY = itemsTop + 14;
-        Font itemFont = GameFonts.get().uiPlain(11);
-        FontMetrics itemFm = g.getFontMetrics(itemFont);
-        for (int i = 0; i < owned.size(); i++) {
-            if (rowY + 4 > listY + listH - 6) {
-                break;
-            }
-            Armour armour = owned.get(i);
-            Rectangle row = new Rectangle(listX + 4, rowY - 13, listW - 8, rowH);
-            ui.equipmentRowBounds.add(row);
-            boolean hovered = i == ui.equipmentHoveredRow;
-            boolean equipped = presenter.model().isEquipped(armour);
-            if (hovered || equipped) {
-                g.setColor(equipped ? new Color(70, 52, 24, 200) : new Color(50, 38, 18, 170));
-                g.fillRoundRect(row.x, row.y, row.width, row.height, 3, 3);
-            }
-            String line = truncateToWidth(armour.getName(), itemFm, listW - 20);
-            drawEquipText(g, itemFont, line, listX + 8, rowY,
-                equipped ? new Color(255, 230, 150) : new Color(200, 180, 130));
-            rowY += rowH;
-        }
-        if (owned.isEmpty()) {
-            drawEquipText(g, GameFonts.get().uiPlain(11), "Пока нет брони…", listX + 8, rowY,
-                new Color(150, 130, 90));
-        }
-
-        int portraitX = listX + listW + 12;
-        int portraitY = py + 30;
-        int portraitW = 152;
-        int portraitH = panelH - 86;
-        g.setColor(new Color(6, 4, 2, 160));
-        g.fillRoundRect(portraitX - 4, portraitY - 4, portraitW + 8, portraitH + 8, 6, 6);
-        if (assets.geraltScaled != null) {
-            drawScaledSprite(g, assets.geraltScaled, portraitX, portraitY, portraitW, portraitH, true);
-        }
-
-        int slotSize = 48;
-        int slotGap = 10;
-        int slotX = px + panelW - slotSize - 12;
-        int slotY = py + 36;
-        ShopEquipSlot[] slots = ShopEquipSlot.values();
-        for (int i = 0; i < slots.length; i++) {
-            ShopEquipSlot slot = slots[i];
-            int sy = slotY + i * (slotSize + slotGap);
-            ui.equipmentSlotBounds[i] = new Rectangle(slotX, sy, slotSize, slotSize);
-            boolean hovered = ui.equipmentHoveredSlot == i;
-            Armour equipped = presenter.model().getEquipped(slot);
-            g.setColor(new Color(22, 14, 8, 220));
-            g.fillRoundRect(slotX, sy, slotSize, slotSize, 4, 4);
-            g.setColor(hovered ? new Color(200, 160, 70) : new Color(120, 90, 45));
-            g.drawRoundRect(slotX, sy, slotSize, slotSize, 4, 4);
-            BufferedImage icon = slot.iconIndex >= 0 && slot.iconIndex < assets.itemIcons.length
-                ? assets.itemIcons[slot.iconIndex] : null;
-            if (equipped != null) {
-                ShopCategory slotCategory = switch (slot) {
-                    case CHEST -> ShopCategory.CHEST;
-                    case LEGS -> ShopCategory.LEGS;
-                    case GLOVES -> ShopCategory.GLOVES;
-                    case BOOTS -> ShopCategory.BOOTS;
-                };
-                BufferedImage armourArt = armourIcons.iconForArmour(equipped, slotCategory, 30);
-                if (armourArt != null) {
-                    icon = armourArt;
-                }
-            }
-            if (equipped != null && icon != null) {
-                int iconSz = 30;
-                g.drawImage(icon, slotX + (slotSize - iconSz) / 2, sy + 7, iconSz, iconSz, null);
-            } else if (icon != null) {
-                g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.35f));
-                int iconSz = 26;
-                g.drawImage(icon, slotX + (slotSize - iconSz) / 2, sy + 9, iconSz, iconSz, null);
-                g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.97f));
-            }
-            String slotLabel = slot.label;
-            Font slotFont = GameFonts.get().uiPlain(9);
-            FontMetrics sfm = g.getFontMetrics(slotFont);
-            drawEquipText(g, slotFont, slotLabel,
-                slotX + (slotSize - sfm.stringWidth(slotLabel)) / 2, sy + slotSize - 5,
-                new Color(170, 140, 90));
-        }
-
-        int statsX = portraitX;
-        int statsY = py + panelH - 80;
-        int statsW = slotX + slotSize - statsX;
-        int statsH = 70;
-        g.setColor(new Color(10, 7, 4, 200));
-        g.fillRoundRect(statsX, statsY, statsW, statsH, 4, 4);
-        g.setColor(new Color(100, 75, 40));
-        g.drawRoundRect(statsX, statsY, statsW, statsH, 4, 4);
-        drawEquipmentStats(g, statsX, statsY, statsW, statsH, presenter.model().equippedStatPreview());
-
-        g.setComposite(prev);
-    }
-
-    private void drawEquipmentStats(Graphics2D g, int x, int y, int w, int h, ShopModel.StatPreview preview) {
-        String header = "ХАРАКТЕРИСТИКИ";
-        Font headerFont = GameFonts.get().uiBold(11);
-        FontMetrics hfm = g.getFontMetrics(headerFont);
-        drawEquipText(g, headerFont, header, x + (w - hfm.stringWidth(header)) / 2, y + 18,
-            new Color(220, 200, 140));
-
-        String[] labels = {"Защита", "Выносл.", "Знаки"};
-        Font lineFont = GameFonts.get().uiPlain(11);
-        int lineY = y + 36;
-        ShopModel.StatRow[] rows = preview.rows();
-        for (int i = 0; i < labels.length && i < rows.length; i++) {
-            ShopModel.StatRow row = rows[i];
-            String delta = "";
-            if (row.delta() > 0) {
-                delta = " (+" + row.delta() + ")";
-            } else if (row.delta() < 0) {
-                delta = " (" + row.delta() + ")";
-            }
-            drawEquipText(g, lineFont, labels[i] + ": " + row.value() + delta, x + 12, lineY,
-                new Color(200, 180, 130));
-            lineY += 15;
-        }
+        ShopEquipmentOverlay.draw(g, overlayContext,
+            this::drawScaledSprite, sw, sh);
     }
 
     private void drawInventoryPouchIcon(Graphics2D g, int x, int y, int size,
