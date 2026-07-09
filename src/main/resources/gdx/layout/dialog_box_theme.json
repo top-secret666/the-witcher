@@ -102,6 +102,7 @@
     "speakerNamePadV": 2,
     "speakerNameBoxPad": 12,
     "speakerNameOffsetY": 2,
+    "speakerNameLiftExtra": 10,
     "shadowRgb": [
       0,
       0,

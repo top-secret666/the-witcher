@@ -13,11 +13,13 @@ import main.java.com.witcher.gdx.WitcherGame;
 import main.java.com.witcher.gdx.graphics.GameFonts;
 import main.java.com.witcher.gdx.graphics.GdxIntroAssets;
 import main.java.com.witcher.gdx.graphics.GdxMenuCursor;
+import main.java.com.witcher.gdx.graphics.GdxUiChrome;
 import main.java.com.witcher.gdx.graphics.GdxWindowAlign;
 import main.java.com.witcher.gdx.graphics.PixelTextures;
 import main.java.com.witcher.gdx.graphics.SwingCoords;
 import main.java.com.witcher.gdx.graphics.SwingViewport;
 import main.java.com.witcher.gdx.intro.GdxIntroView;
+import main.java.com.witcher.ui.intro.view.IntroLayout;
 import main.java.com.witcher.ui.intro.presenter.IntroController;
 
 /**
@@ -40,6 +42,7 @@ public class IntroScreen implements Screen {
     private ShapeRenderer shapes;
     private GameFonts fonts;
     private GdxIntroAssets assets;
+    private GdxUiChrome uiChrome;
     private IntroController controller;
     private FrameBuffer fbo;
     private TextureRegion sceneRegion;
@@ -55,6 +58,7 @@ public class IntroScreen implements Screen {
         fonts = new GameFonts();
         fonts.load();
         assets = GdxIntroAssets.load();
+        uiChrome = GdxUiChrome.load();
         controller = new IntroController(assets.buildAssetsInfo());
         fbo = new FrameBuffer(com.badlogic.gdx.graphics.Pixmap.Format.RGBA8888, FB_W, FB_H, false);
         com.badlogic.gdx.graphics.Texture fboTex = fbo.getColorBufferTexture();
@@ -93,7 +97,7 @@ public class IntroScreen implements Screen {
         shapes.setProjectionMatrix(camera.combined);
         PixelTextures.resetBlend();
 
-        introView.render(game.batch, shapes, fonts, assets, controller, C,
+        introView.render(game.batch, shapes, fonts, assets, uiChrome, camera, controller, C,
             Math.round(VW), Math.round(VH), mouseX, mouseY);
         fbo.end();
 
@@ -105,7 +109,9 @@ public class IntroScreen implements Screen {
         game.batch.setProjectionMatrix(camera.combined);
         game.batch.begin();
         game.batch.draw(sceneRegion, 0f, 0f, VW, VH);
+        drawCursor(mouseX, mouseY);
         game.batch.end();
+        GdxMenuCursor.ensureHidden();
 
         if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
             leaveIntro();
@@ -116,6 +122,18 @@ public class IntroScreen implements Screen {
             leaveIntro();
             game.setScreen(new ShopScreen(game));
         }
+    }
+
+    private void drawCursor(int mouseX, int mouseY) {
+        if (assets == null || assets.cursorTex == null) {
+            return;
+        }
+        game.batch.setColor(1f, 1f, 1f, 1f);
+        float cw = IntroLayout.CURSOR_W;
+        float ch = cw * assets.cursorTex.getHeight() / assets.cursorTex.getWidth();
+        float topY = mouseY - IntroLayout.CURSOR_HOTSPOT_Y;
+        game.batch.draw(assets.cursorTex, mouseX - IntroLayout.CURSOR_HOTSPOT_X,
+            C.rectY(topY, ch), cw, ch);
     }
 
     private void leaveIntro() {
@@ -145,6 +163,10 @@ public class IntroScreen implements Screen {
         if (fbo != null) {
             fbo.dispose();
             fbo = null;
+        }
+        if (uiChrome != null) {
+            uiChrome.dispose();
+            uiChrome = null;
         }
         if (assets != null) {
             assets.dispose();

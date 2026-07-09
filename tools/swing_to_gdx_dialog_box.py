@@ -47,6 +47,8 @@ THEME: dict = {
     "speakerNamePadV": 2,
     "speakerNameBoxPad": 12,
     "speakerNameOffsetY": 2,
+    "speakerNameLiftExtra": 10,
+    "speakerNameLiftExtra": 10,
     "shadowRgb": [0, 0, 0, 140],
     "outlineRgb": [12, 8, 4, 220],
     "dialogHeightRatio": 0.30,
@@ -184,6 +186,7 @@ def emit_java() -> str:
         f"    public static final int SPEAKER_NAME_PAD_V = {t['speakerNamePadV']};\n"
         f"    public static final int SPEAKER_NAME_BOX_PAD = {t['speakerNameBoxPad']};\n"
         f"    public static final int SPEAKER_NAME_OFFSET_Y = {t['speakerNameOffsetY']};\n"
+        f"    public static final int SPEAKER_NAME_LIFT_EXTRA = {t['speakerNameLiftExtra']};\n"
         f"    public static final float DIALOG_HEIGHT_RATIO = {t['dialogHeightRatio']}f;\n"
         f"    public static final float DIALOG_BOTTOM_MARGIN_RATIO = {t['dialogBottomMarginRatio']}f;\n"
         f"    public static final float DIALOG_FONT_SIZE_RATIO = {t['dialogFontSizeRatio']}f;\n"

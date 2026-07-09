@@ -83,6 +83,7 @@ public final class IntroDialogTheme {
     public static final int SPEAKER_NAME_PAD_V = 2;
     public static final int SPEAKER_NAME_BOX_PAD = 12;
     public static final int SPEAKER_NAME_OFFSET_Y = 2;
+    public static final int SPEAKER_NAME_LIFT_EXTRA = 10;
     public static final float DIALOG_HEIGHT_RATIO = 0.3f;
     public static final float DIALOG_BOTTOM_MARGIN_RATIO = 0.02f;
     public static final float DIALOG_FONT_SIZE_RATIO = 0.04f;

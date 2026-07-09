@@ -3,6 +3,7 @@ package main.java.com.witcher.gdx.intro;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
@@ -10,6 +11,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import main.java.com.witcher.gdx.graphics.GameFonts;
 import main.java.com.witcher.gdx.graphics.GdxIntroAssets;
+import main.java.com.witcher.gdx.graphics.GdxUiChrome;
 import main.java.com.witcher.gdx.graphics.PixelTextures;
 import main.java.com.witcher.gdx.graphics.SwingCoords;
 import main.java.com.witcher.ui.intro.IntroAssetsInfo;
@@ -22,20 +24,17 @@ import main.java.com.witcher.ui.intro.view.IntroDialogLayout;
 import main.java.com.witcher.ui.intro.view.IntroLayout;
 import main.java.com.witcher.ui.intro.view.IntroTextLayout;
 
-import java.util.List;
-
 /**
  * Отрисовка интро-сцены LibGDX по состоянию {@link IntroController}.
  */
 public final class GdxIntroView {
 
-    private static final float HISTORY_LINE_H = 16f;
-
     private final GlyphLayout glyph = new GlyphLayout();
 
     public void render(SpriteBatch batch, ShapeRenderer shapes, GameFonts fonts,
-                       GdxIntroAssets assets, IntroController controller,
-                       SwingCoords C, int sw, int sh, int mouseX, int mouseY) {
+                       GdxIntroAssets assets, GdxUiChrome chrome, OrthographicCamera camera,
+                       IntroController controller, SwingCoords C, int sw, int sh,
+                       int mouseX, int mouseY) {
         float fade = controller.getFadeAlpha();
         IntroAssetsInfo info = controller.getAssets();
 
@@ -62,7 +61,9 @@ public final class GdxIntroView {
             GdxDialogBoxRenderer.drawFrame(shapes, C, fonts, glyph, dialogLayout, dialogEntry, fade);
         }
         if (controller.isHistoryOpen()) {
-            drawHistoryOverlayShapes(shapes, controller, C, sw, sh, fade);
+            GdxHistoryPanelRenderer.drawDim(shapes, sw, sh, fade);
+            GdxHistoryPanelRenderer.drawFrame(shapes, C, controller.getHistoryPanelBounds(), fade);
+            GdxHistoryPanelRenderer.drawDividers(shapes, C, controller, sw, sh, fade);
         }
 
         PixelTextures.resetBlend();
@@ -75,9 +76,9 @@ public final class GdxIntroView {
             drawVnButtons(batch, fonts, controller, C, sh, mouseX, mouseY, fade);
         }
         if (controller.isHistoryOpen()) {
-            drawHistoryOverlayText(batch, fonts, controller, C, fade);
+            GdxHistoryPanelRenderer.drawContent(batch, fonts, chrome, glyph,
+                C, controller, sw, sh, fade);
         }
-        drawCursor(batch, assets, C, mouseX, mouseY);
         batch.end();
 
         if (controller.isRightMorphActive()) {
@@ -383,97 +384,6 @@ public final class GdxIntroView {
         font.draw(batch, label, tx + 1f, by - 1f);
         font.setColor(labelColor);
         font.draw(batch, label, tx, by);
-    }
-
-    private void drawHistoryOverlayShapes(ShapeRenderer shapes, IntroController controller,
-                                          SwingCoords C, int sw, int sh, float fade) {
-        Gdx.gl.glEnable(GL20.GL_BLEND);
-        Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
-        shapes.begin(ShapeRenderer.ShapeType.Filled);
-        shapes.setColor(0f, 0f, 0f, fade * 0.62f);
-        shapes.rect(0f, 0f, sw, sh);
-        IntroController.IntroRect panel = controller.getHistoryPanelBounds();
-        shapes.setColor(0.08f, 0.06f, 0.04f, fade * 0.95f);
-        shapes.rect(panel.x, C.rectY(panel.y, panel.height), panel.width, panel.height);
-        shapes.setColor(20f / 255f, 16f / 255f, 8f / 255f, fade * 0.32f);
-        shapes.rect(panel.x, C.rectY(panel.y, panel.height / 3f), panel.width, panel.height / 3f);
-        shapes.end();
-        shapes.begin(ShapeRenderer.ShapeType.Line);
-        shapes.setColor(140f / 255f, 100f / 255f, 35f / 255f, fade);
-        shapes.rect(panel.x + 0.5f, C.rectY(panel.y, panel.height) + 0.5f, panel.width - 1f, panel.height - 1f);
-        float pad = Math.max(10f, sw * 0.022f);
-        float textX = panel.x + pad;
-        float textMaxW = panel.width - pad * 2f;
-        float titleBaseline = panel.y + pad + 14f;
-        float headerBottom = titleBaseline + 10f;
-        float hintBaseline = panel.y + panel.height - pad;
-        float footerTop = hintBaseline - 14f;
-        shapes.line(textX, C.textBaseline(headerBottom - 4f), textX + textMaxW, C.textBaseline(headerBottom - 4f));
-        shapes.line(textX, C.textBaseline(footerTop), textX + textMaxW, C.textBaseline(footerTop));
-        IntroController.IntroRect close = controller.getHistoryCloseBounds();
-        if (controller.isHistoryCloseHovered()) {
-            shapes.setColor(0.85f, 0.75f, 0.48f, fade * 0.20f);
-            shapes.rect(close.x, C.rectY(close.y, close.height), close.width, close.height);
-            shapes.setColor(140f / 255f, 100f / 255f, 35f / 255f, fade);
-        }
-        shapes.rect(close.x + 0.5f, C.rectY(close.y, close.height) + 0.5f, close.width - 1f, close.height - 1f);
-        shapes.line(close.x + 4f, C.textBaseline(close.y + 4f), close.x + close.width - 4f,
-            C.textBaseline(close.y + close.height - 4f));
-        shapes.line(close.x + 4f, C.textBaseline(close.y + close.height - 4f), close.x + close.width - 4f,
-            C.textBaseline(close.y + 4f));
-        shapes.end();
-        PixelTextures.resetBlend();
-    }
-
-    private void drawHistoryOverlayText(SpriteBatch batch, GameFonts fonts, IntroController controller,
-                                        SwingCoords C, float fade) {
-        IntroController.IntroRect panel = controller.getHistoryPanelBounds();
-        BitmapFont font = fonts.dialog;
-        float panelW = panel.width;
-        float panelH = panel.height;
-        float sw = panelW / 0.82f;
-        float pad = Math.max(10f, sw * 0.022f);
-        float textX = panel.x + pad;
-        float textMaxW = panel.width - pad * 2f;
-        float titleBaseline = panel.y + pad + 14f;
-        float hintBaseline = panel.y + panel.height - pad;
-        float footerTop = hintBaseline - 14f;
-        float contentTop = titleBaseline + 12f;
-        float contentBottom = footerTop;
-        float contentH = Math.max(0f, contentBottom - contentTop);
-
-        font.setColor(218f / 255f, 165f / 255f, 32f / 255f, fade);
-        font.draw(batch, "История", textX, C.textBaseline(titleBaseline));
-
-        List<String> lines = controller.buildHistoryLogLines();
-        int visibleSkip = Math.max(0, Math.round(controller.getHistoryScroll() / HISTORY_LINE_H));
-        int maxLines = Math.max(0, (int) (contentH / HISTORY_LINE_H) + 1);
-        float lineY = contentTop + 12f;
-        for (int i = visibleSkip; i < lines.size() && i < visibleSkip + maxLines; i++) {
-            String line = lines.get(i);
-            boolean speaker = line.startsWith("[") && line.endsWith("]");
-            if (speaker) {
-                font.setColor(180f / 255f, 150f / 255f, 90f / 255f, fade);
-            } else {
-                font.setColor(210f / 255f, 195f / 255f, 155f / 255f, fade);
-            }
-            font.draw(batch, line, textX, C.textBaseline(lineY));
-            lineY += HISTORY_LINE_H;
-        }
-        font.setColor(150f / 255f, 130f / 255f, 95f / 255f, fade * 0.8f);
-        font.draw(batch, "Колёсико — прокрутка", textX, C.textBaseline(hintBaseline));
-    }
-
-    private void drawCursor(SpriteBatch batch, GdxIntroAssets assets, SwingCoords C,
-                            int mouseX, int mouseY) {
-        if (assets.cursorTex == null) {
-            return;
-        }
-        float cw = IntroLayout.CURSOR_W;
-        float ch = cw * assets.cursorTex.getHeight() / assets.cursorTex.getWidth();
-        float topY = mouseY - IntroLayout.CURSOR_HOTSPOT_Y;
-        batch.draw(assets.cursorTex, mouseX - IntroLayout.CURSOR_HOTSPOT_X,
-            C.rectY(topY, ch), cw, ch);
     }
 
     private static int[] logicalSize(Texture tex, GdxIntroAssets assets, IntroAssetsInfo info) {

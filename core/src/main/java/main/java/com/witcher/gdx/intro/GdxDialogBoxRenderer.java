@@ -29,10 +29,11 @@ public final class GdxDialogBoxRenderer {
 
     public static void drawBox(ShapeRenderer shapes, SwingCoords C,
                                IntroDialogLayout.Layout layout, float alpha) {
-        int bx = layout.boxX;
-        int by = layout.boxY;
-        int bw = layout.boxW;
-        int bh = layout.boxH;
+        drawBoxAt(shapes, C, layout.boxX, layout.boxY, layout.boxW, layout.boxH, alpha);
+    }
+
+    public static void drawBoxAt(ShapeRenderer shapes, SwingCoords C,
+                                 int bx, int by, int bw, int bh, float alpha) {
         float a = alpha;
 
         beginShapes(shapes);
@@ -108,7 +109,7 @@ public final class GdxDialogBoxRenderer {
         float nameW = glyph.width;
         float nameH = glyph.height;
         int nameBoxX = layout.boxX + layout.pad - 4;
-        int nameBoxY = layout.boxY - Math.round(nameH) - IntroDialogTheme.SPEAKER_NAME_OFFSET_Y;
+        int nameBoxY = speakerPlateSwingTop(layout, Math.round(nameH));
         int nameBoxW = Math.round(nameW) + IntroDialogTheme.SPEAKER_NAME_BOX_PAD;
         int nameBoxH = Math.round(nameH) + 4;
 
@@ -204,10 +205,15 @@ public final class GdxDialogBoxRenderer {
                                         String speaker, Color color, float alpha) {
         glyph.setText(font, speaker);
         int nameBoxX = layout.boxX + layout.pad - 4 + IntroDialogTheme.SPEAKER_NAME_PAD_H;
-        int nameBoxY = layout.boxY - Math.round(glyph.height) - IntroDialogTheme.SPEAKER_NAME_OFFSET_Y;
+        int nameBoxY = speakerPlateSwingTop(layout, Math.round(glyph.height));
         float baseline = IntroTextLayout.dialogLineBaselineSwingY(
             nameBoxY + glyph.height + IntroDialogTheme.SPEAKER_NAME_PAD_V, font.getCapHeight());
         drawOutlined(batch, font, speaker, nameBoxX, baseline, C, color);
+    }
+
+    private static int speakerPlateSwingTop(IntroDialogLayout.Layout layout, int nameH) {
+        return layout.boxY - nameH - IntroDialogTheme.SPEAKER_NAME_OFFSET_Y
+            - IntroDialogTheme.SPEAKER_NAME_LIFT_EXTRA - IntroDialogTheme.FRAME_OUTER_OFFSET;
     }
 
     private static Color speakerColor(IntroScript.DialogEntry entry) {

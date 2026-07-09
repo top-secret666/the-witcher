@@ -1,0 +1,63 @@
+{
+  "design": [
+    480,
+    360
+  ],
+  "theme": {
+    "dimAlpha": 0.85,
+    "fontSizeRatio": 0.034,
+    "fontSizeMin": 11,
+    "titleSizeDelta": 1,
+    "hintSizeDelta": -1,
+    "hintSizeMin": 10,
+    "lineGap": 4,
+    "padRatio": 0.022,
+    "padMin": 10,
+    "headerGap": 8,
+    "footerGap": 6,
+    "titleRgb": [
+      255,
+      195,
+      110
+    ],
+    "dividerRgb": [
+      255,
+      215,
+      0
+    ],
+    "dividerAlpha": 160,
+    "speakerRgb": [
+      180,
+      150,
+      90
+    ],
+    "bodyRgb": [
+      210,
+      195,
+      155
+    ],
+    "hintRgb": [
+      150,
+      130,
+      95
+    ],
+    "hintAlpha": 200,
+    "closeBtnSize": 18,
+    "closeBtnMarginX": 6,
+    "closeBtnMarginY": 5,
+    "panelWRatio": 0.82,
+    "panelHRatio": 0.72,
+    "panelMinW": 280,
+    "panelMinH": 200
+  },
+  "preview480x360": {
+    "panel": {
+      "x": 43,
+      "y": 50,
+      "w": 393,
+      "h": 259
+    },
+    "pad": 10,
+    "fontSize": 12
+  }
+}

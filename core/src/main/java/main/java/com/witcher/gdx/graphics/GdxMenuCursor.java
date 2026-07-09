@@ -20,6 +20,17 @@ public final class GdxMenuCursor {
         }
     }
 
+    /** Повторно скрыть системный курсор (Windows иногда сбрасывает режим). */
+    public static void ensureHidden() {
+        if (!menuHidden) {
+            return;
+        }
+        long handle = windowHandle();
+        if (handle != 0) {
+            GLFW.glfwSetInputMode(handle, GLFW.GLFW_CURSOR, GLFW.GLFW_CURSOR_HIDDEN);
+        }
+    }
+
     public static void restoreAfterMenu() {
         if (!menuHidden) {
             return;
