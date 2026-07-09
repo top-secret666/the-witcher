@@ -22,10 +22,10 @@ public final class IntroDialogLayout {
             boxX = (sw - boxW) / 2;
             boxY = sh - boxH - (int) (sh * 0.02f);
             if (heightRatio <= 0.11f) {
-                fontSize = Math.max(14, (int) (sh * 0.042f));
-                pad = Math.max(7, (int) (sw * 0.018f));
+                fontSize = Math.max(16, (int) (sh * 0.045f));
+                pad = Math.max(8, (int) (sw * 0.018f));
             } else {
-                fontSize = Math.max(14, (int) (sh * 0.042f));
+                fontSize = Math.max(16, (int) (sh * 0.045f));
                 pad = (int) (sw * 0.02f);
             }
             textX = boxX + pad;

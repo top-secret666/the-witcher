@@ -10,52 +10,34 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Шрифты UI (Swing): готический антикварный TTF с полной кириллицей.
+ * Шрифты UI (Swing): готический TTF с кириллицей.
  * <p>
- * Основной — Forum (классическая римская вязь, хорошо читается в диалогах).
- * Акценты / жирный — Philosopher-Bold.
+ * Основной — MedievalSharp (острый средневековый готический, Google Fonts OFL).
  */
 public final class GameFonts {
 
     private static final String CYRILLIC_PROBE = "АбвГдеЁжЗийКлмнопрстуфхцчшщъыьэюя";
 
-    /** Тело диалогов и UI — Forum в приоритете. */
-    private static final String[] DIALOG_PATHS = {
-        "/assets/fonts/Forum-Regular.ttf",
-        "/assets/fonts/Philosopher-Regular.ttf",
-        "/assets/fonts/Philosopher-Bold.ttf"
-    };
-
-    /** Имена, заголовки, кнопки — настоящий bold TTF. */
-    private static final String[] DIALOG_BOLD_PATHS = {
+    private static final String[] GOTHIC_PATHS = {
+        "/assets/fonts/MedievalSharp-Regular.ttf",
+        "/assets/fonts/lavka/MedievalSharp-Regular.ttf",
         "/assets/fonts/Philosopher-Bold.ttf",
-        "/assets/fonts/Forum-Regular.ttf"
+        "/assets/fonts/Philosopher-Regular.ttf"
     };
 
     private static final GameFonts INSTANCE = new GameFonts();
 
-    private final Font dialogBase;
-    private final Font dialogBoldBase;
-    private final Font uiBase;
-    private final Font uiBoldBase;
+    private final Font gothicBase;
     private final Map<String, Font> cache = new HashMap<>();
 
     private GameFonts() {
-        Font body = loadFirst(DIALOG_PATHS);
-        if (body == null) {
-            body = pickSystemCyrillic();
+        Font loaded = loadFirst(GOTHIC_PATHS);
+        if (loaded == null) {
+            loaded = pickSystemGothic();
         }
-        Font bold = loadFirst(DIALOG_BOLD_PATHS);
-        if (bold == null) {
-            bold = body;
-        }
-        dialogBase = body;
-        dialogBoldBase = bold;
-        uiBase = body;
-        uiBoldBase = bold;
-        System.out.println("[GameFonts] Dialog: " + dialogBase.getFontName()
-            + " | Bold: " + dialogBoldBase.getFontName()
-            + (supportsCyrillic(dialogBase) ? " (kirillica OK)" : " (NET kirillicy!)"));
+        gothicBase = loaded;
+        System.out.println("[GameFonts] Gothic: " + gothicBase.getFontName()
+            + (supportsCyrillic(gothicBase) ? " (kirillica OK)" : " (NET kirillicy!)"));
     }
 
     public static GameFonts get() {
@@ -63,62 +45,52 @@ public final class GameFonts {
     }
 
     public Font plain(int size) {
-        return derive(dialogBase, size, Font.PLAIN);
+        return derive(gothicBase, size, Font.PLAIN);
     }
 
     public Font bold(int size) {
-        if (dialogBoldBase == dialogBase) {
-            return derive(dialogBoldBase, size, Font.BOLD);
-        }
-        return derive(dialogBoldBase, size, Font.PLAIN);
+        return derive(gothicBase, size, Font.BOLD);
     }
 
     public Font italic(int size) {
-        return derive(dialogBase, size, Font.ITALIC);
+        return derive(gothicBase, size, Font.ITALIC);
     }
 
     public Font uiPlain(int size) {
-        return derive(uiBase, size, Font.PLAIN);
+        return plain(size);
     }
 
     public Font uiBold(int size) {
-        if (uiBoldBase == uiBase) {
-            return derive(uiBoldBase, size, Font.BOLD);
-        }
-        return derive(uiBoldBase, size, Font.PLAIN);
+        return bold(size);
     }
 
     public Font uiItalic(int size) {
-        return derive(uiBase, size, Font.ITALIC);
+        return italic(size);
     }
 
-    /** Диалоги — чёткий готический TTF. */
     public static void applyDialogHints(Graphics2D g) {
         applyGothicHints(g);
     }
 
-    /** Мелкий пиксельный текст (иконки, счётчики). */
     public static void applyPixelHints(Graphics2D g) {
         applyGameHints(g);
     }
 
-    /** Пиксель-арт / мелкие подписи на карточках. */
     public static void applyGameHints(Graphics2D g) {
         g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
         g.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_OFF);
     }
 
-    /** Готический TTF — чёткие контуры, субпиксель для читаемости кириллицы. */
+    /** Готический TTF — чёткие штрихи, без размытия. */
     public static void applyGothicHints(Graphics2D g) {
-        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB);
+        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
         g.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_OFF);
         g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
         g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
     }
 
-    /** Текст поверх CRT — рисуется уже в ×2, остаётся читаемым. */
     public static void applyUiOverlayHints(Graphics2D g) {
         applyGothicHints(g);
     }
@@ -187,18 +159,14 @@ public final class GameFonts {
         return true;
     }
 
-    /** Запасные системные шрифты — только с кириллицей. */
-    private static Font pickSystemCyrillic() {
+    private static Font pickSystemGothic() {
         String[] names = {
-            "Forum",
-            "Cormorant",
             "MedievalSharp",
+            "UnifrakturMaguntia",
+            "UnifrakturCook",
+            "Forum",
             "Cinzel",
-            "PT Serif",
-            "Times New Roman",
-            "Georgia",
-            "Palatino Linotype",
-            "Segoe UI"
+            "Times New Roman"
         };
         GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
         String[] available = ge.getAvailableFontFamilyNames();
@@ -207,7 +175,7 @@ public final class GameFonts {
                 if (have.equalsIgnoreCase(want)) {
                     Font candidate = new Font(have, Font.PLAIN, 12);
                     if (supportsCyrillic(candidate)) {
-                        System.out.println("[GameFonts] Sistemnyj shrift: " + have);
+                        System.out.println("[GameFonts] Sistemnyj gothic: " + have);
                         return candidate;
                     }
                 }

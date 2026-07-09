@@ -8,7 +8,7 @@ public final class IntroHistoryTheme {
 
     public static final float DIM_ALPHA = 0.85f;
     public static final float FONT_SIZE_RATIO = 0.034f;
-    public static final int FONT_SIZE_MIN = 11;
+    public static final int FONT_SIZE_MIN = 13;
     public static final int TITLE_SIZE_DELTA = 1;
     public static final int HINT_SIZE_DELTA = -1;
     public static final int HINT_SIZE_MIN = 10;
