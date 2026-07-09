@@ -1,6 +1,6 @@
 package main.java.com.witcher.ui.graphics;
 
-import main.java.com.witcher.ui.shop.ArmourIconRegistry;
+import main.java.com.witcher.ui.shop.ShopIconsFactory;
 import main.java.com.witcher.ui.shop.ShopModel;
 import main.java.com.witcher.ui.shop.presenter.ShopInput;
 import main.java.com.witcher.ui.shop.presenter.ShopPresenter;
@@ -25,7 +25,7 @@ public final class ShopScreen {
 
     public ShopScreen(ShopModel model) {
         ShopAssetCache cache = ShopAssetCache.get();
-        this.presenter = new ShopPresenter(model, cache, ArmourIconRegistry.get(cache.cardArtSize()));
+        this.presenter = new ShopPresenter(model, cache, ShopIconsFactory.create(cache.cardArtSize()));
         this.view = new ShopSwingView(presenter);
     }
 

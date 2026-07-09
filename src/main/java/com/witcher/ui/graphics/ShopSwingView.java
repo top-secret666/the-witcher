@@ -1,7 +1,7 @@
 package main.java.com.witcher.ui.graphics;
 
 import main.java.com.witcher.model.armour.Armour;
-import main.java.com.witcher.ui.shop.ArmourIconRegistry;
+import main.java.com.witcher.ui.shop.ShopEntryIcons;
 import main.java.com.witcher.ui.shop.ShopCatalogEntry;
 import main.java.com.witcher.ui.shop.ShopCategory;
 import main.java.com.witcher.ui.shop.ShopEquipSlot;
@@ -44,13 +44,13 @@ public final class ShopSwingView implements ShopView {
     private final ShopPresenter presenter;
     private final ShopSessionState ui;
     private final ShopAssetCache assets;
-    private final ArmourIconRegistry armourIcons;
+    private final ShopEntryIcons armourIcons;
 
     public ShopSwingView(ShopPresenter presenter) {
         this.presenter = presenter;
         this.ui = presenter.ui();
         this.assets = ShopAssetCache.get();
-        this.armourIcons = (ArmourIconRegistry) presenter.armourIcons();
+        this.armourIcons = presenter.armourIcons();
     }
 
     @Override
@@ -784,7 +784,7 @@ public final class ShopSwingView implements ShopView {
                     case GLOVES -> ShopCategory.GLOVES;
                     case BOOTS -> ShopCategory.BOOTS;
                 };
-                BufferedImage armourArt = armourIcons.iconFor(equipped, slotCategory, 30);
+                BufferedImage armourArt = armourIcons.iconForArmour(equipped, slotCategory, 30);
                 if (armourArt != null) {
                     icon = armourArt;
                 }

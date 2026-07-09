@@ -1,5 +1,6 @@
 package main.java.com.witcher.gdx.shop;
 
+import main.java.com.witcher.model.armour.Armour;
 import main.java.com.witcher.gdx.graphics.PixelTextures;
 import main.java.com.witcher.ui.shop.ShopCatalogEntry;
 import main.java.com.witcher.ui.shop.ShopCategory;
@@ -69,7 +70,19 @@ public final class GdxArmourIconRegistry implements ShopEntryIcons {
         return null;
     }
 
+    @Override
+    public BufferedImage iconForArmour(Armour armour, ShopCategory category, int size) {
+        if (armour == null) {
+            return null;
+        }
+        return iconForName(armour.getName(), category, size);
+    }
+
     public BufferedImage iconForName(String armourName, ShopCategory category) {
+        return iconForName(armourName, category, iconSize);
+    }
+
+    public BufferedImage iconForName(String armourName, ShopCategory category, int size) {
         if (armourName == null || armourName.isBlank()) {
             return null;
         }
@@ -77,12 +90,12 @@ public final class GdxArmourIconRegistry implements ShopEntryIcons {
         if (file == null || !matchesCategory(file, category)) {
             return null;
         }
-        String cacheKey = file + "@" + iconSize;
+        String cacheKey = file + "@" + size;
         BufferedImage cached = cache.get(cacheKey);
         if (cached != null) {
             return cached == MISSING_ICON ? null : cached;
         }
-        BufferedImage loaded = loadIcon(file, iconSize);
+        BufferedImage loaded = loadIcon(file, size);
         cache.put(cacheKey, loaded != null ? loaded : MISSING_ICON);
         return loaded;
     }

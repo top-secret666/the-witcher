@@ -1,5 +1,7 @@
 package main.java.com.witcher.ui.graphics;
 
+import main.java.com.witcher.ui.shop.ShopIconsFactory;
+
 import java.util.function.Consumer;
 
 /**
@@ -52,6 +54,7 @@ final class GameAssetLoader {
 
             report(85);
             ShopAssetCache.get();
+            ShopIconsFactory.warmupHybridIcons();
             UiChrome.warmup();
 
             report(100);
