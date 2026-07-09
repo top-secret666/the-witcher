@@ -3,7 +3,9 @@ package main.java.com.witcher.gdx.shop;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.Texture.TextureFilter;
 import static main.java.com.witcher.ui.shop.view.ShopViewConstants.HUD_H;
+import main.java.com.witcher.ui.shop.ShopCategory;
 import main.java.com.witcher.ui.shop.ShopRuntimeAssets;
+import main.java.com.witcher.ui.shop.view.LavkaAssetPaths;
 
 import java.awt.image.BufferedImage;
 import java.util.EnumMap;
@@ -183,7 +185,7 @@ public final class GdxShopRuntimeAssets implements ShopRuntimeAssets {
     }
 
     private static Texture loadLavkaUiOriginal(String fileName) {
-        Texture texture = PixelTextures.loadFirst("sprites/lavka/ui/" + fileName);
+        Texture texture = PixelTextures.loadFirst(LavkaAssetPaths.gdxUi(fileName));
         if (texture != null) {
             texture.setFilter(TextureFilter.Linear, TextureFilter.Linear);
         }

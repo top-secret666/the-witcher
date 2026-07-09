@@ -26,6 +26,10 @@ public final class LavkaAssetPaths {
         return GDX_ROOT + relativePath;
     }
 
+    public static String gdxUi(String fileName) {
+        return GDX_UI + fileName;
+    }
+
     public static String gdxIcons(String fileName) {
         return GDX_ROOT + "icons/" + fileName;
     }
