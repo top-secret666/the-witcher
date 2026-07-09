@@ -35,7 +35,7 @@ public class SplashScreen implements Screen {
     private static final Color WARM_LIGHT = new Color(1f, 170f / 255f, 85f / 255f, 1f);
     private static final Color SPLASH_BACKDROP = new Color(18f / 255f, 12f / 255f, 8f / 255f, 1f);
     private static final Color SMOKE = new Color(190f / 255f, 180f / 255f, 165f / 255f, 1f);
-    private static final boolean DRAW_SMOKE = false;
+    private static final boolean DRAW_SMOKE = true;
 
     /** Скорость загрузки (медленнее, чем было). */
     private static final float ALPHA_STEP = 0.022f;

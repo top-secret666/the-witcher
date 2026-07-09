@@ -97,14 +97,14 @@ public class SplashScreen {
         particles.removeIf(p -> !p.alive);
         for (Particle p : particles) p.update();
 
-        // Дым — только в центре под логотипом, без кругов на монстрах
-        if (tick % 12 == 0 && alpha > 0.25f) {
-            float px = VIRTUAL_W * 0.38f + rng.nextFloat() * VIRTUAL_W * 0.24f;
-            float py = VIRTUAL_H * 0.14f + rng.nextFloat() * VIRTUAL_H * 0.12f;
-            float vx = (rng.nextFloat() - 0.5f) * 0.12f;
-            float vy = -0.08f - rng.nextFloat() * 0.14f;
-            int life = 70 + rng.nextInt(50);
-            int r = 6 + rng.nextInt(6);
+        // Дымок от стойки (центр-низ), небольшой
+        if (tick % 8 == 0 && alpha > 0.25f && smokePuffs.size() < 12) {
+            float px = VIRTUAL_W * 0.40f + rng.nextFloat() * VIRTUAL_W * 0.20f;
+            float py = VIRTUAL_H * 0.60f + rng.nextFloat() * VIRTUAL_H * 0.10f;
+            float vx = (rng.nextFloat() - 0.5f) * 0.14f;
+            float vy = -0.12f - rng.nextFloat() * 0.20f;
+            int life = 90 + rng.nextInt(70);
+            int r = 4 + rng.nextInt(5);
             smokePuffs.add(new SmokePuff(px, py, vx, vy, life, r));
         }
         smokePuffs.removeIf(p -> !p.alive);
@@ -370,9 +370,10 @@ public class SplashScreen {
         void update() {
             x += vx;
             y += vy;
-            r += 0.015f;
-            if (r > 18f) {
-                r = 18f;
+            vx *= 0.98f;
+            r += 0.04f;
+            if (r > 16f) {
+                r = 16f;
             }
             life--;
             if (life <= 0) alive = false;
@@ -380,19 +381,34 @@ public class SplashScreen {
 
         void draw(Graphics2D g) {
             float t = 1f - (life / (float) maxLife);
-            float a = (float) (Math.sin(t * Math.PI) * 0.12f);
-            if (a <= 0f) return;
+            float a = (float) (Math.sin(t * Math.PI));
+            if (a <= 0.02f) {
+                return;
+            }
 
-            Composite prev = g.getComposite();
-            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, a));
+            int cx = Math.round(x);
+            int cy = Math.round(y);
+            int rr = Math.max(2, Math.round(r));
+
+            Composite prevC = g.getComposite();
+            Object prevAa = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, a * 0.10f));
+            g.setColor(new Color(220, 210, 195));
+            g.fillOval(cx - rr - 3, cy - rr - 1, (rr + 3) * 2, (rr + 1) * 2);
+
+            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, a * 0.18f));
             g.setColor(SMOKE);
-
-            int cx = (int) x;
-            int cy = (int) y;
-            int rr = (int) r;
-
             g.fillOval(cx - rr, cy - rr, rr * 2, rr * 2);
-            g.setComposite(prev);
+
+            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, a * 0.09f));
+            g.fillOval(cx - rr + 4, cy - rr - 2, Math.max(4, rr + rr - 2), Math.max(4, rr + rr - 4));
+
+            g.setComposite(prevC);
+            if (prevAa != null) {
+                g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, prevAa);
+            }
         }
     }
 }
