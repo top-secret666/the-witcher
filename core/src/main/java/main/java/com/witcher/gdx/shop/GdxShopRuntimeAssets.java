@@ -2,7 +2,7 @@ package main.java.com.witcher.gdx.shop;
 
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.Texture.TextureFilter;
-import main.java.com.witcher.gdx.graphics.PixelTextures;
+import main.java.com.witcher.gdx.LavkaLayout;
 import main.java.com.witcher.ui.shop.ShopCategory;
 import main.java.com.witcher.ui.shop.ShopRuntimeAssets;
 
@@ -100,7 +100,7 @@ public final class GdxShopRuntimeAssets implements ShopRuntimeAssets {
 
         hudW = panelW;
         hudX = (480 - hudW) / 2;
-        hudH = 58;
+        hudH = LavkaLayout.HUD_H;
 
         hudBar = loadLavka("ui/shop_hud_bar.png");
         cardFrontScaled = loadLavka("ui/shop_card_front.png");

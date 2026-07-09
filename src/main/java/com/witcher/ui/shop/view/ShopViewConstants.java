@@ -51,6 +51,11 @@ public final class ShopViewConstants {
     public static final int TOP_ROW_COLS = 5;
     public static final int BOTTOM_ROW_COLS = 2;
 
+    /** Минимальная высота HUD; фактическая — по пропорциям арта (≈82 при ширине 380). */
+    public static final int HUD_H = 72;
+    public static final int HUD_CROWN_W = 18;
+    public static final int HUD_CROWN_H = 20;
+
     /** Текст поверх CRT-фильтра — читаемость без «дробления». */
     public static final boolean DEFER_UI_TEXT_TO_OVERLAY = true;
 

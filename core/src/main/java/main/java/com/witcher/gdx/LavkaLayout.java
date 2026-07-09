@@ -15,7 +15,7 @@ public final class LavkaLayout {
     public static final int CARD_GAP = 6;
     public static final int GRID_COLS = 5;
     public static final int CARD_ART = 32;
-    public static final int HUD_H = 58;
+    public static final int HUD_H = 72;
     public static final int PIXEL_SCALE = 2;
 
     private LavkaLayout() {

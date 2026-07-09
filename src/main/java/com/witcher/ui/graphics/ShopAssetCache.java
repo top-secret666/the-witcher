@@ -3,6 +3,7 @@ package main.java.com.witcher.ui.graphics;
 import main.java.com.witcher.ui.shop.ShopCategory;
 import main.java.com.witcher.ui.shop.ShopRuntimeAssets;
 import main.java.com.witcher.ui.shop.view.ShopUiMetrics;
+import main.java.com.witcher.ui.shop.view.ShopViewConstants;
 
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
@@ -113,8 +114,8 @@ public final class ShopAssetCache implements ShopRuntimeAssets {
 
         hudW = panelW;
         hudX = (480 - hudW) / 2;
-        hudH = 58;
-        hudBar = loadSized(UI + "shop_hud_bar.png", hudW, hudH, BASE + "ui/shop_hud_bar.png", true);
+        hudBar = loadHudBarUniform(hudW);
+        hudH = hudBar != null ? hudBar.getHeight() : ShopViewConstants.HUD_H;
 
         cardFrontScaled = loadSized(UI + "shop_card_front.png", cardW, cardH,
             BASE + "ui/shop_card_front.png", false);
@@ -239,6 +240,17 @@ public final class ShopAssetCache implements ShopRuntimeAssets {
             }
         }
         return frames;
+    }
+
+    /** HUD-плашка: равномерный масштаб по ширине, без сплющивания короны. */
+    private BufferedImage loadHudBarUniform(int targetW) {
+        BufferedImage src = loadFirst(BASE + "ui/shop_hud_bar.png", UI + "shop_hud_bar.png");
+        if (src == null) {
+            return null;
+        }
+        Rectangle box = ShopImageBounds.compute(src);
+        int drawH = Math.max(1, Math.round(box.height * ((float) targetW / box.width)));
+        return PixelScaler.crispScaleRegion(src, box, targetW, drawH);
     }
 
     private BufferedImage loadBakedIcon(String fileName) {

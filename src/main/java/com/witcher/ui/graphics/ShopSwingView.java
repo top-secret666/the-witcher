@@ -963,22 +963,23 @@ public final class ShopSwingView implements ShopView {
 
         String wallet = presenter.walletHudAmountText();
         String suffix = presenter.model().walletSuffix();
-        int crownSize = 18;
+        int crownW = ShopViewConstants.HUD_CROWN_W;
+        int crownH = ShopViewConstants.HUD_CROWN_H;
         int crownGap = 4;
         drawCrispText(g);
         g.setFont(GameFonts.get().uiBold( 13));
         FontMetrics fm = g.getFontMetrics();
         int blockW = fm.stringWidth(wallet) + fm.stringWidth(suffix);
         if (assets.crownIconScaled != null) {
-            blockW += crownSize + crownGap;
+            blockW += crownW + crownGap;
         }
         int blockX = layout.hudX + (layout.hudW - blockW) / 2;
         int textX = blockX;
         if (assets.crownIconScaled != null) {
-            int crownY = (hudY + (layout.hudH - crownSize) / 2) & ~1;
+            int crownY = (hudY + (layout.hudH - crownH) / 2) & ~1;
             int crownX = blockX & ~1;
-            drawHudPlaqueIcon(g, assets.crownIconScaled, crownX, crownY, crownSize, crownSize);
-            textX = blockX + crownSize + crownGap;
+            drawHudPlaqueIcon(g, assets.crownIconScaled, crownX, crownY, crownW, crownH);
+            textX = blockX + crownW + crownGap;
         }
         int walletY = hudY + (layout.hudH + fm.getAscent()) / 2 - 2;
         ShopUiDraw.drawOutlinedText(g, wallet, textX, walletY, new Color(255, 230, 150));
@@ -1832,18 +1833,26 @@ public final class ShopSwingView implements ShopView {
         return bounds;
     }
 
-    /** LibGDX-иконка HUD-плашки: 2× bake → виртуальный размер, overlay ×2 = 1:1 на экране. */
+    /** LibGDX-иконка HUD-плашки: aspect-fit в слот, без сплющивания. */
     private static void drawHudPlaqueIcon(Graphics2D g, BufferedImage icon, int x, int y, int w, int h) {
         if (icon == null || w <= 0 || h <= 0) {
             return;
         }
+        Rectangle crop = ShopImageBounds.compute(icon);
+        if (crop == null || crop.width <= 0 || crop.height <= 0) {
+            crop = new Rectangle(0, 0, icon.getWidth(), icon.getHeight());
+        }
+        Rectangle dst = aspectFitCroppedBounds(crop, x, y, w, h, 0);
         Object prevInterp = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
         Object prevRender = g.getRenderingHint(RenderingHints.KEY_RENDERING);
         Object prevAa = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
         g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
         g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
-        g.drawImage(icon, x, y, w, h, null);
+        g.drawImage(icon,
+            dst.x, dst.y, dst.x + dst.width, dst.y + dst.height,
+            crop.x, crop.y, crop.x + crop.width, crop.y + crop.height,
+            null);
         if (prevInterp != null) {
             g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, prevInterp);
         }
