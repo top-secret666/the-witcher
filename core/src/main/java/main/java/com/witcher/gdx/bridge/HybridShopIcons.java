@@ -20,7 +20,7 @@ public final class HybridShopIcons {
     public static void warmup() {
         configureAssetsRoot();
         try {
-            GdxIconBakeSession.ensureBaked(38, 30);
+            IconBakeService.ensureBaked(38, 30);
         } catch (Throwable error) {
             System.err.println("[HybridShopIcons] bake failed: " + error.getMessage());
         }
@@ -28,7 +28,7 @@ public final class HybridShopIcons {
 
     public static ShopEntryIcons create(int iconSize) {
         GdxIconBakeSession.ensureBaked(iconSize, EQUIP_ICON_SIZE);
-        if (GdxIconBakeSession.isReady()) {
+        if (IconBakeService.isReady()) {
             System.out.println("[HybridShopIcons] GDX+Swing icons (size " + iconSize + ")");
             return new DelegatingShopIcons(iconSize);
         }

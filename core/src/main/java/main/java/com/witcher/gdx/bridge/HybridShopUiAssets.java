@@ -9,10 +9,6 @@ public final class HybridShopUiAssets {
     }
 
     public static BufferedImage get(String key) {
-        if (!GdxIconBakeSession.isReady()) {
-            return null;
-        }
-        BufferedImage image = GdxIconBakeSession.cache().get(key);
-        return GdxIconBaker.isUsable(image) ? image : null;
+        return IconBakeService.get(key);
     }
 }
