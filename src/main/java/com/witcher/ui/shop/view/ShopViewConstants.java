@@ -62,9 +62,18 @@ public final class ShopViewConstants {
     public static final int HUD_DUKE_SEAL_W = 38;
     public static final int HUD_DUKE_SEAL_H = 46;
 
+    /** Монетка у цены товара (каталог + карточка). */
+    public static final int CATALOG_COIN_SIZE = 8;
+
     /** Запекание LibGDX: 2× слота (Renderer pixelScale=2). */
+    public static final int HUD_ICON_BAKE_SCALE = 2;
+
     public static int hudIconBakePx(int slotW, int slotH) {
-        return Math.max(slotW, slotH) * 2;
+        return Math.max(slotW, slotH) * HUD_ICON_BAKE_SCALE;
+    }
+
+    public static int catalogCoinBakePx() {
+        return CATALOG_COIN_SIZE * HUD_ICON_BAKE_SCALE;
     }
 
     /** Текст поверх CRT-фильтра — читаемость без «дробления». */

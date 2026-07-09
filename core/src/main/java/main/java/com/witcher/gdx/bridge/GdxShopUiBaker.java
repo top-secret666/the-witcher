@@ -8,6 +8,7 @@ import static main.java.com.witcher.ui.shop.view.ShopViewConstants.HUD_CROWN_H;
 import static main.java.com.witcher.ui.shop.view.ShopViewConstants.HUD_CROWN_W;
 import static main.java.com.witcher.ui.shop.view.ShopViewConstants.HUD_DUKE_SEAL_H;
 import static main.java.com.witcher.ui.shop.view.ShopViewConstants.HUD_DUKE_SEAL_W;
+import static main.java.com.witcher.ui.shop.view.ShopViewConstants.catalogCoinBakePx;
 import static main.java.com.witcher.ui.shop.view.ShopViewConstants.hudIconBakePx;
 
 import java.awt.image.BufferedImage;
@@ -20,10 +21,12 @@ public final class GdxShopUiBaker {
     public static final String KEY_CARD_BACK = "shop_card_back@166x249";
     public static final String KEY_HUD_CROWN = "hud.icon_crown@56";
     public static final String KEY_HUD_DUKE_SEAL = "hud.icon_duke_seal@92";
+    public static final String KEY_CATALOG_COIN = "catalog.icon_crown_small@16";
 
     /** Запекание в 2× виртуального размера (Renderer pixelScale=2 → 1:1 на displayFrame). */
     public static final int HUD_CROWN_PX = hudIconBakePx(HUD_CROWN_W, HUD_CROWN_H);
     public static final int HUD_DUKE_SEAL_PX = hudIconBakePx(HUD_DUKE_SEAL_W, HUD_DUKE_SEAL_H);
+    public static final int CATALOG_COIN_PX = catalogCoinBakePx();
 
     /** Размер карточки в режиме категории (как {@code ShopLayout#leftCategoryCardSlot}). */
     public static final int CATEGORY_CARD_W = 166;
@@ -40,6 +43,7 @@ public final class GdxShopUiBaker {
                 bakeUi(batch, "ui/shop_card_back.png", CATEGORY_CARD_W, CATEGORY_CARD_H));
             putIfUsable(out, KEY_HUD_CROWN, bakeIcon(batch, "icon_crown.png", HUD_CROWN_PX));
             putIfUsable(out, KEY_HUD_DUKE_SEAL, bakeIcon(batch, "icon_duke_seal.png", HUD_DUKE_SEAL_PX));
+            putIfUsable(out, KEY_CATALOG_COIN, bakeIcon(batch, "icon_crown_small.png", CATALOG_COIN_PX));
         } finally {
             batch.dispose();
         }

@@ -13,6 +13,8 @@ public final class ShopUiAssetsFactory {
     /** Только HUD-плашка. */
     public static final String KEY_HUD_CROWN = "hud.icon_crown@56";
     public static final String KEY_HUD_DUKE_SEAL = "hud.icon_duke_seal@92";
+    /** Монетка у цены товара (каталог, карточка). */
+    public static final String KEY_CATALOG_COIN = "catalog.icon_crown_small@16";
 
     private ShopUiAssetsFactory() {
     }

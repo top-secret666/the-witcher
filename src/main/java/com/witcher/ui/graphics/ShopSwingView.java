@@ -1373,8 +1373,8 @@ public final class ShopSwingView implements ShopView {
 
             if (assets.crownIconSmall != null && !price.equals("···")) {
                 int coin = assets.catalogCoinSize;
-                int coinY = y + (assets.rowH - coin) / 2;
-                g.drawImage(assets.crownIconSmall, priceX, coinY, coin, coin, null);
+                int coinY = (y + (assets.rowH - coin) / 2) & ~1;
+                drawCatalogCoin(g, assets.crownIconSmall, priceX, coinY, coin);
                 priceX += coin + 2;
             }
             ShopUiDraw.drawOutlinedText(g, price, priceX, textY, new Color(255, 220, 100));
@@ -1620,13 +1620,7 @@ public final class ShopSwingView implements ShopView {
         int priceX = cardX + (cardW - priceW) / 2;
         if (coin != null) {
             int coinY = (priceRowY - coinSize + 1) & ~1;
-            Object prevInterp = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
-            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
-                RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
-            g.drawImage(coin, priceX, coinY, coinSize, coinSize, null);
-            if (prevInterp != null) {
-                g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, prevInterp);
-            }
+            drawCatalogCoin(g, coin, priceX, coinY, coinSize);
             priceX += coinSize + 2;
         }
         drawCategoryLabel(g, priceLabel, priceX, priceRowY, new Color(255, 232, 120));
@@ -1852,6 +1846,11 @@ public final class ShopSwingView implements ShopView {
         Rectangle bounds = aspectFitCroppedBounds(crop, x, y, w, h, pixelArt ? maxPixelSize : 0);
         drawCroppedScaledSprite(g, img, crop, bounds.x, bounds.y, bounds.width, bounds.height, pixelArt);
         return bounds;
+    }
+
+    /** Маленькая монетка у цены — LibGDX bake, aspect-fit. */
+    private static void drawCatalogCoin(Graphics2D g, BufferedImage coin, int x, int y, int size) {
+        drawHudPlaqueIcon(g, coin, x, y, size, size);
     }
 
     /** LibGDX-иконка HUD-плашки: aspect-fit в слот, без сплющивания. */

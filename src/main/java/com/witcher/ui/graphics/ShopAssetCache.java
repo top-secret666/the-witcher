@@ -5,10 +5,12 @@ import main.java.com.witcher.ui.shop.ShopRuntimeAssets;
 import main.java.com.witcher.ui.shop.view.ShopUiMetrics;
 import main.java.com.witcher.ui.shop.view.ShopViewConstants;
 
+import static main.java.com.witcher.ui.shop.view.ShopViewConstants.CATALOG_COIN_SIZE;
 import static main.java.com.witcher.ui.shop.view.ShopViewConstants.HUD_CROWN_H;
 import static main.java.com.witcher.ui.shop.view.ShopViewConstants.HUD_CROWN_W;
 import static main.java.com.witcher.ui.shop.view.ShopViewConstants.HUD_DUKE_SEAL_H;
 import static main.java.com.witcher.ui.shop.view.ShopViewConstants.HUD_DUKE_SEAL_W;
+import static main.java.com.witcher.ui.shop.view.ShopViewConstants.catalogCoinBakePx;
 import static main.java.com.witcher.ui.shop.view.ShopViewConstants.hudIconBakePx;
 
 import java.awt.Rectangle;
@@ -91,7 +93,7 @@ public final class ShopAssetCache implements ShopRuntimeAssets {
     final BufferedImage crownIconScaled;
     /** Монетка в списке товаров и на карточках — без LibGDX. */
     final BufferedImage crownIconSmall;
-    final int catalogCoinSize = 8;
+    final int catalogCoinSize = CATALOG_COIN_SIZE;
     /** Печать герцога на HUD-плашке (LibGDX). */
     final BufferedImage dukeSealIconScaled;
     final int dukeSealSize = Math.max(HUD_DUKE_SEAL_W, HUD_DUKE_SEAL_H);
@@ -138,7 +140,7 @@ public final class ShopAssetCache implements ShopRuntimeAssets {
 
         crownIconScaled = loadGdxUi(ShopUiAssetsFactory.KEY_HUD_CROWN,
             loadHudIconFallback("icon_crown.png", hudIconBakePx(HUD_CROWN_W, HUD_CROWN_H)));
-        crownIconSmall = loadCatalogCoinIcon();
+        crownIconSmall = loadGdxUi(ShopUiAssetsFactory.KEY_CATALOG_COIN, loadCatalogCoinIcon());
         dukeSealIconScaled = loadGdxUi(ShopUiAssetsFactory.KEY_HUD_DUKE_SEAL,
             loadHudIconFallback("icon_duke_seal.png", hudIconBakePx(HUD_DUKE_SEAL_W, HUD_DUKE_SEAL_H)));
         logHudIconSource();
@@ -278,22 +280,22 @@ public final class ShopAssetCache implements ShopRuntimeAssets {
     }
 
     private BufferedImage loadCatalogCoinIcon() {
-        BufferedImage baked = loadBakedIcon("icon_crown_small.png");
-        if (baked == null) {
-            baked = loadBakedIcon("icon_crown.png");
-        }
-        if (baked != null) {
-            return PixelScaler.sharpScaleUniform(baked, catalogCoinSize);
-        }
-        BufferedImage src = load(ICONS_SRC + "icon_crown.png");
+        BufferedImage src = load(ICONS_SRC + "icon_crown_small.png");
         if (src == null) {
-            return null;
+            src = load(ICONS_SRC + "icon_crown.png");
+        }
+        if (src == null) {
+            BufferedImage baked = loadBakedIcon("icon_crown_small.png");
+            if (baked == null) {
+                baked = loadBakedIcon("icon_crown.png");
+            }
+            return baked != null ? PixelScaler.smoothScaleUniform(baked, catalogCoinSize) : null;
         }
         Rectangle box = ShopImageBounds.compute(src);
         BufferedImage cropped = box != null && box.width > 0 && box.height > 0
             ? src.getSubimage(box.x, box.y, box.width, box.height)
             : src;
-        return PixelScaler.sharpScaleUniform(cropped, catalogCoinSize);
+        return PixelScaler.smoothScaleUniform(cropped, catalogCoinBakePx());
     }
 
     private void logHudIconSource() {
@@ -307,6 +309,11 @@ public final class ShopAssetCache implements ShopRuntimeAssets {
             System.out.println("HUD duke seal: baked " + dukeSealIconScaled.getWidth() + "x"
                 + dukeSealIconScaled.getHeight() + " draw@" + HUD_DUKE_SEAL_W + "x" + HUD_DUKE_SEAL_H
                 + (gdx ? " [GDX]" : " [fallback]"));
+        }
+        if (crownIconSmall != null) {
+            boolean gdx = ShopUiAssetsFactory.get(ShopUiAssetsFactory.KEY_CATALOG_COIN) != null;
+            System.out.println("Catalog coin: baked " + crownIconSmall.getWidth() + "x" + crownIconSmall.getHeight()
+                + " draw@" + catalogCoinSize + (gdx ? " [GDX]" : " [fallback]"));
         }
     }
 
