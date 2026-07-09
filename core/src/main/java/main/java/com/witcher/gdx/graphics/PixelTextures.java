@@ -108,15 +108,19 @@ public final class PixelTextures {
         int[] pixels = ((DataBufferInt) image.getRaster().getDataBuffer()).getData();
         for (int y = 0; y < h; y++) {
             for (int x = 0; x < w; x++) {
-                int rgba = pixmap.getPixel(x, y);
-                int a = (rgba >>> 24) & 0xff;
-                int r = (rgba >>> 16) & 0xff;
-                int g = (rgba >>> 8) & 0xff;
-                int b = rgba & 0xff;
-                pixels[y * w + x] = (a << 24) | (r << 16) | (g << 8) | b;
+                pixels[y * w + x] = gdxRgbaToArgb(pixmap.getPixel(x, y));
             }
         }
         return image;
+    }
+
+    /** LibGDX RGBA8888: R — старший байт, A — младший (как {@link GdxMenuAssets}). */
+    public static int gdxRgbaToArgb(int rgba) {
+        int a = rgba & 0xff;
+        int r = (rgba >>> 24) & 0xff;
+        int g = (rgba >>> 16) & 0xff;
+        int b = (rgba >>> 8) & 0xff;
+        return (a << 24) | (r << 16) | (g << 8) | b;
     }
 
     public static LoadedTexture loadLavkaMeta(String relativePath, String... extraFallbacks) {

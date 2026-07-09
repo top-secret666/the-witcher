@@ -34,12 +34,7 @@ public final class GdxTextureBridge {
             int[] pixels = ((DataBufferInt) image.getRaster().getDataBuffer()).getData();
             for (int y = 0; y < h; y++) {
                 for (int x = 0; x < w; x++) {
-                    int rgba = pixmap.getPixel(x, y);
-                    int a = (rgba >>> 24) & 0xff;
-                    int r = (rgba >>> 16) & 0xff;
-                    int g = (rgba >>> 8) & 0xff;
-                    int b = rgba & 0xff;
-                    pixels[y * w + x] = (a << 24) | (r << 16) | (g << 8) | b;
+                    pixels[y * w + x] = PixelTextures.gdxRgbaToArgb(pixmap.getPixel(x, y));
                 }
             }
             return image;
