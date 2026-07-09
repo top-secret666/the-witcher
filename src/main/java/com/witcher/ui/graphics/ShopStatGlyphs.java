@@ -8,16 +8,28 @@ import java.awt.Rectangle;
 /** Пиксельные значки мини-статов в строках каталога. */
 public final class ShopStatGlyphs {
 
-    public static final int ROW_ICON_SIZE = 8;
-    public static final int LEGEND_ICON_SIZE = 12;
+    public static final int ROW_ICON_SIZE = 9;
+    public static final int LEGEND_ICON_SIZE = 13;
     public static final int ROW_GAP = 5;
     public static final int LEGEND_GAP = 12;
 
-    private static final Color ICON_COLOR = new Color(235, 220, 190);
     private static final Color LABEL_COLOR = new Color(255, 238, 170);
     private static final Color POS_VALUE = new Color(168, 214, 148);
     private static final Color NEG_VALUE = new Color(214, 148, 128);
     private static final Color ZERO_VALUE = new Color(150, 142, 128);
+
+    private static final Color[] FILL = {
+        new Color(178, 58, 52),
+        new Color(42, 168, 88),
+        new Color(52, 118, 208)
+    };
+    private static final Color[] GLOW = {
+        new Color(255, 148, 128),
+        new Color(128, 240, 168),
+        new Color(148, 188, 255)
+    };
+    private static final Color RIM = new Color(218, 178, 88);
+    private static final Color SHADOW = new Color(28, 18, 10, 200);
 
     private static final String[] LEGEND_LABELS = {"Защита", "Выносливость", "Знаки"};
 
@@ -59,7 +71,7 @@ public final class ShopStatGlyphs {
             if (i > 0) {
                 cx += LEGEND_GAP;
             }
-            drawIcon(g, i, cx, iconY, LEGEND_ICON_SIZE, ICON_COLOR);
+            drawIcon(g, i, cx, iconY, LEGEND_ICON_SIZE);
             cx += LEGEND_ICON_SIZE + 4;
             int labelX = (cx + 1) & ~1;
             ShopUiDraw.drawOutlinedText(g, LEGEND_LABELS[i], labelX, baselineY, LABEL_COLOR);
@@ -94,7 +106,7 @@ public final class ShopStatGlyphs {
             if (i > 0) {
                 cx += ROW_GAP;
             }
-            drawIcon(g, i, cx, iconY, ROW_ICON_SIZE, ICON_COLOR);
+            drawIcon(g, i, cx, iconY, ROW_ICON_SIZE);
             cx += ROW_ICON_SIZE + 1;
             String text = formatValue(values[i]);
             Color color = values[i] > 0 ? POS_VALUE : values[i] < 0 ? NEG_VALUE : ZERO_VALUE;
@@ -107,8 +119,7 @@ public final class ShopStatGlyphs {
         return delta > 0 ? "+" + delta : String.valueOf(delta);
     }
 
-    private static void drawIcon(Graphics2D g, int kind, int x, int y, int size, Color color) {
-        g.setColor(color);
+    private static void drawIcon(Graphics2D g, int kind, int x, int y, int size) {
         switch (kind) {
             case 0 -> drawShield(g, x, y, size);
             case 1 -> drawLightning(g, x, y, size);
@@ -117,29 +128,64 @@ public final class ShopStatGlyphs {
     }
 
     private static void drawShield(Graphics2D g, int x, int y, int size) {
-        int s = size - 1;
-        g.drawLine(x + s / 2, y, x + s, y + 1);
-        g.drawLine(x + s, y + 1, x + s - 1, y + s);
-        g.drawLine(x + s - 1, y + s, x + s / 2, y + s);
-        g.drawLine(x + s / 2, y + s, x + 1, y + s);
-        g.drawLine(x + 1, y + s, x, y + 1);
-        g.drawLine(x, y + 1, x + s / 2, y);
-        g.drawLine(x + s / 2, y + 2, x + s / 2, y + s - 1);
+        int[] xs = {x + size / 2, x + size - 1, x + size - 2, x + size / 2, x + 1, x};
+        int[] ys = {y, y + 1, y + size - 1, y + size, y + size - 1, y + 1};
+        fillGlyph(g, xs, ys, 0);
+        g.setColor(RIM);
+        for (int i = 0; i < xs.length; i++) {
+            int j = (i + 1) % xs.length;
+            g.drawLine(xs[i], ys[i], xs[j], ys[j]);
+        }
+        g.setColor(GLOW[0]);
+        g.fillRect(x + size / 2, y + 2, 1, Math.max(2, size / 2));
     }
 
     private static void drawLightning(Graphics2D g, int x, int y, int size) {
-        g.drawLine(x + size - 2, y, x + size / 2, y + size / 2 - 1);
-        g.drawLine(x + size / 2, y + size / 2 - 1, x + size - 2, y + size / 2 - 1);
-        g.drawLine(x + size - 2, y + size / 2 - 1, x + 2, y + size - 1);
-        g.drawLine(x + size - 3, y + 2, x + size / 2 + 1, y + 2);
+        g.setColor(SHADOW);
+        g.fillRect(x + size / 2, y + 1, size / 2, 2);
+        g.fillRect(x + size / 2 - 1, y + size / 2, size / 2 + 1, 2);
+        g.fillRect(x + 1, y + size - 3, size / 2 + 1, 2);
+        g.setColor(FILL[1]);
+        g.fillRect(x + size / 2 - 1, y, size / 2, 2);
+        g.fillRect(x + size / 2 - 2, y + size / 2 - 1, size / 2, 2);
+        g.fillRect(x, y + size - 4, size / 2, 2);
+        g.setColor(RIM);
+        g.drawLine(x + size / 2 - 1, y, x + size - 2, y + 1);
+        g.drawLine(x + size - 2, y + 1, x + size / 2 - 2, y + size / 2);
+        g.drawLine(x + size / 2 - 2, y + size / 2, x + size - 2, y + size / 2);
+        g.drawLine(x + size - 2, y + size / 2, x, y + size - 2);
+        g.setColor(GLOW[1]);
+        g.fillRect(x + size / 2, y + 1, 1, 1);
     }
 
     private static void drawSign(Graphics2D g, int x, int y, int size) {
         int mid = x + size / 2;
         int midY = y + size / 2;
-        g.drawLine(mid, y + 1, x + size - 1, midY);
-        g.drawLine(x + size - 1, midY, mid, y + size - 1);
-        g.drawLine(mid, y + size - 1, x + 1, midY);
-        g.drawLine(x + 1, midY, mid, y + 1);
+        int[] xs = {mid, x + size - 1, mid, x + 1};
+        int[] ys = {y + 1, midY, y + size - 1, midY};
+        fillGlyph(g, xs, ys, 2);
+        g.setColor(RIM);
+        for (int i = 0; i < xs.length; i++) {
+            int j = (i + 1) % xs.length;
+            g.drawLine(xs[i], ys[i], xs[j], ys[j]);
+        }
+        g.setColor(GLOW[2]);
+        g.fillRect(mid, midY - 1, 1, 1);
+        g.fillRect(mid - 1, midY, 1, 1);
+    }
+
+    private static void fillGlyph(Graphics2D g, int[] xs, int[] ys, int kind) {
+        g.setColor(SHADOW);
+        g.fillPolygon(offset(xs, 1), offset(ys, 1), xs.length);
+        g.setColor(FILL[kind]);
+        g.fillPolygon(xs, ys, xs.length);
+    }
+
+    private static int[] offset(int[] arr, int d) {
+        int[] out = new int[arr.length];
+        for (int i = 0; i < arr.length; i++) {
+            out[i] = arr[i] + d;
+        }
+        return out;
     }
 }

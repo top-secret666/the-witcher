@@ -235,9 +235,6 @@ public class SplashScreen {
         // === ЧАСТИЦЫ ===
         for (Particle p : particles) p.draw(g);
 
-        // === ДЫМ (только чёрные боковые полосы) ===
-        drawSmokePuffs(g, alpha, smokeGutters);
-
         // === ТЁМНАЯ ПОЛОСА ВНИЗУ (только для прогресс-бара) ===
         int barZoneH = 28;
         GradientPaint fadeBottom = new GradientPaint(
@@ -334,39 +331,39 @@ public class SplashScreen {
         if (background == null) {
             return BgGutters.none();
         }
-        BgGutters gutters = BgGutters.fromContain(sw, sh,
+        BgGutters layout = BgGutters.fromContain(sw, sh,
             background.getWidth(), background.getHeight(), 0.94f);
-        if (!gutters.hasSides) {
-            return gutters;
-        }
-        float top = logoAnim != null ? Math.max(0f, logoY - 6f) : sh * 0.02f;
-        float bottom = logoAnim != null ? Math.min(sh, logoY + logoDrawH + 18f) : sh * 0.30f;
-        return gutters.withVerticalBand(top, bottom);
+        float bandTop = Math.max(0f, logoY - 2f);
+        float bandBottom = logoAnim != null
+            ? Math.min(sh * 0.15f, logoY + logoDrawH + 6f)
+            : sh * 0.12f;
+        float bandLeft = layout.bandLeft + 8f;
+        float bandRight = layout.bandRight - 8f;
+        return layout.asTopBand(bandLeft, bandRight, bandTop, bandBottom);
     }
 
     private SmokePuff createSmokePuff() {
-        float px = smokeGutters.randomX(rng, VIRTUAL_W);
+        float px = smokeGutters.randomX(rng);
         float py = smokeGutters.randomVisualY(rng);
-        float vx = px < smokeGutters.leftEnd * 0.5f
-            ? -0.01f - rng.nextFloat() * 0.04f
-            : 0.01f + rng.nextFloat() * 0.04f;
-        float vy = -0.01f - rng.nextFloat() * 0.04f;
-        int life = 90 + rng.nextInt(70);
-        float r = 5f + rng.nextFloat() * 7f;
+        float vx = (rng.nextFloat() - 0.5f) * 0.10f;
+        float vy = (rng.nextFloat() - 0.5f) * 0.006f;
+        int life = 80 + rng.nextInt(60);
+        float r = 4f + rng.nextFloat() * 6f;
         return new SmokePuff(px, py, vx, vy, life, r);
     }
 
-    /** Боковые полосы + верхняя зона у логотипа (Y сверху вниз). */
+    /** Горизонтальная полоса дыма сверху по центру (не на боковых анимациях). */
     private static final class BgGutters {
-        final float leftEnd;
-        final float rightStart;
+        final float bandLeft;
+        final float bandRight;
         final float visualTop;
         final float visualBottom;
         final boolean hasSides;
 
-        private BgGutters(float leftEnd, float rightStart, float visualTop, float visualBottom, boolean hasSides) {
-            this.leftEnd = leftEnd;
-            this.rightStart = rightStart;
+        private BgGutters(float bandLeft, float bandRight, float visualTop, float visualBottom,
+                          boolean hasSides) {
+            this.bandLeft = bandLeft;
+            this.bandRight = bandRight;
             this.visualTop = visualTop;
             this.visualBottom = visualBottom;
             this.hasSides = hasSides;
@@ -376,34 +373,28 @@ public class SplashScreen {
             return new BgGutters(0f, 0f, 0f, 0f, false);
         }
 
-        BgGutters withVerticalBand(float top, float bottom) {
-            return new BgGutters(leftEnd, rightStart, top, bottom, hasSides);
+        BgGutters asTopBand(float left, float right, float top, float bottom) {
+            boolean active = (right - left) > 24f && (bottom - top) > 4f;
+            return new BgGutters(left, right, top, bottom, active);
         }
 
         static BgGutters fromContain(float sw, float sh, float srcW, float srcH, float shrink) {
             float contain = Math.min(sw / srcW, sh / srcH);
-            float scale = contain * shrink;
-            float drawW = srcW * scale;
+            float drawW = srcW * contain * shrink;
             float dx = (sw - drawW) * 0.5f;
-            float left = dx;
-            float right = dx + drawW;
-            boolean sides = left >= 6f && (sw - right) >= 6f;
-            return new BgGutters(left, right, 0f, sh, sides);
+            return new BgGutters(dx, dx + drawW, 0f, sh, true);
         }
 
         boolean contains(float x, float visualY) {
             return hasSides
-                && (x < leftEnd || x >= rightStart)
+                && x >= bandLeft
+                && x <= bandRight
                 && visualY >= visualTop
                 && visualY <= visualBottom;
         }
 
-        float randomX(Random rng, float sw) {
-            float margin = 4f;
-            if (rng.nextBoolean()) {
-                return margin + rng.nextFloat() * Math.max(2f, leftEnd - margin * 2f);
-            }
-            return rightStart + margin + rng.nextFloat() * Math.max(2f, sw - rightStart - margin * 2f);
+        float randomX(Random rng) {
+            return bandLeft + rng.nextFloat() * Math.max(4f, bandRight - bandLeft);
         }
 
         float randomVisualY(Random rng) {
