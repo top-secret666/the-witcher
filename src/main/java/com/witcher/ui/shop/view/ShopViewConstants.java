@@ -51,8 +51,8 @@ public final class ShopViewConstants {
     public static final int EQUIP_MARGIN = 4;
 
     public static final int GRID_COLS = 5;
-    public static final int TOP_ROW_COLS = 5;
-    public static final int BOTTOM_ROW_COLS = 2;
+    public static final int TOP_ROW_COLS = 4;
+    public static final int BOTTOM_ROW_COLS = 3;
 
     /** Минимальная высота HUD; фактическая — по пропорциям арта. */
     public static final int HUD_H = 72;

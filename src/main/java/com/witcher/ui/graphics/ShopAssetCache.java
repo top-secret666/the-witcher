@@ -6,7 +6,9 @@ import main.java.com.witcher.ui.shop.view.LavkaAssetPaths;
 import main.java.com.witcher.ui.shop.view.ShopUiMetrics;
 import main.java.com.witcher.ui.shop.view.ShopViewConstants;
 
+import static main.java.com.witcher.ui.shop.view.ShopViewConstants.BOTTOM_ROW_COLS;
 import static main.java.com.witcher.ui.shop.view.ShopViewConstants.CATALOG_COIN_SIZE;
+import static main.java.com.witcher.ui.shop.view.ShopViewConstants.TOP_ROW_COLS;
 import static main.java.com.witcher.ui.shop.view.ShopViewConstants.CATALOG_DETAIL_PANEL_H;
 import static main.java.com.witcher.ui.shop.view.ShopViewConstants.CATALOG_DETAIL_PANEL_W;
 import static main.java.com.witcher.ui.shop.view.ShopViewConstants.CATALOG_PANEL_INSET_X;
@@ -63,8 +65,8 @@ public final class ShopAssetCache implements ShopRuntimeAssets {
     final int cardArtSize = 38;
     final int gridCols = 5;
     final int gridRows = 2;
-    final int topRowCols = 5;
-    final int bottomRowCols = 2;
+    final int topRowCols = TOP_ROW_COLS;
+    final int bottomRowCols = BOTTOM_ROW_COLS;
     /** Отступ над сеткой карточек на главной витрине. */
     final int panelHeaderH = 8;
     final int btnW = 100;

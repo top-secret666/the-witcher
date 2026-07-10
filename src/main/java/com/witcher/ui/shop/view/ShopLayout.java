@@ -28,6 +28,8 @@ public final class ShopLayout {
     public final int cardsY;
     public final int gridCols;
     public final int gridRows;
+    public final int topRowCols;
+    public final int bottomRowCols;
     public final int dialogTop;
     public final int cardsStartXBottom;
 
@@ -44,6 +46,8 @@ public final class ShopLayout {
         cardW = 54;
         cardH = 81;
         cardGap = 6;
+        this.topRowCols = topRowCols;
+        this.bottomRowCols = bottomRowCols;
         gridCols = GRID_COLS;
         gridRows = itemCount > topRowCols ? 2 : 1;
 
@@ -69,13 +73,13 @@ public final class ShopLayout {
     }
 
     public Point cardSlot(int index) {
-        if (index < TOP_ROW_COLS) {
+        if (index < topRowCols) {
             int col = index;
             int x = cardsStartX + col * (cardW + cardGap);
             int y = cardsY;
             return new Point(x, y);
         }
-        int bottomIndex = index - TOP_ROW_COLS;
+        int bottomIndex = index - topRowCols;
         int x = cardsStartXBottom + bottomIndex * (cardW + cardGap);
         int y = cardsY + cardH + cardGap;
         return new Point(x, y);

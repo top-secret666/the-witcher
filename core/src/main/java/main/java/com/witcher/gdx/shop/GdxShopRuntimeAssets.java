@@ -11,6 +11,8 @@ import java.awt.image.BufferedImage;
 import java.util.EnumMap;
 import java.util.Map;
 
+import static main.java.com.witcher.ui.shop.view.ShopViewConstants.BOTTOM_ROW_COLS;
+import static main.java.com.witcher.ui.shop.view.ShopViewConstants.TOP_ROW_COLS;
 import static main.java.com.witcher.ui.shop.view.ShopViewConstants.CATALOG_DETAIL_PANEL_H;
 import static main.java.com.witcher.ui.shop.view.ShopViewConstants.CATALOG_DETAIL_PANEL_W;
 import static main.java.com.witcher.ui.shop.view.ShopViewConstants.CATALOG_PANEL_INSET_X;
@@ -42,8 +44,8 @@ public final class GdxShopRuntimeAssets implements ShopRuntimeAssets {
     public final int cardArtSize = 38;
     public final int gridCols = 5;
     public final int gridRows = 2;
-    public final int topRowCols = 5;
-    public final int bottomRowCols = 2;
+    public final int topRowCols = TOP_ROW_COLS;
+    public final int bottomRowCols = BOTTOM_ROW_COLS;
     public final int panelHeaderH = 8;
     public final int btnW = 100;
     public final int btnH = 30;
