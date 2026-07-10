@@ -10,8 +10,8 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 
+import main.java.com.witcher.ui.chapter1.swing.Chapter1Screen;
 import main.java.com.witcher.ui.menu.MainMenuController;
-import main.java.com.witcher.ui.shop.swing.ShopScreen;
 
 public class GameWindow {
 
@@ -29,11 +29,11 @@ public class GameWindow {
     private GameAssetLoader.Bundle loadBundle;
     private MainMenuScreen mainMenu;
     private IntroScreen introScreen;
-    private ShopScreen shopScreen;
+    private Chapter1Screen chapter1Screen;
     private boolean splashActive = true;
     private boolean menuActive = false;
     private boolean introActive = false;
-    private boolean shopActive = false;
+    private boolean chapter1Active = false;
     private boolean introAdvancePending = false;
     private int introWheelPending = 0;
     private boolean shopExitRequested = false;
@@ -149,7 +149,7 @@ public class GameWindow {
                     return;
                 }
 
-                if (shopActive) {
+                if (chapter1Active) {
                     if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
                         shopExitRequested = true;
                     }
@@ -592,22 +592,23 @@ public class GameWindow {
 
                 if (introScreen.isFinished()) {
                     introActive = false;
-                    shopActive = true;
-                    shopScreen = new ShopScreen();
+                    chapter1Active = true;
+                    chapter1Screen = new Chapter1Screen();
+                    chapter1Screen.beginAfterIntro();
                     useHiddenCursor();
                 }
-            } else if (shopActive) {
-                shopScreen.update(mouseVX, mouseVY, mouseClickPending, shopExitRequested, shopWheelPending);
-                shopScreen.render(renderer.screen, mouseVX, mouseVY);
-                renderer.present(g -> shopScreen.renderTextOverlay(g, mouseVX, mouseVY));
+            } else if (chapter1Active) {
+                chapter1Screen.update(mouseVX, mouseVY, mouseClickPending, shopExitRequested, shopWheelPending);
+                chapter1Screen.render(renderer.screen, mouseVX, mouseVY);
+                renderer.present(g -> chapter1Screen.renderTextOverlay(g, mouseVX, mouseVY));
 
                 mouseClickPending = false;
                 shopWheelPending = 0;
                 shopExitRequested = false;
 
-                if (shopScreen.isExitRequested()) {
-                    shopActive = false;
-                    shopScreen.clearExitRequest();
+                if (chapter1Screen.isExitRequested()) {
+                    chapter1Active = false;
+                    chapter1Screen.clearExitRequest();
                     enterMainMenuMode();
                 }
             } else {
