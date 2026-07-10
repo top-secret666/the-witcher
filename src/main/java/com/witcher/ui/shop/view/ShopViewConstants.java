@@ -55,9 +55,8 @@ public final class ShopViewConstants {
     public static final int CATALOG_FRAME_INSET_X_REF = 28;
     /** Верх списка товаров от верха панели (по арту). */
     public static final int CATALOG_FRAME_LIST_TOP_REF = 18;
-    /** Легенда статов — над кнопкой «Купить», внутри панели. */
-    public static final int CATALOG_STAT_LEGEND_BLOCK_H = 22;
-    public static final int CATALOG_LEGEND_GAP_ABOVE_BUY = 5;
+    /** Легенда статов — под кнопкой «Купить». */
+    public static final int CATALOG_LEGEND_GAP_BELOW_BUY = 3;
 
     public static final int PRODUCT_CARD_INSET_X = 7;
     public static final int PRODUCT_CARD_INSET_TOP = 10;
@@ -152,11 +151,11 @@ public final class ShopViewConstants {
 
     public static int categoryStatLegendY(int panelY, int panelH, int btnH) {
         int btnY = categoryBuyButtonY(panelY, panelH, btnH);
-        return btnY - CATALOG_STAT_LEGEND_BLOCK_H - CATALOG_LEGEND_GAP_ABOVE_BUY;
+        return btnY + btnH + CATALOG_LEGEND_GAP_BELOW_BUY;
     }
 
     public static int catalogListBottomY(int panelY, int panelH, int btnH) {
-        return categoryStatLegendY(panelY, panelH, btnH) - CATALOG_PANEL_GAP_ABOVE_BUY;
+        return categoryBuyButtonY(panelY, panelH, btnH) - CATALOG_PANEL_GAP_ABOVE_BUY;
     }
 
     /** Текст поверх CRT-фильтра — читаемость без «дробления». */
