@@ -24,6 +24,10 @@ public final class ShopStatBarRenderer {
     public static void draw(Graphics2D g, int x, int y, int w, int h, ShopModel.StatPreview preview,
                      BufferedImage vialEmpty, BufferedImage vialOverlay, BufferedImage vialEndCap,
                      int animTick) {
+        if (w <= 95) {
+            drawEquipmentCompact(g, x, y, w, h, preview, vialEmpty, vialOverlay, vialEndCap, animTick);
+            return;
+        }
         drawCardText(g);
         int fontSize = w < 90 ? 7 : (h > 200 ? 10 : 8);
         g.setFont(GameFonts.get().uiBold(fontSize));
@@ -67,6 +71,54 @@ public final class ShopStatBarRenderer {
             String valueText = row.value() + (delta.isEmpty() ? "" : " " + delta);
             int valueY = barY + vialH + fm.getAscent() + 3;
             drawOutlinedText(g, valueText, x + 8, valueY, delta.isEmpty() ? new Color(235, 225, 200) : deltaColor);
+        }
+    }
+
+    /** Узкая колонка колбочек справа на экране экипировки. */
+    public static void drawEquipmentCompact(Graphics2D g, int x, int y, int w, int h,
+                                            ShopModel.StatPreview preview,
+                                            BufferedImage vialEmpty, BufferedImage vialOverlay,
+                                            BufferedImage vialEndCap, int animTick) {
+        drawCardText(g);
+        int fontSize = 6;
+        g.setFont(GameFonts.get().uiBold(fontSize));
+        FontMetrics fm = g.getFontMetrics();
+
+        String header = "СТАТЫ";
+        int headerY = y + 10 + fm.getAscent();
+        int headerX = x + (w - fm.stringWidth(header)) / 2;
+        g.setColor(new Color(200, 185, 150));
+        g.drawString(header, headerX, headerY);
+
+        int barW = w - 8;
+        int rowH = Math.max(20, (h - 18) / 3);
+        int startY = headerY + 6;
+        String[] labels = {"Зщ", "Вн", "Зн"};
+        Color[] colors = {
+            new Color(210, 52, 58),
+            new Color(48, 195, 108),
+            new Color(62, 138, 235)
+        };
+
+        boolean useVials = vialEmpty != null;
+        int vialH = Math.max(8, Math.min(11, vialHeight(barW, vialEmpty, h)));
+
+        for (int i = 0; i < preview.rows().length; i++) {
+            ShopModel.StatRow row = preview.rows()[i];
+            int ry = startY + i * rowH;
+            g.setColor(new Color(175, 168, 150));
+            g.drawString(labels[i], x + 4, ry + fm.getAscent());
+            int barY = ry + fm.getHeight() + 1;
+            int baseValue = row.value() - row.delta();
+            if (useVials) {
+                drawVialComparison(g, x + 4, barY, barW, vialH, vialEmpty, vialOverlay, vialEndCap,
+                    colors[i], baseValue, row.value(), row.max(), animTick, i);
+            }
+            String delta = formatDelta(row.delta());
+            if (!delta.isEmpty()) {
+                g.setColor(DELTA_YELLOW);
+                g.drawString(delta, x + 4, barY + vialH + fm.getAscent() + 1);
+            }
         }
     }
 

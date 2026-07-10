@@ -73,8 +73,14 @@ public final class ShopViewConstants {
     public static final int EQUIP_FILTER_GAP = 3;
     public static final int EQUIP_FILTER_BAR_H = 30;
     public static final int EQUIP_LIST_HEADER_H = 14;
-    public static final int EQUIP_ITEM_ROW_H = 24;
-    public static final int EQUIP_ITEM_ICON = 20;
+    /** Сетка иконок в инвентаре экипировки (без текста). */
+    public static final int EQUIP_GRID_COLS = 4;
+    public static final int EQUIP_GRID_CELL = 28;
+    public static final int EQUIP_GRID_ICON = 24;
+    public static final int EQUIP_LIST_W = EQUIP_GRID_COLS * EQUIP_GRID_CELL + 12;
+    /** Узкая колонка колбочек справа под слотами. */
+    public static final int EQUIP_STATS_W = 78;
+    public static final int EQUIP_STATS_H = 108;
 
     public static final int GRID_COLS = 5;
     public static final int TOP_ROW_COLS = 4;
