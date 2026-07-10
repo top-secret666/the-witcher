@@ -1125,7 +1125,7 @@ public final class ShopSwingView implements ShopView {
             if (assets.crownIconSmall != null && !price.equals("···")) {
                 priceW += assets.catalogCoinSize + 2;
             }
-            int priceX = x + rowW - priceW - 6;
+            int priceX = x + rowW - priceW - 10;
 
             int[] deltas = presenter.catalogStatDeltas(row);
             g.setFont(GameFonts.get().uiBold(8));
@@ -1136,12 +1136,12 @@ public final class ShopSwingView implements ShopView {
             }
             int statsRight = priceX - 2;
 
-            int nameMaxW = Math.max(20, statsRight - statsW - (x + 8));
+            int nameMaxW = Math.max(20, statsRight - statsW - (x + 10));
             g.setFont(fitUiFontToWidth(g, row.name, nameMaxW, 9, 7));
             fm = g.getFontMetrics();
             String label = truncateToWidth(row.name, fm, nameMaxW);
             int textY = y + (assets.rowH + fm.getAscent()) / 2 - 1;
-            ShopUiDraw.drawOutlinedText(g, label, x + 8, textY, new Color(235, 215, 155));
+            ShopUiDraw.drawOutlinedText(g, label, x + 10, textY, new Color(235, 215, 155));
 
             if (statsW > 0) {
                 g.setFont(GameFonts.get().uiBold(8));
@@ -1288,7 +1288,8 @@ public final class ShopSwingView implements ShopView {
         Color nameColor = item.kind == ShopShowcaseItem.Kind.SET_CATALOG
             ? new Color(255, 210, 100) : new Color(245, 230, 190);
 
-        int nameMaxW = categoryGrid ? w - 4 : w - 12;
+        int nameMaxW = categoryGrid ? w - 4 : categoryCardTextMaxW(w);
+        int textZoneX = categoryGrid ? x : categoryCardTextX(x, w);
         int nameFontSize;
         FontMetrics nameFm;
         List<String> nameLines;
@@ -1303,8 +1304,8 @@ public final class ShopSwingView implements ShopView {
                 nameLines = wrapCardNameLines(nameFm, name, nameMaxW, 2);
             }
         } else {
-            nameFontSize = h > 220 ? 10 : 9;
-            nameLines = fitCardNameLines(g, name, nameMaxW, nameFontSize, 7, 2);
+            nameFontSize = h > 220 ? 9 : 8;
+            nameLines = fitCardNameLines(g, name, nameMaxW, nameFontSize, 6, 2);
             nameFm = g.getFontMetrics();
         }
 
@@ -1340,7 +1341,7 @@ public final class ShopSwingView implements ShopView {
                 slotTop = y + Math.round(h * 0.12f);
                 slotBottom = nameBlockBottom - labelReserve;
             } else {
-                int innerBottom = y + h - PRODUCT_CARD_INSET_BOTTOM;
+                int innerBottom = y + h - categoryCardTextBottomInset(h);
                 int labelTop = innerBottom - textBlockH;
                 slotX = x + PRODUCT_CARD_INSET_X;
                 slotW = w - PRODUCT_CARD_INSET_X * 2;
@@ -1370,23 +1371,24 @@ public final class ShopSwingView implements ShopView {
                 }
             }
         } else {
-            int innerBottom = y + h - PRODUCT_CARD_INSET_BOTTOM;
+            int innerBottom = y + h - categoryCardTextBottomInset(h);
             int labelTop = innerBottom - textBlockH;
             if (shouldDrawUiTextInScene()) {
                 int baseline = labelTop + nameFm.getAscent();
                 for (String line : nameLines) {
-                    int lineX = x + (w - nameFm.stringWidth(line)) / 2;
+                    int lineX = textZoneX + (nameMaxW - nameFm.stringWidth(line)) / 2;
                     drawCategoryLabel(g, line, lineX, baseline, nameColor);
                     baseline += lineH;
                 }
                 if (showPrice) {
-                    drawProductCardPrice(g, x, w, priceOverride, labelTop + nameBlockH + PRODUCT_CARD_NAME_PRICE_GAP);
+                    drawProductCardPrice(g, textZoneX, nameMaxW, priceOverride,
+                        labelTop + nameBlockH + PRODUCT_CARD_NAME_PRICE_GAP);
                 }
             }
         }
     }
 
-    private void drawProductCardPrice(Graphics2D g, int cardX, int cardW, String priceLabel,
+    private void drawProductCardPrice(Graphics2D g, int textX, int textW, String priceLabel,
                                       int priceTopY) {
         drawCardText(g);
         g.setFont(GameFonts.get().uiBold(10));
@@ -1398,7 +1400,7 @@ public final class ShopSwingView implements ShopView {
             priceW += coinSize + 2;
         }
         int priceRowY = (priceTopY + priceFm.getAscent()) & ~1;
-        int priceX = cardX + (cardW - priceW) / 2;
+        int priceX = textX + (textW - priceW) / 2;
         if (coin != null) {
             int coinY = (priceRowY - coinSize + 1) & ~1;
             drawCatalogCoin(g, coin, priceX, coinY, coinSize);
