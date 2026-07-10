@@ -82,24 +82,30 @@ public final class ShopEquipmentOverlay {
         int listX = px + 8;
         int listW = EQUIP_LIST_W;
         int listY = contentTop;
+        int panelBottom = contentBottom - 6;
+        int leftPanelH = panelBottom - listY;
+
+        g.setColor(new Color(8, 6, 4, 180));
+        g.fillRoundRect(listX, listY, listW, leftPanelH, 4, 4);
+        g.setColor(new Color(100, 75, 40));
+        g.drawRoundRect(listX, listY, listW, leftPanelH, 4, 4);
+
+        int filterY = listY + 5;
+        drawFilterButtons(g, ctx, listX, filterY, listW);
+
         int statsH = EQUIP_STATS_H;
         int statsW = EQUIP_STATS_W;
         int statsX = listX + 4;
-        int statsY = contentBottom - statsH;
-        int listH = statsY - listY - 6;
+        int statsY = panelBottom - statsH - 5;
 
-        g.setColor(new Color(8, 6, 4, 180));
-        g.fillRoundRect(listX, listY, listW, listH + statsH + 6, 4, 4);
-        g.setColor(new Color(100, 75, 40));
-        g.drawRoundRect(listX, listY, listW, listH + statsH + 6, 4, 4);
+        int gridY0 = filterY + EQUIP_FILTER_BAR_H + 5;
+        int gridBottom = statsY - 5;
+        Armour tooltipArmour = null;
+        int tooltipAnchorY = gridY0;
 
         List<Armour> owned = EquipmentArmourList.filter(
             ctx.presenter().model().ownedArmour(), ctx.ui().equipmentFilter);
         int gridX0 = listX + (listW - EQUIP_GRID_COLS * EQUIP_GRID_CELL) / 2;
-        int gridY0 = listY + 8;
-        int gridBottom = statsY - 4;
-        Armour tooltipArmour = null;
-        int tooltipAnchorY = gridY0;
 
         for (int i = 0; i < owned.size(); i++) {
             int col = i % EQUIP_GRID_COLS;
@@ -162,10 +168,7 @@ public final class ShopEquipmentOverlay {
         int portraitH = contentBottom - contentTop;
         drawPortraitFit(g, sprites, ctx.assets().geraltPortraitShop(), portraitX, portraitY, portraitW, portraitH);
 
-        int filterY = contentTop;
-        drawFilterButtons(g, ctx, rightX, filterY, EQUIP_RIGHT_COL_W);
-
-        int slotY = filterY + EQUIP_FILTER_BAR_H + 6;
+        int slotY = contentTop;
         ShopEquipSlot[] slots = ShopEquipSlot.values();
         for (int i = 0; i < slots.length; i++) {
             ShopEquipSlot slot = slots[i];
@@ -246,13 +249,13 @@ public final class ShopEquipmentOverlay {
         sprites.drawScaledSprite(g, img, dx, dy, dw, dh, true);
     }
 
-    /** Кнопки-фильтры категорий справа (иконки в ряд). */
+    /** Кнопки-фильтры категорий в левой колонке (перед сеткой товаров). */
     private static void drawFilterButtons(Graphics2D g, ShopOverlayContext ctx,
                                           int colX, int colY, int colW) {
         EquipmentFilter[] filters = EquipmentFilter.values();
         int totalW = filters.length * EQUIP_FILTER_ICON + (filters.length - 1) * EQUIP_FILTER_GAP;
-        int startX = colX + Math.max(0, (colW - totalW) / 2);
-        int iconY = colY + 2;
+        int startX = colX + Math.max(4, (colW - totalW) / 2);
+        int iconY = colY + 1;
 
         for (int i = 0; i < filters.length; i++) {
             EquipmentFilter filter = filters[i];
@@ -294,7 +297,7 @@ public final class ShopEquipmentOverlay {
     private static void drawEquipmentStats(Graphics2D g, ShopOverlayContext ctx, int x, int y, int w, int h,
                                            ShopModel.StatPreview preview) {
         ShopAssetCache assets = ctx.assets();
-        ShopStatBarRenderer.draw(g, x, y, w, h, preview,
+        ShopStatBarRenderer.drawEquipmentCompact(g, x, y, w, h, preview,
             assets.statVialEmpty(), assets.statVialOverlay(), assets.statVialEndCap(), ctx.ui().tick);
     }
 }

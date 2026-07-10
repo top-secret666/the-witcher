@@ -128,14 +128,14 @@ public final class ShopStatBarRenderer {
         FontMetrics fm = g.getFontMetrics();
 
         String header = "СТАТЫ";
-        int headerY = y + 10 + fm.getAscent();
+        int headerY = y + 6 + fm.getAscent();
         int headerX = x + (w - fm.stringWidth(header)) / 2;
         g.setColor(new Color(200, 185, 150));
         g.drawString(header, headerX, headerY);
 
-        int barW = w - 6;
-        int rowH = Math.max(18, (h - 16) / 3);
-        int startY = headerY + 4;
+        int barW = w - 8;
+        int rowH = Math.max(16, (h - 14) / 3);
+        int startY = headerY + 3;
         String[] labels = {"Зщ", "Вн", "Зн"};
         Color[] colors = {
             new Color(210, 52, 58),
@@ -144,23 +144,23 @@ public final class ShopStatBarRenderer {
         };
 
         boolean useVials = vialEmpty != null;
-        int vialH = Math.max(7, Math.min(10, vialHeight(barW, vialEmpty, h)));
+        int vialH = Math.max(6, Math.min(8, vialHeight(barW, vialEmpty, h)));
 
         for (int i = 0; i < preview.rows().length; i++) {
             ShopModel.StatRow row = preview.rows()[i];
             int ry = startY + i * rowH;
             g.setColor(new Color(175, 168, 150));
             g.drawString(labels[i], x + 4, ry + fm.getAscent());
-            int barY = ry + fm.getHeight() + 1;
+            int barY = ry + fm.getHeight();
             int baseValue = row.value() - row.delta();
             if (useVials) {
                 drawVialComparison(g, x + 4, barY, barW, vialH, vialEmpty, vialOverlay, vialEndCap,
                     colors[i], baseValue, row.value(), row.max(), animTick, i);
             }
             String delta = formatDelta(row.delta());
-            if (!delta.isEmpty()) {
+            if (!delta.isEmpty() && rowH >= 18) {
                 g.setColor(DELTA_YELLOW);
-                g.drawString(delta, x + 4, barY + vialH + fm.getAscent() + 1);
+                g.drawString(delta, x + barW - fm.stringWidth(delta), barY + vialH + fm.getAscent() - 1);
             }
         }
     }
