@@ -1,4 +1,4 @@
-package main.java.com.witcher.ui.graphics.overlay;
+package main.java.com.witcher.ui.shop.swing.overlay;
 
 import main.java.com.witcher.model.armour.Armour;
 import main.java.com.witcher.model.enums.ArmourType;
