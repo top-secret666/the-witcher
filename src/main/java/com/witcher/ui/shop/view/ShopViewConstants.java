@@ -69,6 +69,12 @@ public final class ShopViewConstants {
     public static final int INVENTORY_POUCH_ICON = 32;
     public static final int INVENTORY_POUCH_LARGE = 96;
     public static final int EQUIP_MARGIN = 4;
+    public static final int EQUIP_FILTER_ICON = 24;
+    public static final int EQUIP_FILTER_GAP = 3;
+    public static final int EQUIP_FILTER_BAR_H = 30;
+    public static final int EQUIP_LIST_HEADER_H = 14;
+    public static final int EQUIP_ITEM_ROW_H = 24;
+    public static final int EQUIP_ITEM_ICON = 20;
 
     public static final int GRID_COLS = 5;
     public static final int TOP_ROW_COLS = 4;

@@ -1,5 +1,6 @@
 package main.java.com.witcher.ui.shop.presenter;
 
+import main.java.com.witcher.ui.shop.EquipmentFilter;
 import main.java.com.witcher.ui.shop.ShopCatalogEntry;
 import main.java.com.witcher.ui.shop.ShopEquipSlot;
 import main.java.com.witcher.ui.shop.view.ShopShowcaseItem;
@@ -53,6 +54,9 @@ public final class ShopSessionState {
     public final List<Rectangle> equipmentRowBounds = new ArrayList<>();
     public int equipmentHoveredRow = -1;
     public int equipmentHoveredSlot = -1;
+    public EquipmentFilter equipmentFilter = EquipmentFilter.ALL;
+    public int equipmentHoveredFilter = -1;
+    public final Rectangle[] equipmentFilterBounds = new Rectangle[EquipmentFilter.values().length];
     public boolean categoryBuyHovered;
     public final Rectangle categoryBackBounds = new Rectangle();
     public boolean categoryBackHovered;

@@ -1,5 +1,6 @@
 package main.java.com.witcher.ui.graphics;
 
+import main.java.com.witcher.ui.shop.EquipmentFilter;
 import main.java.com.witcher.ui.shop.ShopCategory;
 import main.java.com.witcher.ui.shop.ShopRuntimeAssets;
 import main.java.com.witcher.ui.shop.view.LavkaAssetPaths;
@@ -568,5 +569,16 @@ public final class ShopAssetCache implements ShopRuntimeAssets {
 
     public BufferedImage statVialEndCap() {
         return statVialEndCap;
+    }
+
+    public BufferedImage inventoryBagIcon() {
+        return inventoryBagIcon;
+    }
+
+    public BufferedImage equipmentFilterIcon(EquipmentFilter filter) {
+        if (filter == EquipmentFilter.ALL) {
+            return inventoryBagIcon;
+        }
+        return equipSlotPlaceholder(filter.iconIndex);
     }
 }

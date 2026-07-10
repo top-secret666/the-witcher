@@ -1,6 +1,8 @@
 package main.java.com.witcher.ui.shop.presenter;
 
 import main.java.com.witcher.model.armour.Armour;
+import main.java.com.witcher.ui.shop.EquipmentArmourList;
+import main.java.com.witcher.ui.shop.EquipmentFilter;
 import main.java.com.witcher.ui.shop.DukeLines;
 import main.java.com.witcher.ui.shop.ShopCatalogEntry;
 import main.java.com.witcher.ui.shop.ShopCategory;
@@ -451,8 +453,10 @@ public final class ShopPresenter {
                 } else if (ui.inventoryEquipButtonBounds.contains(mouseX, mouseY)) {
                     ui.equipmentOpen = true;
                     ui.inventoryOpen = false;
+                    ui.equipmentFilter = EquipmentFilter.ALL;
                     ui.equipmentHoveredRow = -1;
                     ui.equipmentHoveredSlot = -1;
+                    ui.equipmentHoveredFilter = -1;
                 } else if (ui.inventoryPouchIconBounds.contains(mouseX, mouseY)) {
                     ui.inventoryPouchFocused = true;
                 } else if (!ui.inventoryPanelBounds.contains(mouseX, mouseY)) {
@@ -469,7 +473,16 @@ public final class ShopPresenter {
     private void updateEquipmentInput(int mouseX, int mouseY, boolean clicked) {
         ui.equipmentHoveredRow = -1;
         ui.equipmentHoveredSlot = -1;
+        ui.equipmentHoveredFilter = -1;
         ui.equipmentBackHovered = ui.equipmentBackButtonBounds.contains(mouseX, mouseY);
+        EquipmentFilter[] filters = EquipmentFilter.values();
+        for (int i = 0; i < filters.length; i++) {
+            Rectangle bounds = ui.equipmentFilterBounds[i];
+            if (bounds != null && bounds.contains(mouseX, mouseY)) {
+                ui.equipmentHoveredFilter = i;
+                break;
+            }
+        }
         for (int i = 0; i < ui.equipmentRowBounds.size(); i++) {
             if (ui.equipmentRowBounds.get(i).contains(mouseX, mouseY)) {
                 ui.equipmentHoveredRow = i;
@@ -490,10 +503,15 @@ public final class ShopPresenter {
             ui.inventoryOpen = true;
             return;
         }
+        if (ui.equipmentHoveredFilter >= 0) {
+            ui.equipmentFilter = filters[ui.equipmentHoveredFilter];
+            ui.equipmentHoveredRow = -1;
+            return;
+        }
+        List<Armour> visible = EquipmentArmourList.filter(model.ownedArmour(), ui.equipmentFilter);
         if (ui.equipmentHoveredRow >= 0) {
-            List<Armour> owned = model.ownedArmour();
-            if (ui.equipmentHoveredRow < owned.size()) {
-                model.equipArmour(owned.get(ui.equipmentHoveredRow));
+            if (ui.equipmentHoveredRow < visible.size()) {
+                model.equipArmour(visible.get(ui.equipmentHoveredRow));
             }
             return;
         }
