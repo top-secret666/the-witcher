@@ -31,9 +31,12 @@ public final class ShopViewConstants {
     public static final int INVENTORY_BAG_SIZE = 40;
     public static final int INVENTORY_BAG_MARGIN = 8;
 
-    public static final int CATALOG_PANEL_INSET_X = 14;
+    public static final int CATALOG_PANEL_INSET_X = 16;
     public static final int CATALOG_PANEL_INSET_TOP = 20;
     public static final int CATALOG_PANEL_GAP_ABOVE_BUY = 10;
+    /** Правая панель списка товаров в режиме категории. */
+    public static final int CATALOG_DETAIL_PANEL_W = 310;
+    public static final int CATALOG_DETAIL_PANEL_H = 238;
 
     public static final int PRODUCT_CARD_INSET_X = 7;
     public static final int PRODUCT_CARD_INSET_TOP = 10;
