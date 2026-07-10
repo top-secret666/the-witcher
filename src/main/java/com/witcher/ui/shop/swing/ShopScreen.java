@@ -1,5 +1,6 @@
 package main.java.com.witcher.ui.shop.swing;
 
+import main.java.com.witcher.chapter1.shop.Chapter1ShopBridge;
 import main.java.com.witcher.ui.graphics.GameWindow;
 import main.java.com.witcher.ui.shop.ShopIconsFactory;
 import main.java.com.witcher.ui.shop.ShopModel;
@@ -25,9 +26,17 @@ public final class ShopScreen {
     }
 
     public ShopScreen(ShopModel model) {
+        this(model, null);
+    }
+
+    public ShopScreen(ShopModel model, Chapter1ShopBridge chapterBridge) {
         ShopAssetCache cache = ShopAssetCache.get();
-        this.presenter = new ShopPresenter(model, cache, ShopIconsFactory.create(cache.cardArtSize()));
+        this.presenter = new ShopPresenter(model, cache, ShopIconsFactory.create(cache.cardArtSize()), chapterBridge);
         this.view = new ShopSwingView(presenter);
+    }
+
+    public ShopPresenter presenter() {
+        return presenter;
     }
 
     public void update(int mouseX, int mouseY, boolean clicked, boolean escPressed) {

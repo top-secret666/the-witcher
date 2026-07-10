@@ -1,6 +1,7 @@
 package main.java.com.witcher.ui.shop.presenter;
 
 import main.java.com.witcher.model.armour.Armour;
+import main.java.com.witcher.chapter1.shop.Chapter1ShopBridge;
 import main.java.com.witcher.ui.shop.EquipmentArmourList;
 import main.java.com.witcher.ui.shop.EquipmentFilter;
 import main.java.com.witcher.ui.shop.DukeLines;
@@ -41,12 +42,19 @@ public final class ShopPresenter {
     private final ShopRuntimeAssets assets;
     private final ShopUiMetrics metrics;
     private final ShopEntryIcons armourIcons;
+    private final Chapter1ShopBridge chapterBridge;
 
     public ShopPresenter(ShopModel model, ShopRuntimeAssets assets, ShopEntryIcons armourIcons) {
+        this(model, assets, armourIcons, null);
+    }
+
+    public ShopPresenter(ShopModel model, ShopRuntimeAssets assets, ShopEntryIcons armourIcons,
+                         Chapter1ShopBridge chapterBridge) {
         this.model = model;
         this.assets = assets;
         this.metrics = assets;
         this.armourIcons = armourIcons;
+        this.chapterBridge = chapterBridge;
         initShowcaseFromModel();
         ui.currentDialog = WELCOME_LINE;
     }
@@ -213,7 +221,12 @@ public final class ShopPresenter {
                 ShopCatalogEntry row = ui.catalogEntries.get(ui.hoveredRowIndex);
                 Rectangle panel = layout.detailListPanelSlot(metrics.detailPanelW(), metrics.detailPanelH());
                 ensureRowVisible(panel.y, ui.selectedRowIndex);
-                ui.currentDialog = DukeLines.rowInspect(row.name, row.price);
+                if (chapterBridge != null && ui.selectedIndex >= 0 && ui.selectedIndex < ui.showcaseItems.size()) {
+                    ShopCategory showcaseCategory = ui.showcaseItems.get(ui.selectedIndex).category;
+                    ui.currentDialog = chapterBridge.inspectCatalogRow(row, showcaseCategory);
+                } else {
+                    ui.currentDialog = DukeLines.rowInspect(row.name, row.price);
+                }
             }
         }
 
@@ -288,6 +301,10 @@ public final class ShopPresenter {
         return ui.state == ShopScreenState.CATEGORY_OPENING
             || ui.state == ShopScreenState.CATEGORY
             || ui.state == ShopScreenState.CATEGORY_CLOSING;
+    }
+
+    public boolean isChapterEventIdle() {
+        return ui.state == ShopScreenState.IDLE || ui.state == ShopScreenState.CATEGORY;
     }
 
     public ShopCatalogEntry selectedCatalogEntry() {
@@ -511,7 +528,11 @@ public final class ShopPresenter {
         List<Armour> visible = EquipmentArmourList.filter(model.ownedArmour(), ui.equipmentFilter);
         if (ui.equipmentHoveredRow >= 0) {
             if (ui.equipmentHoveredRow < visible.size()) {
-                model.equipArmour(visible.get(ui.equipmentHoveredRow));
+                Armour armour = visible.get(ui.equipmentHoveredRow);
+                model.equipArmour(armour);
+                if (chapterBridge != null) {
+                    chapterBridge.onEquip();
+                }
             }
             return;
         }
@@ -556,6 +577,9 @@ public final class ShopPresenter {
         ShopModel.PurchaseResult result = model.purchase(entry);
         ui.currentDialog = result.dukeLine();
         if (result.success()) {
+            if (chapterBridge != null) {
+                chapterBridge.onPurchase();
+            }
             beginPurchaseReveal(entry);
         }
     }
