@@ -1,7 +1,7 @@
 package main.java.com.witcher.ui.shop.swing.overlay;
 
 import main.java.com.witcher.ui.graphics.GameFonts;
-import main.java.com.witcher.ui.graphics.ShopAssetCache;
+import main.java.com.witcher.ui.shop.swing.ShopAssetCache;
 import main.java.com.witcher.ui.graphics.UiChrome;
 
 import java.awt.AlphaComposite;

@@ -1,5 +1,9 @@
-package main.java.com.witcher.ui.graphics;
+package main.java.com.witcher.ui.shop.swing;
 
+import main.java.com.witcher.ui.graphics.DialogBoxRenderer;
+import main.java.com.witcher.ui.graphics.GameFonts;
+import main.java.com.witcher.ui.graphics.Sprite;
+import main.java.com.witcher.ui.graphics.UiChrome;
 import main.java.com.witcher.model.armour.Armour;
 import main.java.com.witcher.ui.shop.ShopEntryIcons;
 import main.java.com.witcher.ui.shop.ShopCatalogEntry;

@@ -1,4 +1,4 @@
-package main.java.com.witcher.ui.graphics;
+package main.java.com.witcher.ui.shop.swing;
 
 import main.java.com.witcher.ui.shop.bridge.ShopBakeKeys;
 import main.java.com.witcher.ui.shop.bridge.ShopGdxBridge;

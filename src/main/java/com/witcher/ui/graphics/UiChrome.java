@@ -9,6 +9,8 @@ import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 
+import main.java.com.witcher.ui.shop.swing.ShopImageBounds;
+
 /** Маленькие UI-элементы: стрелка «назад», крестик закрытия. */
 public final class UiChrome {
 

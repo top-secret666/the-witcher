@@ -11,6 +11,7 @@ import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 
 import main.java.com.witcher.ui.menu.MainMenuController;
+import main.java.com.witcher.ui.shop.swing.ShopScreen;
 
 public class GameWindow {
 

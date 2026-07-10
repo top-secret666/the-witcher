@@ -28,7 +28,7 @@ import java.awt.image.BufferedImage;
 import static main.java.com.witcher.ui.shop.view.ShopViewConstants.*;
 
 /**
- * LibGDX-отрисовка лавки — порт логики {@link main.java.com.witcher.ui.graphics.ShopSwingView}.
+ * LibGDX-отрисовка лавки — порт логики {@link main.java.com.witcher.ui.shop.swing.ShopSwingView}.
  */
 public final class GdxShopView {
 

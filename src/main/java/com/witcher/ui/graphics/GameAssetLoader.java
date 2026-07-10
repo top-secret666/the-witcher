@@ -1,6 +1,7 @@
 package main.java.com.witcher.ui.graphics;
 
 import main.java.com.witcher.ui.shop.ShopIconsFactory;
+import main.java.com.witcher.ui.shop.swing.ShopAssetCache;
 
 import java.util.function.Consumer;
 

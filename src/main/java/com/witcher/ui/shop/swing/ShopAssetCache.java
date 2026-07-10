@@ -1,5 +1,7 @@
-package main.java.com.witcher.ui.graphics;
+package main.java.com.witcher.ui.shop.swing;
 
+import main.java.com.witcher.ui.graphics.PixelScaler;
+import main.java.com.witcher.ui.graphics.Sprite;
 import main.java.com.witcher.ui.shop.EquipmentFilter;
 import main.java.com.witcher.ui.shop.ShopCategory;
 import main.java.com.witcher.ui.shop.ShopRuntimeAssets;

@@ -1,4 +1,4 @@
-package main.java.com.witcher.ui.graphics;
+package main.java.com.witcher.ui.shop.swing;
 
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;

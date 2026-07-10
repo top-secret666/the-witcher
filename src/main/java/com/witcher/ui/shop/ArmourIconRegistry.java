@@ -2,7 +2,7 @@ package main.java.com.witcher.ui.shop;
 
 import main.java.com.witcher.model.armour.Armour;
 import main.java.com.witcher.ui.graphics.PixelScaler;
-import main.java.com.witcher.ui.graphics.ShopImageBounds;
+import main.java.com.witcher.ui.shop.swing.ShopImageBounds;
 import main.java.com.witcher.ui.graphics.Sprite;
 
 import java.awt.Rectangle;

@@ -21,7 +21,7 @@ import static main.java.com.witcher.ui.shop.view.ShopViewConstants.PANEL_BOTTOM_
 import static main.java.com.witcher.ui.shop.view.ShopViewConstants.VIRTUAL_H;
 
 /**
- * LibGDX-ассеты лавки — аналог {@link main.java.com.witcher.ui.graphics.ShopAssetCache}.
+ * LibGDX-ассеты лавки — аналог {@link main.java.com.witcher.ui.shop.swing.ShopAssetCache}.
  */
 public final class GdxShopRuntimeAssets implements ShopRuntimeAssets {
 

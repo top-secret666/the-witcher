@@ -1,4 +1,4 @@
-package main.java.com.witcher.ui.graphics;
+package main.java.com.witcher.ui.shop.swing;
 
 import java.awt.AlphaComposite;
 import java.awt.Color;
