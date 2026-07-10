@@ -70,18 +70,17 @@ public final class ShopViewConstants {
     public static final int INVENTORY_POUCH_LARGE = 96;
     public static final int EQUIP_MARGIN = 2;
     public static final int EQUIP_FILTER_ICON = 22;
-    public static final int EQUIP_FILTER_GAP = 4;
-    public static final int EQUIP_FILTER_BAR_H = 28;
-    public static final int EQUIP_LIST_HEADER_H = 12;
+    public static final int EQUIP_FILTER_GAP = 3;
+    public static final int EQUIP_FILTER_BAR_H = 26;
     /** Сетка иконок в инвентаре экипировки (без текста). */
     public static final int EQUIP_GRID_COLS = 4;
     public static final int EQUIP_GRID_CELL = 30;
     public static final int EQUIP_GRID_ICON = 26;
     public static final int EQUIP_LIST_W = EQUIP_GRID_COLS * EQUIP_GRID_CELL + 10;
-    /** Колбочки со стеклом — узкая колонка справа под слотами. */
-    public static final int EQUIP_STATS_W = 82;
+    /** Колбочки внизу левой колонки. */
+    public static final int EQUIP_STATS_W = EQUIP_LIST_W - 8;
     public static final int EQUIP_STATS_H = 96;
-    public static final int EQUIP_RIGHT_COL_W = 52;
+    public static final int EQUIP_RIGHT_COL_W = 126;
 
     public static final int GRID_COLS = 5;
     public static final int TOP_ROW_COLS = 4;
