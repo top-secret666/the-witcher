@@ -314,7 +314,11 @@ public final class ShopPresenter {
     }
 
     public int catalogListBottom(int panelY) {
-        return categoryBuyButtonY(panelY) - CATALOG_PANEL_GAP_ABOVE_BUY;
+        return ShopViewConstants.catalogListBottomY(panelY, metrics.detailPanelH(), metrics.btnH());
+    }
+
+    public int categoryStatLegendY(int panelY) {
+        return ShopViewConstants.categoryStatLegendY(panelY, metrics.detailPanelH(), metrics.btnH());
     }
 
     public int catalogRowContentW() {
@@ -326,7 +330,7 @@ public final class ShopPresenter {
     }
 
     public int categoryBuyButtonY(int panelY) {
-        return panelY + metrics.detailPanelH() - metrics.btnH() - 8;
+        return ShopViewConstants.categoryBuyButtonY(panelY, metrics.detailPanelH(), metrics.btnH());
     }
 
     public int maxCatalogScroll(int panelY) {

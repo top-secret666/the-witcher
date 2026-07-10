@@ -596,9 +596,8 @@ public final class ShopSwingView implements ShopView {
         g.setFont(GameFonts.get().uiBold(10));
         FontMetrics fm = g.getFontMetrics();
         Rectangle legendBox = ShopStatGlyphs.legendBounds(fm);
-        int btnY = presenter.categoryBuyButtonY(panelY);
+        int legendY = presenter.categoryStatLegendY(panelY);
         int legendX = panelX + (assets.detailPanelW - legendBox.width) / 2;
-        int legendY = btnY + assets.btnH + 3;
         ShopStatGlyphs.drawLegend(g, legendX, legendY, fm, alpha, assets.statIcons);
         g.setComposite(prev);
     }

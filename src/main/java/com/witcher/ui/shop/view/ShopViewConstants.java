@@ -34,12 +34,12 @@ public final class ShopViewConstants {
     public static final int CATALOG_PANEL_GAP_ABOVE_BUY = 10;
     /** Правая панель списка товаров в режиме категории. */
     public static final int CATALOG_DETAIL_PANEL_W = 314;
-    public static final int CATALOG_DETAIL_PANEL_H = 254;
-    public static final int CATALOG_DETAIL_PANEL_Y = 44;
+    public static final int CATALOG_DETAIL_PANEL_H = 246;
+    public static final int CATALOG_DETAIL_PANEL_Y = 36;
     public static final int CATALOG_DETAIL_PANEL_X_MARGIN = 5;
     /** Левая карточка товара (shop_card_back) в режиме категории. */
     public static final int CATEGORY_OPEN_CARD_X = 2;
-    public static final int CATEGORY_OPEN_CARD_Y = 8;
+    public static final int CATEGORY_OPEN_CARD_Y = 36;
     public static final int CATEGORY_OPEN_CARD_GAP = 3;
     public static final int CATEGORY_OPEN_CARD_W = 156;
     public static final int CATEGORY_OPEN_CARD_H = 234;
@@ -55,6 +55,9 @@ public final class ShopViewConstants {
     public static final int CATALOG_FRAME_INSET_X_REF = 28;
     /** Верх списка товаров от верха панели (по арту). */
     public static final int CATALOG_FRAME_LIST_TOP_REF = 18;
+    /** Легенда статов — над кнопкой «Купить», внутри панели. */
+    public static final int CATALOG_STAT_LEGEND_BLOCK_H = 22;
+    public static final int CATALOG_LEGEND_GAP_ABOVE_BUY = 5;
 
     public static final int PRODUCT_CARD_INSET_X = 7;
     public static final int PRODUCT_CARD_INSET_TOP = 10;
@@ -87,14 +90,14 @@ public final class ShopViewConstants {
     public static final int CATALOG_COIN_SIZE = 8;
 
     /** Мини-иконки статов в строках каталога. */
-    public static final int STAT_ROW_ICON_SIZE = 9;
+    public static final int STAT_ROW_ICON_SIZE = 10;
     /** Иконки в легенде статов под каталогом. */
-    public static final int STAT_LEGEND_ICON_SIZE = 11;
+    public static final int STAT_LEGEND_ICON_SIZE = 12;
 
     /** Запекание LibGDX: 2× слота (Renderer pixelScale=2). */
     public static final int HUD_ICON_BAKE_SCALE = 2;
-    /** Стат-иконки мельче HUD — запекаем в 4× для чёткости при даунскейле. */
-    public static final int STAT_ICON_BAKE_SCALE = 4;
+    /** Стат-иконки — 6× слота для чёткого даунскейла. */
+    public static final int STAT_ICON_BAKE_SCALE = 6;
 
     public static int hudIconBakePx(int slotW, int slotH) {
         return Math.max(slotW, slotH) * HUD_ICON_BAKE_SCALE;
@@ -141,6 +144,19 @@ public final class ShopViewConstants {
 
     public static int categoryCardTextBottomInset(int cardH) {
         return Math.round(CARD_BACK_TEXT_BOTTOM_REF * (float) cardH / CARD_BACK_REF_H);
+    }
+
+    public static int categoryBuyButtonY(int panelY, int panelH, int btnH) {
+        return panelY + panelH - btnH - 8;
+    }
+
+    public static int categoryStatLegendY(int panelY, int panelH, int btnH) {
+        int btnY = categoryBuyButtonY(panelY, panelH, btnH);
+        return btnY - CATALOG_STAT_LEGEND_BLOCK_H - CATALOG_LEGEND_GAP_ABOVE_BUY;
+    }
+
+    public static int catalogListBottomY(int panelY, int panelH, int btnH) {
+        return categoryStatLegendY(panelY, panelH, btnH) - CATALOG_PANEL_GAP_ABOVE_BUY;
     }
 
     /** Текст поверх CRT-фильтра — читаемость без «дробления». */
