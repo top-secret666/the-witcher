@@ -15,7 +15,8 @@ import static main.java.com.witcher.ui.shop.view.ShopViewConstants.BOTTOM_ROW_CO
 import static main.java.com.witcher.ui.shop.view.ShopViewConstants.TOP_ROW_COLS;
 import static main.java.com.witcher.ui.shop.view.ShopViewConstants.CATALOG_DETAIL_PANEL_H;
 import static main.java.com.witcher.ui.shop.view.ShopViewConstants.CATALOG_DETAIL_PANEL_W;
-import static main.java.com.witcher.ui.shop.view.ShopViewConstants.CATALOG_PANEL_INSET_X;
+import static main.java.com.witcher.ui.shop.view.ShopViewConstants.CATALOG_DETAIL_PANEL_W;
+import static main.java.com.witcher.ui.shop.view.ShopViewConstants.catalogRowContentW;
 import static main.java.com.witcher.ui.shop.view.ShopViewConstants.DIALOG_TEXT_ZONE;
 import static main.java.com.witcher.ui.shop.view.ShopViewConstants.PANEL_BOTTOM_MARGIN;
 import static main.java.com.witcher.ui.shop.view.ShopViewConstants.VIRTUAL_H;
@@ -177,7 +178,7 @@ public final class GdxShopRuntimeAssets implements ShopRuntimeAssets {
         detailPanelW = CATALOG_DETAIL_PANEL_W;
         detailPanelH = CATALOG_DETAIL_PANEL_H;
         catalogDetailPanel = loadLavka("ui/shop_catalog_panel_detail.png", "ui/shop_catalog_panel.png");
-        rowW = detailPanelW - CATALOG_PANEL_INSET_X * 2;
+        rowW = catalogRowContentW(CATALOG_DETAIL_PANEL_W);
         rowNormal = loadLavka("ui/shop_row_normal.png");
         rowHover = loadLavka("ui/shop_row_hover.png");
         rowSelected = loadLavka("ui/shop_row_selected.png");

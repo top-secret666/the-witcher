@@ -31,12 +31,17 @@ public final class ShopViewConstants {
     public static final int INVENTORY_BAG_SIZE = 40;
     public static final int INVENTORY_BAG_MARGIN = 8;
 
-    public static final int CATALOG_PANEL_INSET_X = 16;
-    public static final int CATALOG_PANEL_INSET_TOP = 20;
     public static final int CATALOG_PANEL_GAP_ABOVE_BUY = 10;
     /** Правая панель списка товаров в режиме категории. */
     public static final int CATALOG_DETAIL_PANEL_W = 310;
     public static final int CATALOG_DETAIL_PANEL_H = 238;
+    /** Эталон арта {@code shop_catalog_panel_detail} для масштабирования отступов. */
+    public static final int CATALOG_DETAIL_REF_W = 292;
+    public static final int CATALOG_DETAIL_REF_H = 232;
+    /** Горизонтальный отступ золотой рамки (по арту detail panel). */
+    public static final int CATALOG_FRAME_INSET_X_REF = 25;
+    /** Верх списка товаров от верха панели (по арту). */
+    public static final int CATALOG_FRAME_LIST_TOP_REF = 18;
 
     public static final int PRODUCT_CARD_INSET_X = 7;
     public static final int PRODUCT_CARD_INSET_TOP = 10;
@@ -88,6 +93,22 @@ public final class ShopViewConstants {
 
     public static int statIconBakePx() {
         return Math.max(STAT_ROW_ICON_SIZE, STAT_LEGEND_ICON_SIZE) * STAT_ICON_BAKE_SCALE;
+    }
+
+    public static int catalogFrameInsetX(int panelW) {
+        return Math.round(CATALOG_FRAME_INSET_X_REF * (float) panelW / CATALOG_DETAIL_REF_W);
+    }
+
+    public static int catalogRowContentW(int panelW) {
+        return panelW - catalogFrameInsetX(panelW) * 2;
+    }
+
+    public static int catalogListTopInset(int panelH) {
+        return Math.round(CATALOG_FRAME_LIST_TOP_REF * (float) panelH / CATALOG_DETAIL_REF_H);
+    }
+
+    public static int catalogRowX(int panelX, int panelW) {
+        return panelX + catalogFrameInsetX(panelW);
     }
 
     /** Текст поверх CRT-фильтра — читаемость без «дробления». */

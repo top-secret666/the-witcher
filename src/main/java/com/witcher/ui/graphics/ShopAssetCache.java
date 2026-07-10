@@ -11,7 +11,8 @@ import static main.java.com.witcher.ui.shop.view.ShopViewConstants.CATALOG_COIN_
 import static main.java.com.witcher.ui.shop.view.ShopViewConstants.TOP_ROW_COLS;
 import static main.java.com.witcher.ui.shop.view.ShopViewConstants.CATALOG_DETAIL_PANEL_H;
 import static main.java.com.witcher.ui.shop.view.ShopViewConstants.CATALOG_DETAIL_PANEL_W;
-import static main.java.com.witcher.ui.shop.view.ShopViewConstants.CATALOG_PANEL_INSET_X;
+import static main.java.com.witcher.ui.shop.view.ShopViewConstants.CATALOG_DETAIL_PANEL_W;
+import static main.java.com.witcher.ui.shop.view.ShopViewConstants.catalogRowContentW;
 import static main.java.com.witcher.ui.shop.view.ShopViewConstants.HUD_CROWN_H;
 import static main.java.com.witcher.ui.shop.view.ShopViewConstants.HUD_CROWN_W;
 import static main.java.com.witcher.ui.shop.view.ShopViewConstants.HUD_DUKE_SEAL_H;
@@ -213,7 +214,7 @@ public final class ShopAssetCache implements ShopRuntimeAssets {
         detailPanelH = CATALOG_DETAIL_PANEL_H;
         catalogDetailPanel = loadSized(UI + "shop_catalog_panel_detail.png", detailPanelW, detailPanelH,
             BASE + "ui/shop_catalog_panel.png", false);
-        rowW = detailPanelW - CATALOG_PANEL_INSET_X * 2;
+        rowW = catalogRowContentW(CATALOG_DETAIL_PANEL_W);
         rowNormal = loadSized(UI + "shop_row_normal.png", rowW, rowH,
             BASE + "ui/shop_row_normal.png", false);
         rowHover = loadSized(UI + "shop_row_hover.png", rowW, rowH,

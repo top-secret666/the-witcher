@@ -10,6 +10,7 @@ import main.java.com.witcher.ui.shop.ShopModel;
 import main.java.com.witcher.ui.shop.ShopRuntimeAssets;
 import main.java.com.witcher.ui.shop.view.ShopLayout;
 import main.java.com.witcher.ui.shop.view.ShopUiMetrics;
+import main.java.com.witcher.ui.shop.view.ShopViewConstants;
 import main.java.com.witcher.ui.shop.view.ShopShowcaseItem;
 import main.java.com.witcher.ui.shop.view.anim.ShopCategoryAnimator;
 import main.java.com.witcher.ui.shop.view.anim.ShopRevealAnimator;
@@ -309,7 +310,7 @@ public final class ShopPresenter {
     }
 
     public int catalogListTop(int panelY) {
-        return panelY + CATALOG_PANEL_INSET_TOP;
+        return panelY + ShopViewConstants.catalogListTopInset(metrics.detailPanelH());
     }
 
     public int catalogListBottom(int panelY) {
@@ -317,11 +318,11 @@ public final class ShopPresenter {
     }
 
     public int catalogRowContentW() {
-        return metrics.detailPanelW() - CATALOG_PANEL_INSET_X * 2;
+        return ShopViewConstants.catalogRowContentW(metrics.detailPanelW());
     }
 
     public int catalogRowX(int panelX) {
-        return panelX + CATALOG_PANEL_INSET_X;
+        return ShopViewConstants.catalogRowX(panelX, metrics.detailPanelW());
     }
 
     public int categoryBuyButtonY(int panelY) {
