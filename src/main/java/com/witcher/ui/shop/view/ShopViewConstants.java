@@ -70,13 +70,14 @@ public final class ShopViewConstants {
     public static final int INVENTORY_POUCH_LARGE = 96;
     public static final int EQUIP_MARGIN = 2;
     public static final int EQUIP_FILTER_ICON = 20;
-    public static final int EQUIP_FILTER_GAP = 2;
-    public static final int EQUIP_FILTER_BAR_H = 24;
+    public static final int EQUIP_FILTER_GAP = 4;
+    public static final int EQUIP_FILTER_BAR_H = 26;
     /** Сетка иконок в инвентаре экипировки (без текста). */
     public static final int EQUIP_GRID_COLS = 4;
-    public static final int EQUIP_GRID_CELL = 30;
-    public static final int EQUIP_GRID_ICON = 26;
-    public static final int EQUIP_LIST_W = EQUIP_GRID_COLS * EQUIP_GRID_CELL + 10;
+    public static final int EQUIP_GRID_CELL = 32;
+    public static final int EQUIP_GRID_ICON = 28;
+    /** Ширина левой панели «Куплено» — 5 фильтров + 4 колонки иконок. */
+    public static final int EQUIP_LIST_W = 154;
     /** Колбочки в левой колонке (компакт). */
     public static final int EQUIP_STATS_W = EQUIP_LIST_W - 8;
     public static final int EQUIP_STATS_H = 74;

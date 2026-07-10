@@ -253,15 +253,17 @@ public final class ShopEquipmentOverlay {
     private static void drawFilterButtons(Graphics2D g, ShopOverlayContext ctx,
                                           int colX, int colY, int colW) {
         EquipmentFilter[] filters = EquipmentFilter.values();
-        int totalW = filters.length * EQUIP_FILTER_ICON + (filters.length - 1) * EQUIP_FILTER_GAP;
-        int startX = colX + Math.max(4, (colW - totalW) / 2);
-        int iconY = colY + 1;
+        int padX = 5;
+        int cellW = (colW - padX * 2) / filters.length;
+        int btnSize = EQUIP_FILTER_ICON + 4;
+        int iconY = colY + 2;
 
         for (int i = 0; i < filters.length; i++) {
             EquipmentFilter filter = filters[i];
-            int fx = startX + i * (EQUIP_FILTER_ICON + EQUIP_FILTER_GAP);
-            int btnSize = EQUIP_FILTER_ICON + 4;
-            Rectangle bounds = new Rectangle(fx - 2, iconY - 2, btnSize, btnSize);
+            int cellX = colX + padX + i * cellW;
+            int fx = cellX + (cellW - EQUIP_FILTER_ICON) / 2;
+            Rectangle bounds = new Rectangle(
+                cellX + (cellW - btnSize) / 2, iconY - 1, btnSize, btnSize);
             ctx.ui().equipmentFilterBounds[i] = bounds;
 
             boolean active = ctx.ui().equipmentFilter == filter;
