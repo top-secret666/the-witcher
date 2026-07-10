@@ -36,4 +36,13 @@ public enum ShopEquipSlot {
         }
         return null;
     }
+
+    public ShopCategory shopCategory() {
+        return switch (this) {
+            case CHEST -> ShopCategory.CHEST;
+            case LEGS -> ShopCategory.LEGS;
+            case GLOVES -> ShopCategory.GLOVES;
+            case BOOTS -> ShopCategory.BOOTS;
+        };
+    }
 }

@@ -147,13 +147,8 @@ public final class ShopEquipmentOverlay {
             g.drawRoundRect(slotX, sy, slotSize, slotSize, 4, 4);
             BufferedImage icon = ctx.assets().equipSlotPlaceholder(slot.iconIndex);
             if (equipped != null) {
-                ShopCategory slotCategory = switch (slot) {
-                    case CHEST -> ShopCategory.CHEST;
-                    case LEGS -> ShopCategory.LEGS;
-                    case GLOVES -> ShopCategory.GLOVES;
-                    case BOOTS -> ShopCategory.BOOTS;
-                };
-                BufferedImage armourArt = ctx.armourIcons().iconForArmour(equipped, slotCategory, 30);
+                BufferedImage armourArt = ctx.armourIcons().iconForArmour(
+                    equipped, slot.shopCategory(), 30);
                 if (armourArt != null) {
                     icon = armourArt;
                 }
