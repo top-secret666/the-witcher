@@ -4,6 +4,7 @@ import main.java.com.witcher.ui.graphics.PixelScaler;
 import main.java.com.witcher.ui.graphics.Sprite;
 import main.java.com.witcher.ui.shop.EquipmentFilter;
 import main.java.com.witcher.ui.shop.ShopCategory;
+import main.java.com.witcher.ui.shop.ShopOverlayAssets;
 import main.java.com.witcher.ui.shop.ShopRuntimeAssets;
 import main.java.com.witcher.ui.shop.view.LavkaAssetPaths;
 import main.java.com.witcher.ui.shop.view.ShopUiMetrics;
@@ -33,7 +34,7 @@ import java.awt.image.BufferedImage;
  * Иконки товаров/категорий — оригиналы {@code lavka/icons/} (bilinear).
  * UI-карточки — приоритет {@code lavka/1x/ui/}, иначе даунскейл с оригинала.
  */
-public final class ShopAssetCache implements ShopRuntimeAssets {
+public final class ShopAssetCache implements ShopRuntimeAssets, ShopOverlayAssets {
 
     private static final String BASE = LavkaAssetPaths.SWING_ROOT;
     private static final String BAKED = LavkaAssetPaths.SWING_1X;

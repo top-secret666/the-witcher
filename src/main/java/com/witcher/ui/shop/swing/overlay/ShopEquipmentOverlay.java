@@ -2,7 +2,7 @@ package main.java.com.witcher.ui.shop.swing.overlay;
 
 import main.java.com.witcher.model.armour.Armour;
 import main.java.com.witcher.ui.graphics.GameFonts;
-import main.java.com.witcher.ui.shop.swing.ShopAssetCache;
+import main.java.com.witcher.ui.shop.ShopOverlayAssets;
 import main.java.com.witcher.ui.shop.swing.ShopStatBarRenderer;
 import main.java.com.witcher.ui.graphics.UiChrome;
 import main.java.com.witcher.ui.shop.EquipmentArmourList;
@@ -258,7 +258,7 @@ public final class ShopEquipmentOverlay {
 
     private static void drawEquipmentStats(Graphics2D g, ShopOverlayContext ctx, int x, int y, int w, int h,
                                            ShopModel.StatPreview preview) {
-        ShopAssetCache assets = ctx.assets();
+        ShopOverlayAssets assets = ctx.assets();
         ShopStatBarRenderer.drawEquipmentCompact(g, x, y, w, h, preview,
             assets.statVialEmpty(), assets.statVialOverlay(), assets.statVialEndCap(), ctx.ui().tick);
     }
