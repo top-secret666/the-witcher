@@ -33,21 +33,26 @@ public final class ShopViewConstants {
 
     public static final int CATALOG_PANEL_GAP_ABOVE_BUY = 10;
     /** Правая панель списка товаров в режиме категории. */
-    public static final int CATALOG_DETAIL_PANEL_W = 308;
-    public static final int CATALOG_DETAIL_PANEL_H = 252;
-    public static final int CATALOG_DETAIL_PANEL_Y = 46;
-    public static final int CATALOG_DETAIL_PANEL_X_MARGIN = 8;
+    public static final int CATALOG_DETAIL_PANEL_W = 314;
+    public static final int CATALOG_DETAIL_PANEL_H = 254;
+    public static final int CATALOG_DETAIL_PANEL_Y = 44;
+    public static final int CATALOG_DETAIL_PANEL_X_MARGIN = 5;
     /** Левая карточка товара (shop_card_back) в режиме категории. */
-    public static final int CATEGORY_OPEN_CARD_X = 4;
+    public static final int CATEGORY_OPEN_CARD_X = 2;
     public static final int CATEGORY_OPEN_CARD_Y = 8;
-    public static final int CATEGORY_OPEN_CARD_GAP = 6;
-    public static final int CATEGORY_OPEN_CARD_W = 154;
-    public static final int CATEGORY_OPEN_CARD_H = 231;
+    public static final int CATEGORY_OPEN_CARD_GAP = 3;
+    public static final int CATEGORY_OPEN_CARD_W = 156;
+    public static final int CATEGORY_OPEN_CARD_H = 234;
+    /** Эталон арта {@code shop_card_back.png} — внутренняя зона под текст. */
+    public static final int CARD_BACK_REF_W = 832;
+    public static final int CARD_BACK_REF_H = 1248;
+    public static final int CARD_BACK_INNER_W_REF = 721;
+    public static final int CARD_BACK_TEXT_BOTTOM_REF = 90;
     /** Эталон арта {@code shop_catalog_panel_detail} для масштабирования отступов. */
     public static final int CATALOG_DETAIL_REF_W = 292;
     public static final int CATALOG_DETAIL_REF_H = 232;
     /** Горизонтальный отступ золотой рамки (по арту detail panel). */
-    public static final int CATALOG_FRAME_INSET_X_REF = 25;
+    public static final int CATALOG_FRAME_INSET_X_REF = 28;
     /** Верх списка товаров от верха панели (по арту). */
     public static final int CATALOG_FRAME_LIST_TOP_REF = 18;
 
@@ -121,6 +126,21 @@ public final class ShopViewConstants {
 
     public static int catalogDetailPanelX() {
         return VIRTUAL_W - CATALOG_DETAIL_PANEL_W - CATALOG_DETAIL_PANEL_X_MARGIN;
+    }
+
+    /** Ширина текста на shop_card_back — по внутренней коричневой зоне арта. */
+    public static int categoryCardTextMaxW(int cardW) {
+        int inner = Math.round(cardW * (float) CARD_BACK_INNER_W_REF / CARD_BACK_REF_W);
+        return Math.max(48, inner - 10);
+    }
+
+    public static int categoryCardTextX(int cardX, int cardW) {
+        int maxW = categoryCardTextMaxW(cardW);
+        return cardX + (cardW - maxW) / 2;
+    }
+
+    public static int categoryCardTextBottomInset(int cardH) {
+        return Math.round(CARD_BACK_TEXT_BOTTOM_REF * (float) cardH / CARD_BACK_REF_H);
     }
 
     /** Текст поверх CRT-фильтра — читаемость без «дробления». */
