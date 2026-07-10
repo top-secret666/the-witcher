@@ -130,7 +130,7 @@ public final class ShopSwingView implements ShopView {
             drawAshParticles(g);
         }
 
-        if (shouldDrawUiTextInScene()) {
+        if (shouldDrawUiTextInScene() && !ui.equipmentOpen) {
             DialogBoxRenderer.drawCompactFramedSpeakerText(g, sw, sh, "Герцог", ui.currentDialog,
                 DialogBoxRenderer.DUKE_COLOR, 1f);
         }
@@ -198,8 +198,10 @@ public final class ShopSwingView implements ShopView {
                 drawInventoryOverlay(g, sw, sh);
             }
 
-            DialogBoxRenderer.drawCompactFramedSpeakerText(g, sw, sh, "Герцог", ui.currentDialog,
-                DialogBoxRenderer.DUKE_COLOR, 1f);
+            if (!ui.equipmentOpen) {
+                DialogBoxRenderer.drawCompactFramedSpeakerText(g, sw, sh, "Герцог", ui.currentDialog,
+                    DialogBoxRenderer.DUKE_COLOR, 1f);
+            }
             drawCursor(g, mouseX, mouseY);
         } finally {
             uiTextOverlayOnly = false;
