@@ -249,6 +249,16 @@ public final class ShopModel {
         });
     }
 
+    /** Краткая строка бонусов для тултипа экипировки. */
+    public String armourBonusLine(Armour armour) {
+        if (armour == null) {
+            return "";
+        }
+        ShopGearStats bonus = ShopGearRules.bonusFromArmour(armour);
+        return String.format("Защита +%d  ·  Выносл. %+d  ·  Знаки %+d",
+            bonus.protection(), bonus.stamina(), bonus.signs());
+    }
+
     private void recordPurchase(String label) {
         purchasedLabels.add(label);
     }

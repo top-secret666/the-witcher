@@ -5,6 +5,8 @@ import main.java.com.witcher.ui.graphics.GameFonts;
 import main.java.com.witcher.ui.graphics.ShopAssetCache;
 import main.java.com.witcher.ui.graphics.ShopStatBarRenderer;
 import main.java.com.witcher.ui.graphics.UiChrome;
+import main.java.com.witcher.ui.shop.EquipmentArmourList;
+import main.java.com.witcher.ui.shop.EquipmentFilter;
 import main.java.com.witcher.ui.shop.ShopCategory;
 import main.java.com.witcher.ui.shop.ShopEquipSlot;
 import main.java.com.witcher.ui.shop.ShopModel;
@@ -17,8 +19,16 @@ import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
+import java.awt.RenderingHints;
 import java.util.List;
+import java.util.Locale;
 
+import static main.java.com.witcher.ui.shop.view.ShopViewConstants.EQUIP_FILTER_BAR_H;
+import static main.java.com.witcher.ui.shop.view.ShopViewConstants.EQUIP_FILTER_GAP;
+import static main.java.com.witcher.ui.shop.view.ShopViewConstants.EQUIP_FILTER_ICON;
+import static main.java.com.witcher.ui.shop.view.ShopViewConstants.EQUIP_ITEM_ICON;
+import static main.java.com.witcher.ui.shop.view.ShopViewConstants.EQUIP_ITEM_ROW_H;
+import static main.java.com.witcher.ui.shop.view.ShopViewConstants.EQUIP_LIST_HEADER_H;
 import static main.java.com.witcher.ui.shop.view.ShopViewConstants.EQUIP_MARGIN;
 
 /**
@@ -70,38 +80,75 @@ public final class ShopEquipmentOverlay {
         g.setColor(new Color(100, 75, 40));
         g.drawRoundRect(listX, listY, listW, listH, 4, 4);
 
-        ShopOverlayText.drawEquipText(g, GameFonts.get().uiBold(11), "Куплено", listX + 8, listY + 14,
-            new Color(180, 140, 80));
-        int itemsTop = listY + 22;
-        g.setColor(new Color(90, 68, 36, 160));
+        drawFilterBar(g, ctx, listX, listY, listW);
+
+        int sectionY = listY + EQUIP_FILTER_BAR_H + 6;
+        String section = ctx.ui().equipmentFilter == EquipmentFilter.ALL
+            ? "БРОНЯ"
+            : ctx.ui().equipmentFilter.sectionLabel.toUpperCase(Locale.ROOT);
+        ShopOverlayText.drawEquipText(g, GameFonts.get().uiBold(9), section,
+            listX + 8, sectionY + 10, new Color(150, 165, 180));
+
+        int itemsTop = sectionY + EQUIP_LIST_HEADER_H + 4;
+        g.setColor(new Color(90, 68, 36, 120));
         g.drawLine(listX + 6, itemsTop, listX + listW - 6, itemsTop);
 
-        List<Armour> owned = ctx.presenter().model().ownedArmour();
-        int rowH = 18;
-        int rowY = itemsTop + 14;
-        Font itemFont = GameFonts.get().uiPlain(11);
+        List<Armour> owned = EquipmentArmourList.filter(
+            ctx.presenter().model().ownedArmour(), ctx.ui().equipmentFilter);
+        int rowY = itemsTop + 12;
+        Font itemFont = GameFonts.get().uiPlain(10);
         FontMetrics itemFm = g.getFontMetrics(itemFont);
+        int textX = listX + 8 + EQUIP_ITEM_ICON + 6;
+        int textW = listW - 8 - EQUIP_ITEM_ICON - 10;
+        Armour tooltipArmour = null;
+        int tooltipAnchorY = rowY;
+
         for (int i = 0; i < owned.size(); i++) {
-            if (rowY + 4 > listY + listH - 6) {
+            if (rowY + 6 > listY + listH - 6) {
                 break;
             }
             Armour armour = owned.get(i);
-            Rectangle row = new Rectangle(listX + 4, rowY - 13, listW - 8, rowH);
+            Rectangle row = new Rectangle(listX + 4, rowY - EQUIP_ITEM_ROW_H + 8, listW - 8, EQUIP_ITEM_ROW_H);
             ctx.ui().equipmentRowBounds.add(row);
             boolean hovered = i == ctx.ui().equipmentHoveredRow;
             boolean equipped = ctx.presenter().model().isEquipped(armour);
             if (hovered || equipped) {
-                g.setColor(equipped ? new Color(70, 52, 24, 200) : new Color(50, 38, 18, 170));
+                g.setColor(equipped ? new Color(48, 62, 82, 210) : new Color(36, 48, 68, 190));
                 g.fillRoundRect(row.x, row.y, row.width, row.height, 3, 3);
+                if (hovered) {
+                    g.setColor(new Color(88, 148, 210, 180));
+                    g.drawRoundRect(row.x, row.y, row.width, row.height, 3, 3);
+                }
             }
-            String line = ShopOverlayText.truncateToWidth(armour.getName(), itemFm, listW - 20);
-            ShopOverlayText.drawEquipText(g, itemFont, line, listX + 8, rowY,
-                equipped ? new Color(255, 230, 150) : new Color(200, 180, 130));
-            rowY += rowH;
+            ShopCategory cat = EquipmentArmourList.categoryFor(armour);
+            BufferedImage itemIcon = ctx.armourIcons().iconForArmour(armour, cat, EQUIP_ITEM_ICON);
+            int iconX = listX + 8;
+            int iconY = rowY - EQUIP_ITEM_ICON + 6;
+            g.setColor(new Color(12, 10, 8, 200));
+            g.fillRoundRect(iconX - 1, iconY - 1, EQUIP_ITEM_ICON + 2, EQUIP_ITEM_ICON + 2, 2, 2);
+            if (itemIcon != null) {
+                Object interp = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
+                g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+                g.drawImage(itemIcon, iconX, iconY, EQUIP_ITEM_ICON, EQUIP_ITEM_ICON, null);
+                if (interp != null) {
+                    g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, interp);
+                }
+            }
+            String line = ShopOverlayText.truncateToWidth(armour.getName(), itemFm, textW);
+            ShopOverlayText.drawEquipText(g, itemFont, line, textX, rowY,
+                equipped ? new Color(200, 220, 255) : (hovered ? new Color(230, 235, 245) : new Color(185, 195, 210)));
+            if (hovered) {
+                tooltipArmour = armour;
+                tooltipAnchorY = row.y;
+            }
+            rowY += EQUIP_ITEM_ROW_H;
         }
         if (owned.isEmpty()) {
-            ShopOverlayText.drawEquipText(g, GameFonts.get().uiPlain(11), "Пока нет брони…",
-                listX + 8, rowY, new Color(150, 130, 90));
+            String empty = ctx.ui().equipmentFilter == EquipmentFilter.ALL
+                ? "Пока нет брони…"
+                : "Нет предметов в категории";
+            ShopOverlayText.drawEquipText(g, GameFonts.get().uiPlain(10), empty,
+                listX + 8, rowY, new Color(130, 145, 165));
         }
 
         int portraitX = listX + listW + 12;
@@ -170,7 +217,66 @@ public final class ShopEquipmentOverlay {
         drawEquipmentStats(g, ctx, statsX, statsY, statsW, statsH,
             ctx.presenter().model().equippedStatPreview());
 
+        if (tooltipArmour == null && ctx.ui().equipmentHoveredSlot >= 0) {
+            ShopEquipSlot slot = ShopEquipSlot.values()[ctx.ui().equipmentHoveredSlot];
+            tooltipArmour = ctx.presenter().model().getEquipped(slot);
+            if (tooltipArmour != null && ctx.ui().equipmentSlotBounds[ctx.ui().equipmentHoveredSlot] != null) {
+                tooltipAnchorY = ctx.ui().equipmentSlotBounds[ctx.ui().equipmentHoveredSlot].y;
+            }
+        }
+
+        if (tooltipArmour != null) {
+            int tipW = ShopEquipmentTooltipRenderer.preferredWidth();
+            int tipX = listX + listW + 6;
+            if (tipX + tipW > portraitX - 4) {
+                tipX = Math.max(listX + 4, portraitX - tipW - 4);
+            }
+            int tipY = Math.max(listY + 8, Math.min(tooltipAnchorY, statsY - 100));
+            ShopEquipmentTooltipRenderer.draw(g, tipX, tipY, tipW, tooltipArmour, ctx.presenter().model());
+        }
+
         g.setComposite(prev);
+    }
+
+    private static void drawFilterBar(Graphics2D g, ShopOverlayContext ctx, int listX, int listY, int listW) {
+        EquipmentFilter[] filters = EquipmentFilter.values();
+        int totalW = filters.length * EQUIP_FILTER_ICON + (filters.length - 1) * EQUIP_FILTER_GAP;
+        int startX = listX + (listW - totalW) / 2;
+        int iconY = listY + 6;
+
+        for (int i = 0; i < filters.length; i++) {
+            EquipmentFilter filter = filters[i];
+            int fx = startX + i * (EQUIP_FILTER_ICON + EQUIP_FILTER_GAP);
+            Rectangle bounds = new Rectangle(fx - 2, iconY - 2, EQUIP_FILTER_ICON + 4, EQUIP_FILTER_ICON + 4);
+            ctx.ui().equipmentFilterBounds[i] = bounds;
+
+            boolean active = ctx.ui().equipmentFilter == filter;
+            boolean hovered = i == ctx.ui().equipmentHoveredFilter;
+            if (active) {
+                g.setColor(new Color(210, 215, 225, 90));
+                g.fillRoundRect(bounds.x, bounds.y, bounds.width, bounds.height, 3, 3);
+            } else if (hovered) {
+                g.setColor(new Color(120, 150, 190, 70));
+                g.fillRoundRect(bounds.x, bounds.y, bounds.width, bounds.height, 3, 3);
+            }
+
+            BufferedImage icon = ctx.assets().equipmentFilterIcon(filter);
+            if (icon != null) {
+                Composite saved = g.getComposite();
+                g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, active ? 1f : 0.72f));
+                Object interp = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
+                g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+                g.drawImage(icon, fx, iconY, EQUIP_FILTER_ICON, EQUIP_FILTER_ICON, null);
+                if (interp != null) {
+                    g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, interp);
+                }
+                g.setComposite(saved);
+            }
+            if (active) {
+                g.setColor(new Color(200, 220, 245));
+                g.drawRoundRect(bounds.x, bounds.y, bounds.width, bounds.height, 3, 3);
+            }
+        }
     }
 
     private static void drawEquipmentStats(Graphics2D g, ShopOverlayContext ctx, int x, int y, int w, int h,
