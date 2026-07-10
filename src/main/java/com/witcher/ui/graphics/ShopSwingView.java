@@ -1136,7 +1136,7 @@ public final class ShopSwingView implements ShopView {
             int statsRight = priceX - 2;
 
             int nameMaxW = Math.max(20, statsRight - statsW - (x + 10));
-            g.setFont(fitUiFontToWidth(g, row.name, nameMaxW, 9, 7));
+            g.setFont(GameFonts.get().uiBold(9));
             fm = g.getFontMetrics();
             String label = truncateToWidth(row.name, fm, nameMaxW);
             int textY = y + (assets.rowH + fm.getAscent()) / 2 - 1;
