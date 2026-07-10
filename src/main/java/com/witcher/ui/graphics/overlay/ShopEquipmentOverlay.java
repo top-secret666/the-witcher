@@ -2,7 +2,6 @@ package main.java.com.witcher.ui.graphics.overlay;
 
 import main.java.com.witcher.model.armour.Armour;
 import main.java.com.witcher.ui.graphics.GameFonts;
-import main.java.com.witcher.ui.graphics.ShopAssetCache;
 import main.java.com.witcher.ui.graphics.ShopStatBarRenderer;
 import main.java.com.witcher.ui.graphics.UiChrome;
 import main.java.com.witcher.ui.shop.EquipmentArmourList;
@@ -33,8 +32,7 @@ import static main.java.com.witcher.ui.shop.view.ShopViewConstants.EQUIP_LIST_HE
 import static main.java.com.witcher.ui.shop.view.ShopViewConstants.EQUIP_LIST_W;
 import static main.java.com.witcher.ui.shop.view.ShopViewConstants.EQUIP_MARGIN;
 import static main.java.com.witcher.ui.shop.view.ShopViewConstants.EQUIP_STATS_H;
-import static main.java.com.witcher.ui.shop.view.ShopViewConstants.EQUIP_STATS_PAD;
-import static main.java.com.witcher.ui.shop.view.ShopViewConstants.EQUIP_STATS_W;
+import static main.java.com.witcher.ui.shop.view.ShopViewConstants.EQUIP_STATS_PAD_X;
 
 /**
  * Слой экипировки поверх лавки — вынесен из {@code ShopSwingView}.
@@ -68,31 +66,36 @@ public final class ShopEquipmentOverlay {
         g.setColor(new Color(155, 115, 50));
         g.drawRoundRect(px, py, panelW, panelH, 6, 6);
 
-        ShopOverlayText.drawEquipText(g, GameFonts.get().uiBold(15), "Экипировка",
-            px + 14 + UiChrome.BTN_SIZE + 6, py + 24, new Color(255, 220, 140));
-
-        int backX = px + 10;
-        int backY = py + 10;
+        int backX = px + 8;
+        int backY = py + 8;
         ctx.ui().equipmentBackButtonBounds.setBounds(backX, backY, UiChrome.BTN_SIZE, UiChrome.BTN_SIZE);
         UiChrome.drawArrowBackButton(g, ctx.ui().equipmentBackButtonBounds, ctx.ui().equipmentBackHovered, 1f);
 
+        int filterY = py + 8;
+        int filterX = px + UiChrome.BTN_SIZE + 14;
+        int filterW = panelW - (filterX - px) - 8;
+        drawFilterBar(g, ctx, filterX, filterY, filterW);
+
         int slotSize = 48;
         int slotGap = 10;
-        int slotX = px + panelW - slotSize - 12;
+        int slotX = px + panelW - slotSize - 10;
         int slotY = py + 36;
 
-        int listX = px + 10;
-        int listY = py + 34;
+        int contentTop = filterY + EQUIP_FILTER_BAR_H + 6;
+        int statsH = EQUIP_STATS_H;
+        int statsY = py + panelH - statsH - 6;
+        int contentH = statsY - contentTop - 6;
+
+        int listX = px + 8;
+        int listY = contentTop;
         int listW = EQUIP_LIST_W;
-        int listH = panelH - 48;
+        int listH = contentH;
         g.setColor(new Color(8, 6, 4, 180));
         g.fillRoundRect(listX, listY, listW, listH, 4, 4);
         g.setColor(new Color(100, 75, 40));
         g.drawRoundRect(listX, listY, listW, listH, 4, 4);
 
-        drawFilterBar(g, ctx, listX, listY, listW);
-
-        int sectionY = listY + EQUIP_FILTER_BAR_H + 6;
+        int sectionY = listY + 6;
         String section = ctx.ui().equipmentFilter == EquipmentFilter.ALL
             ? "БРОНЯ"
             : ctx.ui().equipmentFilter.sectionLabel.toUpperCase(Locale.ROOT);
@@ -103,11 +106,7 @@ public final class ShopEquipmentOverlay {
         g.setColor(new Color(90, 68, 36, 120));
         g.drawLine(listX + 6, itemsTop, listX + listW - 6, itemsTop);
 
-        int statsW = EQUIP_STATS_W;
-        int statsH = EQUIP_STATS_H;
-        int statsX = listX + EQUIP_STATS_PAD;
-        int statsY = listY + listH - statsH - EQUIP_STATS_PAD;
-        int gridBottom = statsY - 4;
+        int gridBottom = listY + listH - 6;
 
         List<Armour> owned = EquipmentArmourList.filter(
             ctx.presenter().model().ownedArmour(), ctx.ui().equipmentFilter);
@@ -168,23 +167,13 @@ public final class ShopEquipmentOverlay {
                 listX + 10, gridY0 + 12, new Color(130, 145, 165));
         }
 
-        g.setColor(new Color(10, 7, 4, 210));
-        g.fillRoundRect(statsX, statsY, statsW, statsH, 4, 4);
-        g.setColor(new Color(88, 148, 210, 160));
-        g.drawRoundRect(statsX, statsY, statsW, statsH, 4, 4);
-        drawEquipmentStats(g, ctx, statsX, statsY, statsW, statsH,
-            ctx.presenter().model().equippedStatPreview());
-
         int portraitX = listX + listW + 8;
-        int portraitY = py + 30;
-        int portraitW = slotX - portraitX - 10;
-        int portraitH = py + panelH - portraitY - 8;
+        int portraitY = contentTop;
+        int portraitW = slotX - portraitX - 8;
+        int portraitH = contentH;
         g.setColor(new Color(6, 4, 2, 160));
         g.fillRoundRect(portraitX - 4, portraitY - 4, portraitW + 8, portraitH + 8, 6, 6);
-        if (ctx.assets().geraltPortraitShop() != null) {
-            sprites.drawScaledSprite(g, ctx.assets().geraltPortraitShop(), portraitX, portraitY, portraitW, portraitH, true);
-        }
-        drawEquippedArmourHints(g, ctx, portraitX, portraitY, portraitW, portraitH);
+        drawPortraitFit(g, sprites, ctx.assets().geraltPortraitShop(), portraitX, portraitY, portraitW, portraitH);
 
         ShopEquipSlot[] slots = ShopEquipSlot.values();
         for (int i = 0; i < slots.length; i++) {
@@ -227,6 +216,13 @@ public final class ShopEquipmentOverlay {
                 new Color(170, 140, 90));
         }
 
+        int statsX = px + EQUIP_STATS_PAD_X;
+        int statsW = panelW - EQUIP_STATS_PAD_X * 2;
+        g.setColor(new Color(90, 68, 36, 100));
+        g.drawLine(statsX, statsY - 2, statsX + statsW, statsY - 2);
+        drawEquipmentStats(g, ctx, statsX, statsY, statsW, statsH,
+            ctx.presenter().model().equippedStatPreview());
+
         if (tooltipArmour == null && ctx.ui().equipmentHoveredSlot >= 0) {
             ShopEquipSlot slot = ShopEquipSlot.values()[ctx.ui().equipmentHoveredSlot];
             tooltipArmour = ctx.presenter().model().getEquipped(slot);
@@ -248,67 +244,22 @@ public final class ShopEquipmentOverlay {
         g.setComposite(prev);
     }
 
-    /**
-     * Временная визуализация надетой брони на портрете.
-     * Полный paperdoll — отдельные PNG-слои (торс/ноги/перчатки/сапоги) по школам или тонирование зон.
-     */
-    private static void drawEquippedArmourHints(Graphics2D g, ShopOverlayContext ctx,
-                                               int px, int py, int pw, int ph) {
-        ShopModel model = ctx.presenter().model();
-        Composite saved = g.getComposite();
-        Object interp = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
-        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
-
-        drawSlotZone(g, px + pw / 2 - 26, py + Math.round(ph * 0.17f), 52, Math.round(ph * 0.24f),
-            model.getEquipped(ShopEquipSlot.CHEST) != null);
-        drawSlotZone(g, px + pw / 2 - 22, py + Math.round(ph * 0.36f), 44, Math.round(ph * 0.12f),
-            model.getEquipped(ShopEquipSlot.GLOVES) != null);
-        drawSlotZone(g, px + pw / 2 - 24, py + Math.round(ph * 0.50f), 48, Math.round(ph * 0.22f),
-            model.getEquipped(ShopEquipSlot.LEGS) != null);
-        drawSlotZone(g, px + pw / 2 - 20, py + Math.round(ph * 0.74f), 40, Math.round(ph * 0.14f),
-            model.getEquipped(ShopEquipSlot.BOOTS) != null);
-
-        drawArmourHintAt(g, ctx, model.getEquipped(ShopEquipSlot.CHEST),
-            px + pw / 2 - 20, py + Math.round(ph * 0.24f), 40, 0.62f);
-        drawArmourHintAt(g, ctx, model.getEquipped(ShopEquipSlot.GLOVES),
-            px + pw / 2 - 16, py + Math.round(ph * 0.38f), 32, 0.55f);
-        drawArmourHintAt(g, ctx, model.getEquipped(ShopEquipSlot.LEGS),
-            px + pw / 2 - 18, py + Math.round(ph * 0.54f), 36, 0.58f);
-        drawArmourHintAt(g, ctx, model.getEquipped(ShopEquipSlot.BOOTS),
-            px + pw / 2 - 14, py + Math.round(ph * 0.78f), 28, 0.60f);
-
-        g.setComposite(saved);
-        if (interp != null) {
-            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, interp);
-        }
-    }
-
-    private static void drawSlotZone(Graphics2D g, int x, int y, int w, int h, boolean equipped) {
-        if (!equipped) {
+    private static void drawPortraitFit(Graphics2D g, SpriteCallbacks sprites, BufferedImage img,
+                                        int x, int y, int w, int h) {
+        if (img == null || sprites == null || w <= 0 || h <= 0) {
             return;
         }
-        Composite prev = g.getComposite();
-        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.22f));
-        g.setColor(new Color(120, 190, 255));
-        g.fillRoundRect(x, y, w, h, 6, 6);
-        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.55f));
-        g.setColor(new Color(200, 175, 90));
-        g.drawRoundRect(x, y, w - 1, h - 1, 6, 6);
-        g.setComposite(prev);
-    }
-
-    private static void drawArmourHintAt(Graphics2D g, ShopOverlayContext ctx, Armour armour,
-                                         int x, int y, int size, float alpha) {
-        if (armour == null) {
+        int iw = img.getWidth();
+        int ih = img.getHeight();
+        if (iw <= 0 || ih <= 0) {
             return;
         }
-        ShopCategory cat = EquipmentArmourList.categoryFor(armour);
-        BufferedImage icon = ctx.armourIcons().iconForArmour(armour, cat, size);
-        if (icon == null) {
-            return;
-        }
-        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
-        g.drawImage(icon, x, y, size, size, null);
+        float scale = Math.min(w / (float) iw, h / (float) ih);
+        int dw = Math.max(1, Math.round(iw * scale));
+        int dh = Math.max(1, Math.round(ih * scale));
+        int dx = x + (w - dw) / 2;
+        int dy = y + (h - dh) / 2;
+        sprites.drawScaledSprite(g, img, dx, dy, dw, dh, true);
     }
 
     private static void drawFilterBar(Graphics2D g, ShopOverlayContext ctx, int listX, int listY, int listW) {
@@ -354,8 +305,6 @@ public final class ShopEquipmentOverlay {
 
     private static void drawEquipmentStats(Graphics2D g, ShopOverlayContext ctx, int x, int y, int w, int h,
                                            ShopModel.StatPreview preview) {
-        ShopAssetCache assets = ctx.assets();
-        ShopStatBarRenderer.draw(g, x, y, w, h, preview,
-            assets.statVialEmpty(), assets.statVialOverlay(), assets.statVialEndCap(), ctx.ui().tick);
+        ShopStatBarRenderer.drawEquipmentStrip(g, x, y, w, h, preview, ctx.ui().tick);
     }
 }

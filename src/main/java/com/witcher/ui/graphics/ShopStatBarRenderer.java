@@ -74,6 +74,49 @@ public final class ShopStatBarRenderer {
         }
     }
 
+    /** Горизонтальные колбочки без PNG-рамки — полоса внизу экрана экипировки. */
+    public static void drawEquipmentStrip(Graphics2D g, int x, int y, int w, int h,
+                                          ShopModel.StatPreview preview, int animTick) {
+        drawCardText(g);
+        int fontSize = 7;
+        g.setFont(GameFonts.get().uiBold(fontSize));
+        FontMetrics fm = g.getFontMetrics();
+
+        int labelW = 24;
+        int barH = 9;
+        int rowH = Math.max(18, h / 3);
+        int startY = y + 4;
+        String[] labels = {"Защита", "Выносл.", "Знаки"};
+        Color[] colors = {
+            new Color(210, 52, 58),
+            new Color(48, 195, 108),
+            new Color(62, 138, 235)
+        };
+
+        for (int i = 0; i < preview.rows().length; i++) {
+            ShopModel.StatRow row = preview.rows()[i];
+            int ry = startY + i * rowH;
+            drawOutlinedText(g, labels[i], x + 2, ry + fm.getAscent(), new Color(185, 175, 155));
+            int barX = x + labelW;
+            int barW = Math.max(8, w - labelW - 6);
+            int barY = ry + fm.getHeight() - barH + 1;
+            int baseValue = row.value() - row.delta();
+            Shape savedClip = g.getClip();
+            g.clipRect(barX, barY, barW, barH);
+            drawLiquidComparison(g, barX, barY, barW, barH, colors[i], baseValue, row.value(), row.max(),
+                animTick, i);
+            g.setClip(savedClip);
+            g.setColor(new Color(55, 42, 28, 180));
+            g.drawRoundRect(barX, barY, barW, barH, barH, barH);
+
+            String delta = formatDelta(row.delta());
+            if (!delta.isEmpty()) {
+                int valueX = barX + barW - fm.stringWidth(delta) - 2;
+                drawOutlinedText(g, delta, valueX, barY + barH - 2, DELTA_YELLOW);
+            }
+        }
+    }
+
     /** Узкая колонка колбочек справа на экране экипировки. */
     public static void drawEquipmentCompact(Graphics2D g, int x, int y, int w, int h,
                                             ShopModel.StatPreview preview,

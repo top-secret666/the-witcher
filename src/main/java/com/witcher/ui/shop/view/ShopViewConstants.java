@@ -68,20 +68,19 @@ public final class ShopViewConstants {
     public static final int INVENTORY_PANEL_H = 238;
     public static final int INVENTORY_POUCH_ICON = 32;
     public static final int INVENTORY_POUCH_LARGE = 96;
-    public static final int EQUIP_MARGIN = 4;
-    public static final int EQUIP_FILTER_ICON = 24;
-    public static final int EQUIP_FILTER_GAP = 3;
-    public static final int EQUIP_FILTER_BAR_H = 30;
-    public static final int EQUIP_LIST_HEADER_H = 14;
+    public static final int EQUIP_MARGIN = 2;
+    public static final int EQUIP_FILTER_ICON = 22;
+    public static final int EQUIP_FILTER_GAP = 4;
+    public static final int EQUIP_FILTER_BAR_H = 28;
+    public static final int EQUIP_LIST_HEADER_H = 12;
     /** Сетка иконок в инвентаре экипировки (без текста). */
     public static final int EQUIP_GRID_COLS = 4;
-    public static final int EQUIP_GRID_CELL = 28;
-    public static final int EQUIP_GRID_ICON = 24;
-    public static final int EQUIP_LIST_W = EQUIP_GRID_COLS * EQUIP_GRID_CELL + 12;
-    /** Узкие колбочки внизу левой панели инвентаря. */
-    public static final int EQUIP_STATS_W = 88;
-    public static final int EQUIP_STATS_H = 94;
-    public static final int EQUIP_STATS_PAD = 6;
+    public static final int EQUIP_GRID_CELL = 30;
+    public static final int EQUIP_GRID_ICON = 26;
+    public static final int EQUIP_LIST_W = EQUIP_GRID_COLS * EQUIP_GRID_CELL + 10;
+    /** Полоса колбочек внизу окна экипировки (на всю ширину панели). */
+    public static final int EQUIP_STATS_H = 68;
+    public static final int EQUIP_STATS_PAD_X = 10;
 
     public static final int GRID_COLS = 5;
     public static final int TOP_ROW_COLS = 4;
