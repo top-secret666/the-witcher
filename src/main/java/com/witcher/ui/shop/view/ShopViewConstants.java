@@ -66,12 +66,14 @@ public final class ShopViewConstants {
     public static final int CATALOG_COIN_SIZE = 8;
 
     /** Мини-иконки статов в строках каталога. */
-    public static final int STAT_ROW_ICON_SIZE = 8;
+    public static final int STAT_ROW_ICON_SIZE = 9;
     /** Иконки в легенде статов под каталогом. */
-    public static final int STAT_LEGEND_ICON_SIZE = 10;
+    public static final int STAT_LEGEND_ICON_SIZE = 11;
 
     /** Запекание LibGDX: 2× слота (Renderer pixelScale=2). */
     public static final int HUD_ICON_BAKE_SCALE = 2;
+    /** Стат-иконки мельче HUD — запекаем в 4× для чёткости при даунскейле. */
+    public static final int STAT_ICON_BAKE_SCALE = 4;
 
     public static int hudIconBakePx(int slotW, int slotH) {
         return Math.max(slotW, slotH) * HUD_ICON_BAKE_SCALE;
@@ -82,7 +84,7 @@ public final class ShopViewConstants {
     }
 
     public static int statIconBakePx() {
-        return Math.max(STAT_ROW_ICON_SIZE, STAT_LEGEND_ICON_SIZE) * HUD_ICON_BAKE_SCALE;
+        return Math.max(STAT_ROW_ICON_SIZE, STAT_LEGEND_ICON_SIZE) * STAT_ICON_BAKE_SCALE;
     }
 
     /** Текст поверх CRT-фильтра — читаемость без «дробления». */
