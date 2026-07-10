@@ -33,10 +33,10 @@ public final class ShopViewConstants {
 
     public static final int CATALOG_PANEL_GAP_ABOVE_BUY = 10;
     /** Правая панель списка товаров в режиме категории. */
-    public static final int CATALOG_DETAIL_PANEL_W = 317;
-    public static final int CATALOG_DETAIL_PANEL_H = 246;
+    public static final int CATALOG_DETAIL_PANEL_W = 318;
+    public static final int CATALOG_DETAIL_PANEL_H = 250;
     public static final int CATALOG_DETAIL_PANEL_Y = 36;
-    public static final int CATALOG_DETAIL_PANEL_X_MARGIN = 2;
+    public static final int CATALOG_DETAIL_PANEL_X_MARGIN = 1;
     /** Левая карточка товара (shop_card_back) в режиме категории. */
     public static final int CATEGORY_OPEN_CARD_X = 2;
     public static final int CATEGORY_OPEN_CARD_Y = 36;
@@ -52,7 +52,7 @@ public final class ShopViewConstants {
     public static final int CATALOG_DETAIL_REF_W = 292;
     public static final int CATALOG_DETAIL_REF_H = 232;
     /** Горизонтальный отступ золотой рамки (по арту detail panel). */
-    public static final int CATALOG_FRAME_INSET_X_REF = 28;
+    public static final int CATALOG_FRAME_INSET_X_REF = 33;
     /** Верх списка товаров от верха панели (по арту). */
     public static final int CATALOG_FRAME_LIST_TOP_REF = 18;
     /** Легенда статов — под кнопкой «Купить». */
