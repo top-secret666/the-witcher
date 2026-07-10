@@ -259,7 +259,7 @@ public final class ShopPresenter {
     }
 
     public ShopCategoryAnimator categoryAnimator(ShopLayout layout) {
-        Rectangle to = layout.leftCategoryCardSlot(metrics.detailPanelW());
+        Rectangle to = layout.leftCategoryCardSlot();
         float t = categoryAnimProgress();
         if (t >= 1f && !ui.categoryClosing) {
             return ShopCategoryAnimator.open(to.x, to.y, to.width, to.height);

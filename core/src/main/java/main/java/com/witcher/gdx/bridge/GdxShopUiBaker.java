@@ -6,6 +6,8 @@ import main.java.com.witcher.gdx.graphics.PixelTextures;
 import main.java.com.witcher.ui.shop.bridge.ShopBakeKeys;
 import main.java.com.witcher.ui.shop.view.LavkaAssetPaths;
 
+import static main.java.com.witcher.ui.shop.view.ShopViewConstants.CATEGORY_OPEN_CARD_H;
+import static main.java.com.witcher.ui.shop.view.ShopViewConstants.CATEGORY_OPEN_CARD_W;
 import static main.java.com.witcher.ui.shop.view.ShopViewConstants.HUD_CROWN_H;
 import static main.java.com.witcher.ui.shop.view.ShopViewConstants.HUD_CROWN_W;
 import static main.java.com.witcher.ui.shop.view.ShopViewConstants.HUD_DUKE_SEAL_H;
@@ -36,8 +38,8 @@ public final class GdxShopUiBaker {
     public static final int STAT_ICON_PX = statIconBakePx();
 
     /** Размер карточки в режиме категории (как {@code ShopLayout#leftCategoryCardSlot}). */
-    public static final int CATEGORY_CARD_W = 166;
-    public static final int CATEGORY_CARD_H = 249;
+    public static final int CATEGORY_CARD_W = CATEGORY_OPEN_CARD_W;
+    public static final int CATEGORY_CARD_H = CATEGORY_OPEN_CARD_H;
 
     private GdxShopUiBaker() {
     }

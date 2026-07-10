@@ -11,7 +11,8 @@ import static main.java.com.witcher.ui.shop.view.ShopViewConstants.CATALOG_COIN_
 import static main.java.com.witcher.ui.shop.view.ShopViewConstants.TOP_ROW_COLS;
 import static main.java.com.witcher.ui.shop.view.ShopViewConstants.CATALOG_DETAIL_PANEL_H;
 import static main.java.com.witcher.ui.shop.view.ShopViewConstants.CATALOG_DETAIL_PANEL_W;
-import static main.java.com.witcher.ui.shop.view.ShopViewConstants.CATALOG_DETAIL_PANEL_W;
+import static main.java.com.witcher.ui.shop.view.ShopViewConstants.CATEGORY_OPEN_CARD_H;
+import static main.java.com.witcher.ui.shop.view.ShopViewConstants.CATEGORY_OPEN_CARD_W;
 import static main.java.com.witcher.ui.shop.view.ShopViewConstants.catalogRowContentW;
 import static main.java.com.witcher.ui.shop.view.ShopViewConstants.HUD_CROWN_H;
 import static main.java.com.witcher.ui.shop.view.ShopViewConstants.HUD_CROWN_W;
@@ -38,8 +39,6 @@ public final class ShopAssetCache implements ShopRuntimeAssets {
     private static final String ICONS_BAKED = LavkaAssetPaths.SWING_ICONS_BAKED;
     private static final String UI_SRC = LavkaAssetPaths.SWING_UI_SRC;
     /** Размер оборота карточки в режиме категории (см. {@code ShopLayout#leftCategoryCardSlot}). */
-    private static final int CATEGORY_CARD_W = 166;
-    private static final int CATEGORY_CARD_H = 249;
 
     private static ShopAssetCache instance;
 
@@ -147,7 +146,7 @@ public final class ShopAssetCache implements ShopRuntimeAssets {
         cardFrontScaled = loadSized(UI + "shop_card_front.png", cardW, cardH,
             BASE + "ui/shop_card_front.png", false);
         cardBackScaled = loadGdxUi(ShopUiAssetsFactory.KEY_CARD_BACK,
-            loadSharpUi("shop_card_back.png", CATEGORY_CARD_W, CATEGORY_CARD_H));
+            loadSharpUi("shop_card_back.png", CATEGORY_OPEN_CARD_W, CATEGORY_OPEN_CARD_H));
         cardHoverScaled = loadSized(UI + "shop_card_hover.png", cardW, cardH,
             BASE + "ui/shop_card_hover.png", false);
         cardSelectedScaled = loadSized(UI + "shop_card_selected.png", cardW, cardH,

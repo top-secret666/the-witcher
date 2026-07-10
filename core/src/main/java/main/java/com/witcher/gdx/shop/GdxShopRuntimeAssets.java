@@ -15,7 +15,6 @@ import static main.java.com.witcher.ui.shop.view.ShopViewConstants.BOTTOM_ROW_CO
 import static main.java.com.witcher.ui.shop.view.ShopViewConstants.TOP_ROW_COLS;
 import static main.java.com.witcher.ui.shop.view.ShopViewConstants.CATALOG_DETAIL_PANEL_H;
 import static main.java.com.witcher.ui.shop.view.ShopViewConstants.CATALOG_DETAIL_PANEL_W;
-import static main.java.com.witcher.ui.shop.view.ShopViewConstants.CATALOG_DETAIL_PANEL_W;
 import static main.java.com.witcher.ui.shop.view.ShopViewConstants.catalogRowContentW;
 import static main.java.com.witcher.ui.shop.view.ShopViewConstants.DIALOG_TEXT_ZONE;
 import static main.java.com.witcher.ui.shop.view.ShopViewConstants.PANEL_BOTTOM_MARGIN;

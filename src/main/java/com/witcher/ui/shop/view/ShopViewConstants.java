@@ -33,8 +33,16 @@ public final class ShopViewConstants {
 
     public static final int CATALOG_PANEL_GAP_ABOVE_BUY = 10;
     /** Правая панель списка товаров в режиме категории. */
-    public static final int CATALOG_DETAIL_PANEL_W = 310;
-    public static final int CATALOG_DETAIL_PANEL_H = 238;
+    public static final int CATALOG_DETAIL_PANEL_W = 308;
+    public static final int CATALOG_DETAIL_PANEL_H = 252;
+    public static final int CATALOG_DETAIL_PANEL_Y = 46;
+    public static final int CATALOG_DETAIL_PANEL_X_MARGIN = 8;
+    /** Левая карточка товара (shop_card_back) в режиме категории. */
+    public static final int CATEGORY_OPEN_CARD_X = 4;
+    public static final int CATEGORY_OPEN_CARD_Y = 8;
+    public static final int CATEGORY_OPEN_CARD_GAP = 6;
+    public static final int CATEGORY_OPEN_CARD_W = 154;
+    public static final int CATEGORY_OPEN_CARD_H = 231;
     /** Эталон арта {@code shop_catalog_panel_detail} для масштабирования отступов. */
     public static final int CATALOG_DETAIL_REF_W = 292;
     public static final int CATALOG_DETAIL_REF_H = 232;
@@ -45,7 +53,7 @@ public final class ShopViewConstants {
 
     public static final int PRODUCT_CARD_INSET_X = 7;
     public static final int PRODUCT_CARD_INSET_TOP = 10;
-    public static final int PRODUCT_CARD_INSET_BOTTOM = 24;
+    public static final int PRODUCT_CARD_INSET_BOTTOM = 28;
     public static final int PRODUCT_CARD_ICON_TEXT_GAP = 5;
     public static final int PRODUCT_CARD_NAME_PRICE_GAP = 5;
 
@@ -109,6 +117,10 @@ public final class ShopViewConstants {
 
     public static int catalogRowX(int panelX, int panelW) {
         return panelX + catalogFrameInsetX(panelW);
+    }
+
+    public static int catalogDetailPanelX() {
+        return VIRTUAL_W - CATALOG_DETAIL_PANEL_W - CATALOG_DETAIL_PANEL_X_MARGIN;
     }
 
     /** Текст поверх CRT-фильтра — читаемость без «дробления». */

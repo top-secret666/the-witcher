@@ -85,25 +85,20 @@ public final class ShopLayout {
         return new Point(x, y);
     }
 
-    public Rectangle leftCategoryCardSlot(int detailPanelW) {
-        int catalogX = VIRTUAL_W - detailPanelW - 8;
-        int gap = 10;
-        int x = 4;
-        int w = catalogX - gap - x;
-        int h = w * 81 / 54;
+    public Rectangle leftCategoryCardSlot() {
+        int w = CATEGORY_OPEN_CARD_W;
+        int h = CATEGORY_OPEN_CARD_H;
         int maxH = dialogTop - 12;
         if (h > maxH) {
             h = maxH;
-            w = h * 54 / 81;
+            w = Math.round(h * (float) CATEGORY_OPEN_CARD_W / CATEGORY_OPEN_CARD_H);
         }
-        int y = 8;
-        return new Rectangle(x, y, w, h);
+        return new Rectangle(CATEGORY_OPEN_CARD_X, CATEGORY_OPEN_CARD_Y, w, h);
     }
 
     public Rectangle detailListPanelSlot(int detailW, int detailH) {
-        int x = VIRTUAL_W - detailW - 8;
-        int y = 50;
-        return new Rectangle(x, y, detailW, detailH);
+        int x = catalogDetailPanelX();
+        return new Rectangle(x, CATALOG_DETAIL_PANEL_Y, detailW, detailH);
     }
 
     public int categoryCounterY() {
