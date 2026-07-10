@@ -78,9 +78,10 @@ public final class ShopViewConstants {
     public static final int EQUIP_GRID_CELL = 30;
     public static final int EQUIP_GRID_ICON = 26;
     public static final int EQUIP_LIST_W = EQUIP_GRID_COLS * EQUIP_GRID_CELL + 10;
-    /** Полоса колбочек внизу окна экипировки (на всю ширину панели). */
-    public static final int EQUIP_STATS_H = 68;
-    public static final int EQUIP_STATS_PAD_X = 10;
+    /** Колбочки со стеклом — узкая колонка справа под слотами. */
+    public static final int EQUIP_STATS_W = 82;
+    public static final int EQUIP_STATS_H = 96;
+    public static final int EQUIP_RIGHT_COL_W = 52;
 
     public static final int GRID_COLS = 5;
     public static final int TOP_ROW_COLS = 4;
