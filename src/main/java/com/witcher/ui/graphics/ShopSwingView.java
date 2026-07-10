@@ -114,7 +114,7 @@ public final class ShopSwingView implements ShopView {
             drawCharacter(g, sw, sh, dukeDraw, false, layout.dialogTop, portraitAlpha);
         }
 
-        if (!categoryMode) {
+        if (!categoryMode && !ui.equipmentOpen && !ui.inventoryOpen) {
             drawHud(g, layout, reveal.hudAlpha, reveal.hudSlideY);
         }
 
@@ -122,7 +122,7 @@ public final class ShopSwingView implements ShopView {
             ShopCategoryAnimator catAnim = presenter.categoryAnimator(layout);
             drawCategoryView(g, layout, reveal, catAnim, mouseX, mouseY);
             drawCornerWallet(g, 1f);
-        } else {
+        } else if (!ui.equipmentOpen && !ui.inventoryOpen) {
             drawCards(g, layout, reveal);
         }
 
@@ -135,7 +135,7 @@ public final class ShopSwingView implements ShopView {
                 DialogBoxRenderer.DUKE_COLOR, 1f);
         }
 
-        if (!presenter.model().needsWalletReveal()) {
+        if (!presenter.model().needsWalletReveal() && !ui.equipmentOpen && !ui.inventoryOpen) {
             drawInventoryBag(g, 1f);
         }
 
@@ -181,12 +181,12 @@ public final class ShopSwingView implements ShopView {
                 ShopCategoryAnimator catAnim = presenter.categoryAnimator(layout);
                 drawCategoryView(g, layout, reveal, catAnim, mouseX, mouseY);
                 drawCornerWallet(g, 1f);
-            } else {
+            } else if (!ui.equipmentOpen && !ui.inventoryOpen) {
                 drawHud(g, layout, reveal.hudAlpha, reveal.hudSlideY);
                 drawCards(g, layout, reveal);
             }
 
-            if (!presenter.model().needsWalletReveal()) {
+            if (!presenter.model().needsWalletReveal() && !ui.equipmentOpen && !ui.inventoryOpen) {
                 int bagX = INVENTORY_BAG_MARGIN;
                 int bagY = sh - INVENTORY_BAG_MARGIN - INVENTORY_BAG_SIZE;
                 drawBagWalletAmount(g, bagX, bagY, INVENTORY_BAG_SIZE, 1f);
