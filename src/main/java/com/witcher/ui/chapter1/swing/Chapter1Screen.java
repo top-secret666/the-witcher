@@ -5,9 +5,13 @@ import main.java.com.witcher.chapter1.Chapter1Phase;
 import main.java.com.witcher.chapter1.battle.BattleOutcome;
 import main.java.com.witcher.chapter1.battle.BattleVnController;
 import main.java.com.witcher.chapter1.cutscene.CutsceneId;
+import main.java.com.witcher.chapter1.cutscene.CutsceneCatalog;
 import main.java.com.witcher.chapter1.ending.EscapeEnding;
-import main.java.com.witcher.chapter1.ending.EscapeResolver;
 import main.java.com.witcher.chapter1.hack.HackConsoleModel;
+import main.java.com.witcher.chapter1.shop.Chapter1ShopBridge;
+import main.java.com.witcher.chapter1.vn.DukeDialogController;
+import main.java.com.witcher.chapter1.vn.EndingVnController;
+import main.java.com.witcher.chapter1.vn.VnChoiceLayout;
 import main.java.com.witcher.chapter1.vn.VnSceneState;
 import main.java.com.witcher.ui.graphics.DialogBoxRenderer;
 import main.java.com.witcher.ui.graphics.GameFonts;
@@ -16,7 +20,9 @@ import main.java.com.witcher.ui.shop.swing.ShopScreen;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
+import java.util.List;
 
 /**
  * Фасад главы 1 для {@link main.java.com.witcher.ui.graphics.GameWindow}.
@@ -25,12 +31,17 @@ import java.awt.image.BufferedImage;
 public final class Chapter1Screen {
 
   private final Chapter1Director director;
+  private final Chapter1ShopBridge shopBridge;
   private final ShopModel shopModel;
   private final ShopScreen shopScreen;
   private final CutscenePlayer cutscenePlayer = new CutscenePlayer();
+  private final CutscenePlayer doorLoopPlayer = new CutscenePlayer();
 
   private BattleVnController battle;
+  private EndingVnController ending;
+  private DukeDialogController dukeDialog = new DukeDialogController();
   private HackConsoleModel hack;
+  private List<VnChoiceLayout.ChoiceRect> choiceRects = List.of();
   private boolean exitRequested;
 
   public Chapter1Screen() {
@@ -40,7 +51,9 @@ public final class Chapter1Screen {
   public Chapter1Screen(Chapter1Director director, ShopModel shopModel) {
     this.director = director;
     this.shopModel = shopModel;
-    this.shopScreen = new ShopScreen(shopModel);
+    this.shopBridge = new Chapter1ShopBridge(director.session(), director);
+    this.shopScreen = new ShopScreen(shopModel, shopBridge);
+    wireBridgeListeners();
   }
 
   public Chapter1Director director() {
@@ -59,15 +72,100 @@ public final class Chapter1Screen {
   public void update(int mouseX, int mouseY, boolean clicked, boolean escPressed, int wheelNotches) {
     switch (director.phase()) {
       case CUTSCENE -> updateCutscene(clicked);
-      case SHOP -> shopScreen.update(mouseX, mouseY, clicked, escPressed, wheelNotches);
-      case VN_BATTLE -> updateBattle(clicked);
+      case SHOP -> {
+        if (dukeDialog.isActive()) {
+          updateDukeDialog(mouseX, mouseY, clicked);
+        } else {
+          shopScreen.update(mouseX, mouseY, clicked, escPressed, wheelNotches);
+          shopBridge.fireBattleIfPendingAndIdle(shopScreen.presenter().isChapterEventIdle());
+          maybeStartDukeDialog();
+        }
+      }
+      case VN_BATTLE -> updateBattle(mouseX, mouseY, clicked);
+      case VN_DIALOG -> updateDukeDialog(mouseX, mouseY, clicked);
       case HACK -> updateHack(escPressed);
-      case ENDING -> updateEnding(clicked);
-      case VN_DIALOG -> { }
+      case ENDING -> updateEnding(mouseX, mouseY, clicked);
     }
     if (escPressed && director.phase() == Chapter1Phase.SHOP) {
       exitRequested = shopScreen.isExitRequested();
     }
+  }
+
+  public void keyPressed(KeyEvent e) {
+    if (e == null) {
+      return;
+    }
+    int code = e.getKeyCode();
+    if (director.phase() == Chapter1Phase.SHOP) {
+      if (isDukeDialogActive() && dukeDialog.scene().waitingForChoice()) {
+        int choice = keyToChoiceIndex(code);
+        if (choice >= 0) {
+          applyDukeChoice(choice);
+        }
+        return;
+      }
+      if (code == KeyEvent.VK_BACK_QUOTE || code == KeyEvent.VK_DEAD_GRAVE) {
+        shopBridge.tryOpenTerminal();
+      } else if (code == KeyEvent.VK_B && e.isControlDown()) {
+        director.requestBattle();
+        startCutsceneIfNeeded();
+      }
+      return;
+    }
+    if (director.phase() == Chapter1Phase.VN_BATTLE && battle != null && battle.scene().waitingForChoice()) {
+      int choice = keyToChoiceIndex(code);
+      if (choice >= 0) {
+        applyBattleChoice(choice);
+      } else if (code == KeyEvent.VK_ENTER || code == KeyEvent.VK_SPACE) {
+        advanceBattleNarration();
+      }
+      return;
+    }
+    if (isDukeDialogActive() && dukeDialog.scene().waitingForChoice()) {
+      int choice = keyToChoiceIndex(code);
+      if (choice >= 0) {
+        applyDukeChoice(choice);
+      }
+      return;
+    }
+    if (director.phase() == Chapter1Phase.ENDING && ending != null) {
+      if (ending.scene().waitingForChoice()) {
+        int choice = keyToChoiceIndex(code);
+        if (choice >= 0) {
+          applyEndingChoice(choice);
+        }
+      } else if (code == KeyEvent.VK_ENTER || code == KeyEvent.VK_SPACE) {
+        advanceEnding();
+      }
+      return;
+    }
+    if (director.phase() == Chapter1Phase.VN_BATTLE
+        && (code == KeyEvent.VK_ENTER || code == KeyEvent.VK_SPACE)) {
+      advanceBattleNarration();
+      return;
+    }
+    if (director.phase() == Chapter1Phase.HACK && hack != null) {
+      if (code == KeyEvent.VK_ENTER) {
+        handleHackSubmit();
+      } else if (code == KeyEvent.VK_BACK_SPACE) {
+        hack.backspace();
+      }
+    }
+  }
+
+  public void keyTyped(KeyEvent e) {
+    if (e == null || director.phase() != Chapter1Phase.HACK || hack == null) {
+      return;
+    }
+    char c = e.getKeyChar();
+    if (c == '\b' || c == KeyEvent.CHAR_UNDEFINED) {
+      return;
+    }
+    if (c == '\n' || c == '\r') {
+      handleHackSubmit();
+      return;
+    }
+    hack.appendChar(c);
   }
 
   public void render(BufferedImage screen, int mouseX, int mouseY) {
@@ -85,7 +183,18 @@ public final class Chapter1Screen {
           g.dispose();
         }
       }
-      case SHOP, HACK -> shopScreen.render(screen, mouseX, mouseY);
+      case SHOP -> {
+        shopScreen.render(screen, mouseX, mouseY);
+        if (isDukeDialogActive()) {
+          Graphics2D g = screen.createGraphics();
+          try {
+            renderVnOverlay(g, screen.getWidth(), screen.getHeight());
+          } finally {
+            g.dispose();
+          }
+        }
+      }
+      case HACK -> shopScreen.render(screen, mouseX, mouseY);
       case VN_BATTLE, VN_DIALOG, ENDING -> {
         Graphics2D g = screen.createGraphics();
         try {
@@ -101,7 +210,11 @@ public final class Chapter1Screen {
       try {
         GlitchOverlayRenderer.draw(overlay, sw, sh, director.session());
         if (director.phase() == Chapter1Phase.HACK) {
+          doorLoopPlayer.render(overlay, sw, sh);
           renderHackOverlay(overlay, sw, sh);
+        }
+        if (director.phase() == Chapter1Phase.SHOP || director.phase() == Chapter1Phase.HACK) {
+          Chapter1SessionHud.draw(overlay, sw, director.session());
         }
       } finally {
         overlay.dispose();
@@ -113,8 +226,7 @@ public final class Chapter1Screen {
     if (director.phase() == Chapter1Phase.SHOP || director.phase() == Chapter1Phase.HACK) {
       shopScreen.renderTextOverlay(g, mouseX, mouseY);
     }
-    if (director.phase() == Chapter1Phase.VN_BATTLE
-        || director.phase() == Chapter1Phase.ENDING) {
+    if (hasActiveChoices()) {
       renderVnChoices(g);
     }
   }
@@ -130,6 +242,18 @@ public final class Chapter1Screen {
 
   public boolean isChapterComplete() {
     return director.isChapterComplete();
+  }
+
+  private void wireBridgeListeners() {
+    shopBridge.setOnBattleRequested(() -> {
+      director.requestBattle();
+      startCutsceneIfNeeded();
+    });
+    shopBridge.setOnTerminalRequested(() -> {
+      director.requestHackTerminal();
+      onPhaseEntered();
+    });
+    shopBridge.setOnPurchaseHook(() -> dukeDialog.onPrisonIncreased(director.session()));
   }
 
   private void startCutsceneIfNeeded() {
@@ -169,32 +293,186 @@ public final class Chapter1Screen {
     } else if (director.phase() == Chapter1Phase.VN_BATTLE) {
       battle = new BattleVnController(director.session(), shopModel);
       battle.advanceIntro();
+      refreshChoiceRects();
+    } else if (director.phase() == Chapter1Phase.ENDING) {
+      ending = new EndingVnController(director.session());
+      refreshChoiceRects();
     } else if (director.phase() == Chapter1Phase.HACK) {
       hack = new HackConsoleModel(director.session());
       director.session().registerHackAttempt();
+      String doorPath = CutsceneCatalog.resourcePath(CutsceneId.HACK_DOOR_POUND);
+      if (doorPath != null && Chapter1Director.class.getResource(doorPath) != null) {
+        doorLoopPlayer.start(CutsceneId.HACK_DOOR_POUND);
+      } else {
+        doorLoopPlayer.stop();
+      }
+    } else if (director.phase() == Chapter1Phase.SHOP) {
+      doorLoopPlayer.stop();
+      maybeStartDukeDialog();
+    } else {
+      doorLoopPlayer.stop();
     }
   }
 
-  private void updateBattle(boolean clicked) {
+  private void updateBattle(int mouseX, int mouseY, boolean clicked) {
     if (battle == null) {
       battle = new BattleVnController(director.session(), shopModel);
       battle.advanceIntro();
+      refreshChoiceRects();
       return;
     }
-    VnSceneState scene = battle.scene();
     if (!clicked) {
       return;
     }
-    if (scene.waitingForChoice()) {
-      battle.choose(0);
+    if (battle.scene().waitingForChoice()) {
+      int index = VnChoiceLayout.hitIndex(choiceRects, mouseX, mouseY);
+      if (index >= 0) {
+        applyBattleChoice(index);
+      }
+      return;
+    }
+    advanceBattleNarration();
+  }
+
+  private void updateDukeDialog(int mouseX, int mouseY, boolean clicked) {
+    if (!dukeDialog.isActive() || !clicked) {
+      return;
+    }
+    if (dukeDialog.scene().waitingForChoice()) {
+      int index = VnChoiceLayout.hitIndex(choiceRects, mouseX, mouseY);
+      if (index >= 0) {
+        applyDukeChoice(index);
+      }
+    }
+  }
+
+  private void updateEnding(int mouseX, int mouseY, boolean clicked) {
+    if (ending == null) {
+      ending = new EndingVnController(director.session());
+      refreshChoiceRects();
+      return;
+    }
+    if (!clicked) {
+      return;
+    }
+    if (ending.scene().waitingForChoice()) {
+      int index = VnChoiceLayout.hitIndex(choiceRects, mouseX, mouseY);
+      if (index >= 0) {
+        applyEndingChoice(index);
+      }
+      return;
+    }
+    advanceEnding();
+  }
+
+  private void maybeStartDukeDialog() {
+    if (dukeDialog.isActive()) {
+      return;
+    }
+    if (dukeDialog.pollPending(director.session()) != null) {
+      refreshChoiceRects();
+    }
+  }
+
+  private void applyDukeChoice(int index) {
+    dukeDialog.choose(index, director.session());
+    choiceRects = List.of();
+    if (director.phase() == Chapter1Phase.VN_DIALOG) {
+      director.exitDukeDialog();
+    }
+  }
+
+  private void applyEndingChoice(int index) {
+    ending.choose(index);
+    refreshChoiceRects();
+  }
+
+  private void advanceEnding() {
+    if (ending == null) {
+      return;
+    }
+    if (ending.isDone()) {
+      finishEnding();
+      return;
+    }
+    ending.advance();
+    refreshChoiceRects();
+    if (ending.isDone()) {
+      finishEnding();
+    }
+  }
+
+  private void finishEnding() {
+    EscapeEnding result = ending.resolvedEnding();
+    ending = null;
+    choiceRects = List.of();
+    if (result == EscapeEnding.LOCKED) {
+      director.enterShop();
+      return;
+    }
+    director.resolveEscapeEnding();
+    startCutsceneIfNeeded();
+  }
+
+  private void applyBattleChoice(int index) {
+    battle.choose(index);
+    refreshChoiceRects();
+    if (battle.isFinished()) {
+      onBattleFinished();
+    }
+  }
+
+  private void advanceBattleNarration() {
+    if (battle == null || battle.scene().waitingForChoice()) {
+      return;
     }
     if (battle.isFinished()) {
       onBattleFinished();
       return;
     }
-    if (!battle.scene().waitingForChoice()) {
-      battle.advanceAfterNarration();
+    battle.advanceAfterNarration();
+    refreshChoiceRects();
+  }
+
+  private void refreshChoiceRects() {
+    VnSceneState scene = activeScene();
+    if (scene == null || !scene.waitingForChoice()) {
+      choiceRects = List.of();
+      return;
     }
+    choiceRects = VnChoiceLayout.layout(480, 360, scene.choices());
+  }
+
+  private VnSceneState activeScene() {
+    if (director.phase() == Chapter1Phase.VN_BATTLE && battle != null) {
+      return battle.scene();
+    }
+    if (director.phase() == Chapter1Phase.ENDING && ending != null) {
+      return ending.scene();
+    }
+    if (isDukeDialogActive()) {
+      return dukeDialog.scene();
+    }
+    return null;
+  }
+
+  private boolean isDukeDialogActive() {
+    return dukeDialog.isActive();
+  }
+
+  private boolean hasActiveChoices() {
+    VnSceneState scene = activeScene();
+    return scene != null && scene.waitingForChoice();
+  }
+
+  private static int keyToChoiceIndex(int keyCode) {
+    return switch (keyCode) {
+      case KeyEvent.VK_1 -> 0;
+      case KeyEvent.VK_2 -> 1;
+      case KeyEvent.VK_3 -> 2;
+      case KeyEvent.VK_4 -> 3;
+      default -> -1;
+    };
   }
 
   private void onBattleFinished() {
@@ -204,6 +482,7 @@ public final class Chapter1Screen {
       default -> director.onBattleStunReturnToShop();
     }
     battle = null;
+    choiceRects = List.of();
     startCutsceneIfNeeded();
   }
 
@@ -211,46 +490,70 @@ public final class Chapter1Screen {
     if (hack == null) {
       hack = new HackConsoleModel(director.session());
     }
-    if (hack.tick() || esc) {
+    doorLoopPlayer.tick();
+    if (hack.tick()) {
       director.onHackTimeout();
       hack = null;
+      doorLoopPlayer.stop();
+      return;
+    }
+    if (esc) {
+      director.onHackTimeout();
+      hack = null;
+      doorLoopPlayer.stop();
     }
   }
 
-  private void updateEnding(boolean clicked) {
-    if (!clicked) {
+  private void handleHackSubmit() {
+    if (hack == null) {
       return;
     }
-    EscapeEnding ending = EscapeResolver.resolve(director.session());
-    if (ending == EscapeEnding.LOCKED) {
-      director.enterShop();
-      return;
+    HackConsoleModel.HackResult result = hack.submitLine();
+    if (result.type() == HackConsoleModel.HackResultType.SUCCESS) {
+      director.onHackSuccess();
+      hack = null;
+      doorLoopPlayer.stop();
+      startCutsceneIfNeeded();
+    } else if (result.type() == HackConsoleModel.HackResultType.EXIT) {
+      director.onHackTimeout();
+      hack = null;
+      doorLoopPlayer.stop();
     }
-    director.resolveEscapeEnding();
-    startCutsceneIfNeeded();
   }
 
   private void renderVnScene(Graphics2D g, int sw, int sh) {
     g.setColor(new Color(12, 8, 6));
     g.fillRect(0, 0, sw, sh);
-    if (battle == null) {
+    VnSceneState scene = activeScene();
+    if (scene == null) {
       return;
     }
-    VnSceneState scene = battle.scene();
+    DialogBoxRenderer.drawCompactFramedSpeakerText(
+        g, sw, sh, scene.speaker(), scene.body(), new Color(218, 165, 32), 1f);
+  }
+
+  private void renderVnOverlay(Graphics2D g, int sw, int sh) {
+    g.setColor(new Color(0, 0, 0, 140));
+    g.fillRect(0, 0, sw, sh);
+    VnSceneState scene = activeScene();
+    if (scene == null) {
+      return;
+    }
     DialogBoxRenderer.drawCompactFramedSpeakerText(
         g, sw, sh, scene.speaker(), scene.body(), new Color(218, 165, 32), 1f);
   }
 
   private void renderVnChoices(Graphics2D g) {
-    if (battle == null || !battle.scene().waitingForChoice()) {
+    VnSceneState scene = activeScene();
+    if (scene == null || !scene.waitingForChoice()) {
       return;
     }
-    var choices = battle.scene().choices();
+    var choices = scene.choices();
     g.setFont(GameFonts.get().uiBold(10));
-    g.setColor(new Color(255, 220, 140));
-    int y = g.getClipBounds().height - 24 - choices.size() * 16;
-    for (int i = 0; i < choices.size(); i++) {
-      g.drawString((i + 1) + ". " + choices.get(i).label(), 12, y + i * 16);
+    for (VnChoiceLayout.ChoiceRect rect : choiceRects) {
+      g.setColor(new Color(255, 220, 140));
+      String label = (rect.index() + 1) + ". " + choices.get(rect.index()).label();
+      g.drawString(label, (int) rect.x(), (int) (rect.y() + 12));
     }
   }
 
@@ -272,5 +575,6 @@ public final class Chapter1Screen {
     }
     g.drawString("> " + hack.inputLine() + "_", 20, sh - 40);
     g.drawString("TIME: " + hack.ticksRemaining(), sw - 80, 20);
+    g.drawString("ENTER — выполнить, ESC — выход", 20, sh - 20);
   }
 }

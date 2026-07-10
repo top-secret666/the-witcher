@@ -150,6 +150,7 @@ public class GameWindow {
                 }
 
                 if (chapter1Active) {
+                    chapter1Screen.keyPressed(e);
                     if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
                         shopExitRequested = true;
                     }
@@ -167,6 +168,13 @@ public class GameWindow {
                     menuActivate = true;
                 } else if (code == KeyEvent.VK_ESCAPE) {
                     menuExitRequested = true;
+                }
+            }
+
+            @Override
+            public void keyTyped(KeyEvent e) {
+                if (chapter1Active) {
+                    chapter1Screen.keyTyped(e);
                 }
             }
         });
