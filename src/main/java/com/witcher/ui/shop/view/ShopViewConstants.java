@@ -33,10 +33,10 @@ public final class ShopViewConstants {
 
     public static final int CATALOG_PANEL_GAP_ABOVE_BUY = 10;
     /** Правая панель списка товаров в режиме категории. */
-    public static final int CATALOG_DETAIL_PANEL_W = 314;
+    public static final int CATALOG_DETAIL_PANEL_W = 317;
     public static final int CATALOG_DETAIL_PANEL_H = 246;
     public static final int CATALOG_DETAIL_PANEL_Y = 36;
-    public static final int CATALOG_DETAIL_PANEL_X_MARGIN = 5;
+    public static final int CATALOG_DETAIL_PANEL_X_MARGIN = 2;
     /** Левая карточка товара (shop_card_back) в режиме категории. */
     public static final int CATEGORY_OPEN_CARD_X = 2;
     public static final int CATEGORY_OPEN_CARD_Y = 36;
