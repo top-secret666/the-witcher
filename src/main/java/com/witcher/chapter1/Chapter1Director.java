@@ -94,6 +94,16 @@ public final class Chapter1Director {
     LoopRules.persist(session);
   }
 
+  public void enterDukeDialog() {
+    phase = Chapter1Phase.VN_DIALOG;
+    pendingCutscene = null;
+    cutsceneFinished = false;
+  }
+
+  public void exitDukeDialog() {
+    enterShop();
+  }
+
   /** Герцог зовёт в бой (триггер из лавки — позже). */
   public void requestBattle() {
     queueCutscene(CutsceneId.BATTLE_INTRO);
@@ -118,7 +128,7 @@ public final class Chapter1Director {
       return;
     }
     phase = Chapter1Phase.HACK;
-    pendingCutscene = CutsceneId.HACK_DOOR_POUND;
+    pendingCutscene = null;
     cutsceneFinished = false;
   }
 
