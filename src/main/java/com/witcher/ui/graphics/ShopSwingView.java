@@ -1288,22 +1288,24 @@ public final class ShopSwingView implements ShopView {
         Color nameColor = item.kind == ShopShowcaseItem.Kind.SET_CATALOG
             ? new Color(255, 210, 100) : new Color(245, 230, 190);
 
-        int nameMaxW = categoryGrid ? w - 4 : w - 8;
+        int nameMaxW = categoryGrid ? w - 4 : w - 12;
         int nameFontSize;
+        FontMetrics nameFm;
+        List<String> nameLines;
         if (categoryGrid) {
             nameFontSize = w >= 50 ? 11 : Math.max(9, Math.round(11f * w / 54f));
             g.setFont(fitUiFontToWidth(g, name, nameMaxW, nameFontSize, 8));
-        } else {
-            nameFontSize = h > 200 ? 10 : 9;
-            g.setFont(fitUiFontToWidth(g, name, nameMaxW, nameFontSize, 7));
-        }
-        FontMetrics nameFm = g.getFontMetrics();
-        List<String> nameLines = wrapCardNameLines(nameFm, name, nameMaxW, 2);
-        if (categoryGrid && nameLines.size() == 1
-            && nameFm.stringWidth(nameLines.get(0)) > nameMaxW) {
-            g.setFont(GameFonts.get().uiBold(9));
             nameFm = g.getFontMetrics();
             nameLines = wrapCardNameLines(nameFm, name, nameMaxW, 2);
+            if (nameLines.size() == 1 && nameFm.stringWidth(nameLines.get(0)) > nameMaxW) {
+                g.setFont(GameFonts.get().uiBold(9));
+                nameFm = g.getFontMetrics();
+                nameLines = wrapCardNameLines(nameFm, name, nameMaxW, 2);
+            }
+        } else {
+            nameFontSize = h > 220 ? 10 : 9;
+            nameLines = fitCardNameLines(g, name, nameMaxW, nameFontSize, 7, 2);
+            nameFm = g.getFontMetrics();
         }
 
         int lineH = nameFm.getHeight();
@@ -1491,6 +1493,28 @@ public final class ShopSwingView implements ShopView {
         Font font = GameFonts.get().uiBold(minSize);
         g.setFont(font);
         return font;
+    }
+
+    /** До {@code maxLines} строк на shop_card_back — без ужимания в одну линию. */
+    private static List<String> fitCardNameLines(Graphics2D g, String text, int maxW,
+                                                 int startSize, int minSize, int maxLines) {
+        for (int size = startSize; size >= minSize; size--) {
+            g.setFont(GameFonts.get().uiBold(size));
+            FontMetrics fm = g.getFontMetrics();
+            List<String> lines = wrapCardNameLines(fm, text, maxW, maxLines);
+            boolean fits = true;
+            for (String line : lines) {
+                if (fm.stringWidth(line) > maxW) {
+                    fits = false;
+                    break;
+                }
+            }
+            if (fits) {
+                return lines;
+            }
+        }
+        g.setFont(GameFonts.get().uiBold(minSize));
+        return wrapCardNameLines(g.getFontMetrics(), text, maxW, maxLines);
     }
 
     private static List<String> wrapCardNameLines(FontMetrics fm, String text, int maxW, int maxLines) {
