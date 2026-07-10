@@ -5,8 +5,8 @@ import main.java.com.witcher.ui.shop.ShopModel;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 
-/** Колбочки с жидкостью на обороте shop_card_back. */
-final class ShopStatBarRenderer {
+/** Колбочки с жидкостью на обороте shop_card_back и в экипировке. */
+public final class ShopStatBarRenderer {
 
     private static final Color DELTA_YELLOW = new Color(255, 215, 48);
     private static Rectangle cachedEmptyCrop;
@@ -16,12 +16,12 @@ final class ShopStatBarRenderer {
     private ShopStatBarRenderer() {
     }
 
-    static void draw(Graphics2D g, int x, int y, int w, int h, ShopModel.StatPreview preview,
+    public static void draw(Graphics2D g, int x, int y, int w, int h, ShopModel.StatPreview preview,
                      BufferedImage vialEmpty, BufferedImage vialOverlay, BufferedImage vialEndCap) {
         draw(g, x, y, w, h, preview, vialEmpty, vialOverlay, vialEndCap, 0);
     }
 
-    static void draw(Graphics2D g, int x, int y, int w, int h, ShopModel.StatPreview preview,
+    public static void draw(Graphics2D g, int x, int y, int w, int h, ShopModel.StatPreview preview,
                      BufferedImage vialEmpty, BufferedImage vialOverlay, BufferedImage vialEndCap,
                      int animTick) {
         drawCardText(g);

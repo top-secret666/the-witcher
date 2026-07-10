@@ -557,4 +557,16 @@ public final class ShopAssetCache implements ShopRuntimeAssets {
         }
         return null;
     }
+
+    public BufferedImage statVialEmpty() {
+        return statVialEmpty;
+    }
+
+    public BufferedImage statVialOverlay() {
+        return statVialOverlay;
+    }
+
+    public BufferedImage statVialEndCap() {
+        return statVialEndCap;
+    }
 }

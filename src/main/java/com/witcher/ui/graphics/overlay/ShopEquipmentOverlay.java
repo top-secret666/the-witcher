@@ -3,6 +3,7 @@ package main.java.com.witcher.ui.graphics.overlay;
 import main.java.com.witcher.model.armour.Armour;
 import main.java.com.witcher.ui.graphics.GameFonts;
 import main.java.com.witcher.ui.graphics.ShopAssetCache;
+import main.java.com.witcher.ui.graphics.ShopStatBarRenderer;
 import main.java.com.witcher.ui.graphics.UiChrome;
 import main.java.com.witcher.ui.shop.ShopCategory;
 import main.java.com.witcher.ui.shop.ShopEquipSlot;
@@ -106,7 +107,9 @@ public final class ShopEquipmentOverlay {
         int portraitX = listX + listW + 12;
         int portraitY = py + 30;
         int portraitW = 152;
-        int portraitH = panelH - 86;
+        int statsH = 132;
+        int statsY = py + panelH - statsH - 8;
+        int portraitH = statsY - portraitY - 8;
         g.setColor(new Color(6, 4, 2, 160));
         g.fillRoundRect(portraitX - 4, portraitY - 4, portraitW + 8, portraitH + 8, 6, 6);
         if (ctx.assets().geraltPortraitShop() != null) {
@@ -159,41 +162,21 @@ public final class ShopEquipmentOverlay {
         }
 
         int statsX = portraitX;
-        int statsY = py + panelH - 80;
         int statsW = slotX + slotSize - statsX;
-        int statsH = 70;
         g.setColor(new Color(10, 7, 4, 200));
         g.fillRoundRect(statsX, statsY, statsW, statsH, 4, 4);
         g.setColor(new Color(100, 75, 40));
         g.drawRoundRect(statsX, statsY, statsW, statsH, 4, 4);
-        drawEquipmentStats(g, statsX, statsY, statsW, statsH, ctx.presenter().model().equippedStatPreview());
+        drawEquipmentStats(g, ctx, statsX, statsY, statsW, statsH,
+            ctx.presenter().model().equippedStatPreview());
 
         g.setComposite(prev);
     }
 
-    private static void drawEquipmentStats(Graphics2D g, int x, int y, int w, int h,
+    private static void drawEquipmentStats(Graphics2D g, ShopOverlayContext ctx, int x, int y, int w, int h,
                                            ShopModel.StatPreview preview) {
-        String header = "ХАРАКТЕРИСТИКИ";
-        Font headerFont = GameFonts.get().uiBold(11);
-        FontMetrics hfm = g.getFontMetrics(headerFont);
-        ShopOverlayText.drawEquipText(g, headerFont, header, x + (w - hfm.stringWidth(header)) / 2, y + 18,
-            new Color(220, 200, 140));
-
-        String[] labels = {"Защита", "Выносл.", "Знаки"};
-        Font lineFont = GameFonts.get().uiPlain(11);
-        int lineY = y + 36;
-        ShopModel.StatRow[] rows = preview.rows();
-        for (int i = 0; i < labels.length && i < rows.length; i++) {
-            ShopModel.StatRow row = rows[i];
-            String delta = "";
-            if (row.delta() > 0) {
-                delta = " (+" + row.delta() + ")";
-            } else if (row.delta() < 0) {
-                delta = " (" + row.delta() + ")";
-            }
-            ShopOverlayText.drawEquipText(g, lineFont, labels[i] + ": " + row.value() + delta, x + 12, lineY,
-                new Color(200, 180, 130));
-            lineY += 15;
-        }
+        ShopAssetCache assets = ctx.assets();
+        ShopStatBarRenderer.draw(g, x, y, w, h, preview,
+            assets.statVialEmpty(), assets.statVialOverlay(), assets.statVialEndCap(), ctx.ui().tick);
     }
 }
