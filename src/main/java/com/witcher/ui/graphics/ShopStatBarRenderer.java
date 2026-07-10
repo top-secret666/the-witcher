@@ -90,9 +90,9 @@ public final class ShopStatBarRenderer {
         g.setColor(new Color(200, 185, 150));
         g.drawString(header, headerX, headerY);
 
-        int barW = w - 8;
-        int rowH = Math.max(20, (h - 18) / 3);
-        int startY = headerY + 6;
+        int barW = w - 6;
+        int rowH = Math.max(18, (h - 16) / 3);
+        int startY = headerY + 4;
         String[] labels = {"Зщ", "Вн", "Зн"};
         Color[] colors = {
             new Color(210, 52, 58),
@@ -101,7 +101,7 @@ public final class ShopStatBarRenderer {
         };
 
         boolean useVials = vialEmpty != null;
-        int vialH = Math.max(8, Math.min(11, vialHeight(barW, vialEmpty, h)));
+        int vialH = Math.max(7, Math.min(10, vialHeight(barW, vialEmpty, h)));
 
         for (int i = 0; i < preview.rows().length; i++) {
             ShopModel.StatRow row = preview.rows()[i];

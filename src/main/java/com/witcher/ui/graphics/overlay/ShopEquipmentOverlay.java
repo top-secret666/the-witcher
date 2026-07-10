@@ -33,6 +33,7 @@ import static main.java.com.witcher.ui.shop.view.ShopViewConstants.EQUIP_LIST_HE
 import static main.java.com.witcher.ui.shop.view.ShopViewConstants.EQUIP_LIST_W;
 import static main.java.com.witcher.ui.shop.view.ShopViewConstants.EQUIP_MARGIN;
 import static main.java.com.witcher.ui.shop.view.ShopViewConstants.EQUIP_STATS_H;
+import static main.java.com.witcher.ui.shop.view.ShopViewConstants.EQUIP_STATS_PAD;
 import static main.java.com.witcher.ui.shop.view.ShopViewConstants.EQUIP_STATS_W;
 
 /**
@@ -102,6 +103,12 @@ public final class ShopEquipmentOverlay {
         g.setColor(new Color(90, 68, 36, 120));
         g.drawLine(listX + 6, itemsTop, listX + listW - 6, itemsTop);
 
+        int statsW = EQUIP_STATS_W;
+        int statsH = EQUIP_STATS_H;
+        int statsX = listX + EQUIP_STATS_PAD;
+        int statsY = listY + listH - statsH - EQUIP_STATS_PAD;
+        int gridBottom = statsY - 4;
+
         List<Armour> owned = EquipmentArmourList.filter(
             ctx.presenter().model().ownedArmour(), ctx.ui().equipmentFilter);
         int gridX0 = listX + (listW - EQUIP_GRID_COLS * EQUIP_GRID_CELL) / 2;
@@ -114,7 +121,7 @@ public final class ShopEquipmentOverlay {
             int row = i / EQUIP_GRID_COLS;
             int cellX = gridX0 + col * EQUIP_GRID_CELL;
             int cellY = gridY0 + row * EQUIP_GRID_CELL;
-            if (cellY + EQUIP_GRID_CELL > listY + listH - 6) {
+            if (cellY + EQUIP_GRID_CELL > gridBottom) {
                 break;
             }
 
@@ -160,6 +167,13 @@ public final class ShopEquipmentOverlay {
             ShopOverlayText.drawEquipText(g, GameFonts.get().uiPlain(9), "Пусто",
                 listX + 10, gridY0 + 12, new Color(130, 145, 165));
         }
+
+        g.setColor(new Color(10, 7, 4, 210));
+        g.fillRoundRect(statsX, statsY, statsW, statsH, 4, 4);
+        g.setColor(new Color(88, 148, 210, 160));
+        g.drawRoundRect(statsX, statsY, statsW, statsH, 4, 4);
+        drawEquipmentStats(g, ctx, statsX, statsY, statsW, statsH,
+            ctx.presenter().model().equippedStatPreview());
 
         int portraitX = listX + listW + 8;
         int portraitY = py + 30;
@@ -213,17 +227,6 @@ public final class ShopEquipmentOverlay {
                 new Color(170, 140, 90));
         }
 
-        int statsW = EQUIP_STATS_W;
-        int statsH = EQUIP_STATS_H;
-        int statsX = slotX + (slotSize - statsW) / 2;
-        int statsY = slotY + slots.length * (slotSize + slotGap) + 6;
-        g.setColor(new Color(10, 7, 4, 200));
-        g.fillRoundRect(statsX, statsY, statsW, statsH, 4, 4);
-        g.setColor(new Color(100, 75, 40));
-        g.drawRoundRect(statsX, statsY, statsW, statsH, 4, 4);
-        drawEquipmentStats(g, ctx, statsX, statsY, statsW, statsH,
-            ctx.presenter().model().equippedStatPreview());
-
         if (tooltipArmour == null && ctx.ui().equipmentHoveredSlot >= 0) {
             ShopEquipSlot slot = ShopEquipSlot.values()[ctx.ui().equipmentHoveredSlot];
             tooltipArmour = ctx.presenter().model().getEquipped(slot);
@@ -234,11 +237,11 @@ public final class ShopEquipmentOverlay {
 
         if (tooltipArmour != null) {
             int tipW = ShopEquipmentTooltipRenderer.preferredWidth();
-            int tipX = listX + listW + 6;
-            if (tipX + tipW > portraitX + portraitW - 8) {
-                tipX = Math.max(listX + 4, portraitX + portraitW - tipW - 4);
+            int tipX = portraitX + 6;
+            int tipY = Math.max(portraitY + 4, Math.min(tooltipAnchorY, portraitY + portraitH - 100));
+            if (tipX + tipW > slotX - 6) {
+                tipX = Math.max(listX + listW + 4, slotX - tipW - 6);
             }
-            int tipY = Math.max(listY + 8, Math.min(tooltipAnchorY, statsY - 90));
             ShopEquipmentTooltipRenderer.draw(g, tipX, tipY, tipW, tooltipArmour, ctx.presenter().model());
         }
 
@@ -246,8 +249,8 @@ public final class ShopEquipmentOverlay {
     }
 
     /**
-     * Временная визуализация надетой брони: иконки поверх портрета Геральта.
-     * Полноценный paperdoll потребует отдельных слоёв-спрайтов на каждую часть.
+     * Временная визуализация надетой брони на портрете.
+     * Полный paperdoll — отдельные PNG-слои (торс/ноги/перчатки/сапоги) по школам или тонирование зон.
      */
     private static void drawEquippedArmourHints(Graphics2D g, ShopOverlayContext ctx,
                                                int px, int py, int pw, int ph) {
@@ -256,19 +259,42 @@ public final class ShopEquipmentOverlay {
         Object interp = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
         g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
 
+        drawSlotZone(g, px + pw / 2 - 26, py + Math.round(ph * 0.17f), 52, Math.round(ph * 0.24f),
+            model.getEquipped(ShopEquipSlot.CHEST) != null);
+        drawSlotZone(g, px + pw / 2 - 22, py + Math.round(ph * 0.36f), 44, Math.round(ph * 0.12f),
+            model.getEquipped(ShopEquipSlot.GLOVES) != null);
+        drawSlotZone(g, px + pw / 2 - 24, py + Math.round(ph * 0.50f), 48, Math.round(ph * 0.22f),
+            model.getEquipped(ShopEquipSlot.LEGS) != null);
+        drawSlotZone(g, px + pw / 2 - 20, py + Math.round(ph * 0.74f), 40, Math.round(ph * 0.14f),
+            model.getEquipped(ShopEquipSlot.BOOTS) != null);
+
         drawArmourHintAt(g, ctx, model.getEquipped(ShopEquipSlot.CHEST),
-            px + pw / 2 - 18, py + Math.round(ph * 0.22f), 36, 0.50f);
+            px + pw / 2 - 20, py + Math.round(ph * 0.24f), 40, 0.62f);
         drawArmourHintAt(g, ctx, model.getEquipped(ShopEquipSlot.GLOVES),
-            px + pw / 2 - 14, py + Math.round(ph * 0.38f), 28, 0.42f);
+            px + pw / 2 - 16, py + Math.round(ph * 0.38f), 32, 0.55f);
         drawArmourHintAt(g, ctx, model.getEquipped(ShopEquipSlot.LEGS),
-            px + pw / 2 - 16, py + Math.round(ph * 0.52f), 32, 0.45f);
+            px + pw / 2 - 18, py + Math.round(ph * 0.54f), 36, 0.58f);
         drawArmourHintAt(g, ctx, model.getEquipped(ShopEquipSlot.BOOTS),
-            px + pw / 2 - 12, py + Math.round(ph * 0.78f), 24, 0.48f);
+            px + pw / 2 - 14, py + Math.round(ph * 0.78f), 28, 0.60f);
 
         g.setComposite(saved);
         if (interp != null) {
             g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, interp);
         }
+    }
+
+    private static void drawSlotZone(Graphics2D g, int x, int y, int w, int h, boolean equipped) {
+        if (!equipped) {
+            return;
+        }
+        Composite prev = g.getComposite();
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.22f));
+        g.setColor(new Color(120, 190, 255));
+        g.fillRoundRect(x, y, w, h, 6, 6);
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.55f));
+        g.setColor(new Color(200, 175, 90));
+        g.drawRoundRect(x, y, w - 1, h - 1, 6, 6);
+        g.setComposite(prev);
     }
 
     private static void drawArmourHintAt(Graphics2D g, ShopOverlayContext ctx, Armour armour,
