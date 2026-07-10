@@ -6,6 +6,7 @@ public enum HackCommands {
   SCAN,
   DECRYPT,
   UNLOCK,
+  BREAK_LOOP,
   EXIT;
 
   public static HackCommands parse(String raw) {
@@ -13,6 +14,9 @@ public enum HackCommands {
       return null;
     }
     String upper = raw.trim().toUpperCase();
+    if (upper.startsWith("BREAK_LOOP")) {
+      return BREAK_LOOP;
+    }
     int space = upper.indexOf(' ');
     String head = space > 0 ? upper.substring(0, space) : upper;
     try {

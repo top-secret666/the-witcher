@@ -109,6 +109,17 @@ public final class HackConsoleModel {
         appendLine("SIGNATURE REJECTED");
         yield HackResult.none();
       }
+      case BREAK_LOOP -> {
+        boolean ok = HackUnlockChecker.matches(line, session);
+        if (ok) {
+          appendLine("LOOP SIGNATURE ACCEPTED");
+          closed = true;
+          yield HackResult.success();
+        }
+        failedAttempts++;
+        appendLine("SIGNATURE REJECTED");
+        yield HackResult.none();
+      }
       case EXIT -> {
         closed = true;
         yield HackResult.exit();
