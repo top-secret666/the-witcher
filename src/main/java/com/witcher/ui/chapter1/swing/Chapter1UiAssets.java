@@ -1,6 +1,6 @@
 package main.java.com.witcher.ui.chapter1.swing;
 
-import main.java.com.witcher.chapter1.view.Chapter1AssetPaths;
+import main.java.com.witcher.ui.chapter1.view.Chapter1AssetPaths;
 import main.java.com.witcher.ui.graphics.Sprite;
 
 import java.awt.image.BufferedImage;
