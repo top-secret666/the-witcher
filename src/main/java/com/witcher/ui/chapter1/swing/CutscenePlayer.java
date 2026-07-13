@@ -2,55 +2,54 @@ package main.java.com.witcher.ui.chapter1.swing;
 
 import main.java.com.witcher.chapter1.cutscene.CutsceneCatalog;
 import main.java.com.witcher.chapter1.cutscene.CutsceneId;
-import main.java.com.witcher.ui.graphics.GifFrames;
-import main.java.com.witcher.ui.graphics.PixelScaler;
-import main.java.com.witcher.ui.graphics.Sprite;
+import main.java.com.witcher.ui.chapter1.view.Chapter1ViewConstants;
 
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
-import java.util.ArrayList;
-import java.util.List;
 
 /** Воспроизведение GIF- и PNG-катсцен главы 1. */
 public final class CutscenePlayer {
 
-  private GifFrames gif;
-  private BufferedImage[] pngFrames;
-  private int[] pngDelaysMs;
-  private boolean usePng;
+  private CutsceneCache.ScaledSequence scaled;
   private boolean loop;
   private int frameIndex;
   private int frameTick;
   private boolean finished = true;
 
   public void start(CutsceneId id) {
+    start(id, Chapter1ViewConstants.VIRTUAL_W, Chapter1ViewConstants.VIRTUAL_H);
+  }
+
+  public void start(CutsceneId id, int sw, int sh) {
     stop();
     if (id == null) {
       finished = true;
       return;
     }
     loop = CutsceneCatalog.loops(id);
-    String path = CutsceneCatalog.resourcePath(id);
-    gif = GifFrames.load(path);
-    if (gif != null && gif.frames.length > 0) {
+    scaled = CutsceneCache.scaledSequence(id, sw, sh);
+    if (scaled != null && scaled.frameCount() > 0) {
       frameIndex = 0;
       frameTick = 0;
       finished = false;
       return;
     }
     String[] sequence = CutsceneCatalog.frameSequence(id);
-    if (sequence != null && loadPngSequence(sequence, CutsceneCatalog.frameDelayMs(id))) {
-      finished = false;
-      return;
+    if (sequence != null) {
+      scaled = CutsceneCache.scaledPngSequence(
+          sequence, CutsceneCatalog.frameDelayMs(id), sw, sh);
+      if (scaled != null && scaled.frameCount() > 0) {
+        frameIndex = 0;
+        frameTick = 0;
+        finished = false;
+        return;
+      }
     }
     finished = true;
   }
 
   public void stop() {
-    gif = null;
-    pngFrames = null;
-    pngDelaysMs = null;
-    usePng = false;
+    scaled = null;
     finished = true;
   }
 
@@ -59,7 +58,7 @@ public final class CutscenePlayer {
   }
 
   public void tick() {
-    if (finished) {
+    if (finished || scaled == null) {
       return;
     }
     frameTick++;
@@ -69,8 +68,7 @@ public final class CutscenePlayer {
     }
     frameTick = 0;
     frameIndex++;
-    int frameCount = currentFrameCount();
-    if (frameIndex >= frameCount) {
+    if (frameIndex >= scaled.frameCount()) {
       if (loop) {
         frameIndex = 0;
       } else {
@@ -80,73 +78,22 @@ public final class CutscenePlayer {
   }
 
   public void render(Graphics2D g, int sw, int sh) {
-    BufferedImage frame = currentFrame();
+    if (finished || scaled == null || scaled.frames() == null) {
+      return;
+    }
+    int idx = Math.min(frameIndex, scaled.frameCount() - 1);
+    BufferedImage frame = scaled.frames()[idx];
     if (frame == null) {
       return;
     }
-    int fw = frame.getWidth();
-    int fh = frame.getHeight();
-    if (fw <= 0 || fh <= 0) {
-      return;
-    }
-    float scale = Math.min(sw / (float) fw, sh / (float) fh);
-    int dw = Math.max(1, Math.round(fw * scale));
-    int dh = Math.max(1, Math.round(fh * scale));
-    int dx = (sw - dw) / 2;
-    int dy = (sh - dh) / 2;
-    BufferedImage scaled = PixelScaler.sharpScale(frame, dw, dh);
-    g.drawImage(scaled, dx, dy, null);
-  }
-
-  private boolean loadPngSequence(String[] paths, int defaultDelayMs) {
-    List<BufferedImage> loaded = new ArrayList<>();
-    for (String path : paths) {
-      Sprite sprite = Sprite.loadOptional(path);
-      if (sprite != null) {
-        loaded.add(sprite.getImage());
-      }
-    }
-    if (loaded.isEmpty()) {
-      return false;
-    }
-    pngFrames = loaded.toArray(new BufferedImage[0]);
-    pngDelaysMs = new int[pngFrames.length];
-    for (int i = 0; i < pngDelaysMs.length; i++) {
-      pngDelaysMs[i] = defaultDelayMs;
-    }
-    usePng = true;
-    frameIndex = 0;
-    frameTick = 0;
-    return true;
-  }
-
-  private BufferedImage currentFrame() {
-    if (usePng && pngFrames != null && pngFrames.length > 0) {
-      return pngFrames[Math.min(frameIndex, pngFrames.length - 1)];
-    }
-    if (gif != null && gif.frames.length > 0) {
-      return gif.frames[Math.min(frameIndex, gif.frames.length - 1)];
-    }
-    return null;
-  }
-
-  private int currentFrameCount() {
-    if (usePng && pngFrames != null) {
-      return pngFrames.length;
-    }
-    if (gif != null) {
-      return gif.frames.length;
-    }
-    return 0;
+    g.drawImage(frame, scaled.dx()[idx], scaled.dy()[idx], null);
   }
 
   private int currentDelayTicks() {
-    if (usePng && pngDelaysMs != null && frameIndex < pngDelaysMs.length) {
-      return Math.max(1, pngDelaysMs[frameIndex] / 16);
+    if (scaled == null || scaled.delaysMs() == null) {
+      return 1;
     }
-    if (gif != null && frameIndex < gif.delaysMs.length) {
-      return Math.max(1, gif.delaysMs[frameIndex] / 16);
-    }
-    return 1;
+    int idx = Math.min(frameIndex, scaled.delaysMs().length - 1);
+    return Math.max(1, scaled.delaysMs()[idx] / 16);
   }
 }

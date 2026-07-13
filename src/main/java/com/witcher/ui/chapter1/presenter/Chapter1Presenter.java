@@ -19,6 +19,7 @@ import main.java.com.witcher.ui.chapter1.view.BossMapLayout;
 import main.java.com.witcher.ui.chapter1.view.Chapter1ViewConstants;
 import main.java.com.witcher.ui.chapter1.view.VnChoiceLayout;
 import main.java.com.witcher.chapter1.vn.VnSceneState;
+import main.java.com.witcher.ui.chapter1.swing.BossMapView;
 import main.java.com.witcher.ui.chapter1.swing.CutscenePlayer;
 import main.java.com.witcher.ui.chapter1.swing.EyesBlinkEffect;
 import main.java.com.witcher.ui.shop.ShopModel;
@@ -285,6 +286,7 @@ public final class Chapter1Presenter {
     bossHits = BossMapLayout.layoutHits(Chapter1ViewConstants.VIRTUAL_W, Chapter1ViewConstants.VIRTUAL_H);
     hoveredBoss = null;
     selectedBoss = null;
+    BossMapView.warm(Chapter1ViewConstants.VIRTUAL_W, Chapter1ViewConstants.VIRTUAL_H);
   }
 
   private void tryGrantBattleCard() {
@@ -298,7 +300,6 @@ public final class Chapter1Presenter {
   }
 
   private void updateBossMap(int mouseX, int mouseY, boolean clicked) {
-    bossHits = BossMapLayout.layoutHits(Chapter1ViewConstants.VIRTUAL_W, Chapter1ViewConstants.VIRTUAL_H);
     hoveredBoss = BossMapLayout.hitBoss(bossHits, mouseX, mouseY);
     if (!clicked || hoveredBoss == null) {
       return;
@@ -346,7 +347,7 @@ public final class Chapter1Presenter {
   }
 
   private void startLoopCutscene(CutsceneId id) {
-    loopCutscenePlayer.start(id);
+    loopCutscenePlayer.start(id, Chapter1ViewConstants.VIRTUAL_W, Chapter1ViewConstants.VIRTUAL_H);
     if (loopCutscenePlayer.isFinished()) {
       if (id == CutsceneId.ILLUSION_WRONG) {
         director.enterLoopHold();
@@ -364,7 +365,7 @@ public final class Chapter1Presenter {
       onPhaseEntered();
       return;
     }
-    cutscenePlayer.start(id);
+    cutscenePlayer.start(id, Chapter1ViewConstants.VIRTUAL_W, Chapter1ViewConstants.VIRTUAL_H);
     if (cutscenePlayer.isFinished()) {
       director.onCutsceneFinished();
       onPhaseEntered();
@@ -401,7 +402,7 @@ public final class Chapter1Presenter {
       hackShakeTick = 0;
       String doorPath = CutsceneCatalog.resourcePath(CutsceneId.HACK_DOOR_POUND);
       if (doorPath != null && Chapter1Director.class.getResource(doorPath) != null) {
-        doorLoopPlayer.start(CutsceneId.HACK_DOOR_POUND);
+        doorLoopPlayer.start(CutsceneId.HACK_DOOR_POUND, Chapter1ViewConstants.VIRTUAL_W, Chapter1ViewConstants.VIRTUAL_H);
       } else {
         doorLoopPlayer.stop();
       }
