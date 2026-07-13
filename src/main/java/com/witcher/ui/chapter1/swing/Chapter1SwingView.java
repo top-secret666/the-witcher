@@ -2,6 +2,7 @@ package main.java.com.witcher.ui.chapter1.swing;
 
 import main.java.com.witcher.chapter1.Chapter1Phase;
 import main.java.com.witcher.ui.chapter1.presenter.Chapter1Presenter;
+import main.java.com.witcher.ui.chapter1.view.Chapter1View;
 import main.java.com.witcher.ui.chapter1.view.Chapter1ViewConstants;
 
 import java.awt.Color;
@@ -9,12 +10,10 @@ import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 
 /** Отрисовка кадра главы 1 (аналог {@link main.java.com.witcher.ui.shop.swing.ShopSwingView}). */
-public final class Chapter1SwingView {
+public final class Chapter1SwingView implements Chapter1View {
 
-  private Chapter1SwingView() {
-  }
-
-  public static void render(BufferedImage screen, int mouseX, int mouseY, Chapter1Presenter presenter) {
+  @Override
+  public void render(BufferedImage screen, int mouseX, int mouseY, Chapter1Presenter presenter) {
     int sw = screen.getWidth();
     int sh = screen.getHeight();
 
@@ -102,7 +101,8 @@ public final class Chapter1SwingView {
     }
   }
 
-  public static void renderTextOverlay(Graphics2D g, int mouseX, int mouseY, Chapter1Presenter presenter) {
+  @Override
+  public void renderTextOverlay(Graphics2D g, int mouseX, int mouseY, Chapter1Presenter presenter) {
     if (presenter.director().phase() == Chapter1Phase.SHOP
         || presenter.director().phase() == Chapter1Phase.HACK) {
       presenter.shopScreen().renderTextOverlay(g, mouseX, mouseY);

@@ -1,7 +1,9 @@
 package main.java.com.witcher.ui.chapter1.swing;
 
 import main.java.com.witcher.chapter1.Chapter1Director;
+import main.java.com.witcher.ui.chapter1.presenter.Chapter1Input;
 import main.java.com.witcher.ui.chapter1.presenter.Chapter1Presenter;
+import main.java.com.witcher.ui.chapter1.view.Chapter1View;
 import main.java.com.witcher.ui.graphics.GameWindow;
 import main.java.com.witcher.ui.shop.ShopModel;
 import main.java.com.witcher.ui.shop.swing.ShopScreen;
@@ -17,6 +19,7 @@ import java.awt.image.BufferedImage;
 public final class Chapter1Screen {
 
   private final Chapter1Presenter presenter;
+  private final Chapter1View view;
 
   public Chapter1Screen() {
     this(Chapter1Director.loadOrNew(), ShopModel.createNewSession());
@@ -24,6 +27,7 @@ public final class Chapter1Screen {
 
   public Chapter1Screen(Chapter1Director director, ShopModel shopModel) {
     presenter = new Chapter1Presenter(director, shopModel);
+    view = new Chapter1SwingView();
   }
 
   public Chapter1Director director() {
@@ -43,7 +47,7 @@ public final class Chapter1Screen {
   }
 
   public void update(int mouseX, int mouseY, boolean clicked, boolean escPressed, int wheelNotches) {
-    presenter.update(mouseX, mouseY, clicked, escPressed, wheelNotches);
+    presenter.update(new Chapter1Input(mouseX, mouseY, clicked, escPressed, wheelNotches));
   }
 
   public void keyPressed(KeyEvent e) {
@@ -55,11 +59,11 @@ public final class Chapter1Screen {
   }
 
   public void render(BufferedImage screen, int mouseX, int mouseY) {
-    Chapter1SwingView.render(screen, mouseX, mouseY, presenter);
+    view.render(screen, mouseX, mouseY, presenter);
   }
 
   public void renderTextOverlay(Graphics2D g, int mouseX, int mouseY) {
-    Chapter1SwingView.renderTextOverlay(g, mouseX, mouseY, presenter);
+    view.renderTextOverlay(g, mouseX, mouseY, presenter);
   }
 
   public boolean isExitRequested() {
