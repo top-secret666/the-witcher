@@ -2,9 +2,6 @@ package main.java.com.witcher.ui.chapter1.swing;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
-import java.awt.RadialGradientPaint;
-import java.awt.geom.Ellipse2D;
-import java.util.Random;
 
 /** Пиксельная анимация век — открытие / моргание поверх катсцены. */
 public final class EyesBlinkEffect {
@@ -17,9 +14,16 @@ public final class EyesBlinkEffect {
   private static final int BLINK_CLOSE_TICKS = 14;
   private static final int BLINK_OPEN_TICKS = 32;
 
+  private static final Color LID_DARK = new Color(8, 5, 4);
+  private static final Color LASH = new Color(22, 14, 10, 140);
+  private static final Color SCLERA = new Color(210, 198, 175);
+  private static final Color IRIS = new Color(36, 72, 54);
+  private static final Color IRIS_GLOW = new Color(130, 210, 160, 120);
+  private static final Color PUPIL = new Color(8, 8, 10);
+  private static final Color HIGHLIGHT = new Color(255, 255, 255);
+
   private Mode mode = Mode.IDLE;
   private int ticks;
-  private final Random rng = new Random(17);
 
   public void reset(Mode startMode) {
     mode = startMode != null ? startMode : Mode.IDLE;
@@ -81,35 +85,20 @@ public final class EyesBlinkEffect {
 
   private void drawPixelEyelids(Graphics2D g, int sw, int sh, float openT) {
     float closed = 1f - openT;
-    int maxLid = Math.round(sh * 0.54f);
-    int lidH = Math.max(0, Math.round(maxLid * closed));
+    int lidH = Math.max(0, Math.round(sh * 0.54f * closed));
     if (lidH <= 0) {
       return;
     }
 
-    int step = 4;
-    for (int band = 0; band < lidH; band += step) {
-      int shade = 4 + (band * 14 / Math.max(1, lidH));
-      g.setColor(new Color(shade, shade / 2, shade / 3));
-      g.fillRect(0, band, sw, step);
-      g.fillRect(0, sh - band - step, sw, step);
-    }
-
-    g.setColor(new Color(8, 5, 4));
+    g.setColor(LID_DARK);
     g.fillRect(0, 0, sw, lidH);
     g.fillRect(0, sh - lidH, sw, lidH);
 
-    drawLashNoise(g, sw, sh, lidH);
-  }
-
-  private void drawLashNoise(Graphics2D g, int sw, int sh, int lidH) {
-    g.setColor(new Color(22, 14, 10, 140));
-    for (int i = 0; i < 48; i++) {
+    g.setColor(LASH);
+    for (int i = 0; i < 24; i++) {
       int x = (i * 37 + ticks * 3) % sw;
-      int yTop = lidH - 2 + (i % 3);
-      int yBot = sh - lidH + (i % 4);
-      g.fillRect(x, yTop, 2, 1);
-      g.fillRect((x + 11) % sw, yBot, 2, 1);
+      g.fillRect(x, lidH - 2, 2, 1);
+      g.fillRect((x + 11) % sw, sh - lidH + 1, 2, 1);
     }
   }
 
@@ -125,8 +114,7 @@ public final class EyesBlinkEffect {
     int eyeH = Math.max(4, Math.round(sh * 0.065f * eyeT));
 
     for (int side = -1; side <= 1; side += 2) {
-      int ex = cx + side * gap;
-      drawSingleEye(g, ex, cy, eyeW, eyeH, eyeT);
+      drawSingleEye(g, cx + side * gap, cy, eyeW, eyeH, eyeT);
     }
   }
 
@@ -135,33 +123,31 @@ public final class EyesBlinkEffect {
     int pxH = Math.max(eyeH - (eyeH % 2), 4);
     int left = cx - pxW / 2;
     int top = cy - pxH / 2;
+    int alpha = Math.round(220 * eyeT);
 
-    g.setColor(new Color(210, 198, 175, Math.round(220 * eyeT)));
+    g.setColor(withAlpha(SCLERA, alpha));
     g.fillRect(left, top, pxW, pxH);
 
-    g.setColor(new Color(36, 72, 54, Math.round(240 * eyeT)));
     int irisW = Math.max(4, pxW * 2 / 3);
     int irisH = Math.max(3, pxH * 2 / 3);
     int irisX = cx - irisW / 2;
     int irisY = cy - irisH / 2;
+    g.setColor(withAlpha(IRIS, Math.round(240 * eyeT)));
     g.fillRect(irisX, irisY, irisW, irisH);
 
-    RadialGradientPaint glow = new RadialGradientPaint(
-        cx, cy, irisW,
-        new float[]{0f, 1f},
-        new Color[]{
-            new Color(130, 210, 160, Math.round(180 * eyeT)),
-            new Color(30, 60, 45, 0)
-        });
-    g.setPaint(glow);
-    g.fill(new Ellipse2D.Float(irisX - 2, irisY - 2, irisW + 4, irisH + 4));
+    g.setColor(withAlpha(IRIS_GLOW, Math.round(100 * eyeT)));
+    g.fillRect(irisX - 1, irisY - 1, irisW + 2, irisH + 2);
 
-    g.setColor(new Color(8, 8, 10));
     int pupil = Math.max(2, irisW / 3);
+    g.setColor(PUPIL);
     g.fillRect(cx - pupil / 2, cy - pupil / 2, pupil, pupil);
 
-    g.setColor(new Color(255, 255, 255, Math.round(200 * eyeT)));
+    g.setColor(withAlpha(HIGHLIGHT, Math.round(200 * eyeT)));
     g.fillRect(cx - pupil / 2 - 2, cy - pupil / 2 - 1, 2, 2);
+  }
+
+  private static Color withAlpha(Color base, int alpha) {
+    return new Color(base.getRed(), base.getGreen(), base.getBlue(), Math.max(0, Math.min(255, alpha)));
   }
 
   private static float easeOutCubic(float t) {
