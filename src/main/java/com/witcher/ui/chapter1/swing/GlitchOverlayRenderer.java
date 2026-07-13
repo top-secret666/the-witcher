@@ -24,9 +24,8 @@ public final class GlitchOverlayRenderer {
     }
     BufferedImage overlay = switch (session.glitchLevel()) {
       case LIGHT -> cachedLight();
-      case MEDIUM -> cachedMedium();
       case HEAVY -> cachedHeavy();
-      case NONE -> null;
+      case NONE, MEDIUM -> null;
     };
     if (overlay == null) {
       return;

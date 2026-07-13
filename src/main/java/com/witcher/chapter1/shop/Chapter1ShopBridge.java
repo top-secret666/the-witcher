@@ -19,6 +19,7 @@ public final class Chapter1ShopBridge {
   private Runnable onBattleRequested;
   private Runnable onTerminalRequested;
   private Runnable onPurchaseHook;
+  private Runnable onEquipHook;
   private boolean battlePending;
 
   public Chapter1ShopBridge(Chapter1Session session, Chapter1Director director) {
@@ -46,9 +47,12 @@ public final class Chapter1ShopBridge {
     this.onPurchaseHook = onPurchaseHook;
   }
 
+  public void setOnEquipHook(Runnable onEquipHook) {
+    this.onEquipHook = onEquipHook;
+  }
+
   public void onPurchase() {
     PrisonTracker.onPurchase(session);
-    queueBattleIfNeeded();
     if (onPurchaseHook != null) {
       onPurchaseHook.run();
     }
@@ -56,7 +60,9 @@ public final class Chapter1ShopBridge {
 
   public void onEquip() {
     PrisonTracker.onEquip(session);
-    queueBattleIfNeeded();
+    if (onEquipHook != null) {
+      onEquipHook.run();
+    }
   }
 
   public String inspectCatalogRow(ShopCatalogEntry entry, ShopCategory category) {

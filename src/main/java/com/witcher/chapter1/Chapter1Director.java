@@ -15,6 +15,7 @@ public final class Chapter1Director {
   private CutsceneId pendingCutscene = CutsceneId.LOOP_WAKE;
   private boolean cutsceneFinished;
   private boolean chapterComplete;
+  private boolean loopEyesPrelude;
 
   public Chapter1Director(Chapter1Session session) {
     this.session = session != null ? session : Chapter1Session.newGame();
@@ -44,10 +45,10 @@ public final class Chapter1Director {
     return chapterComplete;
   }
 
-  /** Старт главы после интро: катсцена пробуждения → лавка. */
+  /** Старт главы после интро: сразу лавка (loop_wake — только после выбора босса). */
   public void beginAfterIntro() {
-    phase = Chapter1Phase.CUTSCENE;
-    pendingCutscene = CutsceneId.LOOP_WAKE;
+    phase = Chapter1Phase.SHOP;
+    pendingCutscene = null;
     cutsceneFinished = false;
     chapterComplete = false;
   }
@@ -59,17 +60,21 @@ public final class Chapter1Director {
   public void onCutsceneFinished() {
     cutsceneFinished = true;
     switch (pendingCutscene) {
-      case LOOP_WAKE, ILLUSION_WRONG -> enterShop();
+      case LOOP_WAKE, ILLUSION_WRONG -> {
+        if (phase != Chapter1Phase.LOOP_HOLD) {
+          enterShop();
+        }
+      }
       case BATTLE_INTRO -> enterBattleVn();
       case BATTLE_DEFEAT -> {
         LoopRules.onBattleDefeat(session);
-        queueCutscene(CutsceneId.LOOP_WAKE);
+        enterShop();
       }
       case HACK_UNLOCK -> enterEndingDialog();
       case ESCAPE_TRUE -> chapterComplete = true;
       case ESCAPE_FALSE -> {
         LoopRules.onFalseEscape(session);
-        queueCutscene(CutsceneId.LOOP_WAKE);
+        enterShop();
       }
       default -> enterShop();
     }
@@ -81,8 +86,7 @@ public final class Chapter1Director {
       onCutsceneFinished();
       return;
     }
-    String path = CutsceneCatalog.resourcePath(pendingCutscene);
-    if (path == null || Chapter1Director.class.getResource(path) == null) {
+    if (!CutsceneCatalog.isAvailable(pendingCutscene)) {
       onCutsceneFinished();
     }
   }
@@ -135,7 +139,36 @@ public final class Chapter1Director {
   public void onHackSuccess() {
     session.markCipherSolved();
     LoopRules.persist(session);
-    queueCutscene(CutsceneId.HACK_UNLOCK);
+    beginLoopSequence(true);
+  }
+
+  public void beginCardReveal() {
+    phase = Chapter1Phase.CARD_REVEAL;
+    pendingCutscene = null;
+    cutsceneFinished = false;
+  }
+
+  public void enterBossMap() {
+    phase = Chapter1Phase.BOSS_MAP;
+    pendingCutscene = null;
+    cutsceneFinished = false;
+  }
+
+  public void beginLoopSequence(boolean eyesPrelude) {
+    phase = Chapter1Phase.LOOP_SEQUENCE;
+    loopEyesPrelude = eyesPrelude;
+    pendingCutscene = null;
+    cutsceneFinished = false;
+  }
+
+  public boolean loopEyesPrelude() {
+    return loopEyesPrelude;
+  }
+
+  public void enterLoopHold() {
+    phase = Chapter1Phase.LOOP_HOLD;
+    pendingCutscene = null;
+    cutsceneFinished = false;
   }
 
   public void onHackTimeout() {
