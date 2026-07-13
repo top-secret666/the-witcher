@@ -14,11 +14,10 @@ import main.java.com.witcher.chapter1.hack.HackConsoleModel;
 import main.java.com.witcher.chapter1.shop.Chapter1ShopBridge;
 import main.java.com.witcher.chapter1.vn.DukeDialogController;
 import main.java.com.witcher.chapter1.vn.EndingVnController;
-import main.java.com.witcher.chapter1.vn.VnChoiceLayout;
+import main.java.com.witcher.ui.chapter1.view.BossMapLayout;
+import main.java.com.witcher.ui.chapter1.view.Chapter1ViewConstants;
+import main.java.com.witcher.ui.chapter1.view.VnChoiceLayout;
 import main.java.com.witcher.chapter1.vn.VnSceneState;
-import main.java.com.witcher.ui.graphics.DialogBoxRenderer;
-import main.java.com.witcher.ui.graphics.GameFonts;
-import main.java.com.witcher.ui.graphics.PixelScaler;
 import main.java.com.witcher.ui.shop.ShopModel;
 import main.java.com.witcher.ui.shop.swing.ShopScreen;
 
@@ -55,7 +54,7 @@ public final class Chapter1Screen {
   private DukeDialogController dukeDialog = new DukeDialogController();
   private HackConsoleModel hack;
   private List<VnChoiceLayout.ChoiceRect> choiceRects = List.of();
-  private List<BossMapView.BossHit> bossHits = List.of();
+  private List<BossMapLayout.BossHit> bossHits = List.of();
   private BossEntry hoveredBoss;
   private BossEntry selectedBoss;
   private boolean cardIconHovered;
@@ -206,13 +205,14 @@ public final class Chapter1Screen {
           g.dispose();
         }
       }
-      case LOOP_SEQUENCE, LOOP_HOLD -> renderLoopSequence(screen, sw, sh);
+      case LOOP_SEQUENCE, LOOP_HOLD -> LoopSequenceView.draw(
+          screen, sw, sh, loopSequence, eyesEffect, loopCutscenePlayer);
       case SHOP -> {
         shopScreen.render(screen, mouseX, mouseY);
         if (isDukeDialogActive()) {
           Graphics2D g = screen.createGraphics();
           try {
-            renderVnOverlay(g, screen.getWidth(), screen.getHeight());
+            VnSceneRenderer.drawOverlay(g, screen.getWidth(), screen.getHeight(), activeScene());
           } finally {
             g.dispose();
           }
@@ -239,7 +239,7 @@ public final class Chapter1Screen {
       case VN_BATTLE, VN_DIALOG, ENDING -> {
         Graphics2D g = screen.createGraphics();
         try {
-          renderVnScene(g, sw, sh);
+          VnSceneRenderer.drawScene(g, sw, sh, activeScene());
         } finally {
           g.dispose();
         }
@@ -254,7 +254,7 @@ public final class Chapter1Screen {
         GlitchOverlayRenderer.draw(overlay, sw, sh, director.session());
         if (director.phase() == Chapter1Phase.HACK) {
           doorLoopPlayer.render(overlay, sw, sh);
-          renderHackOverlay(overlay, sw, sh);
+          HackTerminalView.draw(overlay, sw, sh, hack, hackShakeTick);
         }
         if (director.phase() == Chapter1Phase.SHOP || director.phase() == Chapter1Phase.HACK) {
           Chapter1SessionHud.draw(overlay, sw, director.session());
@@ -274,7 +274,7 @@ public final class Chapter1Screen {
       shopScreen.renderTextOverlay(g, mouseX, mouseY);
     }
     if (hasActiveChoices()) {
-      renderVnChoices(g);
+      VnSceneRenderer.drawChoices(g, activeScene(), choiceRects);
     }
   }
 
@@ -322,7 +322,7 @@ public final class Chapter1Screen {
       return false;
     }
     director.enterBossMap();
-    bossHits = BossMapView.layoutHits(480, 360);
+    bossHits = BossMapLayout.layoutHits(Chapter1ViewConstants.VIRTUAL_W, Chapter1ViewConstants.VIRTUAL_H);
     hoveredBoss = null;
     selectedBoss = null;
     return true;
@@ -337,8 +337,8 @@ public final class Chapter1Screen {
   }
 
   private void updateBossMap(int mouseX, int mouseY, boolean clicked) {
-    bossHits = BossMapView.layoutHits(480, 360);
-    hoveredBoss = BossMapView.hitBoss(bossHits, mouseX, mouseY);
+    bossHits = BossMapLayout.layoutHits(Chapter1ViewConstants.VIRTUAL_W, Chapter1ViewConstants.VIRTUAL_H);
+    hoveredBoss = BossMapLayout.hitBoss(bossHits, mouseX, mouseY);
     if (!clicked || hoveredBoss == null) {
       return;
     }
@@ -390,26 +390,6 @@ public final class Chapter1Screen {
       if (id == CutsceneId.ILLUSION_WRONG) {
         director.enterLoopHold();
       }
-    }
-  }
-
-  private void renderLoopSequence(BufferedImage screen, int sw, int sh) {
-    Graphics2D g = screen.createGraphics();
-    try {
-      g.setColor(Color.BLACK);
-      g.fillRect(0, 0, sw, sh);
-      if (loopSequence.step() == LoopSequenceController.Step.EYES_OPEN
-          && !eyesEffect.isDone()) {
-        CutsceneNoiseOverlay.draw(g, sw, sh, 0.15f);
-      } else {
-        loopCutscenePlayer.render(g, sw, sh);
-        CutsceneNoiseOverlay.draw(g, sw, sh, LoopSequenceController.NOISE_STRENGTH);
-      }
-      if (loopSequence.showEyes()) {
-        eyesEffect.render(g, sw, sh);
-      }
-    } finally {
-      g.dispose();
     }
   }
 
@@ -687,111 +667,5 @@ public final class Chapter1Screen {
       hack = null;
       doorLoopPlayer.stop();
     }
-  }
-
-  private void renderVnScene(Graphics2D g, int sw, int sh) {
-    g.setColor(new Color(12, 8, 6));
-    g.fillRect(0, 0, sw, sh);
-    VnSceneState scene = activeScene();
-    if (scene == null) {
-      return;
-    }
-    DialogBoxRenderer.drawCompactFramedSpeakerText(
-        g, sw, sh, scene.speaker(), scene.body(), new Color(218, 165, 32), 1f);
-  }
-
-  private void renderVnOverlay(Graphics2D g, int sw, int sh) {
-    g.setColor(new Color(0, 0, 0, 140));
-    g.fillRect(0, 0, sw, sh);
-    VnSceneState scene = activeScene();
-    if (scene == null) {
-      return;
-    }
-    DialogBoxRenderer.drawCompactFramedSpeakerText(
-        g, sw, sh, scene.speaker(), scene.body(), new Color(218, 165, 32), 1f);
-  }
-
-  private void renderVnChoices(Graphics2D g) {
-    VnSceneState scene = activeScene();
-    if (scene == null || !scene.waitingForChoice()) {
-      return;
-    }
-    var choices = scene.choices();
-    g.setFont(GameFonts.get().uiBold(10));
-    for (VnChoiceLayout.ChoiceRect rect : choiceRects) {
-      g.setColor(new Color(255, 220, 140));
-      String label = (rect.index() + 1) + ". " + choices.get(rect.index()).label();
-      g.drawString(label, (int) rect.x(), (int) (rect.y() + 12));
-    }
-  }
-
-  private void renderHackOverlay(Graphics2D g, int sw, int sh) {
-    BufferedImage boot = Chapter1UiAssets.bootBackground();
-    if (boot != null) {
-      g.drawImage(PixelScaler.sharpScale(boot, sw, sh), 0, 0, null);
-    } else {
-      g.setColor(new Color(0, 0, 0, 200));
-      g.fillRect(0, 0, sw, sh);
-    }
-    if (hack == null) {
-      return;
-    }
-
-    int shake = hackShakeOffset();
-    BufferedImage frame = Chapter1UiAssets.terminalFrame();
-    int tx = 0;
-    int ty = 0;
-    int tw = sw;
-    int th = sh;
-    if (frame != null) {
-      float scale = Math.min(sw / (float) frame.getWidth(), sh / (float) frame.getHeight());
-      tw = Math.max(1, Math.round(frame.getWidth() * scale));
-      th = Math.max(1, Math.round(frame.getHeight() * scale));
-      tx = (sw - tw) / 2 + shake;
-      ty = (sh - th) / 2;
-      g.drawImage(PixelScaler.sharpScale(frame, tw, th), tx, ty, null);
-    }
-
-    BufferedImage timer = Chapter1UiAssets.timerBar();
-    if (timer != null) {
-      int barW = Math.min(Math.round(timer.getWidth() * 1.6f), tw - Math.round(tw * 0.2f));
-      int barH = Math.max(10, Math.round(timer.getHeight() * (barW / (float) timer.getWidth())));
-      int barX = tx + (tw - barW) / 2;
-      int barY = ty + Math.round(th * 0.07f);
-      g.drawImage(PixelScaler.sharpScale(timer, barW, barH), barX, barY, null);
-      float progress = hack.ticksRemaining() / (float) HackConsoleModel.TIMER_TICKS;
-      int inset = Math.max(2, Math.round(barW * 0.03f));
-      int fillW = Math.round((barW - inset * 2) * progress);
-      g.setColor(new Color(200, 50, 50, 230));
-      g.fillRect(barX + inset, barY + inset, fillW, barH - inset * 2);
-    }
-
-    int padX = Math.round(tw * 0.14f);
-    int padTop = Math.round(th * 0.18f);
-    int textX = tx + padX;
-    int textY = ty + padTop;
-    int textBottom = ty + th - Math.round(th * 0.16f);
-
-    g.setFont(GameFonts.get().uiPlain(8));
-    g.setColor(new Color(120, 255, 120));
-    int y = textY;
-    for (String line : hack.logText().split("\n")) {
-      if (line.isEmpty() || y > textBottom - 24) {
-        continue;
-      }
-      g.drawString(line, textX, y);
-      y += 11;
-    }
-    g.drawString("> " + hack.inputLine() + "_", textX, textBottom - 8);
-    g.setColor(new Color(160, 220, 160));
-    g.drawString("ENTER — выполнить, ESC — выход", textX, textBottom + 10);
-  }
-
-  private int hackShakeOffset() {
-    if (hack == null) {
-      return 0;
-    }
-    double urgency = 1.0 - (hack.ticksRemaining() / (double) HackConsoleModel.TIMER_TICKS);
-    return (int) Math.round(Math.sin(hackShakeTick * 0.65) * (1 + urgency * 5));
   }
 }
