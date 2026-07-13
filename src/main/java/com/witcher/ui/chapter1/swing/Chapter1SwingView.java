@@ -65,7 +65,8 @@ public final class Chapter1SwingView implements Chapter1View {
 
     if (presenter.director().phase() != Chapter1Phase.CUTSCENE
         && presenter.director().phase() != Chapter1Phase.LOOP_SEQUENCE
-        && presenter.director().phase() != Chapter1Phase.LOOP_HOLD) {
+        && presenter.director().phase() != Chapter1Phase.LOOP_HOLD
+        && presenter.director().phase() != Chapter1Phase.BOSS_MAP) {
       Graphics2D overlay = screen.createGraphics();
       try {
         GlitchOverlayRenderer.draw(overlay, sw, sh, presenter.director().session());
@@ -85,12 +86,18 @@ public final class Chapter1SwingView implements Chapter1View {
 
   @Override
   public void renderTextOverlay(Graphics2D g, int mouseX, int mouseY, Chapter1Presenter presenter) {
-    if (presenter.director().phase() == Chapter1Phase.SHOP
-        || presenter.director().phase() == Chapter1Phase.HACK) {
+    Chapter1Phase phase = presenter.director().phase();
+    if (phase == Chapter1Phase.SHOP || phase == Chapter1Phase.HACK) {
       presenter.shopScreen().renderTextOverlay(g, mouseX, mouseY);
     }
     if (presenter.hasActiveChoices()) {
       VnSceneRenderer.drawChoices(g, presenter.activeScene(), presenter.choiceRects());
+    }
+    if (phase == Chapter1Phase.BOSS_MAP
+        || phase == Chapter1Phase.VN_BATTLE
+        || phase == Chapter1Phase.VN_DIALOG
+        || phase == Chapter1Phase.ENDING) {
+      Chapter1UiCursor.draw(g, mouseX, mouseY);
     }
   }
 }

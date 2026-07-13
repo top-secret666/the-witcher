@@ -66,4 +66,49 @@ public final class Chapter1UiAssets {
     }
     return cardIcon;
   }
+
+  private static BufferedImage bossMapOpen;
+  private static BufferedImage bossMapClosed;
+  private static BufferedImage bossDukeMapIcon;
+  private static BufferedImage bossDukePortrait;
+
+  public static BufferedImage bossMapOpen() {
+    if (bossMapOpen == null) {
+      Sprite sprite = Sprite.loadOptional(Chapter1AssetPaths.CARD_MAP_OPEN);
+      bossMapOpen = sprite != null ? sprite.getImage() : null;
+    }
+    return bossMapOpen;
+  }
+
+  public static BufferedImage bossMapClosed() {
+    if (bossMapClosed == null) {
+      Sprite sprite = Sprite.loadOptional(Chapter1AssetPaths.CARD_CLOSED);
+      bossMapClosed = sprite != null ? sprite.getImage() : null;
+    }
+    return bossMapClosed;
+  }
+
+  public static BufferedImage bossMapIcon(String path) {
+    if (path != null && path.contains("boss_duke_map")) {
+      if (bossDukeMapIcon == null) {
+        Sprite sprite = Sprite.loadOptional(path);
+        bossDukeMapIcon = sprite != null ? sprite.getImage() : null;
+      }
+      return bossDukeMapIcon;
+    }
+    Sprite sprite = Sprite.loadOptional(path);
+    return sprite != null ? sprite.getImage() : null;
+  }
+
+  public static BufferedImage bossPortrait(String path) {
+    if (path != null && path.contains("boss_duke_portrait")) {
+      if (bossDukePortrait == null) {
+        Sprite sprite = Sprite.loadOptional(path);
+        bossDukePortrait = sprite != null ? sprite.getImage() : null;
+      }
+      return bossDukePortrait;
+    }
+    Sprite sprite = Sprite.loadOptional(path);
+    return sprite != null ? sprite.getImage() : null;
+  }
 }

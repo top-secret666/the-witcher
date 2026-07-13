@@ -3,11 +3,9 @@ package main.java.com.witcher.ui.chapter1.swing;
 import main.java.com.witcher.chapter1.battle.BossCatalog;
 import main.java.com.witcher.chapter1.battle.BossEntry;
 import main.java.com.witcher.ui.chapter1.view.BossMapLayout;
-import main.java.com.witcher.ui.chapter1.view.Chapter1AssetPaths;
 import main.java.com.witcher.ui.chapter1.view.Chapter1ViewConstants;
 import main.java.com.witcher.ui.graphics.GameFonts;
 import main.java.com.witcher.ui.graphics.PixelScaler;
-import main.java.com.witcher.ui.graphics.Sprite;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
@@ -23,11 +21,11 @@ public final class BossMapView {
     g.setColor(new Color(8, 6, 5));
     g.fillRect(0, 0, sw, sh);
 
-    BufferedImage map = load(Chapter1AssetPaths.CARD_MAP_OPEN);
+    BufferedImage map = Chapter1UiAssets.bossMapOpen();
     if (map != null) {
       g.drawImage(PixelScaler.sharpScale(map, sw, sh), 0, 0, null);
     } else {
-      BufferedImage closed = load(Chapter1AssetPaths.CARD_CLOSED);
+      BufferedImage closed = Chapter1UiAssets.bossMapClosed();
       if (closed != null) {
         g.drawImage(PixelScaler.sharpScale(closed, sw, sh), 0, 0, null);
       }
@@ -40,7 +38,7 @@ public final class BossMapView {
       boolean hot = boss.equals(hovered) || boss.equals(selected);
       int x = Math.round(boss.mapX() * sx) - icon / 2;
       int y = Math.round(boss.mapY() * sy) - icon / 2;
-      BufferedImage iconImg = load(boss.mapIconPath());
+      BufferedImage iconImg = Chapter1UiAssets.bossMapIcon(boss.mapIconPath());
       if (iconImg != null) {
         g.drawImage(PixelScaler.sharpScale(iconImg, icon, icon), x, y, null);
       } else {
@@ -75,7 +73,7 @@ public final class BossMapView {
     g.setColor(new Color(180, 140, 60));
     g.drawRoundRect(px, py, pw, ph, 6, 6);
 
-    BufferedImage portrait = load(boss.portraitPath());
+    BufferedImage portrait = Chapter1UiAssets.bossPortrait(boss.portraitPath());
     int portraitSize = 56;
     int portraitX = px + 8;
     int portraitY = py + 8;
@@ -96,10 +94,5 @@ public final class BossMapView {
     g.drawString("Защита " + boss.protection(), px + 10, py + 78);
     g.drawString("Выносл. " + boss.stamina(), px + 10, py + 92);
     g.drawString("Знаки " + boss.signs(), px + 10, py + 106);
-  }
-
-  private static BufferedImage load(String path) {
-    Sprite sprite = Sprite.loadOptional(path);
-    return sprite != null ? sprite.getImage() : null;
   }
 }
