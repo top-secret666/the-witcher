@@ -11,8 +11,6 @@ import java.awt.image.BufferedImage;
 /** Оверлей глюка по уровню подозрения. */
 public final class GlitchOverlayRenderer {
 
-  private static BufferedImage light;
-  private static BufferedImage medium;
   private static BufferedImage heavy;
 
   private GlitchOverlayRenderer() {
@@ -23,9 +21,8 @@ public final class GlitchOverlayRenderer {
       return;
     }
     BufferedImage overlay = switch (session.glitchLevel()) {
-      case LIGHT -> cachedLight();
       case HEAVY -> cachedHeavy();
-      case NONE, MEDIUM -> null;
+      case NONE, LIGHT, MEDIUM -> null;
     };
     if (overlay == null) {
       return;
@@ -34,22 +31,6 @@ public final class GlitchOverlayRenderer {
     g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.55f));
     g.drawImage(overlay, 0, 0, sw, sh, null);
     g.setComposite(prev);
-  }
-
-  private static BufferedImage cachedLight() {
-    if (light == null) {
-      var sprite = Sprite.loadOptional(Chapter1AssetPaths.GLITCH_LIGHT);
-      light = sprite != null ? sprite.getImage() : null;
-    }
-    return light;
-  }
-
-  private static BufferedImage cachedMedium() {
-    if (medium == null) {
-      var sprite = Sprite.loadOptional(Chapter1AssetPaths.GLITCH_MEDIUM);
-      medium = sprite != null ? sprite.getImage() : null;
-    }
-    return medium;
   }
 
   private static BufferedImage cachedHeavy() {

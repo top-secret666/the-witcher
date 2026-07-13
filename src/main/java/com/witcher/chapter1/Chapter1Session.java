@@ -179,9 +179,6 @@ public final class Chapter1Session {
     if (suspicion >= 6) {
       return GlitchLevel.HEAVY;
     }
-    if (suspicion >= 1) {
-      return GlitchLevel.LIGHT;
-    }
     return GlitchLevel.NONE;
   }
 
