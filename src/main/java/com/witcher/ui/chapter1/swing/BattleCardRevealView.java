@@ -1,7 +1,5 @@
 package main.java.com.witcher.ui.chapter1.swing;
 
-import main.java.com.witcher.ui.graphics.PixelScaler;
-
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
@@ -15,7 +13,7 @@ public final class BattleCardRevealView {
   public static void drawCardIcon(Graphics2D g, int x, int y, int size, boolean hovered) {
     BufferedImage icon = Chapter1UiAssets.cardIcon();
     if (icon != null) {
-      g.drawImage(PixelScaler.sharpScale(icon, size, size), x, y, null);
+      g.drawImage(ScaledImageCache.get(icon, size, size), x, y, null);
     } else {
       g.setColor(new Color(100, 30, 25));
       g.fillRoundRect(x, y, size, size, 6, 6);
