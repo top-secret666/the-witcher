@@ -45,15 +45,7 @@ public final class Chapter1SwingView implements Chapter1View {
         }
       }
       case HACK -> presenter.shopScreen().render(screen, mouseX, mouseY);
-      case CARD_REVEAL -> {
-        presenter.shopScreen().render(screen, mouseX, mouseY);
-        Graphics2D g = screen.createGraphics();
-        try {
-          BattleCardRevealView.draw(g, sw, sh, presenter.battleCard().revealProgress());
-        } finally {
-          g.dispose();
-        }
-      }
+      case CARD_REVEAL -> presenter.shopScreen().render(screen, mouseX, mouseY);
       case BOSS_MAP -> {
         Graphics2D g = screen.createGraphics();
         try {
@@ -87,12 +79,12 @@ public final class Chapter1SwingView implements Chapter1View {
           Chapter1SessionHud.draw(overlay, sw, presenter.director().session());
           if (presenter.director().phase() == Chapter1Phase.SHOP
               && presenter.battleCard().canOpenMap(presenter.director().session())) {
+            java.awt.Point bag = presenter.shopScreen().presenter().inventoryBagSlot();
+            int iconSize = Chapter1ViewConstants.CARD_ICON_SIZE;
+            int iconX = bag.x + Chapter1ViewConstants.CARD_ICON_BAG_OFFSET_X;
+            int iconY = bag.y + Chapter1ViewConstants.CARD_ICON_BAG_OFFSET_Y;
             BattleCardRevealView.drawCardIcon(
-                overlay,
-                Chapter1ViewConstants.CARD_ICON_X,
-                Chapter1ViewConstants.CARD_ICON_Y,
-                Chapter1ViewConstants.CARD_ICON_SIZE,
-                presenter.cardIconHovered());
+                overlay, iconX, iconY, iconSize, presenter.cardIconHovered());
           }
         }
       } finally {

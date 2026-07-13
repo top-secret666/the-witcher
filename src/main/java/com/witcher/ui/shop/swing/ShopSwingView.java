@@ -21,6 +21,7 @@ import main.java.com.witcher.ui.shop.view.ShopView;
 import main.java.com.witcher.ui.shop.view.ShopViewConstants;
 import main.java.com.witcher.ui.shop.view.anim.ShopCategoryAnimator;
 import main.java.com.witcher.ui.shop.view.anim.ShopRevealAnimator;
+import main.java.com.witcher.ui.chapter1.swing.BattleCardRevealView;
 
 import static main.java.com.witcher.ui.shop.view.ShopViewConstants.*;
 
@@ -81,9 +82,21 @@ public final class ShopSwingView implements ShopView {
             || ui.state == ShopScreenState.CATEGORY || ui.state == ShopScreenState.CATEGORY_CLOSING;
         boolean walletScene = ui.state == ShopScreenState.WALLET_REVEAL;
         boolean purchaseScene = ui.state == ShopScreenState.PURCHASE_REVEAL;
+        boolean battleCardScene = ui.state == ShopScreenState.BATTLE_CARD_REVEAL;
 
         if (walletScene) {
             drawWalletRevealScene(g, sw, sh, layout, mouseX, mouseY);
+            if (shouldDrawUiTextInScene()) {
+                DialogBoxRenderer.drawCompactFramedSpeakerText(g, sw, sh, "Герцог", ui.currentDialog,
+                    DialogBoxRenderer.DUKE_COLOR, 1f);
+                drawCursor(g, mouseX, mouseY);
+            }
+            g.dispose();
+            return;
+        }
+
+        if (battleCardScene) {
+            drawBattleCardRevealScene(g, sw, sh, layout);
             if (shouldDrawUiTextInScene()) {
                 DialogBoxRenderer.drawCompactFramedSpeakerText(g, sw, sh, "Герцог", ui.currentDialog,
                     DialogBoxRenderer.DUKE_COLOR, 1f);
@@ -172,8 +185,9 @@ public final class ShopSwingView implements ShopView {
                 || ui.state == ShopScreenState.CATEGORY || ui.state == ShopScreenState.CATEGORY_CLOSING;
             boolean walletScene = ui.state == ShopScreenState.WALLET_REVEAL;
             boolean purchaseScene = ui.state == ShopScreenState.PURCHASE_REVEAL;
+            boolean battleCardScene = ui.state == ShopScreenState.BATTLE_CARD_REVEAL;
 
-            if (walletScene || purchaseScene) {
+            if (walletScene || purchaseScene || battleCardScene) {
                 DialogBoxRenderer.drawCompactFramedSpeakerText(g, sw, sh, "Герцог", ui.currentDialog,
                     DialogBoxRenderer.DUKE_COLOR, 1f);
                 drawCursor(g, mouseX, mouseY);
@@ -263,6 +277,44 @@ public final class ShopSwingView implements ShopView {
 
         drawPurchaseRevealBag(g, layout);
         drawPurchaseRevealItem(g, layout);
+    }
+
+    private void drawBattleCardRevealScene(Graphics2D g, int sw, int sh, ShopLayout layout) {
+        drawScaledBackground(g, assets.merchantBgScaled, sw, sh, 0.35f);
+
+        Composite prev = g.getComposite();
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.78f));
+        g.setColor(Color.BLACK);
+        g.fillRect(0, 0, sw, sh);
+        g.setComposite(prev);
+
+        drawCharacter(g, sw, sh, assets.geraltScaled, true, layout.dialogTop, 1f);
+        drawCharacter(g, sw, sh, assets.dukeScaled, false, layout.dialogTop, 1f);
+
+        drawBattleCardRevealBag(g, layout);
+        drawBattleCardFlying(g, sw, sh, layout);
+    }
+
+    private void drawBattleCardRevealBag(Graphics2D g, ShopLayout layout) {
+        Point slot = presenter.inventoryBagSlot();
+        float openT = bagOpenProgress(
+            ui.battleCardRevealTicks,
+            WALLET_APPEAR_TICKS,
+            WALLET_FLY_TICKS,
+            WALLET_FADE_TICKS,
+            WALLET_CLOSE_TICKS);
+        drawInventoryBagSprite(g, slot.x, slot.y, INVENTORY_BAG_SIZE, openT, false, 1f);
+    }
+
+    private void drawBattleCardFlying(Graphics2D g, int sw, int sh, ShopLayout layout) {
+        Point slot = presenter.inventoryBagSlot();
+        int bagCenterX = slot.x + INVENTORY_BAG_SIZE / 2;
+        int bagCenterY = slot.y + INVENTORY_BAG_SIZE / 2;
+        int appearEnd = WALLET_APPEAR_TICKS;
+        int flyEnd = appearEnd + WALLET_FLY_TICKS;
+        int fadeEnd = flyEnd + WALLET_FADE_TICKS;
+        BattleCardRevealView.drawFlyingCard(
+            g, sw, sh, bagCenterX, bagCenterY, ui.battleCardRevealTicks, appearEnd, flyEnd, fadeEnd);
     }
 
     private void drawPurchaseRevealBag(Graphics2D g, ShopLayout layout) {
@@ -464,7 +516,8 @@ public final class ShopSwingView implements ShopView {
         if (presenter.model().needsWalletReveal()) {
             return false;
         }
-        if (ui.state == ShopScreenState.PURCHASE_REVEAL || ui.state == ShopScreenState.WALLET_REVEAL) {
+        if (ui.state == ShopScreenState.PURCHASE_REVEAL || ui.state == ShopScreenState.WALLET_REVEAL
+            || ui.state == ShopScreenState.BATTLE_CARD_REVEAL) {
             return false;
         }
         return openT < 0.001f;
@@ -479,7 +532,9 @@ public final class ShopSwingView implements ShopView {
                 if (frames[frame] != null) {
                     return frames[frame];
                 }
-            } else if (ui.state == ShopScreenState.PURCHASE_REVEAL || ui.state == ShopScreenState.WALLET_REVEAL) {
+            } else if (ui.state == ShopScreenState.PURCHASE_REVEAL
+                || ui.state == ShopScreenState.WALLET_REVEAL
+                || ui.state == ShopScreenState.BATTLE_CARD_REVEAL) {
                 return frames[0];
             }
         }

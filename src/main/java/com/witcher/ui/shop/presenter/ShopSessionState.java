@@ -33,6 +33,7 @@ public final class ShopSessionState {
     public final Rectangle categoryBuyBounds = new Rectangle();
     public int walletRevealTicks;
     public boolean walletRevealFromCategory;
+    public int battleCardRevealTicks;
     public int purchaseRevealTicks;
     public BufferedImage purchaseRevealIcon;
     public int purchaseRevealKeepRow = -1;

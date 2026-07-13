@@ -47,4 +47,23 @@ public final class Chapter1UiAssets {
     }
     return hiddenHint;
   }
+
+  private static BufferedImage cardClosed;
+  private static BufferedImage cardIcon;
+
+  public static BufferedImage cardClosed() {
+    if (cardClosed == null) {
+      Sprite sprite = Sprite.loadOptional(Chapter1AssetPaths.CARD_CLOSED);
+      cardClosed = sprite != null ? sprite.getImage() : null;
+    }
+    return cardClosed;
+  }
+
+  public static BufferedImage cardIcon() {
+    if (cardIcon == null) {
+      Sprite sprite = Sprite.loadOptional(Chapter1AssetPaths.CARD_ICON);
+      cardIcon = sprite != null ? sprite.getImage() : null;
+    }
+    return cardIcon;
+  }
 }

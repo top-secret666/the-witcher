@@ -22,6 +22,7 @@ import main.java.com.witcher.chapter1.vn.VnSceneState;
 import main.java.com.witcher.ui.chapter1.swing.CutscenePlayer;
 import main.java.com.witcher.ui.chapter1.swing.EyesBlinkEffect;
 import main.java.com.witcher.ui.shop.ShopModel;
+import main.java.com.witcher.ui.shop.presenter.ShopScreenState;
 import main.java.com.witcher.ui.shop.swing.ShopScreen;
 
 import java.awt.event.KeyEvent;
@@ -174,7 +175,7 @@ public final class Chapter1Presenter {
         }
         cardIconHovered = isCardIconHovered(mouseX, mouseY);
       }
-      case CARD_REVEAL -> updateCardReveal(clicked);
+      case CARD_REVEAL -> { }
       case BOSS_MAP -> updateBossMap(mouseX, mouseY, clicked);
       case LOOP_SEQUENCE -> updateLoopSequence();
       case LOOP_HOLD -> { }
@@ -289,19 +290,18 @@ public final class Chapter1Presenter {
 
   private void tryGrantBattleCard() {
     if (battleCard.tryGrantAfterEquip(director.session(), shopModel)) {
-      director.beginCardReveal();
+      shopScreen.presenter().beginBattleCardReveal(this::onBattleCardRevealFinished);
     }
   }
 
-  private void updateCardReveal(boolean clicked) {
-    battleCard.tickReveal();
-    if (clicked || battleCard.revealTicks() >= BattleCardController.REVEAL_TOTAL_TICKS) {
-      battleCard.finishReveal(director.session());
-      director.enterShop();
-    }
+  private void onBattleCardRevealFinished() {
+    battleCard.finishReveal(director.session());
   }
 
   private boolean handleCardIconClick(int mouseX, int mouseY, boolean clicked) {
+    if (shopScreen.presenter().ui().state == ShopScreenState.BATTLE_CARD_REVEAL) {
+      return false;
+    }
     if (!clicked || !battleCard.canOpenMap(director.session())) {
       return false;
     }
@@ -319,10 +319,12 @@ public final class Chapter1Presenter {
     if (!battleCard.canOpenMap(director.session())) {
       return false;
     }
-    return mouseX >= Chapter1ViewConstants.CARD_ICON_X
-        && mouseX < Chapter1ViewConstants.CARD_ICON_X + Chapter1ViewConstants.CARD_ICON_SIZE
-        && mouseY >= Chapter1ViewConstants.CARD_ICON_Y
-        && mouseY < Chapter1ViewConstants.CARD_ICON_Y + Chapter1ViewConstants.CARD_ICON_SIZE;
+    java.awt.Point bag = shopScreen.presenter().inventoryBagSlot();
+    int iconSize = Chapter1ViewConstants.CARD_ICON_SIZE;
+    int x = bag.x + Chapter1ViewConstants.CARD_ICON_BAG_OFFSET_X;
+    int y = bag.y + Chapter1ViewConstants.CARD_ICON_BAG_OFFSET_Y;
+    return mouseX >= x && mouseX < x + iconSize
+        && mouseY >= y && mouseY < y + iconSize;
   }
 
   private void updateBossMap(int mouseX, int mouseY, boolean clicked) {

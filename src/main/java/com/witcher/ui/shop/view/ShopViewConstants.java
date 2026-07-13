@@ -28,6 +28,8 @@ public final class ShopViewConstants {
     public static final int PURCHASE_REVEAL_TOTAL =
         PURCHASE_APPEAR_TICKS + PURCHASE_FLY_TICKS + PURCHASE_TUCK_TICKS;
 
+    public static final int BATTLE_CARD_REVEAL_TOTAL = WALLET_REVEAL_TOTAL;
+
     public static final int INVENTORY_BAG_SIZE = 40;
     public static final int INVENTORY_BAG_MARGIN = 8;
 

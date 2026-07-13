@@ -111,6 +111,22 @@ public final class DukeLines {
         );
     }
 
+    public static String battleCardReveal() {
+        return pick(
+            "Раз уж вы облачились — держите карту. На ней отмечены те, с кем вам предстоит встретиться.",
+            "Вот. Карта контрактов. Выберите цель — и не тяните, время в Арнскроне не ждёт.",
+            "Экипировка на месте? Тогда и карта ваша. Смотрите, кого хотите встретить первым."
+        );
+    }
+
+    public static String battleCardRevealAfter() {
+        return pick(
+            "Карта у вас в сумке. Когда будете готовы — откройте её.",
+            "Спрятали карту? Хорошо. Выбирайте цель, когда сочтёте нужным.",
+            "Вот и всё. Карта при вас — решайте сами, кого искать."
+        );
+    }
+
     private static String pick(String... lines) {
         return lines[ThreadLocalRandom.current().nextInt(lines.length)];
     }

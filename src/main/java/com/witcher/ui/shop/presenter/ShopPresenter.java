@@ -43,6 +43,7 @@ public final class ShopPresenter {
     private final ShopUiMetrics metrics;
     private final ShopEntryIcons armourIcons;
     private final Chapter1ShopBridge chapterBridge;
+    private Runnable battleCardRevealComplete;
 
     public ShopPresenter(ShopModel model, ShopRuntimeAssets assets, ShopEntryIcons armourIcons) {
         this(model, assets, armourIcons, null);
@@ -77,6 +78,10 @@ public final class ShopPresenter {
                 ui.walletRevealTicks = WALLET_REVEAL_TOTAL - 1;
                 return;
             }
+            if (ui.state == ShopScreenState.BATTLE_CARD_REVEAL) {
+                ui.battleCardRevealTicks = BATTLE_CARD_REVEAL_TOTAL - 1;
+                return;
+            }
             if (ui.state == ShopScreenState.PURCHASE_REVEAL) {
                 ui.purchaseRevealTicks = PURCHASE_REVEAL_TOTAL - 1;
                 return;
@@ -104,6 +109,13 @@ public final class ShopPresenter {
             ui.walletRevealTicks++;
             if (ui.walletRevealTicks >= WALLET_REVEAL_TOTAL) {
                 finishWalletReveal();
+            }
+        }
+
+        if (ui.state == ShopScreenState.BATTLE_CARD_REVEAL) {
+            ui.battleCardRevealTicks++;
+            if (ui.battleCardRevealTicks >= BATTLE_CARD_REVEAL_TOTAL) {
+                finishBattleCardReveal();
             }
         }
 
@@ -137,6 +149,11 @@ public final class ShopPresenter {
             return;
         }
 
+        if (ui.state == ShopScreenState.BATTLE_CARD_REVEAL && input.clicked()) {
+            ui.battleCardRevealTicks = BATTLE_CARD_REVEAL_TOTAL - 1;
+            return;
+        }
+
         if (ui.state == ShopScreenState.PURCHASE_REVEAL && input.clicked()) {
             ui.purchaseRevealTicks = PURCHASE_REVEAL_TOTAL - 1;
             return;
@@ -150,6 +167,7 @@ public final class ShopPresenter {
 
         boolean bagUnlocked = !model.needsWalletReveal()
             && ui.state != ShopScreenState.WALLET_REVEAL
+            && ui.state != ShopScreenState.BATTLE_CARD_REVEAL
             && ui.state != ShopScreenState.PURCHASE_REVEAL;
         if (bagUnlocked) {
             updateInventoryInput(input.mouseX(), input.mouseY(), input.clicked());
@@ -268,7 +286,7 @@ public final class ShopPresenter {
         return switch (ui.state) {
             case REVEAL -> ShopRevealAnimator.forProgress(
                 ui.revealTicks / (float) REVEAL_DURATION_TICKS, ui.showcaseItems.size(), true);
-            case WALLET_REVEAL, PURCHASE_REVEAL -> ShopRevealAnimator.complete(ui.showcaseItems.size());
+            case WALLET_REVEAL, PURCHASE_REVEAL, BATTLE_CARD_REVEAL -> ShopRevealAnimator.complete(ui.showcaseItems.size());
             default -> ShopRevealAnimator.complete(ui.showcaseItems.size());
         };
     }
@@ -559,6 +577,27 @@ public final class ShopPresenter {
         ui.state = ui.walletRevealFromCategory ? ShopScreenState.CATEGORY : ShopScreenState.IDLE;
         ui.walletRevealFromCategory = false;
         ui.currentDialog = DukeLines.walletRevealAfter();
+    }
+
+    /** Анимация выдачи карты боя (как кошелёк) — вызывается из главы 1. */
+    public void beginBattleCardReveal(Runnable onComplete) {
+        battleCardRevealComplete = onComplete;
+        ui.state = ShopScreenState.BATTLE_CARD_REVEAL;
+        ui.battleCardRevealTicks = 0;
+        ui.inventoryOpen = false;
+        ui.equipmentOpen = false;
+        ui.currentDialog = DukeLines.battleCardReveal();
+    }
+
+    private void finishBattleCardReveal() {
+        ui.battleCardRevealTicks = 0;
+        ui.state = ShopScreenState.IDLE;
+        ui.currentDialog = DukeLines.battleCardRevealAfter();
+        Runnable done = battleCardRevealComplete;
+        battleCardRevealComplete = null;
+        if (done != null) {
+            done.run();
+        }
     }
 
     private boolean inventoryPanelContains(int mx, int my) {
