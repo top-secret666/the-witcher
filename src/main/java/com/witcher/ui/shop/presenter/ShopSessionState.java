@@ -2,7 +2,7 @@ package main.java.com.witcher.ui.shop.presenter;
 
 import main.java.com.witcher.ui.shop.EquipmentFilter;
 import main.java.com.witcher.ui.shop.ShopCatalogEntry;
-import main.java.com.witcher.ui.shop.ShopEquipSlot;
+import main.java.com.witcher.shop.EquipSlot;
 import main.java.com.witcher.ui.shop.view.ShopShowcaseItem;
 
 import java.awt.Rectangle;
@@ -50,7 +50,7 @@ public final class ShopSessionState {
     public boolean inventoryCloseHovered;
     public final Rectangle equipmentPanelBounds = new Rectangle();
     public final Rectangle equipmentBackButtonBounds = new Rectangle();
-    public final Rectangle[] equipmentSlotBounds = new Rectangle[ShopEquipSlot.values().length];
+    public final Rectangle[] equipmentSlotBounds = new Rectangle[EquipSlot.values().length];
     public final List<Rectangle> equipmentRowBounds = new ArrayList<>();
     public int equipmentHoveredRow = -1;
     public int equipmentHoveredSlot = -1;

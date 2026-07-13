@@ -3,6 +3,8 @@ package main.java.com.witcher.ui.shop;
 import main.java.com.witcher.model.armour.*;
 import main.java.com.witcher.model.sets.ArmourSet;
 import main.java.com.witcher.model.sets.SchoolSet;
+import main.java.com.witcher.shop.EquipSlot;
+import main.java.com.witcher.shop.EquippedGear;
 import main.java.com.witcher.repository.ArmourRepository;
 import main.java.com.witcher.repository.SetRepository;
 import main.java.com.witcher.service.ArmorCalculationService;
@@ -23,7 +25,7 @@ import java.util.Set;
  * Доменная логика лавки: инвентарь, кошелёк, покупки.
  * Связывает Swing-витрину с сервисами из консольной версии.
  */
-public final class ShopModel {
+public final class ShopModel implements EquippedGear {
 
     public record PurchaseResult(boolean success, String dukeLine) {
         public static PurchaseResult ok(String line) {
@@ -42,7 +44,7 @@ public final class ShopModel {
     private final Set<ArmourSet> soldSets = new HashSet<>();
     private final List<Armour> playerInventory = new ArrayList<>();
     private final List<String> purchasedLabels = new ArrayList<>();
-    private final Map<ShopEquipSlot, Armour> equipped = new EnumMap<>(ShopEquipSlot.class);
+    private final Map<EquipSlot, Armour> equipped = new EnumMap<>(EquipSlot.class);
 
     private int wallet;
     private boolean hideWalletAmount;
@@ -209,7 +211,8 @@ public final class ShopModel {
         return List.copyOf(playerInventory);
     }
 
-    public Armour getEquipped(ShopEquipSlot slot) {
+    @Override
+    public Armour getEquipped(EquipSlot slot) {
         return equipped.get(slot);
     }
 
@@ -221,13 +224,13 @@ public final class ShopModel {
         if (armour == null || !playerInventory.contains(armour)) {
             return;
         }
-        ShopEquipSlot slot = ShopEquipSlot.forArmour(armour);
+        EquipSlot slot = EquipSlot.forArmour(armour);
         if (slot != null) {
             equipped.put(slot, armour);
         }
     }
 
-    public void unequip(ShopEquipSlot slot) {
+    public void unequip(EquipSlot slot) {
         equipped.remove(slot);
     }
 

@@ -6,7 +6,7 @@ import main.java.com.witcher.model.armour.Armour;
 import main.java.com.witcher.ui.shop.DukeLines;
 import main.java.com.witcher.ui.shop.ShopCatalogEntry;
 import main.java.com.witcher.ui.shop.ShopCategory;
-import main.java.com.witcher.ui.shop.ShopEquipSlot;
+import main.java.com.witcher.shop.EquipSlot;
 
 /**
  * Связка лавки с мета-прогрессом главы 1.
@@ -69,7 +69,7 @@ public final class Chapter1ShopBridge {
     if (entry == null) {
       return "";
     }
-    ShopEquipSlot slot = slotForInspect(entry, category);
+    EquipSlot slot = slotForInspect(entry, category);
     if (slot != null) {
       InspectAction result = InspectAction.inspect(session, slot, entry.name);
       return result.dukeLine();
@@ -81,7 +81,7 @@ public final class Chapter1ShopBridge {
     if (armour == null) {
       return "";
     }
-    ShopEquipSlot slot = ShopEquipSlot.forArmour(armour);
+    EquipSlot slot = EquipSlot.forArmour(armour);
     if (slot == null) {
       return DukeLines.rowInspect(armour.getName(), 0);
     }
@@ -122,18 +122,18 @@ public final class Chapter1ShopBridge {
     }
   }
 
-  private static ShopEquipSlot slotForInspect(ShopCatalogEntry entry, ShopCategory category) {
+  private static EquipSlot slotForInspect(ShopCatalogEntry entry, ShopCategory category) {
     if (entry.armour != null) {
-      ShopEquipSlot fromArmour = ShopEquipSlot.forArmour(entry.armour);
+      EquipSlot fromArmour = EquipSlot.forArmour(entry.armour);
       if (fromArmour != null) {
         return fromArmour;
       }
     }
     return switch (category) {
-      case CHEST -> ShopEquipSlot.CHEST;
-      case LEGS -> ShopEquipSlot.LEGS;
-      case GLOVES -> ShopEquipSlot.GLOVES;
-      case BOOTS -> ShopEquipSlot.BOOTS;
+      case CHEST -> EquipSlot.CHEST;
+      case LEGS -> EquipSlot.LEGS;
+      case GLOVES -> EquipSlot.GLOVES;
+      case BOOTS -> EquipSlot.BOOTS;
       default -> null;
     };
   }

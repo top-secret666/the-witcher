@@ -8,7 +8,7 @@ import main.java.com.witcher.ui.graphics.UiChrome;
 import main.java.com.witcher.ui.shop.EquipmentArmourList;
 import main.java.com.witcher.ui.shop.EquipmentFilter;
 import main.java.com.witcher.ui.shop.ShopCategory;
-import main.java.com.witcher.ui.shop.ShopEquipSlot;
+import main.java.com.witcher.shop.EquipSlot;
 import main.java.com.witcher.ui.shop.ShopModel;
 
 import main.java.com.witcher.ui.shop.view.EquipmentOverlayLayout;
@@ -131,9 +131,9 @@ public final class ShopEquipmentOverlay {
         drawPortraitFit(g, sprites, ctx.assets().geraltPortraitShop(),
             layout.portraitX, layout.portraitY, layout.portraitW, layout.portraitH);
 
-        ShopEquipSlot[] slots = layout.equipSlots();
+        EquipSlot[] slots = layout.equipSlots();
         for (int i = 0; i < slots.length; i++) {
-            ShopEquipSlot slot = slots[i];
+            EquipSlot slot = slots[i];
             Rectangle slotBounds = layout.equipSlot(i);
             int slotX = slotBounds.x;
             int sy = slotBounds.y;
@@ -148,7 +148,7 @@ public final class ShopEquipmentOverlay {
             BufferedImage icon = ctx.assets().equipSlotPlaceholder(slot.iconIndex);
             if (equipped != null) {
                 BufferedImage armourArt = ctx.armourIcons().iconForArmour(
-                    equipped, slot.shopCategory(), 30);
+                    equipped, ShopCategory.forEquipSlot(slot), 30);
                 if (armourArt != null) {
                     icon = armourArt;
                 }
@@ -171,7 +171,7 @@ public final class ShopEquipmentOverlay {
         }
 
         if (tooltipArmour == null && ctx.ui().equipmentHoveredSlot >= 0) {
-            ShopEquipSlot slot = ShopEquipSlot.values()[ctx.ui().equipmentHoveredSlot];
+            EquipSlot slot = EquipSlot.values()[ctx.ui().equipmentHoveredSlot];
             tooltipArmour = ctx.presenter().model().getEquipped(slot);
             if (tooltipArmour != null && ctx.ui().equipmentSlotBounds[ctx.ui().equipmentHoveredSlot] != null) {
                 tooltipAnchorY = ctx.ui().equipmentSlotBounds[ctx.ui().equipmentHoveredSlot].y;

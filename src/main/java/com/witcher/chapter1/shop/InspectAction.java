@@ -1,17 +1,17 @@
 package main.java.com.witcher.chapter1.shop;
 
 import main.java.com.witcher.chapter1.Chapter1Session;
-import main.java.com.witcher.ui.shop.ShopEquipSlot;
+import main.java.com.witcher.shop.EquipSlot;
 
 /** Результат осмотра предмета в лавке (без покупки). */
 public record InspectAction(
     boolean fragmentFound,
     String fragmentCode,
-    ShopEquipSlot slot,
+    EquipSlot slot,
     String dukeLine
 ) {
 
-  public static InspectAction inspect(Chapter1Session session, ShopEquipSlot slot, String itemName) {
+  public static InspectAction inspect(Chapter1Session session, EquipSlot slot, String itemName) {
     if (session == null || slot == null) {
       return new InspectAction(false, "", null, "");
     }

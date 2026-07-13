@@ -11,7 +11,7 @@ import main.java.com.witcher.ui.shop.ShopIcon;
 import main.java.com.witcher.model.armour.Armour;
 import main.java.com.witcher.ui.shop.ShopCatalogEntry;
 import main.java.com.witcher.ui.shop.ShopCategory;
-import main.java.com.witcher.ui.shop.ShopEquipSlot;
+import main.java.com.witcher.shop.EquipSlot;
 import main.java.com.witcher.ui.shop.ShopEntryIcons;
 import main.java.com.witcher.ui.shop.ShopModel;
 import main.java.com.witcher.ui.shop.presenter.ShopPresenter;
@@ -200,9 +200,9 @@ public final class GdxShopOverlays {
         int slotGap = 10;
         int slotX = px + panelW - slotSize - 12;
         int slotY = py + 36;
-        ShopEquipSlot[] slots = ShopEquipSlot.values();
+        EquipSlot[] slots = EquipSlot.values();
         for (int i = 0; i < slots.length; i++) {
-            ShopEquipSlot slot = slots[i];
+            EquipSlot slot = slots[i];
             int sy = slotY + i * (slotSize + slotGap);
             ui.equipmentSlotBounds[i] = new Rectangle(slotX, sy, slotSize, slotSize);
             boolean hovered = ui.equipmentHoveredSlot == i;

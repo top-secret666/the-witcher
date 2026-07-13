@@ -1,6 +1,7 @@
 package main.java.com.witcher.ui.shop;
 
 import main.java.com.witcher.model.armour.Armour;
+import main.java.com.witcher.shop.EquipSlot;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,7 +26,7 @@ public final class EquipmentArmourList {
     }
 
     public static ShopCategory categoryFor(Armour armour) {
-        ShopEquipSlot slot = ShopEquipSlot.forArmour(armour);
-        return slot != null ? slot.shopCategory() : ShopCategory.CHEST;
+        EquipSlot slot = EquipSlot.forArmour(armour);
+        return slot != null ? ShopCategory.forEquipSlot(slot) : ShopCategory.CHEST;
     }
 }

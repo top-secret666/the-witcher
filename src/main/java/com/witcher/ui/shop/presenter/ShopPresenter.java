@@ -8,7 +8,7 @@ import main.java.com.witcher.ui.shop.DukeLines;
 import main.java.com.witcher.ui.shop.ShopCatalogEntry;
 import main.java.com.witcher.ui.shop.ShopCategory;
 import main.java.com.witcher.ui.shop.ShopEntryIcons;
-import main.java.com.witcher.ui.shop.ShopEquipSlot;
+import main.java.com.witcher.shop.EquipSlot;
 import main.java.com.witcher.ui.shop.ShopModel;
 import main.java.com.witcher.ui.shop.ShopRuntimeAssets;
 import main.java.com.witcher.ui.shop.view.ShopLayout;
@@ -537,7 +537,7 @@ public final class ShopPresenter {
             return;
         }
         if (ui.equipmentHoveredSlot >= 0) {
-            ShopEquipSlot slot = ShopEquipSlot.values()[ui.equipmentHoveredSlot];
+            EquipSlot slot = EquipSlot.values()[ui.equipmentHoveredSlot];
             if (model.getEquipped(slot) != null) {
                 model.unequip(slot);
             }

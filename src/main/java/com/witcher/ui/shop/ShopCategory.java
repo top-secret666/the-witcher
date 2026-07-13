@@ -18,4 +18,16 @@ public enum ShopCategory {
         this.label = label;
         this.iconIndex = iconIndex;
     }
+
+    public static ShopCategory forEquipSlot(main.java.com.witcher.shop.EquipSlot slot) {
+        if (slot == null) {
+            return CHEST;
+        }
+        return switch (slot) {
+            case CHEST -> CHEST;
+            case LEGS -> LEGS;
+            case GLOVES -> GLOVES;
+            case BOOTS -> BOOTS;
+        };
+    }
 }

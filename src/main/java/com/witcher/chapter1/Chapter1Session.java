@@ -1,6 +1,6 @@
 package main.java.com.witcher.chapter1;
 
-import main.java.com.witcher.ui.shop.ShopEquipSlot;
+import main.java.com.witcher.shop.EquipSlot;
 
 import java.util.Arrays;
 import java.util.EnumSet;
@@ -20,8 +20,8 @@ public final class Chapter1Session {
   private int prison;
   private int suspicion;
   private int trust;
-  private final boolean[] cipherFragments = new boolean[ShopEquipSlot.values().length];
-  private final Set<ShopEquipSlot> inspectedSlots = EnumSet.noneOf(ShopEquipSlot.class);
+  private final boolean[] cipherFragments = new boolean[EquipSlot.values().length];
+  private final Set<EquipSlot> inspectedSlots = EnumSet.noneOf(EquipSlot.class);
   private boolean terminalAccessGranted;
   private boolean cipherSolved;
   private boolean escapeAttemptUnlocked;
@@ -100,18 +100,18 @@ public final class Chapter1Session {
     }
   }
 
-  public void markInspected(ShopEquipSlot slot) {
+  public void markInspected(EquipSlot slot) {
     if (slot != null) {
       inspectedSlots.add(slot);
     }
   }
 
-  public boolean wasInspected(ShopEquipSlot slot) {
+  public boolean wasInspected(EquipSlot slot) {
     return slot != null && inspectedSlots.contains(slot);
   }
 
   /** Шанс найти фрагмент при осмотре — вызывается снаружи после проверки слота. */
-  public boolean tryCollectFragment(ShopEquipSlot slot) {
+  public boolean tryCollectFragment(EquipSlot slot) {
     if (slot == null || cipherFragments[slot.ordinal()]) {
       return false;
     }
@@ -120,7 +120,7 @@ public final class Chapter1Session {
     return true;
   }
 
-  public boolean hasFragment(ShopEquipSlot slot) {
+  public boolean hasFragment(EquipSlot slot) {
     return slot != null && cipherFragments[slot.ordinal()];
   }
 
@@ -192,7 +192,7 @@ public final class Chapter1Session {
     return new Chapter1Snapshot(
         loop, prison, suspicion, trust,
         Arrays.copyOf(cipherFragments, cipherFragments.length),
-        inspectedSlots.toArray(new ShopEquipSlot[0]),
+        inspectedSlots.toArray(new EquipSlot[0]),
         terminalAccessGranted, cipherSolved, escapeAttemptUnlocked, hackAttemptsThisLoop,
         battleCardGranted, battleCardIconVisible);
   }
@@ -209,7 +209,7 @@ public final class Chapter1Session {
       cipherFragments[i] = snap.cipherFragments()[i];
     }
     inspectedSlots.clear();
-    for (ShopEquipSlot slot : snap.inspectedSlots()) {
+    for (EquipSlot slot : snap.inspectedSlots()) {
       if (slot != null) {
         inspectedSlots.add(slot);
       }
@@ -233,7 +233,7 @@ public final class Chapter1Session {
       int suspicion,
       int trust,
       boolean[] cipherFragments,
-      ShopEquipSlot[] inspectedSlots,
+      EquipSlot[] inspectedSlots,
       boolean terminalAccessGranted,
       boolean cipherSolved,
       boolean escapeAttemptUnlocked,

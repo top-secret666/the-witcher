@@ -1,7 +1,7 @@
 package main.java.com.witcher.chapter1.shop;
 
 import main.java.com.witcher.chapter1.Chapter1Session;
-import main.java.com.witcher.ui.shop.ShopEquipSlot;
+import main.java.com.witcher.shop.EquipSlot;
 
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -18,15 +18,15 @@ public final class CipherFragments {
   private CipherFragments() {
   }
 
-  public static ShopEquipSlot slotForCatalogIndex(int categoryOrdinal) {
-    ShopEquipSlot[] slots = ShopEquipSlot.values();
+  public static EquipSlot slotForCatalogIndex(int categoryOrdinal) {
+    EquipSlot[] slots = EquipSlot.values();
     if (categoryOrdinal < 0 || categoryOrdinal >= slots.length) {
       return null;
     }
     return slots[categoryOrdinal];
   }
 
-  public static String fragmentCode(ShopEquipSlot slot) {
+  public static String fragmentCode(EquipSlot slot) {
     if (slot == null) {
       return "";
     }
@@ -39,7 +39,7 @@ public final class CipherFragments {
     }
     StringBuilder sb = new StringBuilder("BREAK_LOOP(");
     boolean first = true;
-    for (ShopEquipSlot slot : ShopEquipSlot.values()) {
+    for (EquipSlot slot : EquipSlot.values()) {
       if (!session.hasFragment(slot)) {
         return "";
       }
@@ -53,7 +53,7 @@ public final class CipherFragments {
     return sb.toString();
   }
 
-  public static boolean tryInspectFind(Chapter1Session session, ShopEquipSlot slot) {
+  public static boolean tryInspectFind(Chapter1Session session, EquipSlot slot) {
     if (session == null || slot == null || session.hasFragment(slot)) {
       return false;
     }

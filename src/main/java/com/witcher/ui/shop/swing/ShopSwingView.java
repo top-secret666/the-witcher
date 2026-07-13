@@ -8,7 +8,6 @@ import main.java.com.witcher.model.armour.Armour;
 import main.java.com.witcher.ui.shop.ShopEntryIcons;
 import main.java.com.witcher.ui.shop.ShopCatalogEntry;
 import main.java.com.witcher.ui.shop.ShopCategory;
-import main.java.com.witcher.ui.shop.ShopEquipSlot;
 import main.java.com.witcher.ui.shop.ShopModel;
 import main.java.com.witcher.ui.shop.presenter.ShopPresenter;
 import main.java.com.witcher.ui.shop.presenter.ShopScreenState;

@@ -1,7 +1,7 @@
 package main.java.com.witcher.ui.shop.view;
 
 import main.java.com.witcher.ui.shop.EquipmentFilter;
-import main.java.com.witcher.ui.shop.ShopEquipSlot;
+import main.java.com.witcher.shop.EquipSlot;
 
 import java.awt.Rectangle;
 
@@ -152,7 +152,7 @@ public final class EquipmentOverlayLayout {
         return new Rectangle(slotX, sy, SLOT_SIZE, SLOT_SIZE);
     }
 
-    public ShopEquipSlot[] equipSlots() {
-        return ShopEquipSlot.values();
+    public EquipSlot[] equipSlots() {
+        return EquipSlot.values();
     }
 }

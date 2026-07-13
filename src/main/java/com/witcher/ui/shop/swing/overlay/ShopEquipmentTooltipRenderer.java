@@ -4,7 +4,7 @@ import main.java.com.witcher.model.armour.Armour;
 import main.java.com.witcher.model.enums.ArmourType;
 import main.java.com.witcher.ui.graphics.GameFonts;
 import main.java.com.witcher.ui.shop.EquipmentArmourList;
-import main.java.com.witcher.ui.shop.ShopEquipSlot;
+import main.java.com.witcher.shop.EquipSlot;
 import main.java.com.witcher.ui.shop.ShopModel;
 
 import java.awt.AlphaComposite;
@@ -128,7 +128,7 @@ public final class ShopEquipmentTooltipRenderer {
     }
 
     private static String slotLabel(Armour armour) {
-        ShopEquipSlot slot = ShopEquipSlot.forArmour(armour);
+        EquipSlot slot = EquipSlot.forArmour(armour);
         if (slot != null) {
             return slot.label;
         }

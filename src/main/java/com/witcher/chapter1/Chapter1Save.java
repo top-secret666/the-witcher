@@ -1,6 +1,6 @@
 package main.java.com.witcher.chapter1;
 
-import main.java.com.witcher.ui.shop.ShopEquipSlot;
+import main.java.com.witcher.shop.EquipSlot;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -79,9 +79,9 @@ public final class Chapter1Save {
       return Chapter1Session.newGame();
     }
 
-    ShopEquipSlot[] slots = ShopEquipSlot.values();
+    EquipSlot[] slots = EquipSlot.values();
     boolean[] fragments = decodeFlags(props.getProperty(KEY_FRAGMENTS, ""), slots.length);
-    ShopEquipSlot[] inspected = decodeInspected(props.getProperty(KEY_INSPECTED, ""));
+    EquipSlot[] inspected = decodeInspected(props.getProperty(KEY_INSPECTED, ""));
 
     Chapter1Session session = Chapter1Session.newGame();
     session.restore(new Chapter1Session.Chapter1Snapshot(
@@ -127,7 +127,7 @@ public final class Chapter1Save {
     return flags;
   }
 
-  private static String encodeInspected(ShopEquipSlot[] slots) {
+  private static String encodeInspected(EquipSlot[] slots) {
     if (slots == null || slots.length == 0) {
       return "";
     }
@@ -141,16 +141,16 @@ public final class Chapter1Save {
     return sb.toString();
   }
 
-  private static ShopEquipSlot[] decodeInspected(String raw) {
+  private static EquipSlot[] decodeInspected(String raw) {
     if (raw == null || raw.isBlank()) {
-      return new ShopEquipSlot[0];
+      return new EquipSlot[0];
     }
     String[] parts = raw.split(",");
-    ShopEquipSlot[] out = new ShopEquipSlot[parts.length];
+    EquipSlot[] out = new EquipSlot[parts.length];
     int count = 0;
     for (String part : parts) {
       try {
-        out[count++] = ShopEquipSlot.valueOf(part.trim());
+        out[count++] = EquipSlot.valueOf(part.trim());
       } catch (IllegalArgumentException ignored) {
         // пропускаем неизвестные значения
       }
