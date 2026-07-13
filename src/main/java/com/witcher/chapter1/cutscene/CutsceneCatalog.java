@@ -4,8 +4,8 @@ import java.util.EnumMap;
 import java.util.Map;
 
 /**
- * Пути к GIF/видео катсцен. Файлы кладутся в {@code assets/cutscenes/chapter1/}.
- * Отсутствующий файл — {@link Chapter1Director} пропускает катсцену.
+ * Пути к GIF/PNG-катсценам. Файлы — в {@code assets/cutscenes/chapter1/}.
+ * Отсутствующий файл — {@link main.java.com.witcher.chapter1.Chapter1Director} пропускает катсцену.
  */
 public final class CutsceneCatalog {
 
@@ -31,8 +31,55 @@ public final class CutsceneCatalog {
     return PATHS.get(id);
   }
 
-  /** Катсцена зациклена (дверь, бой на фоне терминала). */
+  /** Покадровая PNG/JPG-последовательность, если GIF ещё нет. */
+  public static String[] frameSequence(CutsceneId id) {
+    if (id == null) {
+      return null;
+    }
+    return switch (id) {
+      case BATTLE_INTRO -> new String[] {
+          ROOT + "battle_intro_01.png",
+          ROOT + "battle_intro_02.jpg"
+      };
+      case BATTLE_DEFEAT -> new String[] {
+          ROOT + "battle_defeat_01.png",
+          ROOT + "battle_defeat_02.png"
+      };
+      default -> null;
+    };
+  }
+
+  public static int frameDelayMs(CutsceneId id) {
+    return switch (id) {
+      case BATTLE_INTRO -> 2200;
+      case BATTLE_DEFEAT -> 2800;
+      default -> 2000;
+    };
+  }
+
+  /** GIF или полная PNG-последовательность на диске. */
+  public static boolean isAvailable(CutsceneId id) {
+    if (id == null) {
+      return false;
+    }
+    String gif = resourcePath(id);
+    if (gif != null && CutsceneCatalog.class.getResource(gif) != null) {
+      return true;
+    }
+    String[] frames = frameSequence(id);
+    if (frames == null || frames.length == 0) {
+      return false;
+    }
+    for (String frame : frames) {
+      if (CutsceneCatalog.class.getResource(frame) == null) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /** Катсцена зациклена (дверь на фоне терминала). */
   public static boolean loops(CutsceneId id) {
-    return id == CutsceneId.HACK_DOOR_POUND || id == CutsceneId.BATTLE_INTRO;
+    return id == CutsceneId.HACK_DOOR_POUND;
   }
 }
