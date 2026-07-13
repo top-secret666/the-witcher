@@ -3,7 +3,6 @@ package main.java.com.witcher.ui.chapter1.swing;
 import main.java.com.witcher.chapter1.Chapter1Phase;
 import main.java.com.witcher.ui.chapter1.presenter.Chapter1Presenter;
 import main.java.com.witcher.ui.chapter1.view.Chapter1View;
-import main.java.com.witcher.ui.chapter1.view.Chapter1ViewConstants;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
@@ -77,15 +76,6 @@ public final class Chapter1SwingView implements Chapter1View {
         if (presenter.director().phase() == Chapter1Phase.SHOP
             || presenter.director().phase() == Chapter1Phase.HACK) {
           Chapter1SessionHud.draw(overlay, sw, presenter.director().session());
-          if (presenter.director().phase() == Chapter1Phase.SHOP
-              && presenter.battleCard().canOpenMap(presenter.director().session())) {
-            java.awt.Point bag = presenter.shopScreen().presenter().inventoryBagSlot();
-            int iconSize = Chapter1ViewConstants.CARD_ICON_SIZE;
-            int iconX = bag.x + Chapter1ViewConstants.CARD_ICON_BAG_OFFSET_X;
-            int iconY = bag.y + Chapter1ViewConstants.CARD_ICON_BAG_OFFSET_Y;
-            BattleCardRevealView.drawCardIcon(
-                overlay, iconX, iconY, iconSize, presenter.cardIconHovered());
-          }
         }
       } finally {
         overlay.dispose();

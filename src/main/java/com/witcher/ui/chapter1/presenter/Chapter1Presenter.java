@@ -22,7 +22,6 @@ import main.java.com.witcher.chapter1.vn.VnSceneState;
 import main.java.com.witcher.ui.chapter1.swing.CutscenePlayer;
 import main.java.com.witcher.ui.chapter1.swing.EyesBlinkEffect;
 import main.java.com.witcher.ui.shop.ShopModel;
-import main.java.com.witcher.ui.shop.presenter.ShopScreenState;
 import main.java.com.witcher.ui.shop.swing.ShopScreen;
 
 import java.awt.event.KeyEvent;
@@ -55,7 +54,6 @@ public final class Chapter1Presenter {
   private List<BossMapLayout.BossHit> bossHits = List.of();
   private BossEntry hoveredBoss;
   private BossEntry selectedBoss;
-  private boolean cardIconHovered;
   private int hackShakeTick;
   private boolean exitRequested;
 
@@ -115,10 +113,6 @@ public final class Chapter1Presenter {
     return hackShakeTick;
   }
 
-  public boolean cardIconHovered() {
-    return cardIconHovered;
-  }
-
   public BossEntry hoveredBoss() {
     return hoveredBoss;
   }
@@ -167,13 +161,10 @@ public final class Chapter1Presenter {
       case SHOP -> {
         if (dukeDialog.isActive()) {
           updateDukeDialog(mouseX, mouseY, clicked);
-        } else if (handleCardIconClick(mouseX, mouseY, clicked)) {
-          // карта открыта
         } else {
           shopScreen.update(mouseX, mouseY, clicked, escPressed, wheelNotches);
           maybeStartDukeDialog();
         }
-        cardIconHovered = isCardIconHovered(mouseX, mouseY);
       }
       case CARD_REVEAL -> { }
       case BOSS_MAP -> updateBossMap(mouseX, mouseY, clicked);
@@ -286,6 +277,14 @@ public final class Chapter1Presenter {
     });
     shopBridge.setOnPurchaseHook(() -> dukeDialog.onPrisonIncreased(director.session()));
     shopBridge.setOnEquipHook(this::tryGrantBattleCard);
+    shopBridge.setOnBattleCardUse(this::openBossMapFromInventory);
+  }
+
+  private void openBossMapFromInventory() {
+    director.enterBossMap();
+    bossHits = BossMapLayout.layoutHits(Chapter1ViewConstants.VIRTUAL_W, Chapter1ViewConstants.VIRTUAL_H);
+    hoveredBoss = null;
+    selectedBoss = null;
   }
 
   private void tryGrantBattleCard() {
@@ -296,35 +295,6 @@ public final class Chapter1Presenter {
 
   private void onBattleCardRevealFinished() {
     battleCard.finishReveal(director.session());
-  }
-
-  private boolean handleCardIconClick(int mouseX, int mouseY, boolean clicked) {
-    if (shopScreen.presenter().ui().state == ShopScreenState.BATTLE_CARD_REVEAL) {
-      return false;
-    }
-    if (!clicked || !battleCard.canOpenMap(director.session())) {
-      return false;
-    }
-    if (!isCardIconHovered(mouseX, mouseY)) {
-      return false;
-    }
-    director.enterBossMap();
-    bossHits = BossMapLayout.layoutHits(Chapter1ViewConstants.VIRTUAL_W, Chapter1ViewConstants.VIRTUAL_H);
-    hoveredBoss = null;
-    selectedBoss = null;
-    return true;
-  }
-
-  private boolean isCardIconHovered(int mouseX, int mouseY) {
-    if (!battleCard.canOpenMap(director.session())) {
-      return false;
-    }
-    java.awt.Point bag = shopScreen.presenter().inventoryBagSlot();
-    int iconSize = Chapter1ViewConstants.CARD_ICON_SIZE;
-    int x = bag.x + Chapter1ViewConstants.CARD_ICON_BAG_OFFSET_X;
-    int y = bag.y + Chapter1ViewConstants.CARD_ICON_BAG_OFFSET_Y;
-    return mouseX >= x && mouseX < x + iconSize
-        && mouseY >= y && mouseY < y + iconSize;
   }
 
   private void updateBossMap(int mouseX, int mouseY, boolean clicked) {
