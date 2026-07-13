@@ -41,6 +41,9 @@ public final class ShopSessionState {
     public boolean equipmentOpen;
     public boolean equipmentBackHovered;
     public boolean inventoryPouchFocused = true;
+    public int inventoryFocusedIndex;
+    public int inventoryHoveredIndex = -1;
+    public final java.util.List<Rectangle> inventorySlotBounds = new java.util.ArrayList<>();
     public boolean inventoryBagHovered;
     public boolean inventoryPouchIconHovered;
     public final Rectangle inventoryBagBounds = new Rectangle();

@@ -20,6 +20,7 @@ public final class Chapter1ShopBridge {
   private Runnable onTerminalRequested;
   private Runnable onPurchaseHook;
   private Runnable onEquipHook;
+  private Runnable onBattleCardUse;
   private boolean battlePending;
 
   public Chapter1ShopBridge(Chapter1Session session, Chapter1Director director) {
@@ -49,6 +50,20 @@ public final class Chapter1ShopBridge {
 
   public void setOnEquipHook(Runnable onEquipHook) {
     this.onEquipHook = onEquipHook;
+  }
+
+  public void setOnBattleCardUse(Runnable onBattleCardUse) {
+    this.onBattleCardUse = onBattleCardUse;
+  }
+
+  public boolean battleCardInInventory() {
+    return session != null && session.battleCardIconVisible();
+  }
+
+  public void useBattleCard() {
+    if (onBattleCardUse != null) {
+      onBattleCardUse.run();
+    }
   }
 
   public void onPurchase() {

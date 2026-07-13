@@ -21,6 +21,7 @@ import main.java.com.witcher.ui.shop.view.ShopView;
 import main.java.com.witcher.ui.shop.view.ShopViewConstants;
 import main.java.com.witcher.ui.shop.view.anim.ShopCategoryAnimator;
 import main.java.com.witcher.ui.shop.view.anim.ShopRevealAnimator;
+import main.java.com.witcher.ui.shop.ShopInventorySlot;
 import main.java.com.witcher.ui.chapter1.swing.BattleCardRevealView;
 
 import static main.java.com.witcher.ui.shop.view.ShopViewConstants.*;
@@ -307,14 +308,77 @@ public final class ShopSwingView implements ShopView {
     }
 
     private void drawBattleCardFlying(Graphics2D g, int sw, int sh, ShopLayout layout) {
-        Point slot = presenter.inventoryBagSlot();
-        int bagCenterX = slot.x + INVENTORY_BAG_SIZE / 2;
-        int bagCenterY = slot.y + INVENTORY_BAG_SIZE / 2;
+        BufferedImage card = main.java.com.witcher.ui.chapter1.swing.Chapter1UiAssets.cardClosed();
+        if (card == null) {
+            return;
+        }
+
         int appearEnd = WALLET_APPEAR_TICKS;
         int flyEnd = appearEnd + WALLET_FLY_TICKS;
         int fadeEnd = flyEnd + WALLET_FADE_TICKS;
-        BattleCardRevealView.drawFlyingCard(
-            g, sw, sh, bagCenterX, bagCenterY, ui.battleCardRevealTicks, appearEnd, flyEnd, fadeEnd);
+
+        if (ui.battleCardRevealTicks > fadeEnd) {
+            return;
+        }
+
+        float appearT = smoothstep(ui.battleCardRevealTicks / (float) appearEnd);
+        float maxSize = 80f;
+        float minSize = 13f;
+
+        int centerX = VIRTUAL_W / 2;
+        int centerY = layout.dialogTop / 2 + 6;
+        Point bagSlot = presenter.inventoryBagSlot();
+        float bagCenterX = bagSlot.x + INVENTORY_BAG_SIZE / 2f;
+        float bagCenterY = bagSlot.y + INVENTORY_BAG_SIZE / 2f;
+
+        float px;
+        float py;
+        float pw;
+        float alpha;
+
+        if (ui.battleCardRevealTicks <= appearEnd) {
+            pw = maxSize * (0.32f + appearT * 0.68f);
+            px = centerX - pw / 2f;
+            py = centerY - pw / 2f;
+            alpha = Math.min(1f, appearT * 1.15f);
+        } else {
+            float posT = smoothstep((ui.battleCardRevealTicks - appearEnd) / (float) WALLET_FLY_TICKS);
+            float sizeT = posT * posT * (3f - 2f * posT);
+            pw = maxSize + (minSize - maxSize) * sizeT;
+            float cx = centerX + (bagCenterX - centerX) * posT;
+            float cy = centerY + (bagCenterY - centerY) * posT;
+            px = cx - pw / 2f;
+            py = cy - pw / 2f;
+            alpha = 1f;
+            if (ui.battleCardRevealTicks > flyEnd) {
+                float fadeT = smoothstep((ui.battleCardRevealTicks - flyEnd) / (float) WALLET_FADE_TICKS);
+                pw = minSize;
+                px = bagCenterX - pw / 2f;
+                py = bagCenterY - pw / 2f;
+                alpha = Math.max(0f, 1f - fadeT);
+            }
+        }
+
+        if (alpha <= 0.02f) {
+            return;
+        }
+
+        int ipw = Math.round(pw);
+        int iph = Math.round(pw * 1.33f);
+        int ipx = Math.round(px);
+        int ipy = Math.round(py);
+
+        float glowAppearT = ui.battleCardRevealTicks <= appearEnd ? appearT : 1f;
+        float glowFlyT = ui.battleCardRevealTicks <= appearEnd ? 0f
+            : Math.min(1f, (ui.battleCardRevealTicks - appearEnd) / (float) WALLET_FLY_TICKS);
+        float glowTuckT = ui.battleCardRevealTicks > flyEnd
+            ? smoothstep((ui.battleCardRevealTicks - flyEnd) / (float) WALLET_FADE_TICKS) : 0f;
+        drawPouchGlow(g, ipx, ipy, ipw, iph, alpha, glowAppearT, glowFlyT, glowTuckT);
+
+        Composite prev = g.getComposite();
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
+        g.drawImage(card, ipx, ipy, ipx + ipw, ipy + iph, 0, 0, card.getWidth(), card.getHeight(), null);
+        g.setComposite(prev);
     }
 
     private void drawPurchaseRevealBag(Graphics2D g, ShopLayout layout) {
@@ -663,29 +727,28 @@ public final class ShopSwingView implements ShopView {
     }
 
     private void drawInventoryOverlay(Graphics2D g, int sw, int sh) {
-        ShopInventoryOverlay.draw(g, overlayContext, new ShopInventoryOverlay.PouchCallbacks() {
-            @Override
-            public void drawIcon(Graphics2D gg, int x, int y, int size, boolean focused, boolean hovered) {
-                drawInventoryPouchIcon(gg, x, y, size, focused, hovered);
-            }
-
-            @Override
-            public int drawDetail(Graphics2D gg, int x, int y, int maxW) {
-                return drawInventoryPouchDetail(gg, x, y, maxW);
-            }
-        }, sw, sh);
-    }
-
-    private void drawEquipmentOverlay(Graphics2D g, int sw, int sh) {
-        ShopEquipmentOverlay.draw(g, overlayContext,
-            this::drawScaledSprite, sw, sh);
-    }
-
-    private void drawInventoryPouchIcon(Graphics2D g, int x, int y, int size,
-                                        boolean selected, boolean hovered) {
-        if (assets.walletPouch == null) {
-            return;
+        List<ShopInventorySlot> slots = presenter.inventorySlots();
+        if (ui.inventoryFocusedIndex >= slots.size()) {
+            ui.inventoryFocusedIndex = Math.max(0, slots.size() - 1);
         }
+        ShopInventoryOverlay.draw(g, overlayContext, slots, ui.inventoryFocusedIndex,
+            ui.inventoryHoveredIndex, ui.inventorySlotBounds,
+            new ShopInventoryOverlay.SlotCallbacks() {
+                @Override
+                public void drawIcon(Graphics2D gg, ShopInventorySlot slot, int x, int y, int size,
+                                     boolean focused, boolean hovered) {
+                    drawInventorySlotIcon(gg, slot, x, y, size, focused, hovered);
+                }
+
+                @Override
+                public int drawDetail(Graphics2D gg, ShopInventorySlot slot, int x, int y, int maxW) {
+                    return drawInventorySlotDetail(gg, slot, x, y, maxW);
+                }
+            }, sw, sh);
+    }
+
+    private void drawInventorySlotIcon(Graphics2D g, ShopInventorySlot slot, int x, int y, int size,
+                                       boolean selected, boolean hovered) {
         Composite prev = g.getComposite();
         if (selected || hovered) {
             g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.9f));
@@ -693,42 +756,69 @@ public final class ShopSwingView implements ShopView {
             g.fillRoundRect(x - 2, y - 2, size + 4, size + 4, 4, 4);
         }
         g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
-        g.drawImage(assets.walletPouch, x, y, size, size, null);
+        switch (slot.kind()) {
+            case WALLET -> {
+                if (assets.walletPouch != null) {
+                    g.drawImage(assets.walletPouch, x, y, size, size, null);
+                }
+            }
+            case BATTLE_CARD -> BattleCardRevealView.drawCardIcon(g, x, y, size, hovered);
+            case POTION, WEAPON -> {
+                BufferedImage icon = assets.iconForCategory(slot.iconCategory());
+                if (icon != null) {
+                    g.drawImage(icon, x, y, size, size, null);
+                }
+            }
+        }
         g.setComposite(prev);
     }
 
-    private int drawInventoryPouchDetail(Graphics2D g, int x, int y, int maxW) {
-        if (assets.walletPouch == null) {
-            return y + INVENTORY_POUCH_ICON;
-        }
+    private int drawInventorySlotDetail(Graphics2D g, ShopInventorySlot slot, int x, int y, int maxW) {
         int large = INVENTORY_POUCH_LARGE;
-        int pouchX = x + (maxW - large) / 2;
-        int pouchY = y;
+        int iconY = y;
+        int iconX = x + (maxW - large) / 2;
         Shape prevClip = g.getClip();
-        g.clipRect(x, y, maxW, large + 40);
+        g.clipRect(x, y, maxW, large + 56);
 
-        Rectangle crop = ShopImageBounds.compute(assets.walletPouch);
-        if (crop.width > 0 && crop.height > 0) {
-            g.drawImage(assets.walletPouch, pouchX, pouchY, pouchX + large, pouchY + large,
-                crop.x, crop.y, crop.x + crop.width, crop.y + crop.height, null);
-        } else {
-            g.drawImage(assets.walletPouch, pouchX, pouchY, large, large, null);
+        switch (slot.kind()) {
+            case WALLET -> {
+                if (assets.walletPouch != null) {
+                    Rectangle crop = ShopImageBounds.compute(assets.walletPouch);
+                    if (crop.width > 0 && crop.height > 0) {
+                        g.drawImage(assets.walletPouch, iconX, iconY, iconX + large, iconY + large,
+                            crop.x, crop.y, crop.x + crop.width, crop.y + crop.height, null);
+                    } else {
+                        g.drawImage(assets.walletPouch, iconX, iconY, large, large, null);
+                    }
+                }
+            }
+            case BATTLE_CARD -> BattleCardRevealView.drawCardIcon(g, iconX, iconY, large, false);
+            case POTION, WEAPON -> {
+                BufferedImage icon = assets.iconForCategory(slot.iconCategory());
+                if (icon != null) {
+                    g.drawImage(icon, iconX, iconY, large, large, null);
+                }
+            }
         }
 
-        String amount = presenter.model().walletAmountText() + presenter.model().walletSuffix();
-        String[] lines = {
-            "Золотой мешок с гонораром.",
-            amount + " — плата за Арнскрон."
-        };
-        g.setFont(GameFonts.get().uiPlain( 10));
+        g.setFont(GameFonts.get().uiBold(11));
+        g.setColor(new Color(255, 220, 140));
+        int textY = iconY + large + 14;
+        g.drawString(slot.title(), x, textY);
+        g.setFont(GameFonts.get().uiPlain(10));
         g.setColor(new Color(220, 195, 130));
-        int textY = pouchY + large + 12;
-        for (String line : lines) {
+        textY += 14;
+        for (String line : slot.detailLines()) {
             g.drawString(truncateToWidth(line, g.getFontMetrics(), maxW), x, textY);
             textY += 13;
         }
         g.setClip(prevClip);
         return textY;
+    }
+
+    private void drawEquipmentOverlay(Graphics2D g, int sw, int sh) {
+        ShopEquipmentOverlay.draw(g, overlayContext,
+            this::drawScaledSprite, sw, sh);
     }
 
     private static float smoothstep(float t) {

@@ -9,6 +9,8 @@ import main.java.com.witcher.ui.shop.ShopCatalogEntry;
 import main.java.com.witcher.ui.shop.ShopCategory;
 import main.java.com.witcher.ui.shop.ShopEntryIcons;
 import main.java.com.witcher.shop.EquipSlot;
+import main.java.com.witcher.ui.shop.ShopInventoryKind;
+import main.java.com.witcher.ui.shop.ShopInventorySlot;
 import main.java.com.witcher.ui.shop.ShopModel;
 import main.java.com.witcher.ui.shop.ShopRuntimeAssets;
 import main.java.com.witcher.ui.shop.view.ShopLayout;
@@ -23,6 +25,7 @@ import static main.java.com.witcher.ui.shop.view.ShopViewConstants.*;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
 import java.util.List;
 
 /** MVP presenter для экрана лавки — вся логика ввода, состояний и анимаций. */
@@ -71,7 +74,7 @@ public final class ShopPresenter {
             }
             if (ui.inventoryOpen) {
                 ui.inventoryOpen = false;
-                ui.inventoryPouchFocused = true;
+                ui.inventoryFocusedIndex = 0;
                 return;
             }
             if (ui.state == ShopScreenState.WALLET_REVEAL) {
@@ -276,6 +279,18 @@ public final class ShopPresenter {
         return armourIcons;
     }
 
+    public List<ShopInventorySlot> inventorySlots() {
+        List<ShopInventorySlot> slots = new ArrayList<>();
+        if (!model.needsWalletReveal()) {
+            slots.add(ShopInventorySlot.wallet(model));
+        }
+        if (chapterBridge != null && chapterBridge.battleCardInInventory()) {
+            slots.add(ShopInventorySlot.battleCard());
+        }
+        slots.addAll(model.pouchConsumables());
+        return slots;
+    }
+
     public ShopLayout createLayout() {
         return new ShopLayout(VIRTUAL_W, VIRTUAL_H, ui.showcaseItems.size(),
             metrics.hudX(), metrics.hudW(), metrics.hudH(), metrics.panelW(),
@@ -478,13 +493,21 @@ public final class ShopPresenter {
             updateEquipmentInput(mouseX, mouseY, clicked);
             return;
         }
+        List<ShopInventorySlot> slots = inventorySlots();
         if (ui.inventoryOpen) {
-            ui.inventoryPouchIconHovered = ui.inventoryPouchIconBounds.contains(mouseX, mouseY);
+            ui.inventoryHoveredIndex = -1;
+            for (int i = 0; i < ui.inventorySlotBounds.size(); i++) {
+                if (ui.inventorySlotBounds.get(i).contains(mouseX, mouseY)) {
+                    ui.inventoryHoveredIndex = i;
+                    break;
+                }
+            }
+            ui.inventoryPouchIconHovered = ui.inventoryHoveredIndex >= 0;
             ui.inventoryCloseHovered = ui.inventoryCloseBounds.contains(mouseX, mouseY);
             if (clicked) {
                 if (ui.inventoryCloseBounds.contains(mouseX, mouseY)) {
                     ui.inventoryOpen = false;
-                    ui.inventoryPouchFocused = true;
+                    ui.inventoryFocusedIndex = 0;
                 } else if (ui.inventoryEquipButtonBounds.contains(mouseX, mouseY)) {
                     ui.equipmentOpen = true;
                     ui.inventoryOpen = false;
@@ -492,16 +515,22 @@ public final class ShopPresenter {
                     ui.equipmentHoveredRow = -1;
                     ui.equipmentHoveredSlot = -1;
                     ui.equipmentHoveredFilter = -1;
-                } else if (ui.inventoryPouchIconBounds.contains(mouseX, mouseY)) {
-                    ui.inventoryPouchFocused = true;
+                } else if (ui.inventoryHoveredIndex >= 0) {
+                    ShopInventorySlot slot = slots.get(ui.inventoryHoveredIndex);
+                    if (slot.kind() == ShopInventoryKind.BATTLE_CARD && chapterBridge != null) {
+                        chapterBridge.useBattleCard();
+                        ui.inventoryOpen = false;
+                    } else {
+                        ui.inventoryFocusedIndex = ui.inventoryHoveredIndex;
+                    }
                 } else if (!ui.inventoryPanelBounds.contains(mouseX, mouseY)) {
                     ui.inventoryOpen = false;
-                    ui.inventoryPouchFocused = true;
+                    ui.inventoryFocusedIndex = 0;
                 }
             }
         } else if (clicked && ui.inventoryBagBounds.contains(mouseX, mouseY)) {
             ui.inventoryOpen = true;
-            ui.inventoryPouchFocused = true;
+            ui.inventoryFocusedIndex = Math.min(ui.inventoryFocusedIndex, Math.max(0, slots.size() - 1));
         }
     }
 
@@ -613,7 +642,10 @@ public final class ShopPresenter {
             return;
         }
         ShopCatalogEntry entry = ui.catalogEntries.get(ui.selectedRowIndex);
-        ShopModel.PurchaseResult result = model.purchase(entry);
+        ShopCategory shelf = ui.selectedIndex >= 0 && ui.selectedIndex < ui.showcaseItems.size()
+            ? ui.showcaseItems.get(ui.selectedIndex).category
+            : null;
+        ShopModel.PurchaseResult result = model.purchase(entry, shelf);
         ui.currentDialog = result.dukeLine();
         if (result.success()) {
             if (chapterBridge != null) {

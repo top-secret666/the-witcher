@@ -44,6 +44,7 @@ public final class ShopModel implements EquippedGear {
     private final Set<ArmourSet> soldSets = new HashSet<>();
     private final List<Armour> playerInventory = new ArrayList<>();
     private final List<String> purchasedLabels = new ArrayList<>();
+    private final List<ShopInventorySlot> pouchConsumables = new ArrayList<>();
     private final Map<EquipSlot, Armour> equipped = new EnumMap<>(EquipSlot.class);
 
     private int wallet;
@@ -203,6 +204,10 @@ public final class ShopModel implements EquippedGear {
         return List.copyOf(purchasedLabels);
     }
 
+    public List<ShopInventorySlot> pouchConsumables() {
+        return List.copyOf(pouchConsumables);
+    }
+
     public int inventoryItemCount() {
         return purchasedLabels.size();
     }
@@ -267,6 +272,10 @@ public final class ShopModel implements EquippedGear {
     }
 
     public PurchaseResult purchase(ShopCatalogEntry entry) {
+        return purchase(entry, null);
+    }
+
+    public PurchaseResult purchase(ShopCatalogEntry entry, ShopCategory shelfCategory) {
         if (entry == null) {
             return PurchaseResult.fail(DukeLines.purchaseFailGeneric());
         }
@@ -277,7 +286,7 @@ public final class ShopModel implements EquippedGear {
             return purchaseArmor(entry);
         }
         if (entry.placeholder) {
-            return purchasePlaceholder(entry);
+            return purchasePlaceholder(entry, shelfCategory);
         }
         return PurchaseResult.fail("Этого у меня уже нет на полке.");
     }
@@ -314,12 +323,19 @@ public final class ShopModel implements EquippedGear {
         return PurchaseResult.ok(DukeLines.purchaseOk(set.getName(), price));
     }
 
-    private PurchaseResult purchasePlaceholder(ShopCatalogEntry entry) {
+    private PurchaseResult purchasePlaceholder(ShopCatalogEntry entry, ShopCategory shelfCategory) {
         if (wallet < entry.price) {
             return PurchaseResult.fail(DukeLines.purchaseFailMoney());
         }
         wallet -= entry.price;
-        recordPurchase(entry.name);
+        if (shelfCategory == ShopCategory.POTION || shelfCategory == ShopCategory.WEAPON) {
+            String[] lines = statLinesForCategory(shelfCategory);
+            pouchConsumables.add(ShopInventorySlot.consumable(entry.name, shelfCategory, new String[]{
+                lines[0], lines[1], lines[2]
+            }));
+        } else {
+            recordPurchase(entry.name);
+        }
         return PurchaseResult.ok(DukeLines.purchaseOk(entry.name, entry.price));
     }
 
