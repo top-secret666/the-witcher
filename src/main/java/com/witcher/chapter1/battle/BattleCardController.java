@@ -4,7 +4,7 @@ import main.java.com.witcher.chapter1.Chapter1Session;
 import main.java.com.witcher.shop.EquippedGear;
 
 /**
- * Выдача карты боя после полной экипировки.
+ * Выдача карты боя после первой экипировки предмета.
  * Анимация reveal — в {@code ui.chapter1.swing.BattleCardRevealView}.
  */
 public final class BattleCardController {
@@ -28,7 +28,7 @@ public final class BattleCardController {
 
   /** @return true если началась новая сцена выдачи карты */
   public boolean tryGrantAfterEquip(Chapter1Session session, EquippedGear gear) {
-    if (session == null || session.battleCardGranted() || !BattleCardRules.isFullyEquipped(gear)) {
+    if (session == null || session.battleCardGranted() || !BattleCardRules.canGrantAfterEquip(gear)) {
       return false;
     }
     session.grantBattleCard();

@@ -10,15 +10,16 @@ public final class BattleCardRules {
   private BattleCardRules() {
   }
 
-  public static boolean isFullyEquipped(EquippedGear gear) {
+  /** Карта выдаётся после первой экипировки любого предмета на себя. */
+  public static boolean canGrantAfterEquip(EquippedGear gear) {
     if (gear == null) {
       return false;
     }
     for (EquipSlot slot : EquipSlot.values()) {
-      if (gear.getEquipped(slot) == null) {
-        return false;
+      if (gear.getEquipped(slot) != null) {
+        return true;
       }
     }
-    return true;
+    return false;
   }
 }
