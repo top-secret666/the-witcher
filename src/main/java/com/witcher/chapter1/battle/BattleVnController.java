@@ -3,7 +3,6 @@ package main.java.com.witcher.chapter1.battle;
 import main.java.com.witcher.chapter1.Chapter1Session;
 import main.java.com.witcher.chapter1.vn.VnChoice;
 import main.java.com.witcher.chapter1.vn.VnSceneState;
-import main.java.com.witcher.ui.shop.ShopModel;
 
 /**
  * Контроллер VN-боя: раунды, выборы, итог.
@@ -21,14 +20,9 @@ public final class BattleVnController {
   private BattleOutcome outcome = BattleOutcome.ONGOING;
   private boolean finished;
 
-  public BattleVnController(Chapter1Session session, ShopModel shop) {
+  public BattleVnController(Chapter1Session session, BattleResolver.LoadoutStats stats) {
     this.session = session;
-    if (shop != null) {
-      var gear = shop.equippedGearStats();
-      this.stats = new BattleResolver.LoadoutStats(gear.protection(), gear.stamina(), gear.signs());
-    } else {
-      this.stats = new BattleResolver.LoadoutStats(3, 3, 2);
-    }
+    this.stats = stats != null ? stats : new BattleResolver.LoadoutStats(3, 3, 2);
     this.counter = BattleResolver.detectCounter(stats);
     this.tier = BattleTier.forLoop(session != null ? session.loop() : 1);
     this.scene = new VnSceneState("Герцог", BattleScript.introLine(counter));

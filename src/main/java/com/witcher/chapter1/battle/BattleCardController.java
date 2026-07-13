@@ -1,7 +1,7 @@
 package main.java.com.witcher.chapter1.battle;
 
 import main.java.com.witcher.chapter1.Chapter1Session;
-import main.java.com.witcher.ui.shop.ShopModel;
+import main.java.com.witcher.shop.EquippedGear;
 
 /**
  * Выдача карты боя после полной экипировки.
@@ -27,8 +27,8 @@ public final class BattleCardController {
   }
 
   /** @return true если началась новая сцена выдачи карты */
-  public boolean tryGrantAfterEquip(Chapter1Session session, ShopModel shop) {
-    if (session == null || session.battleCardGranted() || !BattleCardRules.isFullyEquipped(shop)) {
+  public boolean tryGrantAfterEquip(Chapter1Session session, EquippedGear gear) {
+    if (session == null || session.battleCardGranted() || !BattleCardRules.isFullyEquipped(gear)) {
       return false;
     }
     session.grantBattleCard();

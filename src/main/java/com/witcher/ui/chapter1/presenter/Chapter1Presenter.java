@@ -4,6 +4,7 @@ import main.java.com.witcher.chapter1.Chapter1Director;
 import main.java.com.witcher.chapter1.Chapter1Phase;
 import main.java.com.witcher.chapter1.battle.BattleCardController;
 import main.java.com.witcher.chapter1.battle.BattleOutcome;
+import main.java.com.witcher.chapter1.battle.BattleResolver;
 import main.java.com.witcher.chapter1.battle.BattleVnController;
 import main.java.com.witcher.chapter1.battle.BossEntry;
 import main.java.com.witcher.chapter1.loop.LoopSequenceController;
@@ -153,6 +154,10 @@ public final class Chapter1Presenter {
 
   public void beginAfterIntro() {
     director.beginAfterIntro();
+  }
+
+  public void update(Chapter1Input input) {
+    update(input.mouseX(), input.mouseY(), input.clicked(), input.escPressed(), input.wheelNotches());
   }
 
   public void update(int mouseX, int mouseY, boolean clicked, boolean escPressed, int wheelNotches) {
@@ -412,7 +417,7 @@ public final class Chapter1Presenter {
     if (director.phase() == Chapter1Phase.CUTSCENE) {
       startCutsceneIfNeeded();
     } else if (director.phase() == Chapter1Phase.VN_BATTLE) {
-      battle = new BattleVnController(director.session(), shopModel);
+      battle = new BattleVnController(director.session(), loadoutStats());
       battle.advanceIntro();
       refreshChoiceRects();
     } else if (director.phase() == Chapter1Phase.ENDING) {
@@ -447,7 +452,7 @@ public final class Chapter1Presenter {
 
   private void updateBattle(int mouseX, int mouseY, boolean clicked) {
     if (battle == null) {
-      battle = new BattleVnController(director.session(), shopModel);
+      battle = new BattleVnController(director.session(), loadoutStats());
       battle.advanceIntro();
       refreshChoiceRects();
       return;
@@ -593,6 +598,11 @@ public final class Chapter1Presenter {
     battle = null;
     choiceRects = List.of();
     startCutsceneIfNeeded();
+  }
+
+  private BattleResolver.LoadoutStats loadoutStats() {
+    var gear = shopModel.equippedGearStats();
+    return new BattleResolver.LoadoutStats(gear.protection(), gear.stamina(), gear.signs());
   }
 
   private void updateHack(boolean esc) {

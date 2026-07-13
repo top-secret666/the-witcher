@@ -1,7 +1,8 @@
 package main.java.com.witcher.chapter1.battle;
 
-import main.java.com.witcher.ui.shop.ShopEquipSlot;
-import main.java.com.witcher.ui.shop.ShopModel;
+import main.java.com.witcher.chapter1.Chapter1Session;
+import main.java.com.witcher.shop.EquipSlot;
+import main.java.com.witcher.shop.EquippedGear;
 
 /** Когда герцог выдаёт карту боя. */
 public final class BattleCardRules {
@@ -9,12 +10,12 @@ public final class BattleCardRules {
   private BattleCardRules() {
   }
 
-  public static boolean isFullyEquipped(ShopModel model) {
-    if (model == null) {
+  public static boolean isFullyEquipped(EquippedGear gear) {
+    if (gear == null) {
       return false;
     }
-    for (ShopEquipSlot slot : ShopEquipSlot.values()) {
-      if (model.getEquipped(slot) == null) {
+    for (EquipSlot slot : EquipSlot.values()) {
+      if (gear.getEquipped(slot) == null) {
         return false;
       }
     }
