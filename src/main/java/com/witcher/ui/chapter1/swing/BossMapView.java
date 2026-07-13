@@ -2,10 +2,10 @@ package main.java.com.witcher.ui.chapter1.swing;
 
 import main.java.com.witcher.chapter1.battle.BossCatalog;
 import main.java.com.witcher.chapter1.battle.BossEntry;
+import main.java.com.witcher.chapter1.cutscene.CutsceneId;
 import main.java.com.witcher.ui.chapter1.view.BossMapLayout;
 import main.java.com.witcher.ui.chapter1.view.Chapter1ViewConstants;
 import main.java.com.witcher.ui.graphics.GameFonts;
-import main.java.com.witcher.ui.graphics.PixelScaler;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
@@ -14,7 +14,26 @@ import java.awt.image.BufferedImage;
 /** Полноэкранная карта боссов (только отрисовка). */
 public final class BossMapView {
 
+  private static final int PORTRAIT_SIZE = 56;
+
   private BossMapView() {
+  }
+
+  /** Прогрев текстур и даунскейла пока игрок смотрит на карту. */
+  public static void warm(int sw, int sh) {
+    BufferedImage map = Chapter1UiAssets.bossMapOpen();
+    if (map == null) {
+      map = Chapter1UiAssets.bossMapClosed();
+    }
+    ScaledImageCache.get(map, sw, sh);
+    int icon = BossMapLayout.BOSS_ICON;
+    for (var boss : BossCatalog.all()) {
+      ScaledImageCache.get(Chapter1UiAssets.bossMapIcon(boss.mapIconPath()), icon, icon);
+      ScaledImageCache.get(Chapter1UiAssets.bossPortrait(boss.portraitPath()), PORTRAIT_SIZE, PORTRAIT_SIZE);
+    }
+    CutsceneCache.warm(CutsceneId.LOOP_WAKE, CutsceneId.ILLUSION_WRONG);
+    CutsceneCache.prewarmScaled(CutsceneId.LOOP_WAKE, sw, sh);
+    CutsceneCache.prewarmScaled(CutsceneId.ILLUSION_WRONG, sw, sh);
   }
 
   public static void draw(Graphics2D g, int sw, int sh, BossEntry hovered, BossEntry selected) {
@@ -23,11 +42,11 @@ public final class BossMapView {
 
     BufferedImage map = Chapter1UiAssets.bossMapOpen();
     if (map != null) {
-      g.drawImage(PixelScaler.sharpScale(map, sw, sh), 0, 0, null);
+      g.drawImage(ScaledImageCache.get(map, sw, sh), 0, 0, null);
     } else {
       BufferedImage closed = Chapter1UiAssets.bossMapClosed();
       if (closed != null) {
-        g.drawImage(PixelScaler.sharpScale(closed, sw, sh), 0, 0, null);
+        g.drawImage(ScaledImageCache.get(closed, sw, sh), 0, 0, null);
       }
     }
 
@@ -40,7 +59,7 @@ public final class BossMapView {
       int y = Math.round(boss.mapY() * sy) - icon / 2;
       BufferedImage iconImg = Chapter1UiAssets.bossMapIcon(boss.mapIconPath());
       if (iconImg != null) {
-        g.drawImage(PixelScaler.sharpScale(iconImg, icon, icon), x, y, null);
+        g.drawImage(ScaledImageCache.get(iconImg, icon, icon), x, y, null);
       } else {
         g.setColor(hot ? new Color(200, 60, 50) : new Color(120, 40, 35));
         g.fillOval(x, y, icon, icon);
@@ -74,15 +93,14 @@ public final class BossMapView {
     g.drawRoundRect(px, py, pw, ph, 6, 6);
 
     BufferedImage portrait = Chapter1UiAssets.bossPortrait(boss.portraitPath());
-    int portraitSize = 56;
     int portraitX = px + 8;
     int portraitY = py + 8;
     if (portrait != null) {
-      g.drawImage(PixelScaler.sharpScale(portrait, portraitSize, portraitSize),
+      g.drawImage(ScaledImageCache.get(portrait, PORTRAIT_SIZE, PORTRAIT_SIZE),
           portraitX, portraitY, null);
     } else {
       g.setColor(new Color(60, 40, 30));
-      g.fillRect(portraitX, portraitY, portraitSize, portraitSize);
+      g.fillRect(portraitX, portraitY, PORTRAIT_SIZE, PORTRAIT_SIZE);
     }
 
     g.setFont(GameFonts.get().uiBold(9));
