@@ -1,11 +1,11 @@
 package main.java.com.witcher.chapter1.battle;
 
-import main.java.com.witcher.chapter1.view.Chapter1AssetPaths;
-
 import java.util.List;
 
 /** Список боссов на карте (пока только герцог). */
 public final class BossCatalog {
+
+  private static final String BATTLE_SPRITES = "/assets/sprites/chapter1/battle/";
 
   private static final List<BossEntry> BOSSES = List.of(
       new BossEntry(
@@ -13,8 +13,8 @@ public final class BossCatalog {
           "Герцог",
           "Хозяин иллюзии",
           9, 8, 6,
-          Chapter1AssetPaths.BOSS_DUKE_MAP,
-          Chapter1AssetPaths.BOSS_DUKE_PORTRAIT,
+          BATTLE_SPRITES + "boss_duke_map.png",
+          BATTLE_SPRITES + "boss_duke_portrait.png",
           280, 150
       )
   );
