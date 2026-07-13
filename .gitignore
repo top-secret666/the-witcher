@@ -37,3 +37,10 @@ build/
 
 ### Mac OS ###
 .DS_Store
+
+### Local runtime / large media ###
+saves/
+*.mp4
+*.MP4
+/*.mp4
+/*.MP4
