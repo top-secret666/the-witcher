@@ -26,6 +26,8 @@ public final class Chapter1Session {
   private boolean cipherSolved;
   private boolean escapeAttemptUnlocked;
   private int hackAttemptsThisLoop;
+  private boolean battleCardGranted;
+  private boolean battleCardIconVisible;
 
   public static Chapter1Session newGame() {
     return new Chapter1Session();
@@ -61,6 +63,22 @@ public final class Chapter1Session {
 
   public boolean escapeAttemptUnlocked() {
     return escapeAttemptUnlocked;
+  }
+
+  public boolean battleCardGranted() {
+    return battleCardGranted;
+  }
+
+  public boolean battleCardIconVisible() {
+    return battleCardIconVisible;
+  }
+
+  public void grantBattleCard() {
+    battleCardGranted = true;
+  }
+
+  public void showBattleCardIcon() {
+    battleCardIconVisible = true;
   }
 
   public void addPrison(int amount) {
@@ -161,9 +179,6 @@ public final class Chapter1Session {
     if (suspicion >= 6) {
       return GlitchLevel.HEAVY;
     }
-    if (suspicion >= 3) {
-      return GlitchLevel.MEDIUM;
-    }
     if (suspicion >= 1) {
       return GlitchLevel.LIGHT;
     }
@@ -181,7 +196,8 @@ public final class Chapter1Session {
         loop, prison, suspicion, trust,
         Arrays.copyOf(cipherFragments, cipherFragments.length),
         inspectedSlots.toArray(new ShopEquipSlot[0]),
-        terminalAccessGranted, cipherSolved, escapeAttemptUnlocked, hackAttemptsThisLoop);
+        terminalAccessGranted, cipherSolved, escapeAttemptUnlocked, hackAttemptsThisLoop,
+        battleCardGranted, battleCardIconVisible);
   }
 
   void restore(Chapter1Snapshot snap) {
@@ -205,6 +221,8 @@ public final class Chapter1Session {
     cipherSolved = snap.cipherSolved();
     escapeAttemptUnlocked = snap.escapeAttemptUnlocked();
     hackAttemptsThisLoop = snap.hackAttemptsThisLoop();
+    battleCardGranted = snap.battleCardGranted();
+    battleCardIconVisible = snap.battleCardIconVisible();
     refreshTerminalAccess();
   }
 
@@ -222,7 +240,9 @@ public final class Chapter1Session {
       boolean terminalAccessGranted,
       boolean cipherSolved,
       boolean escapeAttemptUnlocked,
-      int hackAttemptsThisLoop
+      int hackAttemptsThisLoop,
+      boolean battleCardGranted,
+      boolean battleCardIconVisible
   ) {
   }
 }

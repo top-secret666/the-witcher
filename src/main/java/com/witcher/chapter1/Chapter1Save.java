@@ -26,6 +26,8 @@ public final class Chapter1Save {
   private static final String KEY_CIPHER_SOLVED = "cipherSolved";
   private static final String KEY_ESCAPE = "escapeUnlocked";
   private static final String KEY_HACK_ATTEMPTS = "hackAttempts";
+  private static final String KEY_BATTLE_CARD = "battleCardGranted";
+  private static final String KEY_BATTLE_ICON = "battleCardIcon";
 
   private Chapter1Save() {
   }
@@ -50,6 +52,8 @@ public final class Chapter1Save {
     props.setProperty(KEY_CIPHER_SOLVED, Boolean.toString(snap.cipherSolved()));
     props.setProperty(KEY_ESCAPE, Boolean.toString(snap.escapeAttemptUnlocked()));
     props.setProperty(KEY_HACK_ATTEMPTS, Integer.toString(snap.hackAttemptsThisLoop()));
+    props.setProperty(KEY_BATTLE_CARD, Boolean.toString(snap.battleCardGranted()));
+    props.setProperty(KEY_BATTLE_ICON, Boolean.toString(snap.battleCardIconVisible()));
 
     Path path = defaultPath();
     try {
@@ -90,7 +94,9 @@ public final class Chapter1Save {
         Boolean.parseBoolean(props.getProperty(KEY_TERMINAL, "false")),
         Boolean.parseBoolean(props.getProperty(KEY_CIPHER_SOLVED, "false")),
         Boolean.parseBoolean(props.getProperty(KEY_ESCAPE, "false")),
-        parseInt(props, KEY_HACK_ATTEMPTS, 0)));
+        parseInt(props, KEY_HACK_ATTEMPTS, 0),
+        Boolean.parseBoolean(props.getProperty(KEY_BATTLE_CARD, "false")),
+        Boolean.parseBoolean(props.getProperty(KEY_BATTLE_ICON, "false"))));
     return session;
   }
 
