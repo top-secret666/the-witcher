@@ -6,6 +6,10 @@ public final class Chapter1ViewConstants {
   public static final int VIRTUAL_W = 480;
   public static final int VIRTUAL_H = 360;
 
+  public static final int CARD_ICON_X = 20;
+  public static final int CARD_ICON_Y = 20;
+  public static final int CARD_ICON_SIZE = 28;
+
   private Chapter1ViewConstants() {
   }
 }
