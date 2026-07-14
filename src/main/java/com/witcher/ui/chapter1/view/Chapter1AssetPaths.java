@@ -1,22 +1,24 @@
 package main.java.com.witcher.ui.chapter1.view;
 
-/** Пути к ассетам главы 1 (оверлеи, терминал, карта боя). */
+/**
+ * Swing-фасад над {@link main.java.com.witcher.chapter1.assets.Chapter1AssetPaths}.
+ */
 public final class Chapter1AssetPaths {
 
-  public static final String SPRITES = "/assets/sprites/chapter1/";
-  public static final String GLITCH_HEAVY = SPRITES + "glitch_overlay_heavy.png";
-  public static final String HACK_FRAME = SPRITES + "hack_terminal_frame.png";
-  public static final String HACK_TIMER = SPRITES + "hack_timer_bar.png";
-  public static final String HACK_HIDDEN_HINT = SPRITES + "hack_hidden_hint.png";
-  public static final String BOOT_BG = SPRITES + "escape_boot_bg.png";
+  public static final String SPRITES = main.java.com.witcher.chapter1.assets.Chapter1AssetPaths.SPRITES;
+  public static final String GLITCH_HEAVY = main.java.com.witcher.chapter1.assets.Chapter1AssetPaths.GLITCH_HEAVY;
+  public static final String HACK_FRAME = main.java.com.witcher.chapter1.assets.Chapter1AssetPaths.HACK_FRAME;
+  public static final String HACK_TIMER = main.java.com.witcher.chapter1.assets.Chapter1AssetPaths.HACK_TIMER;
+  public static final String HACK_HIDDEN_HINT = main.java.com.witcher.chapter1.assets.Chapter1AssetPaths.HACK_HIDDEN_HINT;
+  public static final String BOOT_BG = main.java.com.witcher.chapter1.assets.Chapter1AssetPaths.BOOT_BG;
 
-  public static final String BATTLE = SPRITES + "battle/";
-  public static final String CARD_ICON = BATTLE + "card_icon.png";
-  public static final String CARD_CLOSED = BATTLE + "card_closed.png";
-  public static final String CARD_MAP_OPEN = BATTLE + "card_map_open.png";
-  public static final String BOSS_DUKE_MAP = BATTLE + "boss_duke_map.png";
-  public static final String BOSS_DUKE_PORTRAIT = BATTLE + "boss_duke_portrait.png";
-  public static final String BOSS_WAKE_FOREST = BATTLE + "boss_wake_forest.png";
+  public static final String BATTLE = main.java.com.witcher.chapter1.assets.Chapter1AssetPaths.BATTLE;
+  public static final String CARD_ICON = main.java.com.witcher.chapter1.assets.Chapter1AssetPaths.CARD_ICON;
+  public static final String CARD_CLOSED = main.java.com.witcher.chapter1.assets.Chapter1AssetPaths.CARD_CLOSED;
+  public static final String CARD_MAP_OPEN = main.java.com.witcher.chapter1.assets.Chapter1AssetPaths.CARD_MAP_OPEN;
+  public static final String BOSS_DUKE_MAP = main.java.com.witcher.chapter1.assets.Chapter1AssetPaths.BOSS_DUKE_MAP;
+  public static final String BOSS_DUKE_PORTRAIT = main.java.com.witcher.chapter1.assets.Chapter1AssetPaths.BOSS_DUKE_PORTRAIT;
+  public static final String BOSS_WAKE_FOREST = main.java.com.witcher.chapter1.assets.Chapter1AssetPaths.BOSS_WAKE_FOREST;
 
   private Chapter1AssetPaths() {
   }
