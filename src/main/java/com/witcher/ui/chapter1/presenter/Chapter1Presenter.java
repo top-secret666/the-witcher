@@ -10,6 +10,7 @@ import main.java.com.witcher.chapter1.battle.BattleOutcome;
 import main.java.com.witcher.chapter1.battle.BattleResolver;
 import main.java.com.witcher.chapter1.battle.BattleVnController;
 import main.java.com.witcher.chapter1.battle.BossEntry;
+import main.java.com.witcher.chapter1.battle.SwordCutsceneTiming;
 import main.java.com.witcher.chapter1.loop.LoopRules;
 import main.java.com.witcher.chapter1.loop.LoopSequenceController;
 import main.java.com.witcher.chapter1.cutscene.CutsceneId;
@@ -19,8 +20,8 @@ import main.java.com.witcher.chapter1.hack.HackConsoleModel;
 import main.java.com.witcher.chapter1.shop.Chapter1ShopBridge;
 import main.java.com.witcher.chapter1.vn.DukeDialogController;
 import main.java.com.witcher.chapter1.vn.EndingVnController;
+import main.java.com.witcher.chapter1.view.Chapter1Layout;
 import main.java.com.witcher.ui.chapter1.view.BossMapLayout;
-import main.java.com.witcher.ui.chapter1.view.Chapter1ViewConstants;
 import main.java.com.witcher.ui.chapter1.view.VnChoiceLayout;
 import main.java.com.witcher.chapter1.vn.VnSceneState;
 import main.java.com.witcher.ui.chapter1.swing.Chapter1AssetPrewarm;
@@ -67,8 +68,6 @@ public final class Chapter1Presenter {
   private boolean swordGlitchFrozen;
   private int hackShakeTick;
   private boolean exitRequested;
-
-  private static final int SWORD_CUTSCENE_MS = 3500;
 
   public Chapter1Presenter() {
     this(Chapter1Director.loadOrNew(), ShopModel.createNewSession());
@@ -318,7 +317,7 @@ public final class Chapter1Presenter {
 
   private void openBossMap() {
     director.enterBossMap();
-    bossHits = BossMapLayout.layoutHits(Chapter1ViewConstants.VIRTUAL_W, Chapter1ViewConstants.VIRTUAL_H);
+    bossHits = BossMapLayout.layoutHits(Chapter1Layout.VIRTUAL_W, Chapter1Layout.VIRTUAL_H);
     hoveredBoss = null;
     selectedBoss = null;
     Chapter1AssetPrewarm.warmBossMapDrawables();
@@ -383,13 +382,13 @@ public final class Chapter1Presenter {
 
   private void updateSwordCutscene() {
     swordGlint.update(WakeAwakeningTimeline.MS_PER_TICK,
-        Chapter1ViewConstants.VIRTUAL_W, Chapter1ViewConstants.VIRTUAL_H);
+        Chapter1Layout.VIRTUAL_W, Chapter1Layout.VIRTUAL_H);
     if (!swordGlitchFrozen && battleVictory
-        && swordGlint.elapsedMs() > SWORD_CUTSCENE_MS * 0.72) {
+        && swordGlint.elapsedMs() > SwordCutsceneTiming.freezeAfterMs()) {
       swordGlint.freezeFinalGlint();
       swordGlitchFrozen = true;
     }
-    if (swordGlint.elapsedMs() >= SWORD_CUTSCENE_MS) {
+    if (swordGlint.elapsedMs() >= SwordCutsceneTiming.TOTAL_MS) {
       if (!battleVictory) {
         LoopRules.onBattleDefeat(director.session());
       }
@@ -405,7 +404,7 @@ public final class Chapter1Presenter {
   }
 
   private void startLoopCutscene(CutsceneId id) {
-    loopCutscenePlayer.start(id, Chapter1ViewConstants.VIRTUAL_W, Chapter1ViewConstants.VIRTUAL_H);
+    loopCutscenePlayer.start(id, Chapter1Layout.VIRTUAL_W, Chapter1Layout.VIRTUAL_H);
     if (loopCutscenePlayer.isFinished()) {
       if (id == CutsceneId.ILLUSION_WRONG) {
         director.enterLoopHold();
@@ -423,7 +422,7 @@ public final class Chapter1Presenter {
       onPhaseEntered();
       return;
     }
-    cutscenePlayer.start(id, Chapter1ViewConstants.VIRTUAL_W, Chapter1ViewConstants.VIRTUAL_H);
+    cutscenePlayer.start(id, Chapter1Layout.VIRTUAL_W, Chapter1Layout.VIRTUAL_H);
     if (cutscenePlayer.isFinished()) {
       director.onCutsceneFinished();
       onPhaseEntered();
@@ -460,7 +459,7 @@ public final class Chapter1Presenter {
       hackShakeTick = 0;
       String doorPath = CutsceneCatalog.resourcePath(CutsceneId.HACK_DOOR_POUND);
       if (doorPath != null && Chapter1Director.class.getResource(doorPath) != null) {
-        doorLoopPlayer.start(CutsceneId.HACK_DOOR_POUND, Chapter1ViewConstants.VIRTUAL_W, Chapter1ViewConstants.VIRTUAL_H);
+        doorLoopPlayer.start(CutsceneId.HACK_DOOR_POUND, Chapter1Layout.VIRTUAL_W, Chapter1Layout.VIRTUAL_H);
       } else {
         doorLoopPlayer.stop();
       }
@@ -472,8 +471,7 @@ public final class Chapter1Presenter {
       encounter = new BossEncounterController(selectedBoss);
     } else if (director.phase() == Chapter1Phase.SWORD_CUTSCENE) {
       swordGlint.reset();
-      var stats = loadoutStats();
-      battleVictory = stats.defense() + stats.stamina() + stats.signs() >= 6;
+      battleVictory = BattleResolver.meetsSwordCutsceneVictory(loadoutStats());
       swordGlitchFrozen = false;
     } else if (director.phase() == Chapter1Phase.SHOP) {
       doorLoopPlayer.stop();
