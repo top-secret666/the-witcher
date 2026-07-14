@@ -311,22 +311,15 @@ public final class Chapter1Presenter {
 
   private void updateLoopSequence() {
     loopSequence.tick();
+    // GIF крутится под веками; глаза тикают параллельно
+    loopCutscenePlayer.tick();
     if (loopSequence.showEyes()) {
       eyesEffect.tick();
-    } else {
-      loopCutscenePlayer.tick();
     }
 
     switch (loopSequence.step()) {
-      case EYES_OPEN -> {
-        if (eyesEffect.isDone()) {
-          loopSequence.advanceFromEyesOpening();
-          startLoopCutscene(CutsceneId.LOOP_WAKE);
-        }
-      }
       case LOOP_WAKE -> {
         if (loopSequence.shouldStartBlink()) {
-          loopCutscenePlayer.stop();
           loopSequence.enterBlink();
           eyesEffect.reset(EyesBlinkEffect.Mode.BLINKING);
         }
@@ -408,13 +401,8 @@ public final class Chapter1Presenter {
       }
     } else if (director.phase() == Chapter1Phase.LOOP_SEQUENCE) {
       loopSequence.start(director.loopEyesPrelude());
-      eyesEffect.reset(director.loopEyesPrelude()
-          ? EyesBlinkEffect.Mode.OPENING
-          : EyesBlinkEffect.Mode.IDLE);
-      loopCutscenePlayer.stop();
-      if (!director.loopEyesPrelude()) {
-        startLoopCutscene(CutsceneId.LOOP_WAKE);
-      }
+      eyesEffect.reset(EyesBlinkEffect.Mode.OPENING);
+      startLoopCutscene(CutsceneId.LOOP_WAKE);
     } else if (director.phase() == Chapter1Phase.SHOP) {
       doorLoopPlayer.stop();
       maybeStartDukeDialog();

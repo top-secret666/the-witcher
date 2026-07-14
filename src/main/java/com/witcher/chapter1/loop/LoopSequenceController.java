@@ -3,16 +3,15 @@ package main.java.com.witcher.chapter1.loop;
 import main.java.com.witcher.chapter1.cutscene.CutsceneId;
 
 /**
- * Шаги цепочки: (опц.) глаза → loop_wake → моргание → illusion_wrong → стоп.
+ * Шаги: loop_wake (GIF + шум + веки) → короткое моргание поверх GIF → illusion_wrong → стоп.
  */
 public final class LoopSequenceController {
 
   public static final int LOOP_WAKE_TICKS = 130;
-  public static final float NOISE_STRENGTH = 0.45f;
+  public static final float NOISE_STRENGTH = 0.55f;
 
   public enum Step {
     IDLE,
-    EYES_OPEN,
     LOOP_WAKE,
     EYES_BLINK,
     ILLUSION_WRONG,
@@ -34,8 +33,9 @@ public final class LoopSequenceController {
     return step == Step.HOLD;
   }
 
+  /** eyesPrelude больше не отдельный чёрный экран — всегда сразу loop_wake с веками. */
   public void start(boolean eyesPrelude) {
-    step = eyesPrelude ? Step.EYES_OPEN : Step.LOOP_WAKE;
+    step = Step.LOOP_WAKE;
     stepTicks = 0;
   }
 
@@ -48,29 +48,23 @@ public final class LoopSequenceController {
 
   public CutsceneId currentCutscene() {
     return switch (step) {
-      case LOOP_WAKE -> CutsceneId.LOOP_WAKE;
+      case LOOP_WAKE, EYES_BLINK -> CutsceneId.LOOP_WAKE;
       case ILLUSION_WRONG -> CutsceneId.ILLUSION_WRONG;
       default -> null;
     };
   }
 
+  /** Веки поверх GIF на старте открытия и при финальном моргании. */
   public boolean showEyes() {
-    return step == Step.EYES_OPEN || step == Step.EYES_BLINK;
+    return step == Step.LOOP_WAKE || step == Step.EYES_BLINK;
   }
 
   public EyesPhase eyesPhase() {
     return switch (step) {
-      case EYES_OPEN -> EyesPhase.OPENING;
+      case LOOP_WAKE -> EyesPhase.OPENING;
       case EYES_BLINK -> EyesPhase.BLINKING;
       default -> EyesPhase.IDLE;
     };
-  }
-
-  public void advanceFromEyesOpening() {
-    if (step == Step.EYES_OPEN) {
-      step = Step.LOOP_WAKE;
-      stepTicks = 0;
-    }
   }
 
   public void advanceFromEyesBlink() {

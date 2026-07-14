@@ -10,7 +10,7 @@ public enum Chapter1Phase {
   CARD_REVEAL,
   /** Карта боссов на весь экран. */
   BOSS_MAP,
-  /** Цепочка loop_wake → глаза → illusion_wrong. */
+  /** Цепочка loop_wake (GIF + шум + веки) → illusion_wrong. */
   LOOP_SEQUENCE,
   /** Пауза после illusion_wrong — ничего не происходит. */
   LOOP_HOLD,

@@ -3,24 +3,22 @@ package main.java.com.witcher.ui.chapter1.swing;
 import java.awt.Color;
 import java.awt.Graphics2D;
 
-/** Пиксельная анимация век — открытие / моргание поверх катсцены. */
+/**
+ * Веки от первого лица поверх катсцены (как в фильмах): только шторки, без радужки/зрачков.
+ */
 public final class EyesBlinkEffect {
 
   public enum Mode {
     IDLE, OPENING, BLINKING, DONE
   }
 
-  private static final int OPEN_TICKS = 90;
-  private static final int BLINK_CLOSE_TICKS = 14;
-  private static final int BLINK_OPEN_TICKS = 32;
+  private static final int OPEN_TICKS = 70;
+  private static final int BLINK_CLOSE_TICKS = 12;
+  private static final int BLINK_OPEN_TICKS = 28;
 
-  private static final Color LID_DARK = new Color(8, 5, 4);
-  private static final Color LASH = new Color(22, 14, 10, 140);
-  private static final Color SCLERA = new Color(210, 198, 175);
-  private static final Color IRIS = new Color(36, 72, 54);
-  private static final Color IRIS_GLOW = new Color(130, 210, 160, 120);
-  private static final Color PUPIL = new Color(8, 8, 10);
-  private static final Color HIGHLIGHT = new Color(255, 255, 255);
+  private static final Color LID = new Color(6, 4, 3);
+  private static final Color LID_RIM = new Color(28, 16, 12);
+  private static final Color LASH = new Color(18, 10, 8, 200);
 
   private Mode mode = Mode.IDLE;
   private int ticks;
@@ -67,7 +65,7 @@ public final class EyesBlinkEffect {
     if (mode == Mode.IDLE || mode == Mode.DONE) {
       return;
     }
-    float t = switch (mode) {
+    float openT = switch (mode) {
       case OPENING -> easeOutCubic(ticks / (float) OPEN_TICKS);
       case BLINKING -> {
         if (ticks < BLINK_CLOSE_TICKS) {
@@ -75,79 +73,56 @@ public final class EyesBlinkEffect {
         }
         yield easeOutCubic((ticks - BLINK_CLOSE_TICKS) / (float) BLINK_OPEN_TICKS);
       }
-      default -> 0f;
+      default -> 1f;
     };
-    t = Math.max(0f, Math.min(1f, t));
-
-    drawIrisHint(g, sw, sh, t);
-    drawPixelEyelids(g, sw, sh, t);
+    openT = Math.max(0f, Math.min(1f, openT));
+    drawFirstPersonLids(g, sw, sh, openT);
   }
 
-  private void drawPixelEyelids(Graphics2D g, int sw, int sh, float openT) {
+  /**
+   * Верхняя и нижняя шторки смыкаются к центру экрана.
+   * openT=0 — полностью закрыто, openT=1 — открыто.
+   */
+  private void drawFirstPersonLids(Graphics2D g, int sw, int sh, float openT) {
     float closed = 1f - openT;
-    int lidH = Math.max(0, Math.round(sh * 0.54f * closed));
-    if (lidH <= 0) {
+    if (closed <= 0.01f) {
       return;
     }
 
-    g.setColor(LID_DARK);
+    int maxCover = Math.round(sh * 0.52f);
+    int lidH = Math.max(1, Math.round(maxCover * closed));
+
+    // Основная масса век
+    g.setColor(LID);
     g.fillRect(0, 0, sw, lidH);
     g.fillRect(0, sh - lidH, sw, lidH);
 
+    // Пиксельные «складки» — чуть светлее полосы у края
+    g.setColor(LID_RIM);
+    int rim = Math.max(2, lidH / 10);
+    g.fillRect(0, Math.max(0, lidH - rim), sw, rim);
+    g.fillRect(0, sh - lidH, sw, rim);
+
+    // Линия ресниц по стыку века с миром
     g.setColor(LASH);
-    for (int i = 0; i < 24; i++) {
-      int x = (i * 37 + ticks * 3) % sw;
-      g.fillRect(x, lidH - 2, 2, 1);
-      g.fillRect((x + 11) % sw, sh - lidH + 1, 2, 1);
+    for (int x = 0; x < sw; x += 3) {
+      int jitter = (x * 17 + ticks) % 3;
+      g.fillRect(x, lidH - 1 - jitter, 2, 1);
+      g.fillRect(x + 1, sh - lidH + jitter, 2, 1);
     }
-  }
 
-  private void drawIrisHint(Graphics2D g, int sw, int sh, float openT) {
-    if (openT < 0.12f) {
-      return;
+    // Боковые уголки — слегка сильнее закрытие (типичный FP blink)
+    int cornerW = Math.round(sw * 0.12f * closed);
+    if (cornerW > 0) {
+      g.setColor(LID);
+      for (int i = 0; i < cornerW; i++) {
+        int extra = Math.round((cornerW - i) * 0.35f);
+        g.fillRect(i, lidH, 1, extra);
+        g.fillRect(sw - 1 - i, lidH, 1, extra);
+        g.fillRect(i, sh - lidH - extra, 1, extra);
+        g.fillRect(sw - 1 - i, sh - lidH - extra, 1, extra);
+      }
     }
-    float eyeT = Math.min(1f, (openT - 0.12f) / 0.88f);
-    int cx = sw / 2;
-    int cy = sh / 2;
-    int gap = Math.round(sw * 0.085f);
-    int eyeW = Math.max(8, Math.round(sw * 0.13f * eyeT));
-    int eyeH = Math.max(4, Math.round(sh * 0.065f * eyeT));
-
-    for (int side = -1; side <= 1; side += 2) {
-      drawSingleEye(g, cx + side * gap, cy, eyeW, eyeH, eyeT);
-    }
-  }
-
-  private void drawSingleEye(Graphics2D g, int cx, int cy, int eyeW, int eyeH, float eyeT) {
-    int pxW = Math.max(eyeW - (eyeW % 2), 8);
-    int pxH = Math.max(eyeH - (eyeH % 2), 4);
-    int left = cx - pxW / 2;
-    int top = cy - pxH / 2;
-    int alpha = Math.round(220 * eyeT);
-
-    g.setColor(withAlpha(SCLERA, alpha));
-    g.fillRect(left, top, pxW, pxH);
-
-    int irisW = Math.max(4, pxW * 2 / 3);
-    int irisH = Math.max(3, pxH * 2 / 3);
-    int irisX = cx - irisW / 2;
-    int irisY = cy - irisH / 2;
-    g.setColor(withAlpha(IRIS, Math.round(240 * eyeT)));
-    g.fillRect(irisX, irisY, irisW, irisH);
-
-    g.setColor(withAlpha(IRIS_GLOW, Math.round(100 * eyeT)));
-    g.fillRect(irisX - 1, irisY - 1, irisW + 2, irisH + 2);
-
-    int pupil = Math.max(2, irisW / 3);
-    g.setColor(PUPIL);
-    g.fillRect(cx - pupil / 2, cy - pupil / 2, pupil, pupil);
-
-    g.setColor(withAlpha(HIGHLIGHT, Math.round(200 * eyeT)));
-    g.fillRect(cx - pupil / 2 - 2, cy - pupil / 2 - 1, 2, 2);
-  }
-
-  private static Color withAlpha(Color base, int alpha) {
-    return new Color(base.getRed(), base.getGreen(), base.getBlue(), Math.max(0, Math.min(255, alpha)));
   }
 
   private static float easeOutCubic(float t) {

@@ -7,7 +7,7 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 
-/** Отрисовка цепочки loop_wake → глаза → illusion_wrong. */
+/** Отрисовка: GIF + пиксельный шум + веки от первого лица. */
 public final class LoopSequenceView {
 
   private LoopSequenceView() {
@@ -24,13 +24,11 @@ public final class LoopSequenceView {
     try {
       g.setColor(Color.BLACK);
       g.fillRect(0, 0, sw, sh);
-      if (loopSequence.step() == LoopSequenceController.Step.EYES_OPEN
-          && !eyesEffect.isDone()) {
-        CutsceneNoiseOverlay.draw(g, sw, sh, 0.15f);
-      } else {
-        loopCutscenePlayer.render(g, sw, sh);
-        CutsceneNoiseOverlay.draw(g, sw, sh, LoopSequenceController.NOISE_STRENGTH);
-      }
+
+      // Катсцена всегда под оверлеями (веки открываются поверх GIF)
+      loopCutscenePlayer.render(g, sw, sh);
+      CutsceneNoiseOverlay.draw(g, sw, sh, LoopSequenceController.NOISE_STRENGTH);
+
       if (loopSequence.showEyes()) {
         eyesEffect.render(g, sw, sh);
       }
