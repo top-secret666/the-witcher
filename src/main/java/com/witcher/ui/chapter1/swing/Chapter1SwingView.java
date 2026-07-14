@@ -45,14 +45,6 @@ public final class Chapter1SwingView implements Chapter1View {
       }
       case HACK -> presenter.shopScreen().render(screen, mouseX, mouseY);
       case CARD_REVEAL -> presenter.shopScreen().render(screen, mouseX, mouseY);
-      case BOSS_SPLASH -> {
-        Graphics2D g = screen.createGraphics();
-        try {
-          BossMapSplashView.draw(g, sw, sh, presenter.splashTicks());
-        } finally {
-          g.dispose();
-        }
-      }
       case BOSS_MAP -> {
         Graphics2D g = screen.createGraphics();
         try {
@@ -117,7 +109,6 @@ public final class Chapter1SwingView implements Chapter1View {
     return phase == Chapter1Phase.CUTSCENE
         || phase == Chapter1Phase.LOOP_SEQUENCE
         || phase == Chapter1Phase.LOOP_HOLD
-        || phase == Chapter1Phase.BOSS_SPLASH
         || phase == Chapter1Phase.BOSS_MAP
         || phase == Chapter1Phase.BOSS_ENCOUNTER
         || phase == Chapter1Phase.SWORD_CUTSCENE
@@ -133,8 +124,7 @@ public final class Chapter1SwingView implements Chapter1View {
     if (presenter.hasActiveChoices()) {
       VnSceneRenderer.drawChoices(g, presenter.activeScene(), presenter.choiceRects());
     }
-    if (phase == Chapter1Phase.BOSS_SPLASH
-        || phase == Chapter1Phase.BOSS_MAP
+    if (phase == Chapter1Phase.BOSS_MAP
         || phase == Chapter1Phase.BOSS_ENCOUNTER
         || phase == Chapter1Phase.BATTLE_RESULT
         || phase == Chapter1Phase.VN_BATTLE

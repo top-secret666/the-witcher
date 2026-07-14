@@ -22,7 +22,6 @@ import main.java.com.witcher.ui.chapter1.view.BossMapLayout;
 import main.java.com.witcher.ui.chapter1.view.Chapter1ViewConstants;
 import main.java.com.witcher.ui.chapter1.view.VnChoiceLayout;
 import main.java.com.witcher.chapter1.vn.VnSceneState;
-import main.java.com.witcher.ui.chapter1.swing.BossMapSplashView;
 import main.java.com.witcher.ui.chapter1.swing.Chapter1AssetPrewarm;
 import main.java.com.witcher.ui.chapter1.swing.CutscenePlayer;
 import main.java.com.witcher.ui.chapter1.swing.EyesBlinkEffect;
@@ -63,7 +62,6 @@ public final class Chapter1Presenter {
   private List<BossMapLayout.BossHit> bossHits = List.of();
   private BossEntry hoveredBoss;
   private BossEntry selectedBoss;
-  private int splashTicks;
   private boolean battleVictory;
   private boolean swordGlitchFrozen;
   private int hackShakeTick;
@@ -124,10 +122,6 @@ public final class Chapter1Presenter {
 
   public SwordGlintOverlay swordGlint() {
     return swordGlint;
-  }
-
-  public int splashTicks() {
-    return splashTicks;
   }
 
   public boolean battleVictory() {
@@ -204,7 +198,6 @@ public final class Chapter1Presenter {
         }
       }
       case CARD_REVEAL -> { }
-      case BOSS_SPLASH -> updateBossSplash(clicked);
       case BOSS_MAP -> updateBossMap(mouseX, mouseY, clicked);
       case LOOP_SEQUENCE -> updateLoopSequence();
       case LOOP_HOLD -> { }
@@ -318,19 +311,16 @@ public final class Chapter1Presenter {
     });
     shopBridge.setOnPurchaseHook(() -> dukeDialog.onPrisonIncreased(director.session()));
     shopBridge.setOnEquipHook(this::tryGrantBattleCard);
-    shopBridge.setOnBattleCardUse(this::startBattleJourney);
-    shopBridge.setOnBattleJourneyStart(this::startBattleJourney);
+    shopBridge.setOnBossMapOpen(this::openBossMap);
   }
 
-  private void startBattleJourney() {
-    selectedBoss = BossCatalog.byId("duke");
-    splashTicks = 0;
-    director.enterBossSplash();
-    Chapter1AssetPrewarm.warmAllAsync();
-  }
-
-  private void openBossMapFromInventory() {
-    startBattleJourney();
+  private void openBossMap() {
+    director.enterBossMap();
+    bossHits = BossMapLayout.layoutHits(Chapter1ViewConstants.VIRTUAL_W, Chapter1ViewConstants.VIRTUAL_H);
+    hoveredBoss = null;
+    selectedBoss = null;
+    Chapter1AssetPrewarm.warmBossMapDrawables();
+    Chapter1AssetPrewarm.warmCutscenesAsync();
   }
 
   private void tryGrantBattleCard() {
@@ -343,14 +333,6 @@ public final class Chapter1Presenter {
     battleCard.finishReveal(director.session());
     shopBridge.markBattleMapPending();
     Chapter1AssetPrewarm.warmAllAsync();
-  }
-
-  private void updateBossSplash(boolean clicked) {
-    splashTicks++;
-    if (BossMapSplashView.isComplete(splashTicks) || clicked) {
-      director.beginLoopSequence(false);
-      onPhaseEntered();
-    }
   }
 
   private void updateBossMap(int mouseX, int mouseY, boolean clicked) {

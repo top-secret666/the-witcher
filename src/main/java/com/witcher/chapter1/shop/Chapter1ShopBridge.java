@@ -20,8 +20,7 @@ public final class Chapter1ShopBridge {
   private Runnable onTerminalRequested;
   private Runnable onPurchaseHook;
   private Runnable onEquipHook;
-  private Runnable onBattleCardUse;
-  private Runnable onBattleJourneyStart;
+  private Runnable onBossMapOpen;
   private boolean battlePending;
 
   public Chapter1ShopBridge(Chapter1Session session, Chapter1Director director) {
@@ -53,16 +52,16 @@ public final class Chapter1ShopBridge {
     this.onEquipHook = onEquipHook;
   }
 
-  public void setOnBattleCardUse(Runnable onBattleCardUse) {
-    this.onBattleCardUse = onBattleCardUse;
+  public void setOnBossMapOpen(Runnable onBossMapOpen) {
+    this.onBossMapOpen = onBossMapOpen;
   }
 
   public boolean battleCardInInventory() {
     return session != null && session.battleCardIconVisible();
   }
 
-  public void setOnBattleJourneyStart(Runnable onBattleJourneyStart) {
-    this.onBattleJourneyStart = onBattleJourneyStart;
+  public boolean battleMapPending() {
+    return session != null && session.battleMapPending();
   }
 
   public void markBattleMapPending() {
@@ -71,20 +70,20 @@ public final class Chapter1ShopBridge {
     }
   }
 
-  public boolean tryStartBattleMapOnEquipmentBack() {
+  /** Игрок вернулся в лавку — показываем карту боссов, если ждали после экипировки. */
+  public void onReturnedToLavka() {
     if (session == null || !session.battleMapPending()) {
-      return false;
+      return;
     }
     session.clearBattleMapPending();
-    if (onBattleJourneyStart != null) {
-      onBattleJourneyStart.run();
+    if (onBossMapOpen != null) {
+      onBossMapOpen.run();
     }
-    return true;
   }
 
   public void useBattleCard() {
-    if (onBattleCardUse != null) {
-      onBattleCardUse.run();
+    if (onBossMapOpen != null) {
+      onBossMapOpen.run();
     }
   }
 
