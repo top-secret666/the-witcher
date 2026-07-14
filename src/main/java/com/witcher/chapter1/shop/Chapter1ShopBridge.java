@@ -21,6 +21,7 @@ public final class Chapter1ShopBridge {
   private Runnable onPurchaseHook;
   private Runnable onEquipHook;
   private Runnable onBossMapOpen;
+  private Runnable onEquipmentBack;
   private boolean battlePending;
 
   public Chapter1ShopBridge(Chapter1Session session, Chapter1Director director) {
@@ -56,6 +57,10 @@ public final class Chapter1ShopBridge {
     this.onBossMapOpen = onBossMapOpen;
   }
 
+  public void setOnEquipmentBack(Runnable onEquipmentBack) {
+    this.onEquipmentBack = onEquipmentBack;
+  }
+
   public boolean battleCardInInventory() {
     return session != null && session.battleCardIconVisible();
   }
@@ -70,8 +75,14 @@ public final class Chapter1ShopBridge {
     }
   }
 
-  /** Игрок вернулся в лавку — показываем карту боссов, если ждали после экипировки. */
-  public void onReturnedToLavka() {
+  /** «Назад» из экрана экипировки — лавка; карта только отсюда. */
+  public void onEquipmentBack() {
+    if (onEquipmentBack != null) {
+      onEquipmentBack.run();
+    }
+  }
+
+  public void openBossMapIfPending() {
     if (session == null || !session.battleMapPending()) {
       return;
     }

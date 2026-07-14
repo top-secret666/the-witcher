@@ -312,6 +312,7 @@ public final class Chapter1Presenter {
     shopBridge.setOnPurchaseHook(() -> dukeDialog.onPrisonIncreased(director.session()));
     shopBridge.setOnEquipHook(this::tryGrantBattleCard);
     shopBridge.setOnBossMapOpen(this::openBossMap);
+    shopBridge.setOnEquipmentBack(this::onEquipmentBackToLavka);
   }
 
   private void openBossMap() {
@@ -325,14 +326,22 @@ public final class Chapter1Presenter {
 
   private void tryGrantBattleCard() {
     if (battleCard.tryGrantAfterEquip(director.session(), shopModel)) {
-      shopScreen.presenter().beginBattleCardReveal(this::onBattleCardRevealFinished);
+      shopBridge.markBattleMapPending();
     }
   }
 
-  private void onBattleCardRevealFinished() {
+  private void onEquipmentBackToLavka() {
+    if (director.session().battleCardGranted() && !director.session().battleCardIconVisible()) {
+      shopScreen.presenter().beginBattleCardReveal(this::onBattleCardRevealAfterBack);
+      return;
+    }
+    shopBridge.openBossMapIfPending();
+  }
+
+  private void onBattleCardRevealAfterBack() {
     battleCard.finishReveal(director.session());
-    shopBridge.markBattleMapPending();
     Chapter1AssetPrewarm.warmAllAsync();
+    shopBridge.openBossMapIfPending();
   }
 
   private void updateBossMap(int mouseX, int mouseY, boolean clicked) {

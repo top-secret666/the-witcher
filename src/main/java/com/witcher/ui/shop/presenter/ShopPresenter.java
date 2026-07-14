@@ -75,9 +75,6 @@ public final class ShopPresenter {
             if (ui.inventoryOpen) {
                 ui.inventoryOpen = false;
                 ui.inventoryFocusedIndex = 0;
-                if (chapterBridge != null) {
-                    chapterBridge.onReturnedToLavka();
-                }
                 return;
             }
             if (ui.state == ShopScreenState.WALLET_REVEAL) {
@@ -511,9 +508,6 @@ public final class ShopPresenter {
                 if (ui.inventoryCloseBounds.contains(mouseX, mouseY)) {
                     ui.inventoryOpen = false;
                     ui.inventoryFocusedIndex = 0;
-                    if (chapterBridge != null) {
-                        chapterBridge.onReturnedToLavka();
-                    }
                 } else if (ui.inventoryEquipButtonBounds.contains(mouseX, mouseY)) {
                     ui.equipmentOpen = true;
                     ui.inventoryOpen = false;
@@ -532,9 +526,6 @@ public final class ShopPresenter {
                 } else if (!ui.inventoryPanelBounds.contains(mouseX, mouseY)) {
                     ui.inventoryOpen = false;
                     ui.inventoryFocusedIndex = 0;
-                    if (chapterBridge != null) {
-                        chapterBridge.onReturnedToLavka();
-                    }
                 }
             }
         } else if (clicked && ui.inventoryBagBounds.contains(mouseX, mouseY)) {
@@ -575,7 +566,7 @@ public final class ShopPresenter {
             ui.equipmentOpen = false;
             ui.inventoryOpen = false;
             if (chapterBridge != null) {
-                chapterBridge.onReturnedToLavka();
+                chapterBridge.onEquipmentBack();
             }
             return;
         }
