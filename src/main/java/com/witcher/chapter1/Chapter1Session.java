@@ -84,6 +84,16 @@ public final class Chapter1Session {
     battleCardRevealPending = false;
   }
 
+  /**
+   * Лавка поднимается пустой — старый save с иконкой карты нельзя показывать до
+   * экипировки и катсцены (как с мешочком денег).
+   */
+  public void resetBattleCardUntilEquipReveal() {
+    battleCardGranted = false;
+    battleCardIconVisible = false;
+    battleCardRevealPending = false;
+  }
+
   public void markBattleCardRevealPending() {
     battleCardRevealPending = true;
   }

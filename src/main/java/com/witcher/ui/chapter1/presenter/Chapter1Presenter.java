@@ -2,6 +2,7 @@ package main.java.com.witcher.ui.chapter1.presenter;
 
 import main.java.com.witcher.chapter1.Chapter1Director;
 import main.java.com.witcher.chapter1.Chapter1Phase;
+import main.java.com.witcher.chapter1.Chapter1Save;
 import main.java.com.witcher.chapter1.battle.BossCatalog;
 import main.java.com.witcher.chapter1.battle.BossEncounterController;
 import main.java.com.witcher.chapter1.battle.BattleCardController;
@@ -79,9 +80,9 @@ public final class Chapter1Presenter {
     this.shopBridge = new Chapter1ShopBridge(director.session(), director);
     this.shopScreen = new ShopScreen(shopModel, shopBridge);
     wireBridgeListeners();
-    if (director.session().battleCardIconVisible()) {
-      Chapter1AssetPrewarm.warmAllAsync();
-    }
+    // ShopModel.createNewSession() всегда пустой — не тащим иконку карты из старого save.
+    director.session().resetBattleCardUntilEquipReveal();
+    Chapter1Save.save(director.session());
   }
 
   public Chapter1Director director() {
@@ -339,6 +340,7 @@ public final class Chapter1Presenter {
 
   private void onBattleCardRevealAfterBack() {
     battleCard.finishReveal(director.session());
+    Chapter1Save.save(director.session());
     Chapter1AssetPrewarm.warmAllAsync();
   }
 
