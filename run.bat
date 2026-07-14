@@ -21,7 +21,7 @@ set "CP=%BIN%"
 for %%J in ("%ROOT%lib\gdx\*.jar") do set "CP=!CP!;%%~fJ"
 
 echo Zapusk Swing+GDX icons iz: %BIN%
-"%JAVA_HOME%\bin\java.exe" -Xms64m -Xmx512m ^
+"%JAVA_HOME%\bin\java.exe" -Xms128m -Xmx768m ^
   -Dwitcher.assets="%ASSETS%" ^
   -cp "!CP!" main.java.com.witcher.ui.graphics.GameWindow
 endlocal

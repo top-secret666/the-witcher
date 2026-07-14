@@ -60,9 +60,13 @@ public final class BossEncounterView {
     if (portrait == null) {
       return;
     }
+    // Фиксированный размер под виртуальный кадр — один кэш-слот, без sharpScale-пирамиды.
     int basePw = Math.round(sw * 0.36f);
     int basePh = Math.round(sh * 0.78f);
     BufferedImage scaled = ScaledImageCache.get(portrait, basePw, basePh);
+    if (scaled == null) {
+      return;
+    }
     float scale = encounter.portraitScale();
     int pw = Math.round(basePw * scale);
     int ph = Math.round(basePh * scale);

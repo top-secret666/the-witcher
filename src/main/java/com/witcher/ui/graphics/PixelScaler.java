@@ -93,14 +93,14 @@ public final class PixelScaler {
         if (src.getWidth() == dstW && src.getHeight() == dstH) {
             return src;
         }
-        BufferedImage work = src;
-        while (work.getWidth() > dstW * 2 && work.getHeight() > dstH * 2) {
-            work = halfQuality(work);
+        // Крупные PNG (>2× цели по обеим осям) — один проход, без цепочки halfQuality (OOM на -Xmx512).
+        if (src.getWidth() > dstW * 2 || src.getHeight() > dstH * 2) {
+            return smoothScale(src, dstW, dstH);
         }
         BufferedImage out = new BufferedImage(dstW, dstH, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = out.createGraphics();
         applyBicubic(g);
-        g.drawImage(work, 0, 0, dstW, dstH, null);
+        g.drawImage(src, 0, 0, dstW, dstH, null);
         g.dispose();
         return out;
     }

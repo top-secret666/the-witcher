@@ -1,12 +1,17 @@
 package main.java.com.witcher.ui.chapter1.swing;
 
 import main.java.com.witcher.ui.chapter1.view.Chapter1AssetPaths;
+import main.java.com.witcher.ui.graphics.PixelScaler;
 import main.java.com.witcher.ui.graphics.Sprite;
 
 import java.awt.image.BufferedImage;
 
-/** Ленивая загрузка UI-ассетов главы 1. */
+/** Ленивая загрузка UI-ассетов главы 1. Крупные PNG сразу режутся, чтобы не взрывать heap. */
 public final class Chapter1UiAssets {
+
+  private static final int MAX_MAP_EDGE = 640;
+  private static final int MAX_PORTRAIT_EDGE = 512;
+  private static final int MAX_ICON_EDGE = 256;
 
   private static BufferedImage terminalFrame;
   private static BufferedImage timerBar;
@@ -53,16 +58,14 @@ public final class Chapter1UiAssets {
 
   public static BufferedImage cardClosed() {
     if (cardClosed == null) {
-      Sprite sprite = Sprite.loadOptional(Chapter1AssetPaths.CARD_CLOSED);
-      cardClosed = sprite != null ? sprite.getImage() : null;
+      cardClosed = loadCapped(Chapter1AssetPaths.CARD_CLOSED, MAX_MAP_EDGE);
     }
     return cardClosed;
   }
 
   public static BufferedImage cardIcon() {
     if (cardIcon == null) {
-      Sprite sprite = Sprite.loadOptional(Chapter1AssetPaths.CARD_ICON);
-      cardIcon = sprite != null ? sprite.getImage() : null;
+      cardIcon = loadCapped(Chapter1AssetPaths.CARD_ICON, MAX_ICON_EDGE);
     }
     return cardIcon;
   }
@@ -75,16 +78,14 @@ public final class Chapter1UiAssets {
 
   public static BufferedImage bossMapOpen() {
     if (bossMapOpen == null) {
-      Sprite sprite = Sprite.loadOptional(Chapter1AssetPaths.CARD_MAP_OPEN);
-      bossMapOpen = sprite != null ? sprite.getImage() : null;
+      bossMapOpen = loadCapped(Chapter1AssetPaths.CARD_MAP_OPEN, MAX_MAP_EDGE);
     }
     return bossMapOpen;
   }
 
   public static BufferedImage bossMapClosed() {
     if (bossMapClosed == null) {
-      Sprite sprite = Sprite.loadOptional(Chapter1AssetPaths.CARD_CLOSED);
-      bossMapClosed = sprite != null ? sprite.getImage() : null;
+      bossMapClosed = loadCapped(Chapter1AssetPaths.CARD_CLOSED, MAX_MAP_EDGE);
     }
     return bossMapClosed;
   }
@@ -92,19 +93,16 @@ public final class Chapter1UiAssets {
   public static BufferedImage bossMapIcon(String path) {
     if (path != null && path.contains("boss_duke_map")) {
       if (bossDukeMapIcon == null) {
-        Sprite sprite = Sprite.loadOptional(path);
-        bossDukeMapIcon = sprite != null ? sprite.getImage() : null;
+        bossDukeMapIcon = loadCapped(path, MAX_ICON_EDGE);
       }
       return bossDukeMapIcon;
     }
-    Sprite sprite = Sprite.loadOptional(path);
-    return sprite != null ? sprite.getImage() : null;
+    return loadCapped(path, MAX_ICON_EDGE);
   }
 
   public static BufferedImage bossWakeForest() {
     if (bossWakeForest == null) {
-      Sprite sprite = Sprite.loadOptional(Chapter1AssetPaths.BOSS_WAKE_FOREST);
-      bossWakeForest = sprite != null ? sprite.getImage() : null;
+      bossWakeForest = loadCapped(Chapter1AssetPaths.BOSS_WAKE_FOREST, MAX_MAP_EDGE);
     }
     return bossWakeForest;
   }
@@ -112,12 +110,34 @@ public final class Chapter1UiAssets {
   public static BufferedImage bossPortrait(String path) {
     if (path != null && path.contains("boss_duke_portrait")) {
       if (bossDukePortrait == null) {
-        Sprite sprite = Sprite.loadOptional(path);
-        bossDukePortrait = sprite != null ? sprite.getImage() : null;
+        bossDukePortrait = loadCapped(path, MAX_PORTRAIT_EDGE);
       }
       return bossDukePortrait;
     }
+    return loadCapped(path, MAX_PORTRAIT_EDGE);
+  }
+
+  private static BufferedImage loadCapped(String path, int maxEdge) {
     Sprite sprite = Sprite.loadOptional(path);
-    return sprite != null ? sprite.getImage() : null;
+    if (sprite == null) {
+      return null;
+    }
+    return capEdge(sprite.getImage(), maxEdge);
+  }
+
+  /** Ужимает оригинал один раз при загрузке — дальше ScaledImageCache не аллоцирует гигантские half. */
+  static BufferedImage capEdge(BufferedImage src, int maxEdge) {
+    if (src == null || maxEdge <= 0) {
+      return src;
+    }
+    int w = src.getWidth();
+    int h = src.getHeight();
+    if (w <= maxEdge && h <= maxEdge) {
+      return src;
+    }
+    float scale = Math.min((float) maxEdge / w, (float) maxEdge / h);
+    int dw = Math.max(1, Math.round(w * scale));
+    int dh = Math.max(1, Math.round(h * scale));
+    return PixelScaler.smoothScale(src, dw, dh);
   }
 }
