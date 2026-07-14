@@ -5,7 +5,7 @@ import main.java.com.witcher.chapter1.Chapter1Session;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 
-/** Катсцена боя: чёрный экран, блики меча, тряска. */
+/** Катсцена боя: столкновения клинков, вспышки, тряска. */
 public final class SwordCutsceneView {
 
   private SwordCutsceneView() {

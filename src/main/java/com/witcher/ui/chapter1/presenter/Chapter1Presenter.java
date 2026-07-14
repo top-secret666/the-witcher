@@ -67,7 +67,7 @@ public final class Chapter1Presenter {
   private int hackShakeTick;
   private boolean exitRequested;
 
-  private static final int SWORD_CUTSCENE_MS = 4500;
+  private static final int SWORD_CUTSCENE_MS = 3500;
 
   public Chapter1Presenter() {
     this(Chapter1Director.loadOrNew(), ShopModel.createNewSession());
