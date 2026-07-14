@@ -11,7 +11,8 @@ import java.util.Random;
  */
 public final class IntroMorphAnimation {
 
-    public static final int VN_RIGHT_MORPH_TICKS = 84;
+    /** ~0.7 с при 60 FPS (раньше 84 ≈ 1.4 с). */
+    public static final int VN_RIGHT_MORPH_TICKS = 42;
 
     public static final class IntroRect {
         public float x;
