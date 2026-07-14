@@ -17,6 +17,21 @@ public final class EyelidOverlay {
   private EyelidOverlay() {
   }
 
+  /** Плоское закрытие: чёрные полосы сверху/снизу, без контура века. openT=1 — полностью открыто. */
+  public static void renderFlat(Graphics2D g, int sw, int sh, float openT) {
+    if (g == null || sw <= 0 || sh <= 0 || openT >= 0.995f) {
+      return;
+    }
+    float closed = Math.max(0f, Math.min(1f, 1f - openT));
+    int cover = (int) Math.ceil(sh * 0.5f * closed);
+    if (cover <= 0) {
+      return;
+    }
+    g.setColor(Color.BLACK);
+    g.fillRect(0, 0, sw, cover);
+    g.fillRect(0, sh - cover, sw, cover);
+  }
+
   public static void render(Graphics2D g, int sw, int sh, float openT) {
     if (g == null || sw <= 0 || sh <= 0 || openT >= 0.995f) {
       return;

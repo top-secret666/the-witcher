@@ -2,12 +2,13 @@ package main.java.com.witcher.chapter1.battle;
 
 import main.java.com.witcher.chapter1.vn.VnSceneState;
 
-/** VN-появление босса после пробуждения: лес + злодей по центру. */
+/** VN-появление босса: чёрный экран → пауза → полное открытие → злодей и диалог. */
 public final class BossEncounterController {
 
   private static final int MS_PER_TICK = 16;
-  private static final int LID_OPEN_MS = 1500;
-  private static final int PORTRAIT_DELAY_MS = 600;
+  private static final int CLOSED_HOLD_MS = 2000;
+  private static final int OPEN_MS = 1100;
+  private static final int PORTRAIT_FADE_MS = 700;
 
   private final BossEntry boss;
   private int ticks;
@@ -31,28 +32,35 @@ public final class BossEncounterController {
 
   public float eyelidOpenT() {
     int ms = elapsedMs();
-    if (ms >= LID_OPEN_MS) {
+    if (ms < CLOSED_HOLD_MS) {
+      return 0f;
+    }
+    if (ms >= CLOSED_HOLD_MS + OPEN_MS) {
       return 1f;
     }
-    return easeOutCubic(ms / (float) LID_OPEN_MS);
+    float t = (ms - CLOSED_HOLD_MS) / (float) OPEN_MS;
+    return easeOutCubic(t);
   }
 
   public float portraitAlpha() {
     int ms = elapsedMs();
-    if (ms < PORTRAIT_DELAY_MS) {
+    int revealStart = CLOSED_HOLD_MS + OPEN_MS;
+    if (ms < revealStart) {
       return 0f;
     }
-    return easeOutCubic((ms - PORTRAIT_DELAY_MS) / (float) (LID_OPEN_MS - PORTRAIT_DELAY_MS + 500));
+    if (ms >= revealStart + PORTRAIT_FADE_MS) {
+      return 1f;
+    }
+    return easeOutCubic((ms - revealStart) / (float) PORTRAIT_FADE_MS);
   }
 
-  /** Лёгкий zoom-in злодея из центра. */
   public float portraitScale() {
     float alpha = portraitAlpha();
-    return 0.88f + 0.12f * alpha;
+    return 0.92f + 0.08f * alpha;
   }
 
   public boolean showDialog() {
-    return portraitAlpha() > 0.6f;
+    return portraitAlpha() > 0.85f;
   }
 
   public VnSceneState scene() {
@@ -67,7 +75,7 @@ public final class BossEncounterController {
   }
 
   public boolean isReadyForSword() {
-    return dialogDismissed && eyelidOpenT() >= 0.98f;
+    return dialogDismissed && portraitAlpha() >= 0.98f;
   }
 
   private static float easeOutCubic(float t) {

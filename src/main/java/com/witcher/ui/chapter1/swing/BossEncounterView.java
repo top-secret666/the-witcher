@@ -42,7 +42,7 @@ public final class BossEncounterView {
           portraitA);
     }
 
-    EyelidOverlay.render(g, sw, sh, 1f - encounter.eyelidOpenT());
+    EyelidOverlay.renderFlat(g, sw, sh, 1f - encounter.eyelidOpenT());
   }
 
   private static void drawForestBackground(Graphics2D g, int sw, int sh, float alpha) {
