@@ -93,6 +93,9 @@ public final class Chapter1ShopBridge {
   }
 
   public void useBattleCard() {
+    if (!battleCardInInventory()) {
+      return;
+    }
     if (onBossMapOpen != null) {
       onBossMapOpen.run();
     }

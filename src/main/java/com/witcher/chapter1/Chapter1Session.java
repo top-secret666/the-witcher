@@ -28,6 +28,7 @@ public final class Chapter1Session {
   private int hackAttemptsThisLoop;
   private boolean battleCardGranted;
   private boolean battleCardIconVisible;
+  private boolean battleCardRevealPending;
   private boolean battleMapPending;
 
   public static Chapter1Session newGame() {
@@ -80,6 +81,19 @@ public final class Chapter1Session {
 
   public void showBattleCardIcon() {
     battleCardIconVisible = true;
+    battleCardRevealPending = false;
+  }
+
+  public void markBattleCardRevealPending() {
+    battleCardRevealPending = true;
+  }
+
+  public void clearBattleCardRevealPending() {
+    battleCardRevealPending = false;
+  }
+
+  public boolean battleCardRevealPending() {
+    return battleCardRevealPending;
   }
 
   public void markBattleMapPending() {
@@ -233,6 +247,10 @@ public final class Chapter1Session {
     hackAttemptsThisLoop = snap.hackAttemptsThisLoop();
     battleCardGranted = snap.battleCardGranted();
     battleCardIconVisible = snap.battleCardIconVisible();
+    if (battleCardIconVisible && !battleCardGranted) {
+      battleCardIconVisible = false;
+    }
+    battleCardRevealPending = battleCardGranted && !battleCardIconVisible;
     refreshTerminalAccess();
   }
 

@@ -329,7 +329,10 @@ public final class Chapter1Presenter {
   }
 
   private void onEquipmentBackToLavka() {
-    if (director.session().battleCardGranted() && !director.session().battleCardIconVisible()) {
+    var session = director.session();
+    if (session.battleCardRevealPending()
+        || (session.battleCardGranted() && !session.battleCardIconVisible())) {
+      session.clearBattleCardRevealPending();
       shopScreen.presenter().beginBattleCardReveal(this::onBattleCardRevealAfterBack);
     }
   }
