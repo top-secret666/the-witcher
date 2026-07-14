@@ -1,10 +1,10 @@
 package main.java.com.witcher.ui.chapter1.swing;
 
-import java.awt.Color;
 import java.awt.Graphics2D;
 
 /**
- * Веки от первого лица поверх катсцены (как в фильмах): только шторки, без радужки/зрачков.
+ * Таймлайн век поверх loop_wake: закрыто → открытие → пауза → моргание → открыто.
+ * Форма век — {@link EyelidOverlay} (кривые Безье).
  */
 public final class EyesBlinkEffect {
 
@@ -12,13 +12,18 @@ public final class EyesBlinkEffect {
     IDLE, OPENING, BLINKING, DONE
   }
 
-  private static final int OPEN_TICKS = 70;
-  private static final int BLINK_CLOSE_TICKS = 12;
-  private static final int BLINK_OPEN_TICKS = 28;
+  /** ~60 FPS. */
+  private static final int MS_PER_TICK = 16;
 
-  private static final Color LID = new Color(6, 4, 3);
-  private static final Color LID_RIM = new Color(28, 16, 12);
-  private static final Color LASH = new Color(18, 10, 8, 200);
+  // Таймлайн открытия (мс)
+  private static final int CLOSED_HOLD_MS = 600;
+  private static final int OPEN_DURATION_MS = 1200;
+  private static final int OPEN_HOLD_MS = 600;
+  private static final int MICRO_BLINK_MS = 200;
+  private static final int END_HOLD_MS = 400;
+
+  private static final int BLINK_CLOSE_MS = 100;
+  private static final int BLINK_OPEN_MS = 120;
 
   private Mode mode = Mode.IDLE;
   private int ticks;
@@ -46,18 +51,10 @@ public final class EyesBlinkEffect {
       return;
     }
     ticks++;
-    switch (mode) {
-      case OPENING -> {
-        if (ticks >= OPEN_TICKS) {
-          mode = Mode.DONE;
-        }
-      }
-      case BLINKING -> {
-        if (ticks >= BLINK_CLOSE_TICKS + BLINK_OPEN_TICKS) {
-          mode = Mode.DONE;
-        }
-      }
-      default -> { }
+    if (mode == Mode.OPENING && openingElapsedMs() >= totalOpeningMs()) {
+      mode = Mode.DONE;
+    } else if (mode == Mode.BLINKING && blinkElapsedMs() >= BLINK_CLOSE_MS + BLINK_OPEN_MS) {
+      mode = Mode.DONE;
     }
   }
 
@@ -66,63 +63,63 @@ public final class EyesBlinkEffect {
       return;
     }
     float openT = switch (mode) {
-      case OPENING -> easeOutCubic(ticks / (float) OPEN_TICKS);
-      case BLINKING -> {
-        if (ticks < BLINK_CLOSE_TICKS) {
-          yield 1f - easeInCubic(ticks / (float) BLINK_CLOSE_TICKS);
-        }
-        yield easeOutCubic((ticks - BLINK_CLOSE_TICKS) / (float) BLINK_OPEN_TICKS);
-      }
+      case OPENING -> openingOpenT(openingElapsedMs());
+      case BLINKING -> blinkOpenT(blinkElapsedMs());
       default -> 1f;
     };
-    openT = Math.max(0f, Math.min(1f, openT));
-    drawFirstPersonLids(g, sw, sh, openT);
+    EyelidOverlay.render(g, sw, sh, openT);
+  }
+
+  private int openingElapsedMs() {
+    return ticks * MS_PER_TICK;
+  }
+
+  private int blinkElapsedMs() {
+    return ticks * MS_PER_TICK;
+  }
+
+  private static int totalOpeningMs() {
+    return CLOSED_HOLD_MS + OPEN_DURATION_MS + OPEN_HOLD_MS + MICRO_BLINK_MS + END_HOLD_MS;
   }
 
   /**
-   * Верхняя и нижняя шторки смыкаются к центру экрана.
-   * openT=0 — полностью закрыто, openT=1 — открыто.
+   * 0.0–0.6с закрыто → 0.6–1.8с ease-out → 1.8–2.4с открыто → 2.4–2.6с моргание → 2.6–3.0с открыто.
    */
-  private void drawFirstPersonLids(Graphics2D g, int sw, int sh, float openT) {
-    float closed = 1f - openT;
-    if (closed <= 0.01f) {
-      return;
+  private static float openingOpenT(int ms) {
+    int t0 = 0;
+    int t1 = t0 + CLOSED_HOLD_MS;
+    int t2 = t1 + OPEN_DURATION_MS;
+    int t3 = t2 + OPEN_HOLD_MS;
+    int t4 = t3 + MICRO_BLINK_MS;
+    int t5 = t4 + END_HOLD_MS;
+
+    if (ms < t1) {
+      return 0f;
     }
-
-    int maxCover = Math.round(sh * 0.52f);
-    int lidH = Math.max(1, Math.round(maxCover * closed));
-
-    // Основная масса век
-    g.setColor(LID);
-    g.fillRect(0, 0, sw, lidH);
-    g.fillRect(0, sh - lidH, sw, lidH);
-
-    // Пиксельные «складки» — чуть светлее полосы у края
-    g.setColor(LID_RIM);
-    int rim = Math.max(2, lidH / 10);
-    g.fillRect(0, Math.max(0, lidH - rim), sw, rim);
-    g.fillRect(0, sh - lidH, sw, rim);
-
-    // Линия ресниц по стыку века с миром
-    g.setColor(LASH);
-    for (int x = 0; x < sw; x += 3) {
-      int jitter = (x * 17 + ticks) % 3;
-      g.fillRect(x, lidH - 1 - jitter, 2, 1);
-      g.fillRect(x + 1, sh - lidH + jitter, 2, 1);
+    if (ms < t2) {
+      return easeOutCubic((ms - t1) / (float) OPEN_DURATION_MS);
     }
-
-    // Боковые уголки — слегка сильнее закрытие (типичный FP blink)
-    int cornerW = Math.round(sw * 0.12f * closed);
-    if (cornerW > 0) {
-      g.setColor(LID);
-      for (int i = 0; i < cornerW; i++) {
-        int extra = Math.round((cornerW - i) * 0.35f);
-        g.fillRect(i, lidH, 1, extra);
-        g.fillRect(sw - 1 - i, lidH, 1, extra);
-        g.fillRect(i, sh - lidH - extra, 1, extra);
-        g.fillRect(sw - 1 - i, sh - lidH - extra, 1, extra);
+    if (ms < t3) {
+      return 1f;
+    }
+    if (ms < t4) {
+      float blinkT = (ms - t3) / (float) MICRO_BLINK_MS;
+      if (blinkT < 0.5f) {
+        return 1f - easeInCubic(blinkT * 2f) * 0.75f;
       }
+      return easeOutCubic((blinkT - 0.5f) * 2f);
     }
+    if (ms < t5) {
+      return 1f;
+    }
+    return 1f;
+  }
+
+  private static float blinkOpenT(int ms) {
+    if (ms < BLINK_CLOSE_MS) {
+      return 1f - easeInCubic(ms / (float) BLINK_CLOSE_MS);
+    }
+    return easeOutCubic((ms - BLINK_CLOSE_MS) / (float) BLINK_OPEN_MS);
   }
 
   private static float easeOutCubic(float t) {

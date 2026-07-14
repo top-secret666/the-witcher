@@ -7,7 +7,8 @@ import main.java.com.witcher.chapter1.cutscene.CutsceneId;
  */
 public final class LoopSequenceController {
 
-  public static final int LOOP_WAKE_TICKS = 130;
+  /** ~3 с при 60 FPS — совпадает с таймлайном открытия век. */
+  public static final int LOOP_WAKE_TICKS = 180;
   public static final float NOISE_STRENGTH = 0.55f;
 
   public enum Step {
