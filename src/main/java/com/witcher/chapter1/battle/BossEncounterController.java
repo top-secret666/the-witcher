@@ -3,14 +3,15 @@ package main.java.com.witcher.chapter1.battle;
 import main.java.com.witcher.chapter1.vn.VnSceneState;
 
 /**
- * После loop_wake: веки закрыты → открываются полностью.
- * Лес и злодей уже под веками; диалог — когда глаза открыты до конца.
+ * После loop_wake: полный чёрный экран → веки открываются поверх леса и злодея.
+ * Диалог — только когда глаза открыты до конца.
  */
 public final class BossEncounterController {
 
   private static final int MS_PER_TICK = 16;
-  private static final int CLOSED_HOLD_MS = 450;
-  private static final int OPEN_MS = 1400;
+  /** Пауза на сплошной тьме после закрытия век пробуждения. */
+  private static final int CLOSED_HOLD_MS = 900;
+  private static final int OPEN_MS = 1600;
 
   private final BossEntry boss;
   private int ticks;
@@ -32,7 +33,7 @@ public final class BossEncounterController {
     ticks++;
   }
 
-  /** 0 = закрыто, 1 = полностью открыто. */
+  /** 0 = полностью закрыто (тьма), 1 = полностью открыто. */
   public float eyelidOpenT() {
     int ms = elapsedMs();
     if (ms < CLOSED_HOLD_MS) {
@@ -45,7 +46,6 @@ public final class BossEncounterController {
     return easeOutCubic(t);
   }
 
-  /** Веки открыты полностью — можно показать диалог. */
   public boolean eyesFullyOpen() {
     return eyelidOpenT() >= 1f;
   }

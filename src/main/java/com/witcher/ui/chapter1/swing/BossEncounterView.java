@@ -8,8 +8,8 @@ import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 
 /**
- * Лес + злодей всегда под веками; веки открываются полностью и открывают сцену.
- * Диалог — только когда глаза открыты до конца.
+ * Лес + злодей под веками с первого кадра.
+ * Сначала сплошная тьма (веки закрыты), потом открытие раскрывает сцену.
  */
 public final class BossEncounterView {
 
@@ -26,7 +26,7 @@ public final class BossEncounterView {
     g.setColor(Color.BLACK);
     g.fillRect(0, 0, sw, sh);
 
-    // Сцена уже есть под веками — открытие глаз её раскрывает.
+    // Уже под веками — видно только по мере открытия.
     drawForestBackground(g, sw, sh);
     drawCenterPortrait(g, sw, sh, encounter);
 
