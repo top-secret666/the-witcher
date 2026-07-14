@@ -3,6 +3,7 @@ package main.java.com.witcher.ui.chapter1.swing;
 import main.java.com.witcher.ui.chapter1.view.Chapter1AssetPaths;
 import main.java.com.witcher.ui.graphics.PixelScaler;
 import main.java.com.witcher.ui.graphics.Sprite;
+import main.java.com.witcher.ui.graphics.SpriteSheet;
 
 import java.awt.image.BufferedImage;
 
@@ -75,6 +76,9 @@ public final class Chapter1UiAssets {
   private static BufferedImage bossDukeMapIcon;
   private static BufferedImage bossDukePortrait;
   private static BufferedImage bossWakeForest;
+  private static SpriteSheet swordSlashSheetA;
+  private static SpriteSheet swordSlashSheetB;
+  private static boolean swordSlashTried;
 
   public static BufferedImage bossMapOpen() {
     if (bossMapOpen == null) {
@@ -115,6 +119,33 @@ public final class Chapter1UiAssets {
       return bossDukePortrait;
     }
     return loadCapped(path, MAX_PORTRAIT_EDGE);
+  }
+
+  /** Кадр проблеска меча: лист A (6×4) или B (2×4), чёрный фон вырезан. */
+  public static BufferedImage swordSlashFrame(
+      main.java.com.witcher.chapter1.battle.SwordSlashShowTimeline.SheetId sheet, int index) {
+    ensureSwordSlashSheets();
+    SpriteSheet frames = sheet == main.java.com.witcher.chapter1.battle.SwordSlashShowTimeline.SheetId.A
+        ? swordSlashSheetA
+        : swordSlashSheetB;
+    return frames != null ? frames.getFrame(index) : null;
+  }
+
+  public static boolean swordSlashSheetsReady() {
+    ensureSwordSlashSheets();
+    return swordSlashSheetA != null || swordSlashSheetB != null;
+  }
+
+  private static void ensureSwordSlashSheets() {
+    if (swordSlashTried) {
+      return;
+    }
+    swordSlashTried = true;
+    // чёрный → прозрачный, чтобы рисовать поверх чёрного кадра катсцены
+    swordSlashSheetA = SpriteSheet.loadOptional(
+        Chapter1AssetPaths.SWORD_SLASH_SHEET_A, 6, 4, 1, true);
+    swordSlashSheetB = SpriteSheet.loadOptional(
+        Chapter1AssetPaths.SWORD_SLASH_SHEET_B, 2, 4, 1, true);
   }
 
   private static BufferedImage loadCapped(String path, int maxEdge) {

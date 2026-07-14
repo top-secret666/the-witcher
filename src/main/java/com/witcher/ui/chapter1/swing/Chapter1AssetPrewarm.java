@@ -52,6 +52,7 @@ public final class Chapter1AssetPrewarm {
         CutsceneCache.warm(CutsceneId.LOOP_WAKE, CutsceneId.ILLUSION_WRONG);
         CutsceneCache.prewarmScaled(CutsceneId.LOOP_WAKE, sw, sh);
         CutsceneCache.prewarmScaled(CutsceneId.ILLUSION_WRONG, sw, sh);
+        Chapter1UiAssets.swordSlashSheetsReady();
         cutscenesReady = true;
       } finally {
         cutscenesWarming = false;

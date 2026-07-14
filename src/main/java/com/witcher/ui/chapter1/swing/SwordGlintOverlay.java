@@ -1,14 +1,13 @@
 package main.java.com.witcher.ui.chapter1.swing;
 
 import main.java.com.witcher.chapter1.battle.SwordClashTimeline;
-import main.java.com.witcher.chapter1.battle.SwordClashTimeline.ClashMoment;
-import main.java.com.witcher.chapter1.battle.SwordClashTimeline.Spark;
 
 import java.awt.Graphics2D;
-import java.util.ArrayList;
-import java.util.List;
 
-/** Swing-обёртка над {@link SwordClashTimeline}: симуляция в домене, paint в renderer. */
+/**
+ * Катсцена боя: тряска/тайминг из {@link SwordClashTimeline},
+ * картинка — спрайты проблесков на чёрном фоне (fallback — procedural blades).
+ */
 public final class SwordGlintOverlay {
 
   private final SwordClashTimeline timeline = new SwordClashTimeline();
@@ -30,17 +29,12 @@ public final class SwordGlintOverlay {
   }
 
   public void render(Graphics2D g, int width, int height) {
-    List<SwordGlintRenderer.ClashDraw> clashDraws = new ArrayList<>();
-    for (ClashMoment c : timeline.clashes()) {
-      clashDraws.add(new SwordGlintRenderer.ClashDraw(
-          c.time(), c.x(), c.y(), c.angleA(), c.angleB()));
+    if (Chapter1UiAssets.swordSlashSheetsReady()) {
+      SwordSlashSheetRenderer.paint(g, width, height, timeline.renderMs());
+      return;
     }
-    List<SwordGlintRenderer.SparkDraw> sparkDraws = new ArrayList<>();
-    for (Spark s : timeline.sparks()) {
-      sparkDraws.add(new SwordGlintRenderer.SparkDraw(
-          s.x(), s.y(), s.vx(), s.vy(), s.startTime(), s.duration()));
-    }
-    SwordGlintRenderer.paint(g, width, height, timeline.renderMs(), clashDraws, sparkDraws);
+    // Fallback, если листы не нашлись в resources.
+    SwordGlintRenderer.paintProceduralFallback(g, width, height, timeline);
   }
 
   public int getShakeOffsetX() {

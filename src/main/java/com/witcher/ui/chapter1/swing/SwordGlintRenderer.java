@@ -1,11 +1,16 @@
 package main.java.com.witcher.ui.chapter1.swing;
 
+import main.java.com.witcher.chapter1.battle.SwordClashTimeline;
+import main.java.com.witcher.chapter1.battle.SwordClashTimeline.ClashMoment;
+import main.java.com.witcher.chapter1.battle.SwordClashTimeline.Spark;
+
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.RadialGradientPaint;
 import java.awt.RenderingHints;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
+import java.util.ArrayList;
 import java.util.List;
 
 /** Только отрисовка столкновений клинков — без тайминга/симуляции. */
@@ -18,6 +23,19 @@ public final class SwordGlintRenderer {
   }
 
   private SwordGlintRenderer() {
+  }
+
+  public static void paintProceduralFallback(
+      Graphics2D g, int width, int height, SwordClashTimeline timeline) {
+    List<ClashDraw> clashes = new ArrayList<>();
+    for (ClashMoment c : timeline.clashes()) {
+      clashes.add(new ClashDraw(c.time(), c.x(), c.y(), c.angleA(), c.angleB()));
+    }
+    List<SparkDraw> sparks = new ArrayList<>();
+    for (Spark s : timeline.sparks()) {
+      sparks.add(new SparkDraw(s.x(), s.y(), s.vx(), s.vy(), s.startTime(), s.duration()));
+    }
+    paint(g, width, height, timeline.renderMs(), clashes, sparks);
   }
 
   public static void paint(
