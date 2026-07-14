@@ -7,7 +7,10 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 
-/** VN-появление врага: лес, злодей по центру, диалог — только после полного открытия век. */
+/**
+ * Лес + злодей всегда под веками; веки открываются полностью и открывают сцену.
+ * Диалог — только когда глаза открыты до конца.
+ */
 public final class BossEncounterView {
 
   private BossEncounterView() {
@@ -23,44 +26,39 @@ public final class BossEncounterView {
     g.setColor(Color.BLACK);
     g.fillRect(0, 0, sw, sh);
 
-    if (encounter.sceneRevealed()) {
-      drawForestBackground(g, sw, sh, 1f);
-      drawCenterPortrait(g, sw, sh, encounter, 1f);
+    // Сцена уже есть под веками — открытие глаз её раскрывает.
+    drawForestBackground(g, sw, sh);
+    drawCenterPortrait(g, sw, sh, encounter);
 
-      if (encounter.showDialog() && encounter.scene() != null) {
-        DialogBoxRenderer.drawCompactFramedSpeakerText(
-            g, sw, sh,
-            encounter.scene().speaker(),
-            encounter.scene().body(),
-            new Color(218, 165, 32),
-            1f);
-      }
+    if (encounter.showDialog() && encounter.scene() != null) {
+      DialogBoxRenderer.drawCompactFramedSpeakerText(
+          g, sw, sh,
+          encounter.scene().speaker(),
+          encounter.scene().body(),
+          new Color(218, 165, 32),
+          1f);
     }
 
-    // openT=0 закрыто, openT=1 открыто — НЕ инвертировать
     EyelidOverlay.renderBlack(g, sw, sh, encounter.eyelidOpenT());
   }
 
-  private static void drawForestBackground(Graphics2D g, int sw, int sh, float alpha) {
+  private static void drawForestBackground(Graphics2D g, int sw, int sh) {
     BufferedImage forest = Chapter1UiAssets.bossWakeForest();
     if (forest == null) {
       return;
     }
     BufferedImage bg = ScaledImageCache.get(forest, sw, sh);
-    var prev = g.getComposite();
-    g.setComposite(java.awt.AlphaComposite.getInstance(
-        java.awt.AlphaComposite.SRC_OVER, Math.min(1f, alpha)));
-    g.drawImage(bg, 0, 0, null);
-    g.setComposite(prev);
+    if (bg != null) {
+      g.drawImage(bg, 0, 0, null);
+    }
   }
 
   private static void drawCenterPortrait(
-      Graphics2D g, int sw, int sh, BossEncounterController encounter, float alpha) {
+      Graphics2D g, int sw, int sh, BossEncounterController encounter) {
     BufferedImage portrait = Chapter1UiAssets.bossPortrait(encounter.boss().portraitPath());
     if (portrait == null) {
       return;
     }
-    // Фиксированный размер под виртуальный кадр — один кэш-слот, без sharpScale-пирамиды.
     int basePw = Math.round(sw * 0.36f);
     int basePh = Math.round(sh * 0.78f);
     BufferedImage scaled = ScaledImageCache.get(portrait, basePw, basePh);
@@ -72,10 +70,6 @@ public final class BossEncounterView {
     int ph = Math.round(basePh * scale);
     int x = (sw - pw) / 2;
     int y = sh - ph - 42;
-    var prev = g.getComposite();
-    g.setComposite(java.awt.AlphaComposite.getInstance(
-        java.awt.AlphaComposite.SRC_OVER, Math.min(1f, alpha)));
     g.drawImage(scaled, x, y, pw, ph, null);
-    g.setComposite(prev);
   }
 }
