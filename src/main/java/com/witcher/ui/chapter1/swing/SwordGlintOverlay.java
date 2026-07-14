@@ -1,18 +1,12 @@
 package main.java.com.witcher.ui.chapter1.swing;
 
-import java.awt.Color;
 import java.awt.Graphics2D;
-import java.awt.RadialGradientPaint;
-import java.awt.RenderingHints;
-import java.awt.geom.Path2D;
-import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
 /**
- * Катсцена боя: 3 дискретных столкновения клинков на чёрном фоне.
- * Клинок — сужающийся силуэт, вспышка в точке контакта, искры из удара.
+ * Катсцена боя: симуляция столкновений + делегирование отрисовки в {@link SwordGlintRenderer}.
  */
 public final class SwordGlintOverlay {
 
@@ -101,50 +95,16 @@ public final class SwordGlintOverlay {
 
   public void render(Graphics2D g, int width, int height) {
     ensureLayout(width, height);
-    Object prevAa = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
-    g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-    g.setColor(Color.BLACK);
-    g.fillRect(0, 0, width, height);
-
-    for (int i = 0; i < clashes.size(); i++) {
-      ClashMoment c = clashes.get(i);
-      long dt = renderMs - c.time;
-      if (dt < -150 || dt > 350) {
-        continue;
-      }
-
-      float approach = clamp((150f + dt) / 150f, 0f, 1f);
-      drawBlade(g, c.x, c.y, c.angleA, approach);
-      drawBlade(g, c.x, c.y, c.angleB, approach);
-
-      if (dt >= -30 && dt <= 200) {
-        float flashT = clamp(dt / 200f, 0f, 1f);
-        float flashAlpha = flashT < 0.15f ? flashT / 0.15f : 1f - (flashT - 0.15f) / 0.85f;
-        float radius = 15f + flashT * 70f;
-
-        RadialGradientPaint glow = new RadialGradientPaint(
-            new Point2D.Float(c.x, c.y),
-            radius,
-            new float[] {0f, 1f},
-            new Color[] {
-                new Color(1f, 1f, 0.92f, Math.max(0f, flashAlpha)),
-                new Color(1f, 1f, 0.92f, 0f)
-            });
-        g.setPaint(glow);
-        g.fillOval(
-            (int) (c.x - radius),
-            (int) (c.y - radius),
-            (int) (radius * 2f),
-            (int) (radius * 2f));
-      }
+    List<SwordGlintRenderer.ClashDraw> clashDraws = new ArrayList<>(clashes.size());
+    for (ClashMoment c : clashes) {
+      clashDraws.add(new SwordGlintRenderer.ClashDraw(c.time, c.x, c.y, c.angleA, c.angleB));
     }
-
-    renderSparks(g);
-
-    if (prevAa != null) {
-      g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, prevAa);
+    List<SwordGlintRenderer.SparkDraw> sparkDraws = new ArrayList<>(sparks.size());
+    for (Spark s : sparks) {
+      sparkDraws.add(new SwordGlintRenderer.SparkDraw(
+          s.x, s.y, s.vx, s.vy, s.startTime, s.duration));
     }
+    SwordGlintRenderer.paint(g, width, height, renderMs, clashDraws, sparkDraws);
   }
 
   public int getShakeOffsetX() {
@@ -186,33 +146,6 @@ public final class SwordGlintOverlay {
     clashes.add(new ClashMoment(2200, width * 0.5f, height * 0.55f, -0.2f, 0.8f));
   }
 
-  private void drawBlade(Graphics2D g, float cx, float cy, float angle, float approach) {
-    float len = 90f;
-    float tipDist = len * (0.4f + approach * 0.6f);
-    float dx = (float) Math.cos(angle);
-    float dy = (float) Math.sin(angle);
-
-    float tipX = cx + dx * tipDist;
-    float tipY = cy + dy * tipDist;
-    float baseX = cx + dx * (tipDist - len);
-    float baseY = cy + dy * (tipDist - len);
-
-    float perpX = -dy;
-    float perpY = dx;
-    float baseWidth = 6f;
-    float tipWidth = 1f;
-
-    Path2D blade = new Path2D.Float();
-    blade.moveTo(baseX + perpX * baseWidth, baseY + perpY * baseWidth);
-    blade.lineTo(tipX + perpX * tipWidth, tipY + perpY * tipWidth);
-    blade.lineTo(tipX - perpX * tipWidth, tipY - perpY * tipWidth);
-    blade.lineTo(baseX - perpX * baseWidth, baseY - perpY * baseWidth);
-    blade.closePath();
-
-    g.setColor(new Color(0.85f, 0.9f, 1f, 0.9f * approach));
-    g.fill(blade);
-  }
-
   private void spawnSparks(float x, float y, long now) {
     for (int i = 0; i < 12; i++) {
       Spark s = new Spark();
@@ -226,24 +159,5 @@ public final class SwordGlintOverlay {
       s.duration = 200 + rnd.nextInt(150);
       sparks.add(s);
     }
-  }
-
-  private void renderSparks(Graphics2D g) {
-    for (Spark s : sparks) {
-      float t = (renderMs - s.startTime) / (float) s.duration;
-      if (t < 0f || t > 1f) {
-        continue;
-      }
-      float px = s.x + s.vx * t * 25f;
-      float py = s.y + s.vy * t * 25f + t * t * 15f;
-      float alpha = 1f - t;
-
-      g.setColor(new Color(1f, 0.9f, 0.5f, Math.max(0f, alpha)));
-      g.fillRect((int) px, (int) py, 2, 2);
-    }
-  }
-
-  private static float clamp(float v, float min, float max) {
-    return Math.max(min, Math.min(max, v));
   }
 }

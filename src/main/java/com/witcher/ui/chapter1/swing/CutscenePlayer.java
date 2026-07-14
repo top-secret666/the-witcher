@@ -83,10 +83,7 @@ public final class CutscenePlayer {
     }
     int idx = Math.min(frameIndex, scaled.frameCount() - 1);
     BufferedImage frame = scaled.frames()[idx];
-    if (frame == null) {
-      return;
-    }
-    g.drawImage(frame, scaled.dx()[idx], scaled.dy()[idx], null);
+    CutsceneFrameRenderer.paintFrame(g, frame, scaled.dx()[idx], scaled.dy()[idx]);
   }
 
   /** Кадр для WakeVisionRenderer (резкость/шум). */
@@ -96,10 +93,8 @@ public final class CutscenePlayer {
     }
     int idx = Math.min(frameIndex, scaled.frameCount() - 1);
     BufferedImage frame = scaled.frames()[idx];
-    if (frame == null) {
-      return;
-    }
-    WakeVisionRenderer.drawFrame(g, frame, scaled.dx()[idx], scaled.dy()[idx], sharpness);
+    CutsceneFrameRenderer.paintWakeFrame(
+        g, frame, scaled.dx()[idx], scaled.dy()[idx], sharpness);
   }
 
   private int currentDelayTicks() {
