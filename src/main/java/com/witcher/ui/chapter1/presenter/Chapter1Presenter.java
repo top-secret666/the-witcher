@@ -325,23 +325,18 @@ public final class Chapter1Presenter {
   }
 
   private void tryGrantBattleCard() {
-    if (battleCard.tryGrantAfterEquip(director.session(), shopModel)) {
-      shopBridge.markBattleMapPending();
-    }
+    battleCard.tryGrantAfterEquip(director.session(), shopModel);
   }
 
   private void onEquipmentBackToLavka() {
     if (director.session().battleCardGranted() && !director.session().battleCardIconVisible()) {
       shopScreen.presenter().beginBattleCardReveal(this::onBattleCardRevealAfterBack);
-      return;
     }
-    shopBridge.openBossMapIfPending();
   }
 
   private void onBattleCardRevealAfterBack() {
     battleCard.finishReveal(director.session());
     Chapter1AssetPrewarm.warmAllAsync();
-    shopBridge.openBossMapIfPending();
   }
 
   private void updateBossMap(int mouseX, int mouseY, boolean clicked) {
