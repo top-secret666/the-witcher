@@ -3,13 +3,20 @@ package main.java.com.witcher.ui.chapter1.swing;
 import main.java.com.witcher.ui.graphics.PixelScaler;
 
 import java.awt.image.BufferedImage;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /** Кэш даунскейла — sharpScale не вызывается каждый кадр. */
 public final class ScaledImageCache {
 
-  private static final Map<Long, BufferedImage> CACHE = new HashMap<>();
+  private static final int MAX_ENTRIES = 48;
+
+  private static final Map<Long, BufferedImage> CACHE = new LinkedHashMap<>(MAX_ENTRIES + 1, 0.75f, true) {
+    @Override
+    protected boolean removeEldestEntry(Map.Entry<Long, BufferedImage> eldest) {
+      return size() > MAX_ENTRIES;
+    }
+  };
 
   private ScaledImageCache() {
   }

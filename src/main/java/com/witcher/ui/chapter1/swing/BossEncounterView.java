@@ -64,16 +64,18 @@ public final class BossEncounterView {
     if (portrait == null) {
       return;
     }
+    int basePw = Math.round(sw * 0.36f);
+    int basePh = Math.round(sh * 0.78f);
+    BufferedImage scaled = ScaledImageCache.get(portrait, basePw, basePh);
     float scale = encounter.portraitScale();
-    int pw = Math.round(sw * 0.36f * scale);
-    int ph = Math.round(sh * 0.78f * scale);
-    BufferedImage scaled = ScaledImageCache.get(portrait, pw, ph);
+    int pw = Math.round(basePw * scale);
+    int ph = Math.round(basePh * scale);
     int x = (sw - pw) / 2;
     int y = sh - ph - 42;
     var prev = g.getComposite();
     g.setComposite(java.awt.AlphaComposite.getInstance(
         java.awt.AlphaComposite.SRC_OVER, Math.min(1f, alpha)));
-    g.drawImage(scaled, x, y, null);
+    g.drawImage(scaled, x, y, pw, ph, null);
     g.setComposite(prev);
   }
 }
