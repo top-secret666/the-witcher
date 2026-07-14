@@ -7,7 +7,7 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 
-/** Отрисовка: GIF + пиксельный шум + веки от первого лица. */
+/** loop_wake: GIF с пробуждением (резкость + шум) и веки от первого лица. */
 public final class LoopSequenceView {
 
   private LoopSequenceView() {
@@ -25,9 +25,12 @@ public final class LoopSequenceView {
       g.setColor(Color.BLACK);
       g.fillRect(0, 0, sw, sh);
 
-      // Катсцена всегда под оверлеями (веки открываются поверх GIF)
-      loopCutscenePlayer.render(g, sw, sh);
-      CutsceneNoiseOverlay.draw(g, sw, sh, LoopSequenceController.NOISE_STRENGTH);
+      float openT = eyesEffect.eyelidOpenT();
+      if (openT > 0.03f) {
+        float sharpness = eyesEffect.sharpness();
+        loopCutscenePlayer.renderWake(g, sharpness);
+        CutsceneNoiseOverlay.draw(g, sw, sh, eyesEffect.noiseStrength());
+      }
 
       if (loopSequence.showEyes()) {
         eyesEffect.render(g, sw, sh);

@@ -89,6 +89,19 @@ public final class CutscenePlayer {
     g.drawImage(frame, scaled.dx()[idx], scaled.dy()[idx], null);
   }
 
+  /** Кадр для WakeVisionRenderer (резкость/шум). */
+  public void renderWake(Graphics2D g, float sharpness) {
+    if (finished || scaled == null || scaled.frames() == null) {
+      return;
+    }
+    int idx = Math.min(frameIndex, scaled.frameCount() - 1);
+    BufferedImage frame = scaled.frames()[idx];
+    if (frame == null) {
+      return;
+    }
+    WakeVisionRenderer.drawFrame(g, frame, scaled.dx()[idx], scaled.dy()[idx], sharpness);
+  }
+
   private int currentDelayTicks() {
     if (scaled == null || scaled.delaysMs() == null) {
       return 1;
