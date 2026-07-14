@@ -2,13 +2,12 @@ package main.java.com.witcher.chapter1.battle;
 
 import main.java.com.witcher.chapter1.vn.VnSceneState;
 
-/** VN-появление босса: чёрный экран → пауза → полное открытие → злодей и диалог. */
+/** После loop_wake: веки закрыты → полное открытие → злодей по центру и диалог. */
 public final class BossEncounterController {
 
   private static final int MS_PER_TICK = 16;
-  private static final int CLOSED_HOLD_MS = 2000;
-  private static final int OPEN_MS = 1100;
-  private static final int PORTRAIT_FADE_MS = 700;
+  private static final int CLOSED_HOLD_MS = 700;
+  private static final int OPEN_MS = 1300;
 
   private final BossEntry boss;
   private int ticks;
@@ -42,25 +41,20 @@ public final class BossEncounterController {
     return easeOutCubic(t);
   }
 
+  public boolean sceneRevealed() {
+    return eyelidOpenT() >= 0.99f;
+  }
+
   public float portraitAlpha() {
-    int ms = elapsedMs();
-    int revealStart = CLOSED_HOLD_MS + OPEN_MS;
-    if (ms < revealStart) {
-      return 0f;
-    }
-    if (ms >= revealStart + PORTRAIT_FADE_MS) {
-      return 1f;
-    }
-    return easeOutCubic((ms - revealStart) / (float) PORTRAIT_FADE_MS);
+    return sceneRevealed() ? 1f : 0f;
   }
 
   public float portraitScale() {
-    float alpha = portraitAlpha();
-    return 0.92f + 0.08f * alpha;
+    return 1f;
   }
 
   public boolean showDialog() {
-    return portraitAlpha() > 0.85f;
+    return sceneRevealed();
   }
 
   public VnSceneState scene() {
@@ -75,7 +69,7 @@ public final class BossEncounterController {
   }
 
   public boolean isReadyForSword() {
-    return dialogDismissed && portraitAlpha() >= 0.98f;
+    return dialogDismissed && sceneRevealed();
   }
 
   private static float easeOutCubic(float t) {

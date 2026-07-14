@@ -7,7 +7,7 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 
-/** VN-появление врага: лес, злодей по центру, диалог. */
+/** VN-появление врага: лес, злодей по центру, диалог — только после полного открытия век. */
 public final class BossEncounterView {
 
   private BossEncounterView() {
@@ -23,26 +23,21 @@ public final class BossEncounterView {
     g.setColor(Color.BLACK);
     g.fillRect(0, 0, sw, sh);
 
-    float bgAlpha = Math.min(1f, encounter.eyelidOpenT() * 1.1f);
-    if (bgAlpha > 0.02f) {
-      drawForestBackground(g, sw, sh, bgAlpha);
+    if (encounter.sceneRevealed()) {
+      drawForestBackground(g, sw, sh, 1f);
+      drawCenterPortrait(g, sw, sh, encounter, 1f);
+
+      if (encounter.showDialog() && encounter.scene() != null) {
+        DialogBoxRenderer.drawCompactFramedSpeakerText(
+            g, sw, sh,
+            encounter.scene().speaker(),
+            encounter.scene().body(),
+            new Color(218, 165, 32),
+            1f);
+      }
     }
 
-    float portraitA = encounter.portraitAlpha();
-    if (portraitA > 0.02f) {
-      drawCenterPortrait(g, sw, sh, encounter, portraitA);
-    }
-
-    if (encounter.showDialog() && encounter.scene() != null) {
-      DialogBoxRenderer.drawCompactFramedSpeakerText(
-          g, sw, sh,
-          encounter.scene().speaker(),
-          encounter.scene().body(),
-          new Color(218, 165, 32),
-          portraitA);
-    }
-
-    EyelidOverlay.renderFlat(g, sw, sh, 1f - encounter.eyelidOpenT());
+    EyelidOverlay.renderBlack(g, sw, sh, 1f - encounter.eyelidOpenT());
   }
 
   private static void drawForestBackground(Graphics2D g, int sw, int sh, float alpha) {

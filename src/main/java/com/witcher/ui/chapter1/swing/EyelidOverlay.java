@@ -17,22 +17,17 @@ public final class EyelidOverlay {
   private EyelidOverlay() {
   }
 
-  /** Плоское закрытие: чёрные полосы сверху/снизу, без контура века. openT=1 — полностью открыто. */
-  public static void renderFlat(Graphics2D g, int sw, int sh, float openT) {
-    if (g == null || sw <= 0 || sh <= 0 || openT >= 0.995f) {
-      return;
-    }
-    float closed = Math.max(0f, Math.min(1f, 1f - openT));
-    int cover = (int) Math.ceil(sh * 0.5f * closed);
-    if (cover <= 0) {
-      return;
-    }
-    g.setColor(Color.BLACK);
-    g.fillRect(0, 0, sw, cover);
-    g.fillRect(0, sh - cover, sw, cover);
+  /** Закруглённые чёрные веки без контура — для пробуждения и появления босса. */
+  public static void renderBlack(Graphics2D g, int sw, int sh, float openT) {
+    renderLids(g, sw, sh, openT, Color.BLACK, false);
   }
 
   public static void render(Graphics2D g, int sw, int sh, float openT) {
+    renderLids(g, sw, sh, openT, LID, true);
+  }
+
+  private static void renderLids(
+      Graphics2D g, int sw, int sh, float openT, Color fill, boolean strokeEdges) {
     if (g == null || sw <= 0 || sh <= 0 || openT >= 0.995f) {
       return;
     }
@@ -44,16 +39,19 @@ public final class EyelidOverlay {
     Object prevAa = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
     g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
 
-    fillUpperLid(g, sw, curveY, curveDepth);
-    fillLowerLid(g, sw, sh, curveY, curveDepth);
-    strokeLidEdges(g, sw, sh, curveY, curveDepth);
+    fillUpperLid(g, sw, curveY, curveDepth, fill);
+    fillLowerLid(g, sw, sh, curveY, curveDepth, fill);
+    if (strokeEdges) {
+      strokeLidEdges(g, sw, sh, curveY, curveDepth);
+    }
 
     if (prevAa != null) {
       g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, prevAa);
     }
   }
 
-  private static void fillUpperLid(Graphics2D g, int sw, double curveY, double curveDepth) {
+  private static void fillUpperLid(
+      Graphics2D g, int sw, double curveY, double curveDepth, Color fill) {
     if (curveY < 0.5) {
       return;
     }
@@ -63,11 +61,12 @@ public final class EyelidOverlay {
     path.lineTo(sw, curveY);
     path.quadTo(sw * 0.5, curveY - curveDepth, 0, curveY);
     path.closePath();
-    g.setColor(LID);
+    g.setColor(fill);
     g.fill(path);
   }
 
-  private static void fillLowerLid(Graphics2D g, int sw, int sh, double curveY, double curveDepth) {
+  private static void fillLowerLid(
+      Graphics2D g, int sw, int sh, double curveY, double curveDepth, Color fill) {
     if (curveY < 0.5) {
       return;
     }
@@ -78,11 +77,10 @@ public final class EyelidOverlay {
     path.lineTo(sw, bottomY);
     path.quadTo(sw * 0.5, bottomY + curveDepth, 0, bottomY);
     path.closePath();
-    g.setColor(LID);
+    g.setColor(fill);
     g.fill(path);
   }
 
-  /** Тонкая линия по краю века — читается на ретро-фильтре. */
   private static void strokeLidEdges(Graphics2D g, int sw, int sh, double curveY, double curveDepth) {
     if (curveY < 2) {
       return;

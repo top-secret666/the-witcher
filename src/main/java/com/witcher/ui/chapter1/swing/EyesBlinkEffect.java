@@ -55,6 +55,6 @@ public final class EyesBlinkEffect {
     if (mode != Mode.AWAKENING) {
       return;
     }
-    EyelidOverlay.renderFlat(g, sw, sh, eyelidOpenT());
+    EyelidOverlay.renderBlack(g, sw, sh, eyelidOpenT());
   }
 }
