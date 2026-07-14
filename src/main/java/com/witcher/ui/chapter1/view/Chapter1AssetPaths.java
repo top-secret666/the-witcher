@@ -16,6 +16,7 @@ public final class Chapter1AssetPaths {
   public static final String CARD_MAP_OPEN = BATTLE + "card_map_open.png";
   public static final String BOSS_DUKE_MAP = BATTLE + "boss_duke_map.png";
   public static final String BOSS_DUKE_PORTRAIT = BATTLE + "boss_duke_portrait.png";
+  public static final String BOSS_WAKE_FOREST = BATTLE + "boss_wake_forest.png";
 
   private Chapter1AssetPaths() {
   }

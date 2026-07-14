@@ -2,12 +2,12 @@ package main.java.com.witcher.chapter1.battle;
 
 import main.java.com.witcher.chapter1.vn.VnSceneState;
 
-/** VN-появление босса после пробуждения. */
+/** VN-появление босса после пробуждения: лес + злодей по центру. */
 public final class BossEncounterController {
 
   private static final int MS_PER_TICK = 16;
-  private static final int LID_OPEN_MS = 1400;
-  private static final int PORTRAIT_DELAY_MS = 500;
+  private static final int LID_OPEN_MS = 1500;
+  private static final int PORTRAIT_DELAY_MS = 600;
 
   private final BossEntry boss;
   private int ticks;
@@ -42,25 +42,24 @@ public final class BossEncounterController {
     if (ms < PORTRAIT_DELAY_MS) {
       return 0f;
     }
-    return easeOutCubic((ms - PORTRAIT_DELAY_MS) / (float) (LID_OPEN_MS - PORTRAIT_DELAY_MS + 400));
+    return easeOutCubic((ms - PORTRAIT_DELAY_MS) / (float) (LID_OPEN_MS - PORTRAIT_DELAY_MS + 500));
   }
 
-  public float portraitSlideX() {
+  /** Лёгкий zoom-in злодея из центра. */
+  public float portraitScale() {
     float alpha = portraitAlpha();
-    return (1f - alpha) * 48f;
+    return 0.88f + 0.12f * alpha;
   }
 
   public boolean showDialog() {
-    return portraitAlpha() > 0.55f;
+    return portraitAlpha() > 0.6f;
   }
 
   public VnSceneState scene() {
     if (!showDialog()) {
       return null;
     }
-    return new VnSceneState(
-        boss.name(),
-        "Ты наконец открыл глаза… но лес помнит каждый твой шаг.");
+    return new VnSceneState(boss.name(), "…Наконец-то ты проснулся.");
   }
 
   public void dismissDialog() {

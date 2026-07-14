@@ -71,6 +71,7 @@ public final class Chapter1UiAssets {
   private static BufferedImage bossMapClosed;
   private static BufferedImage bossDukeMapIcon;
   private static BufferedImage bossDukePortrait;
+  private static BufferedImage bossWakeForest;
 
   public static BufferedImage bossMapOpen() {
     if (bossMapOpen == null) {
@@ -98,6 +99,14 @@ public final class Chapter1UiAssets {
     }
     Sprite sprite = Sprite.loadOptional(path);
     return sprite != null ? sprite.getImage() : null;
+  }
+
+  public static BufferedImage bossWakeForest() {
+    if (bossWakeForest == null) {
+      Sprite sprite = Sprite.loadOptional(Chapter1AssetPaths.BOSS_WAKE_FOREST);
+      bossWakeForest = sprite != null ? sprite.getImage() : null;
+    }
+    return bossWakeForest;
   }
 
   public static BufferedImage bossPortrait(String path) {
