@@ -6,8 +6,8 @@ import main.java.com.witcher.chapter1.vn.VnSceneState;
 public final class BossEncounterController {
 
   private static final int MS_PER_TICK = 16;
-  private static final int CLOSED_HOLD_MS = 700;
-  private static final int OPEN_MS = 1300;
+  private static final int CLOSED_HOLD_MS = 500;
+  private static final int OPEN_MS = 1200;
 
   private final BossEntry boss;
   private int ticks;
@@ -29,6 +29,7 @@ public final class BossEncounterController {
     ticks++;
   }
 
+  /** 0 = закрыто, 1 = полностью открыто. */
   public float eyelidOpenT() {
     int ms = elapsedMs();
     if (ms < CLOSED_HOLD_MS) {
@@ -41,8 +42,9 @@ public final class BossEncounterController {
     return easeOutCubic(t);
   }
 
+  /** Сцена врага и диалог — только когда веки полностью открыты. */
   public boolean sceneRevealed() {
-    return eyelidOpenT() >= 0.99f;
+    return eyelidOpenT() >= 1f;
   }
 
   public float portraitAlpha() {

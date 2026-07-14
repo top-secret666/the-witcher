@@ -37,7 +37,8 @@ public final class BossEncounterView {
       }
     }
 
-    EyelidOverlay.renderBlack(g, sw, sh, 1f - encounter.eyelidOpenT());
+    // openT=0 закрыто, openT=1 открыто — НЕ инвертировать
+    EyelidOverlay.renderBlack(g, sw, sh, encounter.eyelidOpenT());
   }
 
   private static void drawForestBackground(Graphics2D g, int sw, int sh, float alpha) {
