@@ -42,8 +42,8 @@ public final class EyelidOverlay {
     float closed = Math.max(0f, Math.min(1f, 1f - openT));
     double centerY = sh * 0.5;
     double curveY = centerY * closed;
-    // Изгиб ВСТРЕЧНЫЙ (к центру) — при закрытии веки перекрываются, щели нет.
-    double curveDepth = Math.min(sw, sh) * 0.08 * closed;
+    // Выпуклые веки (дуга от глаза) — классический first-person силуэт.
+    double curveDepth = Math.min(sw, sh) * 0.09 * closed;
 
     Object prevAa = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
     g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
@@ -68,8 +68,8 @@ public final class EyelidOverlay {
     path.moveTo(0, 0);
     path.lineTo(sw, 0);
     path.lineTo(sw, curveY);
-    // Центр дуги ниже — верхнее веко закрывает середину.
-    path.quadTo(sw * 0.5, curveY + curveDepth, 0, curveY);
+    // Центр дуги выше — верхнее веко выпуклое наружу.
+    path.quadTo(sw * 0.5, curveY - curveDepth, 0, curveY);
     path.closePath();
     g.setColor(fill);
     g.fill(path);
@@ -85,8 +85,8 @@ public final class EyelidOverlay {
     path.moveTo(0, sh);
     path.lineTo(sw, sh);
     path.lineTo(sw, bottomY);
-    // Центр дуги выше — нижнее веко закрывает середину.
-    path.quadTo(sw * 0.5, bottomY - curveDepth, 0, bottomY);
+    // Центр дуги ниже — нижнее веко выпуклое наружу.
+    path.quadTo(sw * 0.5, bottomY + curveDepth, 0, bottomY);
     path.closePath();
     g.setColor(fill);
     g.fill(path);
@@ -99,13 +99,13 @@ public final class EyelidOverlay {
     g.setColor(LID_EDGE);
     Path2D upperEdge = new Path2D.Double();
     upperEdge.moveTo(0, curveY);
-    upperEdge.quadTo(sw * 0.5, curveY + curveDepth, sw, curveY);
+    upperEdge.quadTo(sw * 0.5, curveY - curveDepth, sw, curveY);
     g.draw(upperEdge);
 
     double bottomY = sh - curveY;
     Path2D lowerEdge = new Path2D.Double();
     lowerEdge.moveTo(0, bottomY);
-    lowerEdge.quadTo(sw * 0.5, bottomY - curveDepth, sw, bottomY);
+    lowerEdge.quadTo(sw * 0.5, bottomY + curveDepth, sw, bottomY);
     g.draw(lowerEdge);
   }
 }
