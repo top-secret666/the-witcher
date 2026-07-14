@@ -154,6 +154,30 @@ public final class Chapter1Director {
     cutsceneFinished = false;
   }
 
+  public void enterBossSplash() {
+    phase = Chapter1Phase.BOSS_SPLASH;
+    pendingCutscene = null;
+    cutsceneFinished = false;
+  }
+
+  public void enterBossEncounter() {
+    phase = Chapter1Phase.BOSS_ENCOUNTER;
+    pendingCutscene = null;
+    cutsceneFinished = false;
+  }
+
+  public void enterSwordCutscene() {
+    phase = Chapter1Phase.SWORD_CUTSCENE;
+    pendingCutscene = null;
+    cutsceneFinished = false;
+  }
+
+  public void enterBattleResult() {
+    phase = Chapter1Phase.BATTLE_RESULT;
+    pendingCutscene = null;
+    cutsceneFinished = false;
+  }
+
   public void beginLoopSequence(boolean eyesPrelude) {
     phase = Chapter1Phase.LOOP_SEQUENCE;
     loopEyesPrelude = eyesPrelude;
