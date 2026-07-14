@@ -2,11 +2,14 @@ package main.java.com.witcher.ui.chapter1.presenter;
 
 import main.java.com.witcher.chapter1.Chapter1Director;
 import main.java.com.witcher.chapter1.Chapter1Phase;
+import main.java.com.witcher.chapter1.battle.BossCatalog;
+import main.java.com.witcher.chapter1.battle.BossEncounterController;
 import main.java.com.witcher.chapter1.battle.BattleCardController;
 import main.java.com.witcher.chapter1.battle.BattleOutcome;
 import main.java.com.witcher.chapter1.battle.BattleResolver;
 import main.java.com.witcher.chapter1.battle.BattleVnController;
 import main.java.com.witcher.chapter1.battle.BossEntry;
+import main.java.com.witcher.chapter1.loop.LoopRules;
 import main.java.com.witcher.chapter1.loop.LoopSequenceController;
 import main.java.com.witcher.chapter1.cutscene.CutsceneId;
 import main.java.com.witcher.chapter1.cutscene.CutsceneCatalog;
@@ -19,9 +22,12 @@ import main.java.com.witcher.ui.chapter1.view.BossMapLayout;
 import main.java.com.witcher.ui.chapter1.view.Chapter1ViewConstants;
 import main.java.com.witcher.ui.chapter1.view.VnChoiceLayout;
 import main.java.com.witcher.chapter1.vn.VnSceneState;
+import main.java.com.witcher.ui.chapter1.swing.BossMapSplashView;
 import main.java.com.witcher.ui.chapter1.swing.Chapter1AssetPrewarm;
 import main.java.com.witcher.ui.chapter1.swing.CutscenePlayer;
 import main.java.com.witcher.ui.chapter1.swing.EyesBlinkEffect;
+import main.java.com.witcher.ui.chapter1.swing.SwordGlintOverlay;
+import main.java.com.witcher.ui.chapter1.swing.WakeAwakeningTimeline;
 import main.java.com.witcher.ui.shop.ShopModel;
 import main.java.com.witcher.ui.shop.swing.ShopScreen;
 
@@ -46,8 +52,10 @@ public final class Chapter1Presenter {
   private final BattleCardController battleCard = new BattleCardController();
   private final LoopSequenceController loopSequence = new LoopSequenceController();
   private final EyesBlinkEffect eyesEffect = new EyesBlinkEffect();
+  private final SwordGlintOverlay swordGlint = new SwordGlintOverlay();
 
   private BattleVnController battle;
+  private BossEncounterController encounter;
   private EndingVnController ending;
   private DukeDialogController dukeDialog = new DukeDialogController();
   private HackConsoleModel hack;
@@ -55,8 +63,13 @@ public final class Chapter1Presenter {
   private List<BossMapLayout.BossHit> bossHits = List.of();
   private BossEntry hoveredBoss;
   private BossEntry selectedBoss;
+  private int splashTicks;
+  private boolean battleVictory;
+  private boolean swordGlitchFrozen;
   private int hackShakeTick;
   private boolean exitRequested;
+
+  private static final int SWORD_CUTSCENE_MS = 4500;
 
   public Chapter1Presenter() {
     this(Chapter1Director.loadOrNew(), ShopModel.createNewSession());
@@ -103,6 +116,26 @@ public final class Chapter1Presenter {
 
   public EyesBlinkEffect eyesEffect() {
     return eyesEffect;
+  }
+
+  public BossEncounterController encounter() {
+    return encounter;
+  }
+
+  public SwordGlintOverlay swordGlint() {
+    return swordGlint;
+  }
+
+  public int splashTicks() {
+    return splashTicks;
+  }
+
+  public boolean battleVictory() {
+    return battleVictory;
+  }
+
+  public boolean swordGlitchFrozen() {
+    return swordGlitchFrozen;
   }
 
   public BattleCardController battleCard() {
@@ -171,9 +204,13 @@ public final class Chapter1Presenter {
         }
       }
       case CARD_REVEAL -> { }
+      case BOSS_SPLASH -> updateBossSplash(clicked);
       case BOSS_MAP -> updateBossMap(mouseX, mouseY, clicked);
       case LOOP_SEQUENCE -> updateLoopSequence();
       case LOOP_HOLD -> { }
+      case BOSS_ENCOUNTER -> updateBossEncounter(clicked);
+      case SWORD_CUTSCENE -> updateSwordCutscene();
+      case BATTLE_RESULT -> updateBattleResult(clicked);
       case VN_BATTLE -> updateBattle(mouseX, mouseY, clicked);
       case VN_DIALOG -> updateDukeDialog(mouseX, mouseY, clicked);
       case HACK -> updateHack(escPressed);
@@ -281,16 +318,19 @@ public final class Chapter1Presenter {
     });
     shopBridge.setOnPurchaseHook(() -> dukeDialog.onPrisonIncreased(director.session()));
     shopBridge.setOnEquipHook(this::tryGrantBattleCard);
-    shopBridge.setOnBattleCardUse(this::openBossMapFromInventory);
+    shopBridge.setOnBattleCardUse(this::startBattleJourney);
+    shopBridge.setOnBattleJourneyStart(this::startBattleJourney);
+  }
+
+  private void startBattleJourney() {
+    selectedBoss = BossCatalog.byId("duke");
+    splashTicks = 0;
+    director.enterBossSplash();
+    Chapter1AssetPrewarm.warmAllAsync();
   }
 
   private void openBossMapFromInventory() {
-    director.enterBossMap();
-    bossHits = BossMapLayout.layoutHits(Chapter1ViewConstants.VIRTUAL_W, Chapter1ViewConstants.VIRTUAL_H);
-    hoveredBoss = null;
-    selectedBoss = null;
-    Chapter1AssetPrewarm.warmBossMapDrawables();
-    Chapter1AssetPrewarm.warmCutscenesAsync();
+    startBattleJourney();
   }
 
   private void tryGrantBattleCard() {
@@ -301,7 +341,16 @@ public final class Chapter1Presenter {
 
   private void onBattleCardRevealFinished() {
     battleCard.finishReveal(director.session());
+    shopBridge.markBattleMapPending();
     Chapter1AssetPrewarm.warmAllAsync();
+  }
+
+  private void updateBossSplash(boolean clicked) {
+    splashTicks++;
+    if (BossMapSplashView.isComplete(splashTicks) || clicked) {
+      director.beginLoopSequence(false);
+      onPhaseEntered();
+    }
   }
 
   private void updateBossMap(int mouseX, int mouseY, boolean clicked) {
@@ -322,7 +371,45 @@ public final class Chapter1Presenter {
     }
 
     if (loopSequence.step() == LoopSequenceController.Step.LOOP_WAKE && eyesEffect.isDone()) {
-      director.enterLoopHold();
+      director.enterBossEncounter();
+      onPhaseEntered();
+    }
+  }
+
+  private void updateBossEncounter(boolean clicked) {
+    if (encounter == null) {
+      encounter = new BossEncounterController(selectedBoss);
+    }
+    encounter.tick();
+    if (clicked && encounter.showDialog() && !encounter.isReadyForSword()) {
+      encounter.dismissDialog();
+    }
+    if (encounter.isReadyForSword()) {
+      director.enterSwordCutscene();
+      onPhaseEntered();
+    }
+  }
+
+  private void updateSwordCutscene() {
+    swordGlint.update(WakeAwakeningTimeline.MS_PER_TICK,
+        Chapter1ViewConstants.VIRTUAL_W, Chapter1ViewConstants.VIRTUAL_H);
+    if (!swordGlitchFrozen && battleVictory
+        && swordGlint.elapsedMs() > SWORD_CUTSCENE_MS * 0.72) {
+      swordGlint.freezeFinalGlint();
+      swordGlitchFrozen = true;
+    }
+    if (swordGlint.elapsedMs() >= SWORD_CUTSCENE_MS) {
+      if (!battleVictory) {
+        LoopRules.onBattleDefeat(director.session());
+      }
+      director.enterBattleResult();
+    }
+  }
+
+  private void updateBattleResult(boolean clicked) {
+    if (clicked) {
+      director.enterShop();
+      onPhaseEntered();
     }
   }
 
@@ -390,6 +477,13 @@ public final class Chapter1Presenter {
       loopSequence.start(director.loopEyesPrelude());
       eyesEffect.reset(EyesBlinkEffect.Mode.AWAKENING);
       startLoopCutscene(CutsceneId.LOOP_WAKE);
+    } else if (director.phase() == Chapter1Phase.BOSS_ENCOUNTER) {
+      encounter = new BossEncounterController(selectedBoss);
+    } else if (director.phase() == Chapter1Phase.SWORD_CUTSCENE) {
+      swordGlint.reset();
+      var stats = loadoutStats();
+      battleVictory = stats.defense() + stats.stamina() + stats.signs() >= 6;
+      swordGlitchFrozen = false;
     } else if (director.phase() == Chapter1Phase.SHOP) {
       doorLoopPlayer.stop();
       maybeStartDukeDialog();

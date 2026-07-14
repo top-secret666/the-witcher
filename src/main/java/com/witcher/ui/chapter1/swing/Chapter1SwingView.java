@@ -45,10 +45,41 @@ public final class Chapter1SwingView implements Chapter1View {
       }
       case HACK -> presenter.shopScreen().render(screen, mouseX, mouseY);
       case CARD_REVEAL -> presenter.shopScreen().render(screen, mouseX, mouseY);
+      case BOSS_SPLASH -> {
+        Graphics2D g = screen.createGraphics();
+        try {
+          BossMapSplashView.draw(g, sw, sh, presenter.splashTicks());
+        } finally {
+          g.dispose();
+        }
+      }
       case BOSS_MAP -> {
         Graphics2D g = screen.createGraphics();
         try {
           BossMapView.draw(g, sw, sh, presenter.hoveredBoss(), presenter.selectedBoss());
+        } finally {
+          g.dispose();
+        }
+      }
+      case BOSS_ENCOUNTER -> {
+        Graphics2D g = screen.createGraphics();
+        try {
+          BossEncounterView.draw(g, sw, sh, presenter.encounter());
+        } finally {
+          g.dispose();
+        }
+      }
+      case SWORD_CUTSCENE -> SwordCutsceneView.draw(
+          screen, sw, sh,
+          presenter.swordGlint(),
+          presenter.swordGlint().getShakeOffsetX(),
+          presenter.swordGlint().getShakeOffsetY(),
+          presenter.director().session(),
+          presenter.swordGlitchFrozen());
+      case BATTLE_RESULT -> {
+        Graphics2D g = screen.createGraphics();
+        try {
+          BattleResultView.draw(g, sw, sh, presenter.battleVictory());
         } finally {
           g.dispose();
         }
@@ -63,25 +94,34 @@ public final class Chapter1SwingView implements Chapter1View {
       }
     }
 
-    if (presenter.director().phase() != Chapter1Phase.CUTSCENE
-        && presenter.director().phase() != Chapter1Phase.LOOP_SEQUENCE
-        && presenter.director().phase() != Chapter1Phase.LOOP_HOLD
-        && presenter.director().phase() != Chapter1Phase.BOSS_MAP) {
-      Graphics2D overlay = screen.createGraphics();
-      try {
-        GlitchOverlayRenderer.draw(overlay, sw, sh, presenter.director().session());
-        if (presenter.director().phase() == Chapter1Phase.HACK) {
-          presenter.doorLoopPlayer().render(overlay, sw, sh);
-          HackTerminalView.draw(overlay, sw, sh, presenter.hack(), presenter.hackShakeTick());
-        }
-        if (presenter.director().phase() == Chapter1Phase.SHOP
-            || presenter.director().phase() == Chapter1Phase.HACK) {
-          Chapter1SessionHud.draw(overlay, sw, presenter.director().session());
-        }
-      } finally {
-        overlay.dispose();
-      }
+    if (shouldSkipSessionOverlay(presenter.director().phase())) {
+      return;
     }
+    Graphics2D overlay = screen.createGraphics();
+    try {
+      GlitchOverlayRenderer.draw(overlay, sw, sh, presenter.director().session());
+      if (presenter.director().phase() == Chapter1Phase.HACK) {
+        presenter.doorLoopPlayer().render(overlay, sw, sh);
+        HackTerminalView.draw(overlay, sw, sh, presenter.hack(), presenter.hackShakeTick());
+      }
+      if (presenter.director().phase() == Chapter1Phase.SHOP
+          || presenter.director().phase() == Chapter1Phase.HACK) {
+        Chapter1SessionHud.draw(overlay, sw, presenter.director().session());
+      }
+    } finally {
+      overlay.dispose();
+    }
+  }
+
+  private static boolean shouldSkipSessionOverlay(Chapter1Phase phase) {
+    return phase == Chapter1Phase.CUTSCENE
+        || phase == Chapter1Phase.LOOP_SEQUENCE
+        || phase == Chapter1Phase.LOOP_HOLD
+        || phase == Chapter1Phase.BOSS_SPLASH
+        || phase == Chapter1Phase.BOSS_MAP
+        || phase == Chapter1Phase.BOSS_ENCOUNTER
+        || phase == Chapter1Phase.SWORD_CUTSCENE
+        || phase == Chapter1Phase.BATTLE_RESULT;
   }
 
   @Override
@@ -93,7 +133,10 @@ public final class Chapter1SwingView implements Chapter1View {
     if (presenter.hasActiveChoices()) {
       VnSceneRenderer.drawChoices(g, presenter.activeScene(), presenter.choiceRects());
     }
-    if (phase == Chapter1Phase.BOSS_MAP
+    if (phase == Chapter1Phase.BOSS_SPLASH
+        || phase == Chapter1Phase.BOSS_MAP
+        || phase == Chapter1Phase.BOSS_ENCOUNTER
+        || phase == Chapter1Phase.BATTLE_RESULT
         || phase == Chapter1Phase.VN_BATTLE
         || phase == Chapter1Phase.VN_DIALOG
         || phase == Chapter1Phase.ENDING) {

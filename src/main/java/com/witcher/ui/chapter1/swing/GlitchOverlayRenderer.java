@@ -33,6 +33,20 @@ public final class GlitchOverlayRenderer {
     g.setComposite(prev);
   }
 
+  public static void drawHeavyForced(Graphics2D g, int sw, int sh) {
+    if (g == null) {
+      return;
+    }
+    BufferedImage overlay = cachedHeavy();
+    if (overlay == null) {
+      return;
+    }
+    var prev = g.getComposite();
+    g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.65f));
+    g.drawImage(overlay, 0, 0, sw, sh, null);
+    g.setComposite(prev);
+  }
+
   private static BufferedImage cachedHeavy() {
     if (heavy == null) {
       var sprite = Sprite.loadOptional(Chapter1AssetPaths.GLITCH_HEAVY);
