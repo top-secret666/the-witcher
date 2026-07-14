@@ -21,6 +21,7 @@ public final class Chapter1ShopBridge {
   private Runnable onPurchaseHook;
   private Runnable onEquipHook;
   private Runnable onBattleCardUse;
+  private Runnable onBattleJourneyStart;
   private boolean battlePending;
 
   public Chapter1ShopBridge(Chapter1Session session, Chapter1Director director) {
@@ -58,6 +59,27 @@ public final class Chapter1ShopBridge {
 
   public boolean battleCardInInventory() {
     return session != null && session.battleCardIconVisible();
+  }
+
+  public void setOnBattleJourneyStart(Runnable onBattleJourneyStart) {
+    this.onBattleJourneyStart = onBattleJourneyStart;
+  }
+
+  public void markBattleMapPending() {
+    if (session != null) {
+      session.markBattleMapPending();
+    }
+  }
+
+  public boolean tryStartBattleMapOnEquipmentBack() {
+    if (session == null || !session.battleMapPending()) {
+      return false;
+    }
+    session.clearBattleMapPending();
+    if (onBattleJourneyStart != null) {
+      onBattleJourneyStart.run();
+    }
+    return true;
   }
 
   public void useBattleCard() {

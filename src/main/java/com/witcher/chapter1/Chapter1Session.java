@@ -28,6 +28,7 @@ public final class Chapter1Session {
   private int hackAttemptsThisLoop;
   private boolean battleCardGranted;
   private boolean battleCardIconVisible;
+  private boolean battleMapPending;
 
   public static Chapter1Session newGame() {
     return new Chapter1Session();
@@ -79,6 +80,18 @@ public final class Chapter1Session {
 
   public void showBattleCardIcon() {
     battleCardIconVisible = true;
+  }
+
+  public void markBattleMapPending() {
+    battleMapPending = true;
+  }
+
+  public boolean battleMapPending() {
+    return battleMapPending;
+  }
+
+  public void clearBattleMapPending() {
+    battleMapPending = false;
   }
 
   public void addPrison(int amount) {

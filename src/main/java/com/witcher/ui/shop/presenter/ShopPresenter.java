@@ -563,6 +563,11 @@ public final class ShopPresenter {
             return;
         }
         if (ui.equipmentBackButtonBounds.contains(mouseX, mouseY)) {
+            if (chapterBridge != null && chapterBridge.tryStartBattleMapOnEquipmentBack()) {
+                ui.equipmentOpen = false;
+                ui.inventoryOpen = false;
+                return;
+            }
             ui.equipmentOpen = false;
             ui.inventoryOpen = true;
             return;
