@@ -316,31 +316,13 @@ public final class Chapter1Presenter {
 
   private void updateLoopSequence() {
     loopSequence.tick();
-    // GIF крутится под веками; глаза тикают параллельно
     loopCutscenePlayer.tick();
     if (loopSequence.showEyes()) {
       eyesEffect.tick();
     }
 
-    switch (loopSequence.step()) {
-      case LOOP_WAKE -> {
-        if (loopSequence.shouldStartBlink()) {
-          loopSequence.enterBlink();
-          eyesEffect.reset(EyesBlinkEffect.Mode.BLINKING);
-        }
-      }
-      case EYES_BLINK -> {
-        if (eyesEffect.isDone()) {
-          loopSequence.advanceFromEyesBlink();
-          startLoopCutscene(CutsceneId.ILLUSION_WRONG);
-        }
-      }
-      case ILLUSION_WRONG -> {
-        if (loopCutscenePlayer.isFinished()) {
-          director.enterLoopHold();
-        }
-      }
-      default -> { }
+    if (loopSequence.step() == LoopSequenceController.Step.LOOP_WAKE && eyesEffect.isDone()) {
+      director.enterLoopHold();
     }
   }
 
@@ -406,7 +388,7 @@ public final class Chapter1Presenter {
       }
     } else if (director.phase() == Chapter1Phase.LOOP_SEQUENCE) {
       loopSequence.start(director.loopEyesPrelude());
-      eyesEffect.reset(EyesBlinkEffect.Mode.OPENING);
+      eyesEffect.reset(EyesBlinkEffect.Mode.AWAKENING);
       startLoopCutscene(CutsceneId.LOOP_WAKE);
     } else if (director.phase() == Chapter1Phase.SHOP) {
       doorLoopPlayer.stop();
