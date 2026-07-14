@@ -1,163 +1,53 @@
 package main.java.com.witcher.ui.chapter1.swing;
 
+import main.java.com.witcher.chapter1.battle.SwordClashTimeline;
+import main.java.com.witcher.chapter1.battle.SwordClashTimeline.ClashMoment;
+import main.java.com.witcher.chapter1.battle.SwordClashTimeline.Spark;
+
 import java.awt.Graphics2D;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 
-/**
- * Катсцена боя: симуляция столкновений + делегирование отрисовки в {@link SwordGlintRenderer}.
- */
+/** Swing-обёртка над {@link SwordClashTimeline}: симуляция в домене, paint в renderer. */
 public final class SwordGlintOverlay {
 
-  private static final class Spark {
-    float x;
-    float y;
-    float vx;
-    float vy;
-    long startTime;
-    int duration;
-  }
-
-  private static final class ClashMoment {
-    final long time;
-    final float x;
-    final float y;
-    final float angleA;
-    final float angleB;
-
-    ClashMoment(long time, float x, float y, float angleA, float angleB) {
-      this.time = time;
-      this.x = x;
-      this.y = y;
-      this.angleA = angleA;
-      this.angleB = angleB;
-    }
-  }
-
-  private final List<ClashMoment> clashes = new ArrayList<>();
-  private final List<Spark> sparks = new ArrayList<>();
-  private final boolean[] sparkSpawned = new boolean[3];
-  private final Random rnd = new Random(41);
-
-  private long elapsedMs;
-  private long renderMs;
-  private boolean freezeFrame;
-  private long frozenAtMs = -1;
-  private int lastShakeClash = -1;
-  private int layoutW;
-  private int layoutH;
+  private final SwordClashTimeline timeline = new SwordClashTimeline();
 
   public void reset() {
-    clashes.clear();
-    sparks.clear();
-    for (int i = 0; i < sparkSpawned.length; i++) {
-      sparkSpawned[i] = false;
-    }
-    elapsedMs = 0;
-    renderMs = 0;
-    freezeFrame = false;
-    frozenAtMs = -1;
-    lastShakeClash = -1;
-    layoutW = 0;
-    layoutH = 0;
+    timeline.reset();
   }
 
   public void update(long deltaMs, int width, int height) {
-    ensureLayout(width, height);
-    elapsedMs += deltaMs;
-    renderMs = freezeFrame && frozenAtMs >= 0 ? frozenAtMs : elapsedMs;
-
-    sparks.removeIf(s -> renderMs - s.startTime > s.duration);
-    for (int i = 0; i < clashes.size(); i++) {
-      long dt = renderMs - clashes.get(i).time;
-      if (!sparkSpawned[i] && dt >= -10 && dt <= 10) {
-        spawnSparks(clashes.get(i).x, clashes.get(i).y, renderMs);
-        sparkSpawned[i] = true;
-        lastShakeClash = i;
-      }
-    }
+    timeline.update(deltaMs, width, height);
   }
 
-  /** Заморозить кадр на финальном ударе (победа + глитч). */
   public void freezeFinalGlint() {
-    if (freezeFrame) {
-      return;
-    }
-    freezeFrame = true;
-    frozenAtMs = elapsedMs;
-    renderMs = frozenAtMs;
+    timeline.freezeFinalGlint();
   }
 
   public long elapsedMs() {
-    return elapsedMs;
+    return timeline.elapsedMs();
   }
 
   public void render(Graphics2D g, int width, int height) {
-    ensureLayout(width, height);
-    List<SwordGlintRenderer.ClashDraw> clashDraws = new ArrayList<>(clashes.size());
-    for (ClashMoment c : clashes) {
-      clashDraws.add(new SwordGlintRenderer.ClashDraw(c.time, c.x, c.y, c.angleA, c.angleB));
+    List<SwordGlintRenderer.ClashDraw> clashDraws = new ArrayList<>();
+    for (ClashMoment c : timeline.clashes()) {
+      clashDraws.add(new SwordGlintRenderer.ClashDraw(
+          c.time(), c.x(), c.y(), c.angleA(), c.angleB()));
     }
-    List<SwordGlintRenderer.SparkDraw> sparkDraws = new ArrayList<>(sparks.size());
-    for (Spark s : sparks) {
+    List<SwordGlintRenderer.SparkDraw> sparkDraws = new ArrayList<>();
+    for (Spark s : timeline.sparks()) {
       sparkDraws.add(new SwordGlintRenderer.SparkDraw(
-          s.x, s.y, s.vx, s.vy, s.startTime, s.duration));
+          s.x(), s.y(), s.vx(), s.vy(), s.startTime(), s.duration()));
     }
-    SwordGlintRenderer.paint(g, width, height, renderMs, clashDraws, sparkDraws);
+    SwordGlintRenderer.paint(g, width, height, timeline.renderMs(), clashDraws, sparkDraws);
   }
 
   public int getShakeOffsetX() {
-    return shakeOffset(true);
+    return timeline.getShakeOffsetX();
   }
 
   public int getShakeOffsetY() {
-    return shakeOffset(false);
-  }
-
-  private int shakeOffset(boolean xAxis) {
-    if (lastShakeClash < 0 || lastShakeClash >= clashes.size()) {
-      return 0;
-    }
-    long dt = renderMs - clashes.get(lastShakeClash).time;
-    if (dt < 0 || dt > 90) {
-      return 0;
-    }
-    int amp = xAxis ? 4 : 3;
-    return rnd.nextInt(amp * 2 + 1) - amp;
-  }
-
-  private void ensureLayout(int width, int height) {
-    if (width <= 0 || height <= 0) {
-      return;
-    }
-    if (layoutW == width && layoutH == height && !clashes.isEmpty()) {
-      return;
-    }
-    layoutW = width;
-    layoutH = height;
-    clashes.clear();
-    for (int i = 0; i < sparkSpawned.length; i++) {
-      sparkSpawned[i] = false;
-    }
-    sparks.clear();
-    clashes.add(new ClashMoment(600, width * 0.4f, height * 0.5f, -0.6f, 0.6f));
-    clashes.add(new ClashMoment(1400, width * 0.6f, height * 0.45f, 0.3f, -0.9f));
-    clashes.add(new ClashMoment(2200, width * 0.5f, height * 0.55f, -0.2f, 0.8f));
-  }
-
-  private void spawnSparks(float x, float y, long now) {
-    for (int i = 0; i < 12; i++) {
-      Spark s = new Spark();
-      s.x = x;
-      s.y = y;
-      float angle = rnd.nextFloat() * (float) (Math.PI * 2);
-      float speed = 1.5f + rnd.nextFloat() * 2.5f;
-      s.vx = (float) Math.cos(angle) * speed;
-      s.vy = (float) Math.sin(angle) * speed;
-      s.startTime = now;
-      s.duration = 200 + rnd.nextInt(150);
-      sparks.add(s);
-    }
+    return timeline.getShakeOffsetY();
   }
 }

@@ -1,58 +1,68 @@
 package main.java.com.witcher.ui.chapter1.swing;
 
+import main.java.com.witcher.chapter1.loop.EyesAwakeningController;
+
 import java.awt.Graphics2D;
 
-/** Анимация век и тайминг пробуждения loop_wake. */
+/** Swing-обёртка над {@link EyesAwakeningController}: state в домене, веки в EyelidOverlay. */
 public final class EyesBlinkEffect {
 
   public enum Mode {
-    IDLE, AWAKENING, DONE
+    IDLE, AWAKENING, DONE;
+
+    EyesAwakeningController.Mode toDomain() {
+      return switch (this) {
+        case IDLE -> EyesAwakeningController.Mode.IDLE;
+        case AWAKENING -> EyesAwakeningController.Mode.AWAKENING;
+        case DONE -> EyesAwakeningController.Mode.DONE;
+      };
+    }
+
+    static Mode fromDomain(EyesAwakeningController.Mode mode) {
+      return switch (mode) {
+        case IDLE -> IDLE;
+        case AWAKENING -> AWAKENING;
+        case DONE -> DONE;
+      };
+    }
   }
 
-  private Mode mode = Mode.IDLE;
-  private int ticks;
+  private final EyesAwakeningController controller = new EyesAwakeningController();
 
   public void reset(Mode startMode) {
-    mode = startMode == Mode.AWAKENING ? Mode.AWAKENING : Mode.IDLE;
-    ticks = 0;
+    controller.reset(startMode == null ? EyesAwakeningController.Mode.IDLE : startMode.toDomain());
   }
 
   public Mode mode() {
-    return mode;
+    return Mode.fromDomain(controller.mode());
   }
 
   public boolean isDone() {
-    return mode == Mode.DONE;
+    return controller.isDone();
   }
 
   public int elapsedMs() {
-    return ticks * WakeAwakeningTimeline.MS_PER_TICK;
+    return controller.elapsedMs();
   }
 
   public float eyelidOpenT() {
-    return WakeAwakeningTimeline.eyelidOpenT(elapsedMs());
+    return controller.eyelidOpenT();
   }
 
   public float sharpness() {
-    return WakeAwakeningTimeline.sharpness(elapsedMs());
+    return controller.sharpness();
   }
 
   public float noiseStrength() {
-    return WakeAwakeningTimeline.noiseStrength(elapsedMs());
+    return controller.noiseStrength();
   }
 
   public void tick() {
-    if (mode != Mode.AWAKENING) {
-      return;
-    }
-    ticks++;
-    if (WakeAwakeningTimeline.isComplete(elapsedMs())) {
-      mode = Mode.DONE;
-    }
+    controller.tick();
   }
 
   public void render(Graphics2D g, int sw, int sh) {
-    if (mode != Mode.AWAKENING) {
+    if (controller.mode() != EyesAwakeningController.Mode.AWAKENING) {
       return;
     }
     EyelidOverlay.renderBlack(g, sw, sh, eyelidOpenT());

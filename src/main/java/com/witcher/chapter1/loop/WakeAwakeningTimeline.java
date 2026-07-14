@@ -1,7 +1,8 @@
-package main.java.com.witcher.ui.chapter1.swing;
+package main.java.com.witcher.chapter1.loop;
 
 /**
- * Таймлайн пробуждения: чёрный экран → быстрый peek → открытие → моргание → закрытие.
+ * Таймлайн пробуждения (общий для Swing и будущего движка):
+ * чёрный экран → peek → открытие → моргание → закрытие.
  */
 public final class WakeAwakeningTimeline {
 
@@ -68,7 +69,6 @@ public final class WakeAwakeningTimeline {
     return Math.max(0f, Math.min(1f, clarity * Math.min(1f, open * 1.2f)));
   }
 
-  /** Сильный шум в начале пробуждения, слабеет по мере прояснения. */
   public static float noiseStrength(int ms) {
     float sharp = sharpness(ms);
     float open = eyelidOpenT(ms);

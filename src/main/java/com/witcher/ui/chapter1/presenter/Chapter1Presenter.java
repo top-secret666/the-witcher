@@ -27,7 +27,7 @@ import main.java.com.witcher.ui.chapter1.swing.Chapter1AssetPrewarm;
 import main.java.com.witcher.ui.chapter1.swing.CutscenePlayer;
 import main.java.com.witcher.ui.chapter1.swing.EyesBlinkEffect;
 import main.java.com.witcher.ui.chapter1.swing.SwordGlintOverlay;
-import main.java.com.witcher.ui.chapter1.swing.WakeAwakeningTimeline;
+import main.java.com.witcher.chapter1.loop.WakeAwakeningTimeline;
 import main.java.com.witcher.ui.shop.ShopModel;
 import main.java.com.witcher.ui.shop.swing.ShopScreen;
 

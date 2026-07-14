@@ -1,7 +1,7 @@
 package main.java.com.witcher.chapter1.loop;
 
 import main.java.com.witcher.chapter1.cutscene.CutsceneId;
-import main.java.com.witcher.ui.chapter1.swing.WakeAwakeningTimeline;
+import main.java.com.witcher.chapter1.loop.WakeAwakeningTimeline;
 
 /**
  * loop_wake: GIF + шум + веки пробуждения. illusion_wrong пока отключён.
