@@ -19,7 +19,7 @@ import main.java.com.witcher.ui.chapter1.view.BossMapLayout;
 import main.java.com.witcher.ui.chapter1.view.Chapter1ViewConstants;
 import main.java.com.witcher.ui.chapter1.view.VnChoiceLayout;
 import main.java.com.witcher.chapter1.vn.VnSceneState;
-import main.java.com.witcher.ui.chapter1.swing.BossMapView;
+import main.java.com.witcher.ui.chapter1.swing.Chapter1AssetPrewarm;
 import main.java.com.witcher.ui.chapter1.swing.CutscenePlayer;
 import main.java.com.witcher.ui.chapter1.swing.EyesBlinkEffect;
 import main.java.com.witcher.ui.shop.ShopModel;
@@ -68,6 +68,9 @@ public final class Chapter1Presenter {
     this.shopBridge = new Chapter1ShopBridge(director.session(), director);
     this.shopScreen = new ShopScreen(shopModel, shopBridge);
     wireBridgeListeners();
+    if (director.session().battleCardIconVisible()) {
+      Chapter1AssetPrewarm.warmAllAsync();
+    }
   }
 
   public Chapter1Director director() {
@@ -286,7 +289,8 @@ public final class Chapter1Presenter {
     bossHits = BossMapLayout.layoutHits(Chapter1ViewConstants.VIRTUAL_W, Chapter1ViewConstants.VIRTUAL_H);
     hoveredBoss = null;
     selectedBoss = null;
-    BossMapView.warm(Chapter1ViewConstants.VIRTUAL_W, Chapter1ViewConstants.VIRTUAL_H);
+    Chapter1AssetPrewarm.warmBossMapDrawables();
+    Chapter1AssetPrewarm.warmCutscenesAsync();
   }
 
   private void tryGrantBattleCard() {
@@ -297,6 +301,7 @@ public final class Chapter1Presenter {
 
   private void onBattleCardRevealFinished() {
     battleCard.finishReveal(director.session());
+    Chapter1AssetPrewarm.warmAllAsync();
   }
 
   private void updateBossMap(int mouseX, int mouseY, boolean clicked) {

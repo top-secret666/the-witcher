@@ -2,7 +2,6 @@ package main.java.com.witcher.ui.chapter1.swing;
 
 import main.java.com.witcher.chapter1.battle.BossCatalog;
 import main.java.com.witcher.chapter1.battle.BossEntry;
-import main.java.com.witcher.chapter1.cutscene.CutsceneId;
 import main.java.com.witcher.ui.chapter1.view.BossMapLayout;
 import main.java.com.witcher.ui.chapter1.view.Chapter1ViewConstants;
 import main.java.com.witcher.ui.graphics.GameFonts;
@@ -17,23 +16,6 @@ public final class BossMapView {
   private static final int PORTRAIT_SIZE = 56;
 
   private BossMapView() {
-  }
-
-  /** Прогрев текстур и даунскейла пока игрок смотрит на карту. */
-  public static void warm(int sw, int sh) {
-    BufferedImage map = Chapter1UiAssets.bossMapOpen();
-    if (map == null) {
-      map = Chapter1UiAssets.bossMapClosed();
-    }
-    ScaledImageCache.get(map, sw, sh);
-    int icon = BossMapLayout.BOSS_ICON;
-    for (var boss : BossCatalog.all()) {
-      ScaledImageCache.get(Chapter1UiAssets.bossMapIcon(boss.mapIconPath()), icon, icon);
-      ScaledImageCache.get(Chapter1UiAssets.bossPortrait(boss.portraitPath()), PORTRAIT_SIZE, PORTRAIT_SIZE);
-    }
-    CutsceneCache.warm(CutsceneId.LOOP_WAKE, CutsceneId.ILLUSION_WRONG);
-    CutsceneCache.prewarmScaled(CutsceneId.LOOP_WAKE, sw, sh);
-    CutsceneCache.prewarmScaled(CutsceneId.ILLUSION_WRONG, sw, sh);
   }
 
   public static void draw(Graphics2D g, int sw, int sh, BossEntry hovered, BossEntry selected) {
