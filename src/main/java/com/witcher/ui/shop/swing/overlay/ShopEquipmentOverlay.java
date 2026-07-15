@@ -99,9 +99,6 @@ public final class ShopEquipmentOverlay {
             } else if (equipped) {
                 g.setColor(new Color(200, 175, 90, 180));
                 g.drawRoundRect(cell.x, cell.y, cell.width, cell.height, 3, 3);
-            } else {
-                g.setColor(new Color(55, 48, 38, 160));
-                g.drawRoundRect(cell.x, cell.y, cell.width, cell.height, 2, 2);
             }
 
             ShopCategory cat = EquipmentArmourList.categoryFor(armour);
