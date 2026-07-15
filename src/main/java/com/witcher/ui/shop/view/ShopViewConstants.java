@@ -74,13 +74,19 @@ public final class ShopViewConstants {
     public static final int PRODUCT_CARD_ICON_TEXT_GAP = 5;
     public static final int PRODUCT_CARD_NAME_PRICE_GAP = 5;
 
-    public static final int INVENTORY_PANEL_W = 420;
-    public static final int INVENTORY_PANEL_H = 292;
+    public static final int INVENTORY_PANEL_W = 440;
+    public static final int INVENTORY_PANEL_H = 300;
     public static final int INVENTORY_POUCH_ICON = 34;
     public static final int INVENTORY_POUCH_LARGE = 112;
     public static final int INVENTORY_GRID_COLS = 4;
     public static final int INVENTORY_DETAIL_W = 196;
     public static final int INVENTORY_ACTION_BTN_H = 24;
+    /** Верхняя сетка: кошелёк / карта / зелья / оружие. */
+    public static final int INVENTORY_SPECIAL_VISIBLE_ROWS = 2;
+    /** Нижняя сетка: купленная броня. */
+    public static final int INVENTORY_ARMOUR_VISIBLE_ROWS = 4;
+    public static final int INVENTORY_SCROLLBAR_W = 7;
+    public static final int INVENTORY_GRID_GAP = 8;
     public static final int EQUIP_MARGIN = 2;
     public static final int EQUIP_FILTER_ICON = 20;
     public static final int EQUIP_FILTER_GAP = 4;

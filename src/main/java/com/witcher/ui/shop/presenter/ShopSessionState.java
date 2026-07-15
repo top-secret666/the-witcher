@@ -46,6 +46,12 @@ public final class ShopSessionState {
     public int inventoryFocusedIndex;
     public int inventoryHoveredIndex = -1;
     public final java.util.List<Rectangle> inventorySlotBounds = new java.util.ArrayList<>();
+    /** Скролл верхней сетки (особые предметы) в рядах. */
+    public int inventorySpecialScroll;
+    /** Скролл нижней сетки (броня) в рядах. */
+    public int inventoryArmourScroll;
+    public final Rectangle inventorySpecialGridBounds = new Rectangle();
+    public final Rectangle inventoryArmourGridBounds = new Rectangle();
     public boolean inventoryBagHovered;
     public boolean inventoryPouchIconHovered;
     public final Rectangle inventoryBagBounds = new Rectangle();

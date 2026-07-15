@@ -167,7 +167,7 @@ public final class ShopPresenter {
             && ui.state != ShopScreenState.BATTLE_CARD_REVEAL
             && ui.state != ShopScreenState.PURCHASE_REVEAL;
         if (bagUnlocked) {
-            updateInventoryInput(input.mouseX(), input.mouseY(), input.clicked());
+            updateInventoryInput(input.mouseX(), input.mouseY(), input.clicked(), input.wheelNotches());
         } else {
             ui.inventoryBagBounds.setBounds(0, 0, 0, 0);
             ui.inventoryBagHovered = false;
@@ -494,7 +494,7 @@ public final class ShopPresenter {
         ui.catalogScrollOffset = Math.max(0, Math.min(maxCatalogScroll(panelY), ui.catalogScrollOffset));
     }
 
-    private void updateInventoryInput(int mouseX, int mouseY, boolean clicked) {
+    private void updateInventoryInput(int mouseX, int mouseY, boolean clicked, int wheelNotches) {
         inventoryBagSlot();
         if (ui.equipmentOpen) {
             updateEquipmentInput(mouseX, mouseY, clicked);
@@ -502,9 +502,13 @@ public final class ShopPresenter {
         }
         List<ShopInventorySlot> slots = inventorySlots();
         if (ui.inventoryOpen) {
+            if (wheelNotches != 0) {
+                scrollInventoryGrids(mouseX, mouseY, wheelNotches, slots);
+            }
             ui.inventoryHoveredIndex = -1;
             for (int i = 0; i < ui.inventorySlotBounds.size(); i++) {
-                if (ui.inventorySlotBounds.get(i).contains(mouseX, mouseY)) {
+                Rectangle bounds = ui.inventorySlotBounds.get(i);
+                if (bounds.width > 0 && bounds.height > 0 && bounds.contains(mouseX, mouseY)) {
                     ui.inventoryHoveredIndex = i;
                     break;
                 }
@@ -532,7 +536,44 @@ public final class ShopPresenter {
             }
         } else if (clicked && ui.inventoryBagBounds.contains(mouseX, mouseY)) {
             ui.inventoryOpen = true;
+            ui.inventorySpecialScroll = 0;
+            ui.inventoryArmourScroll = 0;
             ui.inventoryFocusedIndex = Math.min(ui.inventoryFocusedIndex, Math.max(0, slots.size() - 1));
+        }
+    }
+
+    private void scrollInventoryGrids(int mouseX, int mouseY, int wheelNotches,
+                                      List<ShopInventorySlot> slots) {
+        int specialCount = 0;
+        int armourCount = 0;
+        for (ShopInventorySlot slot : slots) {
+            if (slot.kind() == ShopInventoryKind.ARMOUR) {
+                armourCount++;
+            } else {
+                specialCount++;
+            }
+        }
+        int cols = Math.max(1, INVENTORY_GRID_COLS);
+        int specialRows = Math.max(1, (specialCount + cols - 1) / cols);
+        int armourRows = Math.max(1, (armourCount + cols - 1) / cols);
+        int maxSpecial = Math.max(0, specialRows - INVENTORY_SPECIAL_VISIBLE_ROWS);
+        int maxArmour = Math.max(0, armourRows - INVENTORY_ARMOUR_VISIBLE_ROWS);
+
+        // Колесо вниз (положительные notches у нас увеличивают offset каталога) — скроллим вниз.
+        if (ui.inventorySpecialGridBounds.contains(mouseX, mouseY)) {
+            ui.inventorySpecialScroll = Math.max(0, Math.min(maxSpecial,
+                ui.inventorySpecialScroll + wheelNotches));
+        } else if (ui.inventoryArmourGridBounds.contains(mouseX, mouseY)) {
+            ui.inventoryArmourScroll = Math.max(0, Math.min(maxArmour,
+                ui.inventoryArmourScroll + wheelNotches));
+        } else if (ui.inventoryPanelBounds.contains(mouseX, mouseY)) {
+            if (mouseY < ui.inventoryArmourGridBounds.y) {
+                ui.inventorySpecialScroll = Math.max(0, Math.min(maxSpecial,
+                    ui.inventorySpecialScroll + wheelNotches));
+            } else {
+                ui.inventoryArmourScroll = Math.max(0, Math.min(maxArmour,
+                    ui.inventoryArmourScroll + wheelNotches));
+            }
         }
     }
 
