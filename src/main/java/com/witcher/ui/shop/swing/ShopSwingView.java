@@ -548,16 +548,17 @@ public final class ShopSwingView implements ShopView {
             return;
         }
 
-        // Обычная броня: сначала иконка, потом цветное свечение.
-        int iconEnd = Math.min(WALLET_ICON_IN_TICKS, appearEnd / 2);
+        // Обычная броня: сначала полностью иконка, пауза, только потом цветное свечение.
+        int iconIn = PURCHASE_ICON_ONLY_TICKS;
+        int glowStart = iconIn + PURCHASE_ICON_HOLD_TICKS;
         float iconAlpha = alpha;
         if (ticks <= appearEnd) {
-            iconAlpha = alpha * smoothstep(ticks / (float) Math.max(1, iconEnd));
+            iconAlpha = alpha * smoothstep(Math.min(1f, ticks / (float) Math.max(1, iconIn)));
         }
-        float glowAppearT = 0f;
-        if (ticks > iconEnd) {
-            glowAppearT = ticks <= appearEnd
-                ? smoothstep((ticks - iconEnd) / (float) Math.max(1, appearEnd - iconEnd))
+
+        if (ticks > glowStart) {
+            float glowAppearT = ticks <= appearEnd
+                ? smoothstep((ticks - glowStart) / (float) Math.max(1, PURCHASE_GLOW_IN_TICKS))
                 : 1f;
             drawItemRevealGlow(g, ipx, ipy, ipw, alpha, glowAppearT, flyT, tuckT,
                 ui.purchaseRevealCategory);
