@@ -10,7 +10,8 @@ import java.awt.image.BufferedImage;
 /** Фоновый прогрев тяжёлых ассетов — не блокирует клик по карте в сумке. */
 public final class Chapter1AssetPrewarm {
 
-  private static final int PORTRAIT_SIZE = 56;
+  private static final int PORTRAIT_W = 58;
+  private static final int PORTRAIT_H = 72;
 
   private static volatile boolean cutscenesWarming;
   private static volatile boolean cutscenesReady;
@@ -33,8 +34,18 @@ public final class Chapter1AssetPrewarm {
     ScaledImageCache.get(map, sw, sh);
     int icon = BossMapLayout.BOSS_ICON;
     for (var boss : BossCatalog.all()) {
-      ScaledImageCache.get(Chapter1UiAssets.bossMapIcon(boss.mapIconPath()), icon, icon);
-      ScaledImageCache.get(Chapter1UiAssets.bossPortrait(boss.portraitPath()), PORTRAIT_SIZE, PORTRAIT_SIZE);
+      Chapter1UiAssets.bossMapIcon(boss.mapIconPath());
+      Chapter1UiAssets.bossMapIcon(boss.mapHoverIconPath());
+      Chapter1UiAssets.bossPortrait(boss.portraitPath());
+      // Прогрев nearest-кэша не нужен: рисуем напрямую из capped-ассета.
+      if (boss.mapIconPath() != null) {
+        ScaledImageCache.get(Chapter1UiAssets.bossMapIcon(boss.mapIconPath()), icon, icon);
+      }
+      if (boss.mapHoverIconPath() != null) {
+        ScaledImageCache.get(Chapter1UiAssets.bossMapIcon(boss.mapHoverIconPath()), icon + 4, icon + 4);
+      }
+      ScaledImageCache.get(
+          Chapter1UiAssets.bossPortrait(boss.portraitPath()), PORTRAIT_W, PORTRAIT_H);
     }
     mapDrawablesReady = true;
   }

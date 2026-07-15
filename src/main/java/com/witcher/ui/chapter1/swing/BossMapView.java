@@ -8,14 +8,24 @@ import main.java.com.witcher.ui.graphics.GameFonts;
 import main.java.com.witcher.ui.graphics.UiChrome;
 
 import java.awt.Color;
+import java.awt.Font;
+import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
+import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 
 /** Полноэкранная карта боссов (только отрисовка). */
 public final class BossMapView {
 
-  private static final int PORTRAIT_SIZE = 56;
+  private static final int PORTRAIT_W = 58;
+  private static final int PORTRAIT_H = 72;
+  private static final Color PANEL_BG = new Color(18, 12, 8, 230);
+  private static final Color PANEL_BORDER = new Color(200, 160, 70);
+  private static final Color SCANLINE = new Color(0, 0, 0, 55);
+  private static final Color NAME_COLOR = new Color(245, 240, 230);
+  private static final Color TITLE_COLOR = new Color(200, 175, 140);
+  private static final Color STAT_COLOR = new Color(235, 225, 210);
 
   private BossMapView() {
   }
@@ -40,20 +50,17 @@ public final class BossMapView {
     int icon = BossMapLayout.BOSS_ICON;
     for (BossEntry boss : BossCatalog.all()) {
       boolean hot = boss.equals(hovered) || boss.equals(selected);
-      int x = Math.round(boss.mapX() * sx) - icon / 2;
-      int y = Math.round(boss.mapY() * sy) - icon / 2;
-      BufferedImage iconImg = Chapter1UiAssets.bossMapIcon(boss.mapIconPath());
+      int size = hot ? icon + 4 : icon;
+      int x = Math.round(boss.mapX() * sx) - size / 2;
+      int y = Math.round(boss.mapY() * sy) - size / 2;
+      BufferedImage iconImg = Chapter1UiAssets.bossMapIcon(boss.activeMapIconPath(hot));
       if (iconImg != null) {
-        g.drawImage(ScaledImageCache.get(iconImg, icon, icon), x, y, null);
+        drawCrisp(g, iconImg, x, y, size, size);
       } else {
         g.setColor(hot ? new Color(200, 60, 50) : new Color(120, 40, 35));
-        g.fillOval(x, y, icon, icon);
+        g.fillOval(x, y, size, size);
         g.setColor(new Color(220, 180, 80));
-        g.drawOval(x, y, icon - 1, icon - 1);
-      }
-      if (hot) {
-        g.setColor(new Color(255, 220, 120, 180));
-        g.drawRect(x - 2, y - 2, icon + 3, icon + 3);
+        g.drawOval(x, y, size - 1, size - 1);
       }
     }
 
@@ -67,34 +74,90 @@ public final class BossMapView {
   }
 
   private static void drawBossPanel(Graphics2D g, int sw, int sh, BossEntry boss) {
-    int pw = 150;
-    int ph = 120;
+    int pad = 8;
+    int textColX = pad + PORTRAIT_W + 10;
+    Font nameFont = GameFonts.get().uiBold(11);
+    Font titleFont = GameFonts.get().uiPlain(8);
+    Font statFont = GameFonts.get().uiPlain(9);
+    FontMetrics nameFm = g.getFontMetrics(nameFont);
+    FontMetrics titleFm = g.getFontMetrics(titleFont);
+    FontMetrics statFm = g.getFontMetrics(statFont);
+
+    String name = boss.name() != null ? boss.name() : "";
+    String title = boss.title() != null ? boss.title() : "";
+    String[] stats = {
+        "Защита " + boss.protection(),
+        "Выносл. " + boss.stamina(),
+        "Знаки " + boss.signs()
+    };
+
+    int textW = Math.max(nameFm.stringWidth(name), titleFm.stringWidth(title));
+    for (String s : stats) {
+      textW = Math.max(textW, statFm.stringWidth(s));
+    }
+    int pw = Math.max(150, textColX + textW + pad);
+    int headerH = Math.max(PORTRAIT_H, nameFm.getHeight() + titleFm.getHeight() + 6);
+    int statsTop = pad + headerH + 6;
+    int ph = statsTop + stats.length * (statFm.getHeight() + 2) + pad;
     int px = sw - pw - 10;
     int py = 10;
-    g.setColor(new Color(20, 14, 10, 220));
-    g.fillRoundRect(px, py, pw, ph, 6, 6);
-    g.setColor(new Color(180, 140, 60));
-    g.drawRoundRect(px, py, pw, ph, 6, 6);
+
+    g.setColor(PANEL_BG);
+    g.fillRect(px, py, pw, ph);
+    for (int ly = 1; ly < ph; ly += 2) {
+      g.setColor(SCANLINE);
+      g.drawLine(px, py + ly, px + pw - 1, py + ly);
+    }
+    g.setColor(PANEL_BORDER);
+    g.drawRect(px, py, pw - 1, ph - 1);
 
     BufferedImage portrait = Chapter1UiAssets.bossPortrait(boss.portraitPath());
-    int portraitX = px + 8;
-    int portraitY = py + 8;
+    int portraitX = px + pad;
+    int portraitY = py + pad;
     if (portrait != null) {
-      g.drawImage(ScaledImageCache.get(portrait, PORTRAIT_SIZE, PORTRAIT_SIZE),
-          portraitX, portraitY, null);
+      drawCrisp(g, portrait, portraitX, portraitY, PORTRAIT_W, PORTRAIT_H);
     } else {
       g.setColor(new Color(60, 40, 30));
-      g.fillRect(portraitX, portraitY, PORTRAIT_SIZE, PORTRAIT_SIZE);
+      g.fillRect(portraitX, portraitY, PORTRAIT_W, PORTRAIT_H);
     }
 
-    g.setFont(GameFonts.get().uiBold(9));
-    g.setColor(new Color(240, 210, 150));
-    g.drawString(boss.name(), px + 72, py + 20);
-    g.setFont(GameFonts.get().uiPlain(8));
-    g.setColor(new Color(190, 170, 140));
-    g.drawString(boss.title(), px + 72, py + 34);
-    g.drawString("Защита " + boss.protection(), px + 10, py + 78);
-    g.drawString("Выносл. " + boss.stamina(), px + 10, py + 92);
-    g.drawString("Знаки " + boss.signs(), px + 10, py + 106);
+    int textX = px + textColX;
+    g.setFont(nameFont);
+    g.setColor(NAME_COLOR);
+    g.drawString(name, textX, py + pad + nameFm.getAscent());
+    g.setFont(titleFont);
+    g.setColor(TITLE_COLOR);
+    g.drawString(title, textX, py + pad + nameFm.getHeight() + titleFm.getAscent());
+
+    g.setFont(statFont);
+    g.setColor(STAT_COLOR);
+    int sy = py + statsTop + statFm.getAscent();
+    for (String s : stats) {
+      g.drawString(s, px + pad, sy);
+      sy += statFm.getHeight() + 2;
+    }
+  }
+
+  /** Иконка/портрет без размытия — nearest-neighbor, целые координаты. */
+  private static void drawCrisp(Graphics2D g, BufferedImage img, int x, int y, int w, int h) {
+    if (img == null || w <= 0 || h <= 0) {
+      return;
+    }
+    Object prevInterp = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
+    Object prevRender = g.getRenderingHint(RenderingHints.KEY_RENDERING);
+    Object prevAa = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
+    g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+    g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
+    g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+    g.drawImage(img, x, y, w, h, null);
+    if (prevInterp != null) {
+      g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, prevInterp);
+    }
+    if (prevRender != null) {
+      g.setRenderingHint(RenderingHints.KEY_RENDERING, prevRender);
+    }
+    if (prevAa != null) {
+      g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, prevAa);
+    }
   }
 }

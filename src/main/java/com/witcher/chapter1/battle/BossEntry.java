@@ -9,8 +9,17 @@ public record BossEntry(
     int stamina,
     int signs,
     String mapIconPath,
+    String mapHoverIconPath,
     String portraitPath,
     int mapX,
     int mapY
 ) {
+
+  /** Иконка на карте: hover/selected → hover-арт, иначе обычная. */
+  public String activeMapIconPath(boolean hot) {
+    if (hot && mapHoverIconPath != null && !mapHoverIconPath.isBlank()) {
+      return mapHoverIconPath;
+    }
+    return mapIconPath;
+  }
 }

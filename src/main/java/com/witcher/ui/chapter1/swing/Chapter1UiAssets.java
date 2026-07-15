@@ -74,6 +74,7 @@ public final class Chapter1UiAssets {
   private static BufferedImage bossMapOpen;
   private static BufferedImage bossMapClosed;
   private static BufferedImage bossDukeMapIcon;
+  private static BufferedImage bossDukeMapHoverIcon;
   private static BufferedImage bossDukePortrait;
   private static BufferedImage bossWakeForest;
   private static SpriteSheet swordSlashSheetA;
@@ -95,13 +96,22 @@ public final class Chapter1UiAssets {
   }
 
   public static BufferedImage bossMapIcon(String path) {
-    if (path != null && path.contains("boss_duke_map")) {
+    if (path == null) {
+      return null;
+    }
+    if (path.contains("boss_duke_map_hover") || path.equals(Chapter1AssetPaths.BOSS_DUKE_MAP_HOVER)) {
+      if (bossDukeMapHoverIcon == null) {
+        bossDukeMapHoverIcon = loadCappedCrisp(path, MAX_ICON_EDGE);
+      }
+      return bossDukeMapHoverIcon;
+    }
+    if (path.contains("boss_duke_map") || path.equals(Chapter1AssetPaths.BOSS_DUKE_MAP)) {
       if (bossDukeMapIcon == null) {
-        bossDukeMapIcon = loadCapped(path, MAX_ICON_EDGE);
+        bossDukeMapIcon = loadCappedCrisp(path, MAX_ICON_EDGE);
       }
       return bossDukeMapIcon;
     }
-    return loadCapped(path, MAX_ICON_EDGE);
+    return loadCappedCrisp(path, MAX_ICON_EDGE);
   }
 
   public static BufferedImage bossWakeForest() {
@@ -112,13 +122,14 @@ public final class Chapter1UiAssets {
   }
 
   public static BufferedImage bossPortrait(String path) {
-    if (path != null && path.contains("boss_duke_portrait")) {
+    if (path != null && (path.contains("boss_duke_portrait")
+        || path.equals(Chapter1AssetPaths.BOSS_DUKE_PORTRAIT))) {
       if (bossDukePortrait == null) {
-        bossDukePortrait = loadCapped(path, MAX_PORTRAIT_EDGE);
+        bossDukePortrait = loadCappedCrisp(path, MAX_PORTRAIT_EDGE);
       }
       return bossDukePortrait;
     }
-    return loadCapped(path, MAX_PORTRAIT_EDGE);
+    return loadCappedCrisp(path, MAX_PORTRAIT_EDGE);
   }
 
   /** Кадр проблеска меча: лист A (6×4) или B (2×4), чёрный фон вырезан. */
@@ -156,6 +167,14 @@ public final class Chapter1UiAssets {
     return capEdge(sprite.getImage(), maxEdge);
   }
 
+  private static BufferedImage loadCappedCrisp(String path, int maxEdge) {
+    Sprite sprite = Sprite.loadOptional(path);
+    if (sprite == null) {
+      return null;
+    }
+    return capEdgeCrisp(sprite.getImage(), maxEdge);
+  }
+
   /** Ужимает оригинал один раз при загрузке — дальше ScaledImageCache не аллоцирует гигантские half. */
   static BufferedImage capEdge(BufferedImage src, int maxEdge) {
     if (src == null || maxEdge <= 0) {
@@ -170,5 +189,21 @@ public final class Chapter1UiAssets {
     int dw = Math.max(1, Math.round(w * scale));
     int dh = Math.max(1, Math.round(h * scale));
     return PixelScaler.smoothScale(src, dw, dh);
+  }
+
+  /** Иконки/портреты боссов — nearest, без размытия. */
+  static BufferedImage capEdgeCrisp(BufferedImage src, int maxEdge) {
+    if (src == null || maxEdge <= 0) {
+      return src;
+    }
+    int w = src.getWidth();
+    int h = src.getHeight();
+    if (w <= maxEdge && h <= maxEdge) {
+      return src;
+    }
+    float scale = Math.min((float) maxEdge / w, (float) maxEdge / h);
+    int dw = Math.max(1, Math.round(w * scale));
+    int dh = Math.max(1, Math.round(h * scale));
+    return PixelScaler.crispScale(src, dw, dh);
   }
 }
