@@ -21,6 +21,7 @@ import main.java.com.witcher.ui.shop.view.ShopView;
 import main.java.com.witcher.ui.shop.view.ShopViewConstants;
 import main.java.com.witcher.ui.shop.view.anim.ShopCategoryAnimator;
 import main.java.com.witcher.ui.shop.view.anim.ShopRevealAnimator;
+import main.java.com.witcher.ui.shop.ShopInventoryKind;
 import main.java.com.witcher.ui.shop.ShopInventorySlot;
 import main.java.com.witcher.ui.chapter1.swing.BattleCardRevealView;
 
@@ -147,7 +148,7 @@ public final class ShopSwingView implements ShopView {
             drawAshParticles(g);
         }
 
-        if (shouldDrawUiTextInScene() && !ui.equipmentOpen) {
+        if (shouldDrawUiTextInScene() && !ui.equipmentOpen && !ui.inventoryOpen) {
             DialogBoxRenderer.drawCompactFramedSpeakerText(g, sw, sh, "Герцог", ui.currentDialog,
                 DialogBoxRenderer.DUKE_COLOR, 1f);
         }
@@ -216,7 +217,7 @@ public final class ShopSwingView implements ShopView {
                 drawInventoryOverlay(g, sw, sh);
             }
 
-            if (!ui.equipmentOpen) {
+            if (!ui.equipmentOpen && !ui.inventoryOpen) {
                 DialogBoxRenderer.drawCompactFramedSpeakerText(g, sw, sh, "Герцог", ui.currentDialog,
                     DialogBoxRenderer.DUKE_COLOR, 1f);
             }
@@ -849,31 +850,42 @@ public final class ShopSwingView implements ShopView {
     private void drawInventorySlotIcon(Graphics2D g, ShopInventorySlot slot, int x, int y, int size,
                                        boolean selected, boolean hovered) {
         Composite prev = g.getComposite();
+        Object prevAa = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
         if (selected || hovered) {
-            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.9f));
-            g.setColor(selected ? new Color(120, 90, 40) : new Color(80, 60, 30));
-            g.fillRoundRect(x - 2, y - 2, size + 4, size + 4, 4, 4);
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.92f));
+            g.setColor(selected ? new Color(120, 90, 40, 230) : new Color(80, 60, 30, 200));
+            g.fillRoundRect(x, y, size, size, 6, 6);
+            g.setColor(selected ? new Color(200, 160, 70) : new Color(140, 110, 55));
+            g.drawRoundRect(x, y, size - 1, size - 1, 6, 6);
         }
         g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
+        int inset = (selected || hovered) ? 3 : 1;
+        int ix = x + inset;
+        int iy = y + inset;
+        int isz = size - inset * 2;
         switch (slot.kind()) {
             case WALLET -> {
                 if (assets.walletPouch != null) {
-                    g.drawImage(assets.walletPouch, x, y, size, size, null);
+                    g.drawImage(assets.walletPouch, ix, iy, isz, isz, null);
                 }
             }
-            case BATTLE_CARD -> BattleCardRevealView.drawCardIcon(g, x, y, size, hovered);
+            case BATTLE_CARD -> BattleCardRevealView.drawCardIcon(g, ix, iy, isz, hovered);
             case POTION, WEAPON -> {
                 BufferedImage icon = assets.iconForCategory(slot.iconCategory());
                 if (icon != null) {
-                    g.drawImage(icon, x, y, size, size, null);
+                    g.drawImage(icon, ix, iy, isz, isz, null);
                 }
             }
             case ARMOUR -> {
-                BufferedImage icon = armourIcons.iconForArmour(slot.armour(), slot.iconCategory(), size);
+                BufferedImage icon = armourIcons.iconForArmour(slot.armour(), slot.iconCategory(), isz);
                 if (icon != null) {
-                    g.drawImage(icon, x, y, size, size, null);
+                    g.drawImage(icon, ix, iy, isz, isz, null);
                 }
             }
+        }
+        if (prevAa != null) {
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, prevAa);
         }
         g.setComposite(prev);
     }
@@ -912,22 +924,92 @@ public final class ShopSwingView implements ShopView {
             }
         }
 
+        Color descColor = ShopCategoryGlow.descriptionColor(slot.iconCategory());
+        if (slot.kind() == ShopInventoryKind.WALLET || slot.kind() == ShopInventoryKind.BATTLE_CARD) {
+            descColor = ShopCategoryGlow.descriptionColor(null);
+        }
+
         g.setFont(GameFonts.get().uiBold(11));
-        g.setColor(new Color(255, 220, 140));
+        FontMetrics titleFm = g.getFontMetrics();
         int textY = iconY + large + 14;
-        g.drawString(truncateToWidth(slot.title(), g.getFontMetrics(), maxW), x, textY);
-        g.setFont(GameFonts.get().uiPlain(10));
-        g.setColor(new Color(220, 195, 130));
-        textY += 14;
-        for (String line : slot.detailLines()) {
+        int lineH = titleFm.getHeight();
+        g.setColor(descColor);
+        for (String line : wrapInventoryText(slot.title(), titleFm, maxW)) {
             if (textY > y + maxH - 4) {
                 break;
             }
-            g.drawString(truncateToWidth(line, g.getFontMetrics(), maxW), x, textY);
-            textY += 13;
+            g.drawString(line, x, textY);
+            textY += lineH;
+        }
+
+        g.setFont(GameFonts.get().uiPlain(10));
+        FontMetrics bodyFm = g.getFontMetrics();
+        int bodyH = bodyFm.getHeight();
+        Color bodyColor = new Color(
+            Math.min(255, descColor.getRed() + 20),
+            Math.min(255, descColor.getGreen() + 15),
+            Math.min(255, descColor.getBlue() + 10));
+        g.setColor(bodyColor);
+        textY += 2;
+        for (String detail : slot.detailLines()) {
+            for (String line : wrapInventoryText(detail, bodyFm, maxW)) {
+                if (textY > y + maxH - 4) {
+                    g.setClip(prevClip);
+                    return textY;
+                }
+                g.drawString(line, x, textY);
+                textY += bodyH;
+            }
         }
         g.setClip(prevClip);
         return textY;
+    }
+
+    private static List<String> wrapInventoryText(String text, FontMetrics fm, int maxW) {
+        List<String> lines = new ArrayList<>();
+        if (text == null || text.isEmpty() || maxW <= 8) {
+            return lines;
+        }
+        String[] words = text.trim().split("\\s+");
+        StringBuilder line = new StringBuilder();
+        for (String word : words) {
+            String candidate = line.isEmpty() ? word : line + " " + word;
+            if (fm.stringWidth(candidate) > maxW && !line.isEmpty()) {
+                lines.add(line.toString());
+                if (fm.stringWidth(word) > maxW) {
+                    lines.addAll(breakLongWord(word, fm, maxW));
+                    line = new StringBuilder();
+                } else {
+                    line = new StringBuilder(word);
+                }
+            } else if (fm.stringWidth(candidate) > maxW) {
+                lines.addAll(breakLongWord(word, fm, maxW));
+                line = new StringBuilder();
+            } else {
+                line = new StringBuilder(candidate);
+            }
+        }
+        if (!line.isEmpty()) {
+            lines.add(line.toString());
+        }
+        return lines;
+    }
+
+    private static List<String> breakLongWord(String word, FontMetrics fm, int maxW) {
+        List<String> parts = new ArrayList<>();
+        StringBuilder cur = new StringBuilder();
+        for (int i = 0; i < word.length(); i++) {
+            cur.append(word.charAt(i));
+            if (fm.stringWidth(cur.toString()) > maxW && cur.length() > 1) {
+                cur.deleteCharAt(cur.length() - 1);
+                parts.add(cur.toString());
+                cur = new StringBuilder().append(word.charAt(i));
+            }
+        }
+        if (!cur.isEmpty()) {
+            parts.add(cur.toString());
+        }
+        return parts;
     }
 
     private void drawEquipmentOverlay(Graphics2D g, int sw, int sh) {

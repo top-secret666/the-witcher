@@ -194,7 +194,9 @@ public final class ShopInventoryOverlay {
     int rowH = cell + cellGap;
 
     Shape prevClip = g.getClip();
-    g.clipRect(area.x, area.y, gridInnerW, area.height);
+    // Запас для скруглённой рамки выделения (иначе верх/бок срезаются клипом).
+    int pad = 3;
+    g.clipRect(area.x - pad, area.y - pad, gridInnerW + pad * 2, area.height + pad * 2);
 
     for (int local = 0; local < indices.size(); local++) {
       int col = local % cols;
@@ -205,7 +207,7 @@ public final class ShopInventoryOverlay {
       int drawRow = row - scrollRows;
       int x = area.x + col * (cell + cellGap);
       int y = area.y + drawRow * rowH;
-      if (y + cell > area.y + area.height) {
+      if (y + cell > area.y + area.height + pad) {
         break;
       }
       int global = indices.get(local);

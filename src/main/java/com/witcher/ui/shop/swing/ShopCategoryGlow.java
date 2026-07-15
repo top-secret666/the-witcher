@@ -6,7 +6,7 @@ import java.awt.Color;
 
 /**
  * Цвета мягкого свечения при покупке (палитра лавки).
- * Особые предметы (зелье/оружие) используют ореолы, не эти tint'ы.
+ * Описание в инвентаре/экипировке берёт тот же оттенок.
  */
 public final class ShopCategoryGlow {
 
@@ -19,6 +19,8 @@ public final class ShopCategoryGlow {
     private static final Tint BOOTS = new Tint(new Color(78, 138, 72), new Color(150, 210, 100));
     private static final Tint GLOVES = new Tint(new Color(148, 72, 58), new Color(188, 115, 85));
     private static final Tint SETS = new Tint(new Color(148, 78, 190), new Color(210, 150, 255));
+    private static final Tint POTION = new Tint(new Color(90, 150, 120), new Color(150, 220, 170));
+    private static final Tint WEAPON = new Tint(new Color(180, 150, 70), new Color(230, 205, 120));
 
     private ShopCategoryGlow() {
     }
@@ -33,7 +35,18 @@ public final class ShopCategoryGlow {
             case BOOTS -> BOOTS;
             case GLOVES -> GLOVES;
             case SETS -> SETS;
+            case POTION -> POTION;
+            case WEAPON -> WEAPON;
             default -> GOLD;
         };
+    }
+
+    /** Цвет текста описания — тот же оттенок, что свечение при полёте в сумку. */
+    public static Color descriptionColor(ShopCategory category) {
+        return forCategory(category).inner();
+    }
+
+    public static Color borderColor(ShopCategory category) {
+        return forCategory(category).outer();
     }
 }
