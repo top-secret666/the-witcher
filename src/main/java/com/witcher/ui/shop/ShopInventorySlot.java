@@ -1,6 +1,7 @@
 package main.java.com.witcher.ui.shop;
 
 import main.java.com.witcher.model.armour.Armour;
+import main.java.com.witcher.model.sets.ArmourSet;
 
 /** Один слот иконки в панели инвентаря лавки. */
 public record ShopInventorySlot(
@@ -8,7 +9,8 @@ public record ShopInventorySlot(
     String title,
     String[] detailLines,
     ShopCategory iconCategory,
-    Armour armour
+    Armour armour,
+    ArmourSet armourSet
 ) {
 
   public static ShopInventorySlot wallet(ShopModel model) {
@@ -21,6 +23,7 @@ public record ShopInventorySlot(
             amount + " — плата за Арнскрон."
         },
         ShopCategory.POTION,
+        null,
         null);
   }
 
@@ -33,6 +36,7 @@ public record ShopInventorySlot(
             "Откройте карту, чтобы выбрать встречу."
         },
         ShopCategory.WEAPON,
+        null,
         null);
   }
 
@@ -40,7 +44,7 @@ public record ShopInventorySlot(
     ShopInventoryKind kind = category == ShopCategory.WEAPON
         ? ShopInventoryKind.WEAPON
         : ShopInventoryKind.POTION;
-    return new ShopInventorySlot(kind, name, detailLines, category, null);
+    return new ShopInventorySlot(kind, name, detailLines, category, null, null);
   }
 
   public static ShopInventorySlot armour(Armour piece) {
@@ -53,7 +57,21 @@ public record ShopInventorySlot(
             "Купленный предмет. Откройте экипировку, чтобы надеть."
         },
         cat,
-        piece);
+        piece,
+        null);
+  }
+
+  public static ShopInventorySlot set(ArmourSet set) {
+    return new ShopInventorySlot(
+        ShopInventoryKind.SET,
+        set.getName(),
+        new String[]{
+            "Комплект",
+            "Эмблема набора. Экипировка надевает все четыре части."
+        },
+        ShopCategory.SETS,
+        null,
+        set);
   }
 
   public String actionLabel() {

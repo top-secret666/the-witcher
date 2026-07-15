@@ -2,7 +2,11 @@ package main.java.com.witcher.ui.shop;
 
 import main.java.com.witcher.model.armour.*;
 import main.java.com.witcher.model.sets.ArmourSet;
-import main.java.com.witcher.model.sets.SchoolSet;
+import main.java.com.witcher.model.sets.BeauclaireGuardSet;
+import main.java.com.witcher.model.sets.NonSchoolSet;
+import main.java.com.witcher.model.sets.TemerianKitSet;
+import main.java.com.witcher.model.sets.TouissantSet;
+import main.java.com.witcher.model.sets.WhiteTigerSet;
 import main.java.com.witcher.shop.EquipSlot;
 import main.java.com.witcher.shop.EquippedGear;
 import main.java.com.witcher.repository.ArmourRepository;
@@ -119,7 +123,7 @@ public final class ShopModel implements EquippedGear {
             };
         }
         return switch (category) {
-            case SETS -> new String[]{"Школьные", "Легендар.", "4 части"};
+            case SETS -> new String[]{"Регионы", "4 части", "Эмблема"};
             case POTION -> new String[]{"Токсин", "0.5 кг", "Осторожно"};
             case WEAPON -> new String[]{"Урон 42", "Вес 8", "Сталь"};
             default -> new String[]{"—", "—", category.label};
@@ -304,6 +308,25 @@ public final class ShopModel implements EquippedGear {
         }
     }
 
+    /** Экипирует все части купленного комплекта (кнопка по эмблеме). */
+    public void equipSet(ArmourSet set) {
+        if (set == null || !soldSets.contains(set)) {
+            return;
+        }
+        for (Armour piece : set.getArmorPieces()) {
+            if (playerInventory.contains(piece)) {
+                EquipSlot slot = EquipSlot.forArmour(piece);
+                if (slot != null) {
+                    equipped.put(slot, piece);
+                }
+            }
+        }
+    }
+
+    public List<ArmourSet> ownedSets() {
+        return List.copyOf(soldSets);
+    }
+
     public void unequip(EquipSlot slot) {
         equipped.remove(slot);
     }
@@ -421,8 +444,8 @@ public final class ShopModel implements EquippedGear {
 
     private List<ShopCatalogEntry> setsCatalog() {
         List<ShopCatalogEntry> out = new ArrayList<>();
-        for (SchoolSet set : setService.getSchoolSets()) {
-            if (soldSets.contains(set)) {
+        for (NonSchoolSet set : setService.getNonSchoolSets()) {
+            if (!isShopRegionalKit(set) || soldSets.contains(set)) {
                 continue;
             }
             int price = ShopPricing.setPrice(set);
@@ -430,6 +453,14 @@ public final class ShopModel implements EquippedGear {
         }
         out.sort(Comparator.comparingInt(e -> e.price));
         return out;
+    }
+
+    /** Четыре региональных комплекта витрины (эмблемы + kits/). */
+    private static boolean isShopRegionalKit(ArmourSet set) {
+        return set instanceof WhiteTigerSet
+            || set instanceof TouissantSet
+            || set instanceof BeauclaireGuardSet
+            || set instanceof TemerianKitSet;
     }
 
     private static List<ShopCatalogEntry> staticPotionOffers() {

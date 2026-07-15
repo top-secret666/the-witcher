@@ -890,6 +890,12 @@ public final class ShopSwingView implements ShopView {
                     g.drawImage(icon, ix, iy, isz, isz, null);
                 }
             }
+            case SET -> {
+                BufferedImage icon = armourIcons.iconForName(slot.title(), ShopCategory.SETS, isz);
+                if (icon != null) {
+                    g.drawImage(icon, ix, iy, isz, isz, null);
+                }
+            }
         }
         if (prevAa != null) {
             g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, prevAa);
@@ -925,6 +931,12 @@ public final class ShopSwingView implements ShopView {
             }
             case ARMOUR -> {
                 BufferedImage icon = armourIcons.iconForArmour(slot.armour(), slot.iconCategory(), large);
+                if (icon != null) {
+                    g.drawImage(icon, iconX, iconY, large, large, null);
+                }
+            }
+            case SET -> {
+                BufferedImage icon = armourIcons.iconForName(slot.title(), ShopCategory.SETS, large);
                 if (icon != null) {
                     g.drawImage(icon, iconX, iconY, large, large, null);
                 }

@@ -66,6 +66,19 @@ public final class ShopPricing {
                 case BEAR -> 420;
             };
         }
+        String name = set.getName().toLowerCase();
+        if (name.contains("темер")) {
+            return 340;
+        }
+        if (name.contains("боклер") || name.contains("страж")) {
+            return 365;
+        }
+        if (name.contains("туссент")) {
+            return 390;
+        }
+        if (name.contains("тигр")) {
+            return 415;
+        }
         int sum = set.getArmorPieces().stream().mapToInt(ShopPricing::armorPrice).sum();
         return clamp(sum - 40, 320, 450);
     }

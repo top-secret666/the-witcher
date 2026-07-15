@@ -1,6 +1,7 @@
 package main.java.com.witcher.ui.shop.presenter;
 
 import main.java.com.witcher.model.armour.Armour;
+import main.java.com.witcher.model.sets.ArmourSet;
 import main.java.com.witcher.chapter1.shop.Chapter1ShopBridge;
 import main.java.com.witcher.ui.shop.EquipmentArmourList;
 import main.java.com.witcher.ui.shop.EquipmentFilter;
@@ -292,8 +293,15 @@ public final class ShopPresenter {
         }
         slots.addAll(potions);
         slots.addAll(weapons);
+        java.util.Set<Armour> kitPieces = new java.util.HashSet<>();
+        for (ArmourSet set : model.ownedSets()) {
+            slots.add(ShopInventorySlot.set(set));
+            kitPieces.addAll(set.getArmorPieces());
+        }
         for (Armour armour : model.ownedArmour()) {
-            slots.add(ShopInventorySlot.armour(armour));
+            if (!kitPieces.contains(armour)) {
+                slots.add(ShopInventorySlot.armour(armour));
+            }
         }
         return slots;
     }
@@ -541,7 +549,7 @@ public final class ShopPresenter {
         int specialCount = 0;
         int armourCount = 0;
         for (ShopInventorySlot slot : slots) {
-            if (slot.kind() == ShopInventoryKind.ARMOUR) {
+            if (slot.kind().isArmourGrid()) {
                 armourCount++;
             } else {
                 specialCount++;
@@ -597,6 +605,12 @@ public final class ShopPresenter {
             case ARMOUR -> {
                 if (focused.armour() != null) {
                     model.equipArmour(focused.armour());
+                }
+                openEquipmentFromInventory();
+            }
+            case SET -> {
+                if (focused.armourSet() != null) {
+                    model.equipSet(focused.armourSet());
                 }
                 openEquipmentFromInventory();
             }

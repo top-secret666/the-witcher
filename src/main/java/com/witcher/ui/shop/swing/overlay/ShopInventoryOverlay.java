@@ -94,7 +94,7 @@ public final class ShopInventoryOverlay {
     List<Integer> specialIdx = new ArrayList<>();
     List<Integer> armourIdx = new ArrayList<>();
     for (int i = 0; i < slots.size(); i++) {
-      if (slots.get(i).kind() == ShopInventoryKind.ARMOUR) {
+      if (slots.get(i).kind().isArmourGrid()) {
         armourIdx.add(i);
       } else {
         specialIdx.add(i);

@@ -6,7 +6,9 @@ public enum ShopInventoryKind {
     BATTLE_CARD,
     POTION,
     WEAPON,
-    ARMOUR;
+    ARMOUR,
+    /** Эмблема купленного комплекта — экипирует все 4 части. */
+    SET;
 
     public String actionLabel() {
         return switch (this) {
@@ -14,5 +16,9 @@ public enum ShopInventoryKind {
             case BATTLE_CARD -> "Открыть";
             default -> "Экипировка";
         };
+    }
+
+    public boolean isArmourGrid() {
+        return this == ARMOUR || this == SET;
     }
 }
