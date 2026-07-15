@@ -47,6 +47,15 @@ public final class ShopScreen {
         presenter.update(new ShopInput(mouseX, mouseY, clicked, escPressed, wheelNotches));
     }
 
+    /** Доигрывает fly-in покупки/кошелька, даже если глава ушла в VN поверх лавки. */
+    public void tickTimedScenes() {
+        presenter.tickTimedScenes();
+    }
+
+    public boolean isChapterEventIdle() {
+        return presenter.isChapterEventIdle();
+    }
+
     public void render(BufferedImage screen, int mouseX, int mouseY) {
         view.renderScene(screen, mouseX, mouseY);
     }

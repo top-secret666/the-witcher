@@ -69,6 +69,8 @@ public final class Chapter1Presenter {
   private boolean swordGlitchFrozen;
   private int hackShakeTick;
   private boolean exitRequested;
+  /** Не стартовать VN «тюрьмы» посреди fly-in покупки. */
+  private boolean prisonDialogPending;
 
   public Chapter1Presenter() {
     this(Chapter1Director.loadOrNew(), ShopModel.createNewSession());
@@ -196,9 +198,12 @@ public final class Chapter1Presenter {
       case CUTSCENE -> updateCutscene(clicked);
       case SHOP -> {
         if (dukeDialog.isActive()) {
+          // Иначе PURCHASE_REVEAL зависает навечно под VN «тюрьмы».
+          shopScreen.tickTimedScenes();
           updateDukeDialog(mouseX, mouseY, clicked);
         } else {
           shopScreen.update(mouseX, mouseY, clicked, escPressed, wheelNotches);
+          flushPendingDukeDialog();
           maybeStartDukeDialog();
         }
       }
@@ -313,7 +318,7 @@ public final class Chapter1Presenter {
       director.requestHackTerminal();
       onPhaseEntered();
     });
-    shopBridge.setOnPurchaseHook(() -> dukeDialog.onPrisonIncreased(director.session()));
+    shopBridge.setOnPurchaseHook(() -> prisonDialogPending = true);
     shopBridge.setOnEquipHook(this::tryGrantBattleCard);
     shopBridge.setOnBossMapOpen(this::openBossMap);
     shopBridge.setOnEquipmentBack(this::onEquipmentBackToLavka);
@@ -547,10 +552,21 @@ public final class Chapter1Presenter {
   }
 
   private void maybeStartDukeDialog() {
-    if (dukeDialog.isActive()) {
+    if (dukeDialog.isActive() || !shopScreen.isChapterEventIdle()) {
       return;
     }
     if (dukeDialog.pollPending(director.session()) != null) {
+      refreshChoiceRects();
+    }
+  }
+
+  private void flushPendingDukeDialog() {
+    if (!prisonDialogPending || dukeDialog.isActive() || !shopScreen.isChapterEventIdle()) {
+      return;
+    }
+    prisonDialogPending = false;
+    dukeDialog.onPrisonIncreased(director.session());
+    if (dukeDialog.isActive()) {
       refreshChoiceRects();
     }
   }

@@ -82,6 +82,8 @@ public final class ShopPresenter {
             if (ui.state == ShopScreenState.WALLET_REVEAL
                 || ui.state == ShopScreenState.BATTLE_CARD_REVEAL
                 || ui.state == ShopScreenState.PURCHASE_REVEAL) {
+                // Не return до tickTimedScenes — иначе Esc «замораживает» fly-in.
+                tickTimedScenes();
                 return;
             }
             if (ui.state == ShopScreenState.CATEGORY || ui.state == ShopScreenState.CATEGORY_OPENING) {
@@ -95,46 +97,7 @@ public final class ShopPresenter {
             return;
         }
 
-        if (ui.state == ShopScreenState.REVEAL) {
-            ui.revealTicks++;
-            if (ui.revealTicks >= REVEAL_DURATION_TICKS) {
-                ui.state = ShopScreenState.IDLE;
-                ui.currentDialog = IDLE_LINE;
-            }
-        }
-
-        if (ui.state == ShopScreenState.WALLET_REVEAL) {
-            ui.walletRevealTicks++;
-            if (ui.walletRevealTicks >= WALLET_REVEAL_TOTAL) {
-                finishWalletReveal();
-            }
-        }
-
-        if (ui.state == ShopScreenState.BATTLE_CARD_REVEAL) {
-            ui.battleCardRevealTicks++;
-            if (ui.battleCardRevealTicks >= BATTLE_CARD_REVEAL_TOTAL) {
-                finishBattleCardReveal();
-            }
-        }
-
-        if (ui.state == ShopScreenState.PURCHASE_REVEAL) {
-            ui.purchaseRevealTicks++;
-            if (ui.purchaseRevealTicks >= PURCHASE_REVEAL_TOTAL) {
-                finishPurchaseReveal();
-            }
-        }
-
-        if (ui.state == ShopScreenState.CATEGORY_OPENING || ui.state == ShopScreenState.CATEGORY_CLOSING) {
-            ui.categoryTicks++;
-            if (ui.categoryClosing) {
-                if (ui.categoryTicks >= CATEGORY_OPEN_DURATION_TICKS) {
-                    finishCategoryClose();
-                }
-            } else if (ui.categoryTicks >= CATEGORY_OPEN_DURATION_TICKS) {
-                ui.state = ShopScreenState.CATEGORY;
-            }
-        }
-
+        tickTimedScenes();
         updateAshParticles();
 
         ShopRevealAnimator reveal = revealAnimator();
@@ -353,6 +316,52 @@ public final class ShopPresenter {
 
     public boolean isChapterEventIdle() {
         return ui.state == ShopScreenState.IDLE || ui.state == ShopScreenState.CATEGORY;
+    }
+
+    /**
+     * Только таймеры reveal (покупка / кошелёк / карта / категория).
+     * Нужен, когда глава показывает VN поверх лавки и не вызывает полный {@link #update}.
+     */
+    public void tickTimedScenes() {
+        if (ui.state == ShopScreenState.REVEAL) {
+            ui.revealTicks++;
+            if (ui.revealTicks >= REVEAL_DURATION_TICKS) {
+                ui.state = ShopScreenState.IDLE;
+                ui.currentDialog = IDLE_LINE;
+            }
+        }
+
+        if (ui.state == ShopScreenState.WALLET_REVEAL) {
+            ui.walletRevealTicks++;
+            if (ui.walletRevealTicks >= WALLET_REVEAL_TOTAL) {
+                finishWalletReveal();
+            }
+        }
+
+        if (ui.state == ShopScreenState.BATTLE_CARD_REVEAL) {
+            ui.battleCardRevealTicks++;
+            if (ui.battleCardRevealTicks >= BATTLE_CARD_REVEAL_TOTAL) {
+                finishBattleCardReveal();
+            }
+        }
+
+        if (ui.state == ShopScreenState.PURCHASE_REVEAL) {
+            ui.purchaseRevealTicks++;
+            if (ui.purchaseRevealTicks >= PURCHASE_REVEAL_TOTAL) {
+                finishPurchaseReveal();
+            }
+        }
+
+        if (ui.state == ShopScreenState.CATEGORY_OPENING || ui.state == ShopScreenState.CATEGORY_CLOSING) {
+            ui.categoryTicks++;
+            if (ui.categoryClosing) {
+                if (ui.categoryTicks >= CATEGORY_OPEN_DURATION_TICKS) {
+                    finishCategoryClose();
+                }
+            } else if (ui.categoryTicks >= CATEGORY_OPEN_DURATION_TICKS) {
+                ui.state = ShopScreenState.CATEGORY;
+            }
+        }
     }
 
     public ShopCatalogEntry selectedCatalogEntry() {

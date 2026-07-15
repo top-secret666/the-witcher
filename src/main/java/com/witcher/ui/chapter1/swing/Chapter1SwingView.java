@@ -118,7 +118,9 @@ public final class Chapter1SwingView implements Chapter1View {
   @Override
   public void renderTextOverlay(Graphics2D g, int mouseX, int mouseY, Chapter1Presenter presenter) {
     Chapter1Phase phase = presenter.director().phase();
-    if (phase == Chapter1Phase.SHOP || phase == Chapter1Phase.HACK) {
+    // Не рисуем речь лавки поверх VN — отсюда «живой.осов?» при зависании покупки.
+    if ((phase == Chapter1Phase.SHOP || phase == Chapter1Phase.HACK)
+        && !presenter.isDukeDialogActive()) {
       presenter.shopScreen().renderTextOverlay(g, mouseX, mouseY);
     }
     if (presenter.hasActiveChoices()) {
@@ -129,7 +131,8 @@ public final class Chapter1SwingView implements Chapter1View {
         || phase == Chapter1Phase.BATTLE_RESULT
         || phase == Chapter1Phase.VN_BATTLE
         || phase == Chapter1Phase.VN_DIALOG
-        || phase == Chapter1Phase.ENDING) {
+        || phase == Chapter1Phase.ENDING
+        || (phase == Chapter1Phase.SHOP && presenter.isDukeDialogActive())) {
       Chapter1UiCursor.draw(g, mouseX, mouseY);
     }
   }
