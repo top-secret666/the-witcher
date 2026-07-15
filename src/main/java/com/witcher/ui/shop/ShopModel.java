@@ -27,6 +27,9 @@ import java.util.Set;
  */
 public final class ShopModel implements EquippedGear {
 
+    /** Временно для теста: покупки без списания крон. */
+    private static final boolean FREE_PURCHASES_FOR_TEST = true;
+
     public record PurchaseResult(boolean success, String dukeLine) {
         public static PurchaseResult ok(String line) {
             return new PurchaseResult(true, line);
@@ -198,7 +201,18 @@ public final class ShopModel implements EquippedGear {
         if (entry.armourSet != null && soldSets.contains(entry.armourSet)) {
             return false;
         }
-        return wallet >= entry.price;
+        return FREE_PURCHASES_FOR_TEST || wallet >= entry.price;
+    }
+
+    private boolean trySpend(int price) {
+        if (FREE_PURCHASES_FOR_TEST) {
+            return true;
+        }
+        if (wallet < price) {
+            return false;
+        }
+        wallet -= price;
+        return true;
     }
 
     public List<String> inventoryItemNames() {
@@ -352,10 +366,9 @@ public final class ShopModel implements EquippedGear {
             return PurchaseResult.fail(DukeLines.purchaseFailSold());
         }
         int price = entry.price;
-        if (wallet < price) {
+        if (!trySpend(price)) {
             return PurchaseResult.fail(DukeLines.purchaseFailMoney());
         }
-        wallet -= price;
         soldArmor.add(armour);
         playerInventory.add(armour);
         recordPurchase(armour.getName());
@@ -368,10 +381,9 @@ public final class ShopModel implements EquippedGear {
             return PurchaseResult.fail(DukeLines.purchaseFailSold());
         }
         int price = entry.price;
-        if (wallet < price) {
+        if (!trySpend(price)) {
             return PurchaseResult.fail(DukeLines.purchaseFailMoney());
         }
-        wallet -= price;
         soldSets.add(set);
         playerInventory.addAll(set.getArmorPieces());
         recordPurchase(set.getName());
@@ -379,10 +391,9 @@ public final class ShopModel implements EquippedGear {
     }
 
     private PurchaseResult purchasePlaceholder(ShopCatalogEntry entry, ShopCategory shelfCategory) {
-        if (wallet < entry.price) {
+        if (!trySpend(entry.price)) {
             return PurchaseResult.fail(DukeLines.purchaseFailMoney());
         }
-        wallet -= entry.price;
         if (shelfCategory == ShopCategory.POTION || shelfCategory == ShopCategory.WEAPON) {
             String[] lines = statLinesForCategory(shelfCategory);
             pouchConsumables.add(ShopInventorySlot.consumable(entry.name, shelfCategory, new String[]{
