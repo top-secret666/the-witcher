@@ -27,13 +27,13 @@ public final class ShopViewConstants {
     public static final int WALLET_REVEAL_TOTAL =
         WALLET_APPEAR_TICKS + WALLET_FLY_TICKS + WALLET_BAG_CLOSE_TICKS + WALLET_COUNT_TICKS;
 
-    public static final int PURCHASE_APPEAR_TICKS = 40;
+    public static final int PURCHASE_APPEAR_TICKS = 48;
     /** Обычный товар: сколько тиков только иконка, без свечения. */
-    public static final int PURCHASE_ICON_ONLY_TICKS = 18;
+    public static final int PURCHASE_ICON_ONLY_TICKS = 22;
     /** Обычный товар: пауза после полной иконки перед стартом свечения. */
-    public static final int PURCHASE_ICON_HOLD_TICKS = 8;
+    public static final int PURCHASE_ICON_HOLD_TICKS = 12;
     /** Обычный товар: набор яркости цветного свечения. */
-    public static final int PURCHASE_GLOW_IN_TICKS = 14;
+    public static final int PURCHASE_GLOW_IN_TICKS = 16;
     public static final int PURCHASE_FLY_TICKS = 34;
     public static final int PURCHASE_FADE_TICKS = 8;
     /** Сразу после fade — без мёртвой паузы закрытия сумки. */

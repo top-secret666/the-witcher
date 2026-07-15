@@ -548,18 +548,22 @@ public final class ShopSwingView implements ShopView {
             return;
         }
 
-        // Обычная броня: сначала полностью иконка, пауза, только потом цветное свечение.
+        // Обычная броня: сначала только иконка, пауза, потом отдельно набирает цветное свечение.
         int iconIn = PURCHASE_ICON_ONLY_TICKS;
         int glowStart = iconIn + PURCHASE_ICON_HOLD_TICKS;
         float iconAlpha = alpha;
-        if (ticks <= appearEnd) {
-            iconAlpha = alpha * smoothstep(Math.min(1f, ticks / (float) Math.max(1, iconIn)));
+        if (ticks < iconIn) {
+            iconAlpha = alpha * smoothstep(ticks / (float) Math.max(1, iconIn));
         }
 
-        if (ticks > glowStart) {
-            float glowAppearT = ticks <= appearEnd
-                ? smoothstep((ticks - glowStart) / (float) Math.max(1, PURCHASE_GLOW_IN_TICKS))
-                : 1f;
+        // Свечение не трогаем до glowStart — даже на полёте в сумку.
+        if (ticks >= glowStart) {
+            float glowAppearT;
+            if (ticks <= glowStart + PURCHASE_GLOW_IN_TICKS) {
+                glowAppearT = smoothstep((ticks - glowStart) / (float) Math.max(1, PURCHASE_GLOW_IN_TICKS));
+            } else {
+                glowAppearT = 1f;
+            }
             drawItemRevealGlow(g, ipx, ipy, ipw, alpha, glowAppearT, flyT, tuckT,
                 ui.purchaseRevealCategory);
         }
@@ -595,9 +599,13 @@ public final class ShopSwingView implements ShopView {
     private void drawItemRevealGlow(Graphics2D g, int px, int py, int pw,
                                     float alpha, float appearT, float flyT, float tuckT,
                                     ShopCategory category) {
-        float glow = alpha * (0.4f + appearT * 0.5f) * (1f - flyT * 0.2f) * (1f - tuckT);
+        // Без базовой яркости: при appearT=0 свечения нет (иначе иконка и glow стартуют вместе).
+        float glow = alpha * appearT * 0.95f * (1f - flyT * 0.25f) * (1f - tuckT);
+        if (glow <= 0.02f) {
+            return;
+        }
         ShopCategoryGlow.Tint tint = ShopCategoryGlow.forCategory(category);
-        drawSoftItemGlow(g, px + pw / 2, py + pw / 2, pw, glow, 1.7f, 1.1f, 0.2f, 0.38f,
+        drawSoftItemGlow(g, px + pw / 2, py + pw / 2, pw, glow, 1.7f, 1.1f, 0.22f, 0.4f,
             tint.outer(), tint.inner());
     }
 
