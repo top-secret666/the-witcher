@@ -549,7 +549,7 @@ public final class ShopSwingView implements ShopView {
         }
 
         float glowAppearT = ticks <= appearEnd ? appearT : 1f;
-        drawItemRevealGlow(g, ipx, ipy, ipw, alpha, glowAppearT, flyT, tuckT);
+        drawItemRevealGlow(g, ipx, ipy, ipw, alpha, glowAppearT, flyT, tuckT, ui.purchaseRevealCategory);
         drawPurchaseIcon(g, ipx, ipy, ipw, alpha);
     }
 
@@ -578,9 +578,12 @@ public final class ShopSwingView implements ShopView {
     }
 
     private void drawItemRevealGlow(Graphics2D g, int px, int py, int pw,
-                                    float alpha, float appearT, float flyT, float tuckT) {
+                                    float alpha, float appearT, float flyT, float tuckT,
+                                    ShopCategory category) {
         float glow = alpha * (0.4f + appearT * 0.5f) * (1f - flyT * 0.2f) * (1f - tuckT);
-        drawSoftGoldItemGlow(g, px + pw / 2, py + pw / 2, pw, glow, 1.7f, 1.1f, 0.2f, 0.38f);
+        ShopCategoryGlow.Tint tint = ShopCategoryGlow.forCategory(category);
+        drawSoftItemGlow(g, px + pw / 2, py + pw / 2, pw, glow, 1.7f, 1.1f, 0.2f, 0.38f,
+            tint.outer(), tint.inner());
     }
 
     private void drawWalletRevealBag(Graphics2D g, ShopLayout layout) {
@@ -1684,17 +1687,27 @@ public final class ShopSwingView implements ShopView {
 
     private static void drawSoftGoldItemGlow(Graphics2D g, int cx, int cy, int baseSize, float strength,
                                              float outerMul, float midMul, float outerAlpha, float midAlpha) {
+        drawSoftItemGlow(g, cx, cy, baseSize, strength, outerMul, midMul, outerAlpha, midAlpha,
+            new Color(255, 210, 80), new Color(255, 235, 150));
+    }
+
+    private static void drawSoftItemGlow(Graphics2D g, int cx, int cy, int baseSize, float strength,
+                                         float outerMul, float midMul, float outerAlpha, float midAlpha,
+                                         Color outerColor, Color midColor) {
+        if (strength <= 0.01f) {
+            return;
+        }
         Composite prev = g.getComposite();
         Object prevAa = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
         g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, strength * outerAlpha));
-        g.setColor(new Color(255, 210, 80));
+        g.setColor(outerColor);
         int outer = Math.round(baseSize * outerMul);
         g.fillOval(cx - outer / 2, cy - outer / 2, outer, outer);
 
         g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, strength * midAlpha));
-        g.setColor(new Color(255, 235, 150));
+        g.setColor(midColor);
         int mid = Math.round(baseSize * midMul);
         g.fillOval(cx - mid / 2, cy - mid / 2, mid, mid);
 
