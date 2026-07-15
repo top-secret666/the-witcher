@@ -202,17 +202,21 @@ public final class ShopStatBarRenderer {
                                            Color main, int baseValue, int newValue, int max,
                                            int animTick, int rowIndex) {
         Object interp = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
-        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
 
         Rectangle emptyCrop = cropOf(vialEmpty, true);
-        int padX = Math.max(4, Math.round(w * 0.11f));
-        int padY = Math.max(2, Math.round(h * 0.20f));
+        // Caps уже в стеклянном арте — жидкости только в середине трубки.
+        boolean glassSheet = vialOverlay == null && vialEndCap == null;
+        float padXRatio = glassSheet ? 0.13f : 0.11f;
+        float padYRatio = glassSheet ? 0.22f : 0.20f;
+        int padX = Math.max(4, Math.round(w * padXRatio));
+        int padY = Math.max(2, Math.round(h * padYRatio));
         int cavityX = x + padX;
         int cavityY = y + padY;
         int cavityW = Math.max(1, w - padX * 2);
         int cavityH = Math.max(1, h - padY * 2);
 
-        g.setColor(new Color(18, 12, 8, 210));
+        g.setColor(new Color(12, 8, 6, glassSheet ? 160 : 210));
         g.fillRoundRect(cavityX, cavityY, cavityW, cavityH, cavityH, cavityH);
 
         Shape savedClip = g.getClip();
@@ -221,15 +225,18 @@ public final class ShopStatBarRenderer {
             animTick, rowIndex);
         g.setClip(savedClip);
 
+        // Слой стекла поверх воды (исходный PNG не трогаем — чёрный ключ при загрузке).
         drawCroppedSprite(g, vialEmpty, emptyCrop, x, y, w, h);
         if (vialOverlay != null) {
             drawCroppedSprite(g, vialOverlay, cropOf(vialOverlay, false), x, y, w, h);
         }
-        applyWarmGlassTint(g, x, y, w, h);
-        if (vialEndCap != null) {
-            drawVialEndCaps(g, x, y, w, h, vialEndCap);
-        } else {
-            drawGothicVialTrim(g, x, y, w, h);
+        if (!glassSheet) {
+            applyWarmGlassTint(g, x, y, w, h);
+            if (vialEndCap != null) {
+                drawVialEndCaps(g, x, y, w, h, vialEndCap);
+            } else {
+                drawGothicVialTrim(g, x, y, w, h);
+            }
         }
 
         if (interp != null) {

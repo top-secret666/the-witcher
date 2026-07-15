@@ -197,9 +197,18 @@ public final class ShopAssetCache implements ShopRuntimeAssets, ShopOverlayAsset
         inventoryBagHover = loadSized(UI + "inventory_bag_hover.png", bagSize, bagSize,
             BASE + "ui/inventory_bag_hover.png", true);
         inventoryBagOpenFrames = loadBagOpenFrames(bagSize);
-        statVialEmpty = loadFirst(BASE + "ui/stat_vial_empty.png");
-        statVialOverlay = loadFirst(BASE + "ui/stat_vial_glass_overlay.png");
-        statVialEndCap = loadFirst(BAKED + "ui/stat_vial_end_cap.png", BASE + "ui/stat_vial_end_cap.png");
+        BufferedImage vialSheet = loadFirst(BASE + "ui/stat_vial_glass_sheet.png");
+        BufferedImage glassVial = ShopVialGlassPrep.loadMiddleGlass(vialSheet);
+        if (glassVial != null) {
+            // Прозрачное стекло поверх жидкости; caps уже в арте — empty/overlay/endCap не нужны.
+            statVialEmpty = glassVial;
+            statVialOverlay = null;
+            statVialEndCap = null;
+        } else {
+            statVialEmpty = loadFirst(BASE + "ui/stat_vial_empty.png");
+            statVialOverlay = loadFirst(BASE + "ui/stat_vial_glass_overlay.png");
+            statVialEndCap = loadFirst(BAKED + "ui/stat_vial_end_cap.png", BASE + "ui/stat_vial_end_cap.png");
+        }
         walletPouch = loadFirst(BASE + "wallet_pouch_gold.png");
         haloWallet = loadFirst(main.java.com.witcher.chapter1.assets.Chapter1AssetPaths.HALO_WALLET);
         haloPotion = loadFirst(main.java.com.witcher.chapter1.assets.Chapter1AssetPaths.HALO_POTION);
