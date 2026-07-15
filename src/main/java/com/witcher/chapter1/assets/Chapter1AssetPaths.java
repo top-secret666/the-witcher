@@ -24,6 +24,8 @@ public final class Chapter1AssetPaths {
   public static final String BOSS_WAKE_FOREST = BATTLE + "boss_wake_forest.png";
   public static final String SWORD_SLASH_SHEET_A = BATTLE + "sword_slash_sheet_a.png";
   public static final String SWORD_SLASH_SHEET_B = BATTLE + "sword_slash_sheet_b.png";
+  /** Раскадровка дуэли 5×12 (60 кадров). */
+  public static final String SWORD_SLASH_SHEET_RUSH = BATTLE + "sword_slash_sheet_rush.png";
 
   public static final String HALO_WALLET = UI + "halo_wallet.png";
   public static final String HALO_POTION = UI + "halo_potion.png";
