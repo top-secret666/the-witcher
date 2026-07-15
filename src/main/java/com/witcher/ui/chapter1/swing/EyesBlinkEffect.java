@@ -61,6 +61,11 @@ public final class EyesBlinkEffect {
     controller.tick();
   }
 
+  /** Пропуск анимации пробуждения. */
+  public void skip() {
+    controller.skip();
+  }
+
   public void render(Graphics2D g, int sw, int sh) {
     if (controller.mode() != EyesAwakeningController.Mode.AWAKENING) {
       return;

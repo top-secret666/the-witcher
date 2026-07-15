@@ -228,6 +228,12 @@ public final class Chapter1Presenter {
       return;
     }
     int code = e.getKeyCode();
+    if (director.phase() == Chapter1Phase.LOOP_SEQUENCE) {
+      if (code == KeyEvent.VK_SPACE || code == KeyEvent.VK_ENTER) {
+        skipLoopAwakening();
+      }
+      return;
+    }
     if (director.phase() == Chapter1Phase.BOSS_ENCOUNTER && encounter != null) {
       if (code == KeyEvent.VK_ENTER || code == KeyEvent.VK_SPACE) {
         encounter.updateDialog(0, 0, false, 0, true);
@@ -389,6 +395,16 @@ public final class Chapter1Presenter {
       director.enterBossEncounter();
       onPhaseEntered();
     }
+  }
+
+  private void skipLoopAwakening() {
+    if (director.phase() != Chapter1Phase.LOOP_SEQUENCE) {
+      return;
+    }
+    eyesEffect.skip();
+    loopCutscenePlayer.stop();
+    director.enterBossEncounter();
+    onPhaseEntered();
   }
 
   private void updateBossEncounter(int mouseX, int mouseY, boolean clicked, int wheelNotches) {

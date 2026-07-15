@@ -48,4 +48,11 @@ public final class EyesAwakeningController {
       mode = Mode.DONE;
     }
   }
+
+  /** Пропуск заставки пробуждения (пробел). */
+  public void skip() {
+    if (mode == Mode.AWAKENING || mode == Mode.IDLE) {
+      mode = Mode.DONE;
+    }
+  }
 }
