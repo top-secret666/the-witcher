@@ -98,8 +98,19 @@ public final class ShopPresenter {
             return;
         }
 
+        ShopScreenState stateBeforeTick = ui.state;
         tickTimedScenes();
         updateAshParticles();
+
+        // Если reveal только что сам доиграл, клик этого кадра не уходит в каталог/покупку.
+        boolean revealJustFinished = input.clicked()
+            && (stateBeforeTick == ShopScreenState.PURCHASE_REVEAL
+                || stateBeforeTick == ShopScreenState.BATTLE_CARD_REVEAL
+                || stateBeforeTick == ShopScreenState.WALLET_REVEAL)
+            && ui.state != stateBeforeTick;
+        if (revealJustFinished) {
+            return;
+        }
 
         ShopRevealAnimator reveal = revealAnimator();
         boolean showcaseInteractive = reveal.uiInteractive && ui.state == ShopScreenState.IDLE;
@@ -117,7 +128,8 @@ public final class ShopPresenter {
         }
 
         if (ui.state == ShopScreenState.PURCHASE_REVEAL && input.clicked()) {
-            ui.purchaseRevealTicks = PURCHASE_REVEAL_TOTAL - 1;
+            // Сразу завершаем: TOTAL-1 оставлял кадр и клик мог «протечь» в buy.
+            finishPurchaseReveal();
             return;
         }
 
@@ -787,6 +799,7 @@ public final class ShopPresenter {
             ui.purchaseRevealIcon = null;
             ui.purchaseRevealCategory = null;
         }
+        ui.purchaseRevealCrop = null;
         ui.purchaseRevealTicks = 0;
         ui.inventoryOpen = false;
         ui.equipmentOpen = false;
@@ -796,6 +809,7 @@ public final class ShopPresenter {
     private void finishPurchaseReveal() {
         ui.purchaseRevealTicks = 0;
         ui.purchaseRevealIcon = null;
+        ui.purchaseRevealCrop = null;
         ui.purchaseRevealCategory = null;
         if (ui.selectedIndex >= 0) {
             int keepIndex = Math.min(ui.purchaseRevealKeepRow, Math.max(0, ui.catalogEntries.size() - 2));

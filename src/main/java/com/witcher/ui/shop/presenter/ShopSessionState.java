@@ -37,6 +37,8 @@ public final class ShopSessionState {
     public int battleCardRevealTicks;
     public int purchaseRevealTicks;
     public BufferedImage purchaseRevealIcon;
+    /** Кэш обрезки иконки purchase-reveal — без повторного scan пикселей каждый кадр. */
+    public Rectangle purchaseRevealCrop;
     public ShopCategory purchaseRevealCategory;
     public int purchaseRevealKeepRow = -1;
     public boolean inventoryOpen;

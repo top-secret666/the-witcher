@@ -584,10 +584,14 @@ public final class ShopSwingView implements ShopView {
     }
 
     private void drawPurchaseIcon(Graphics2D g, int ipx, int ipy, int ipw, float alpha) {
-        Rectangle crop = ShopImageBounds.compute(ui.purchaseRevealIcon);
+        Rectangle crop = ui.purchaseRevealCrop;
+        if (crop == null && ui.purchaseRevealIcon != null) {
+            crop = ShopImageBounds.compute(ui.purchaseRevealIcon);
+            ui.purchaseRevealCrop = crop;
+        }
         Composite comp = g.getComposite();
         g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
-        if (crop.width > 0 && crop.height > 0) {
+        if (crop != null && crop.width > 0 && crop.height > 0) {
             g.drawImage(ui.purchaseRevealIcon, ipx, ipy, ipx + ipw, ipy + ipw,
                 crop.x, crop.y, crop.x + crop.width, crop.y + crop.height, null);
         } else {
