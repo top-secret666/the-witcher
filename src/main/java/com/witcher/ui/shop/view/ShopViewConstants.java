@@ -22,8 +22,9 @@ public final class ShopViewConstants {
 
     public static final int PURCHASE_APPEAR_TICKS = 24;
     public static final int PURCHASE_FLY_TICKS = 34;
-    public static final int PURCHASE_FADE_TICKS = 10;
-    public static final int PURCHASE_CLOSE_TICKS = 10;
+    public static final int PURCHASE_FADE_TICKS = 8;
+    /** Сразу после fade — без мёртвой паузы закрытия сумки. */
+    public static final int PURCHASE_CLOSE_TICKS = 0;
     public static final int PURCHASE_TUCK_TICKS = PURCHASE_FADE_TICKS + PURCHASE_CLOSE_TICKS;
     public static final int PURCHASE_REVEAL_TOTAL =
         PURCHASE_APPEAR_TICKS + PURCHASE_FLY_TICKS + PURCHASE_TUCK_TICKS;

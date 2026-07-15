@@ -77,16 +77,10 @@ public final class ShopPresenter {
                 ui.inventoryFocusedIndex = 0;
                 return;
             }
-            if (ui.state == ShopScreenState.WALLET_REVEAL) {
-                ui.walletRevealTicks = WALLET_REVEAL_TOTAL - 1;
-                return;
-            }
-            if (ui.state == ShopScreenState.BATTLE_CARD_REVEAL) {
-                ui.battleCardRevealTicks = BATTLE_CARD_REVEAL_TOTAL - 1;
-                return;
-            }
-            if (ui.state == ShopScreenState.PURCHASE_REVEAL) {
-                ui.purchaseRevealTicks = PURCHASE_REVEAL_TOTAL - 1;
+            // Кошелёк / карта / покупка: Esc не ускоряет анимацию reveal.
+            if (ui.state == ShopScreenState.WALLET_REVEAL
+                || ui.state == ShopScreenState.BATTLE_CARD_REVEAL
+                || ui.state == ShopScreenState.PURCHASE_REVEAL) {
                 return;
             }
             if (ui.state == ShopScreenState.CATEGORY || ui.state == ShopScreenState.CATEGORY_OPENING) {
@@ -147,8 +141,8 @@ public final class ShopPresenter {
 
         ShopLayout layout = createLayout();
 
-        if (ui.state == ShopScreenState.WALLET_REVEAL && input.clicked()) {
-            ui.walletRevealTicks = WALLET_REVEAL_TOTAL - 1;
+        // Reveal кошелька нельзя пропустить кликом — анимация всегда доигрывает.
+        if (ui.state == ShopScreenState.WALLET_REVEAL) {
             return;
         }
 
