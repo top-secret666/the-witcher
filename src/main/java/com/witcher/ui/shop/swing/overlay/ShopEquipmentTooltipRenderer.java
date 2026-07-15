@@ -5,7 +5,9 @@ import main.java.com.witcher.model.enums.ArmourType;
 import main.java.com.witcher.ui.graphics.GameFonts;
 import main.java.com.witcher.ui.shop.EquipmentArmourList;
 import main.java.com.witcher.shop.EquipSlot;
+import main.java.com.witcher.ui.shop.ShopCategory;
 import main.java.com.witcher.ui.shop.ShopModel;
+import main.java.com.witcher.ui.shop.swing.ShopCategoryGlow;
 
 import java.awt.AlphaComposite;
 import java.awt.Color;
@@ -21,14 +23,10 @@ import java.util.Locale;
 /** Тултип предмета в стиле инвентаря Ведьмака 3. */
 public final class ShopEquipmentTooltipRenderer {
 
-    private static final Color BG = new Color(6, 10, 18, 235);
-    private static final Color BORDER = new Color(72, 148, 210);
-    private static final Color TITLE = new Color(118, 188, 248);
-    private static final Color CATEGORY = new Color(148, 158, 172);
+    private static final Color BG = new Color(12, 10, 8, 238);
     private static final Color EFFECT = new Color(238, 198, 58);
-    private static final Color BODY = new Color(214, 218, 226);
-    private static final Color RARITY = new Color(98, 168, 232);
-    private static final Color FOOTER = new Color(170, 176, 188);
+    private static final Color BODY = new Color(220, 210, 190);
+    private static final Color FOOTER = new Color(170, 160, 140);
 
     private ShopEquipmentTooltipRenderer() {
     }
@@ -39,7 +37,15 @@ public final class ShopEquipmentTooltipRenderer {
         }
         GameFonts.applyGothicHints(g);
         int pad = 8;
-        int innerW = maxW - pad * 2;
+        int innerW = Math.max(24, maxW - pad * 2);
+
+        ShopCategory category = EquipmentArmourList.categoryFor(armour);
+        Color accent = ShopCategoryGlow.descriptionColor(category);
+        Color border = ShopCategoryGlow.borderColor(category);
+        Color categoryMute = new Color(
+            Math.max(40, accent.getRed() - 40),
+            Math.max(40, accent.getGreen() - 35),
+            Math.max(40, accent.getBlue() - 30));
 
         Font titleFont = GameFonts.get().uiBold(10);
         Font catFont = GameFonts.get().uiPlain(8);
@@ -47,21 +53,24 @@ public final class ShopEquipmentTooltipRenderer {
         Font bodyFont = GameFonts.get().uiPlain(8);
         Font footerFont = GameFonts.get().uiPlain(8);
 
-        g.setFont(bodyFont);
-        List<String> bodyLines = wrapLines(armour.getDescription(), g.getFontMetrics(bodyFont), innerW);
-        String bonus = model.armourBonusLine(armour);
-        String rarity = rarityLabel(armour.getType());
-        String slotLabel = slotLabel(armour);
-
         FontMetrics titleFm = g.getFontMetrics(titleFont);
         FontMetrics catFm = g.getFontMetrics(catFont);
         FontMetrics effectFm = g.getFontMetrics(effectFont);
         FontMetrics bodyFm = g.getFontMetrics(bodyFont);
         FontMetrics footerFm = g.getFontMetrics(footerFont);
 
-        int h = pad + titleFm.getAscent() + 4 + catFm.getHeight() + 6;
-        if (!bonus.isEmpty()) {
-            h += effectFm.getHeight() + 2;
+        List<String> titleLines = wrapLines(armour.getName().toUpperCase(Locale.ROOT), titleFm, innerW);
+        List<String> bodyLines = wrapLines(armour.getDescription(), bodyFm, innerW);
+        String bonus = model.armourBonusLine(armour);
+        List<String> bonusLines = bonus.isEmpty() ? List.of() : wrapLines(bonus, effectFm, innerW);
+        String rarity = rarityLabel(armour.getType());
+        String slotLabel = slotLabel(armour);
+
+        int h = pad;
+        h += titleLines.size() * titleFm.getHeight();
+        h += 4 + catFm.getHeight();
+        if (!bonusLines.isEmpty()) {
+            h += 6 + bonusLines.size() * effectFm.getHeight();
         }
         h += bodyLines.size() * (bodyFm.getHeight() + 1);
         h += 6 + catFm.getAscent() + 12 + footerFm.getHeight() + pad;
@@ -73,49 +82,57 @@ public final class ShopEquipmentTooltipRenderer {
         g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.98f));
         g.setColor(BG);
         g.fillRoundRect(x, y, maxW, h, 4, 4);
-        g.setColor(BORDER);
+        g.setColor(border);
         g.drawRoundRect(x, y, maxW - 1, h - 1, 4, 4);
         g.drawRoundRect(x + 1, y + 1, maxW - 3, h - 3, 3, 3);
 
-        int ty = y + pad + titleFm.getAscent();
+        int ty = y + pad;
         g.setFont(titleFont);
-        g.setColor(TITLE);
-        g.drawString(armour.getName().toUpperCase(Locale.ROOT), x + pad, ty);
+        g.setColor(accent);
+        for (String line : titleLines) {
+            ty += titleFm.getAscent();
+            g.drawString(line, x + pad, ty);
+            ty += titleFm.getDescent();
+        }
 
-        ty += 4 + catFm.getAscent();
+        ty += 4;
         g.setFont(catFont);
-        g.setColor(CATEGORY);
-        g.drawString(slotLabel.toUpperCase(Locale.ROOT), x + pad, ty);
+        g.setColor(categoryMute);
+        ty += catFm.getAscent();
+        g.drawString(truncate(slotLabel.toUpperCase(Locale.ROOT), catFm, innerW), x + pad, ty);
+        ty += catFm.getDescent();
 
-        ty += 6;
-        if (!bonus.isEmpty()) {
+        if (!bonusLines.isEmpty()) {
+            ty += 6;
             g.setFont(effectFont);
             g.setColor(EFFECT);
-            ty += effectFm.getAscent();
-            g.drawString(bonus, x + pad, ty);
-            ty += effectFm.getDescent() + 2;
+            for (String line : bonusLines) {
+                ty += effectFm.getAscent();
+                g.drawString(line, x + pad, ty);
+                ty += effectFm.getDescent();
+            }
         }
 
         g.setFont(bodyFont);
         g.setColor(BODY);
         for (String line : bodyLines) {
-            ty += bodyFm.getAscent();
+            ty += bodyFm.getAscent() + 1;
             g.drawString(line, x + pad, ty);
-            ty += bodyFm.getDescent() + 1;
+            ty += bodyFm.getDescent();
         }
 
         ty += 4;
         g.setFont(catFont);
-        g.setColor(RARITY);
+        g.setColor(accent);
         ty += catFm.getAscent();
-        g.drawString(rarity, x + pad, ty);
+        g.drawString(truncate(rarity, catFm, innerW), x + pad, ty);
 
         ty += 10;
         g.setFont(footerFont);
         g.setColor(FOOTER);
         ty += footerFm.getAscent();
         String footer = String.format("%.1f кг   ·   %d крон", armour.getWeight(), armour.getPrice());
-        g.drawString(footer, x + pad, ty);
+        g.drawString(truncate(footer, footerFm, innerW), x + pad, ty);
 
         g.setComposite(prev);
         if (interp != null) {
@@ -124,7 +141,7 @@ public final class ShopEquipmentTooltipRenderer {
     }
 
     public static int preferredWidth() {
-        return 152;
+        return 176;
     }
 
     private static String slotLabel(Armour armour) {
@@ -144,6 +161,23 @@ public final class ShopEquipmentTooltipRenderer {
         };
     }
 
+    private static String truncate(String text, FontMetrics fm, int maxW) {
+        if (text == null) {
+            return "";
+        }
+        if (fm.stringWidth(text) <= maxW) {
+            return text;
+        }
+        String ellipsis = "…";
+        for (int len = text.length() - 1; len > 0; len--) {
+            String cut = text.substring(0, len) + ellipsis;
+            if (fm.stringWidth(cut) <= maxW) {
+                return cut;
+            }
+        }
+        return ellipsis;
+    }
+
     private static List<String> wrapLines(String text, FontMetrics fm, int maxW) {
         List<String> lines = new ArrayList<>();
         if (text == null || text.isEmpty()) {
@@ -159,7 +193,15 @@ public final class ShopEquipmentTooltipRenderer {
                 String candidate = line.isEmpty() ? word : line + " " + word;
                 if (fm.stringWidth(candidate) > maxW && !line.isEmpty()) {
                     lines.add(line.toString());
-                    line = new StringBuilder(word);
+                    if (fm.stringWidth(word) > maxW) {
+                        softBreakWord(lines, word, fm, maxW);
+                        line = new StringBuilder();
+                    } else {
+                        line = new StringBuilder(word);
+                    }
+                } else if (fm.stringWidth(candidate) > maxW) {
+                    softBreakWord(lines, word, fm, maxW);
+                    line = new StringBuilder();
                 } else {
                     line = new StringBuilder(candidate);
                 }
@@ -169,5 +211,20 @@ public final class ShopEquipmentTooltipRenderer {
             }
         }
         return lines;
+    }
+
+    private static void softBreakWord(List<String> lines, String word, FontMetrics fm, int maxW) {
+        StringBuilder cur = new StringBuilder();
+        for (int i = 0; i < word.length(); i++) {
+            cur.append(word.charAt(i));
+            if (fm.stringWidth(cur.toString()) > maxW && cur.length() > 1) {
+                cur.deleteCharAt(cur.length() - 1);
+                lines.add(cur.toString());
+                cur = new StringBuilder().append(word.charAt(i));
+            }
+        }
+        if (!cur.isEmpty()) {
+            lines.add(cur.toString());
+        }
     }
 }

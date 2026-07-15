@@ -182,7 +182,8 @@ public final class ShopEquipmentOverlay {
         }
 
         if (tooltipArmour != null) {
-            int tipW = ShopEquipmentTooltipRenderer.preferredWidth();
+            int tipW = Math.min(ShopEquipmentTooltipRenderer.preferredWidth(),
+                Math.max(120, layout.portraitW - 8));
             int tipX = layout.portraitX + (layout.portraitW - tipW) / 2;
             int tipY = Math.max(layout.portraitY + 4,
                 Math.min(tooltipAnchorY, layout.portraitY + layout.portraitH - 110));
