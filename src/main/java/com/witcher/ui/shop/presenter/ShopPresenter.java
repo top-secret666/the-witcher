@@ -656,12 +656,14 @@ public final class ShopPresenter {
         ui.purchaseRevealKeepRow = ui.selectedRowIndex;
         if (ui.selectedIndex >= 0 && ui.selectedIndex < ui.showcaseItems.size()) {
             ShopShowcaseItem cat = ui.showcaseItems.get(ui.selectedIndex);
+            ui.purchaseRevealCategory = cat.category;
             ui.purchaseRevealIcon = armourIcons.iconForEntry(entry, cat.category);
             if (ui.purchaseRevealIcon == null) {
                 ui.purchaseRevealIcon = cat.cardArt != null ? cat.cardArt : cat.icon;
             }
         } else {
             ui.purchaseRevealIcon = null;
+            ui.purchaseRevealCategory = null;
         }
         ui.purchaseRevealTicks = 0;
         ui.inventoryOpen = false;
@@ -672,6 +674,7 @@ public final class ShopPresenter {
     private void finishPurchaseReveal() {
         ui.purchaseRevealTicks = 0;
         ui.purchaseRevealIcon = null;
+        ui.purchaseRevealCategory = null;
         if (ui.selectedIndex >= 0) {
             int keepIndex = Math.min(ui.purchaseRevealKeepRow, Math.max(0, ui.catalogEntries.size() - 2));
             buildCatalogRows(ui.showcaseItems.get(ui.selectedIndex));

@@ -126,6 +126,10 @@ public final class ShopAssetCache implements ShopRuntimeAssets, ShopOverlayAsset
     final BufferedImage statVialOverlay;
     final BufferedImage statVialEndCap;
     final BufferedImage walletPouch;
+    final BufferedImage haloWallet;
+    final BufferedImage haloPotion;
+    final BufferedImage haloMap;
+    final BufferedImage haloWeapon;
     /** LibGDX: защита, выносливость, знаки — строки каталога и легенда. */
     final BufferedImage[] statIcons = new BufferedImage[3];
 
@@ -197,6 +201,10 @@ public final class ShopAssetCache implements ShopRuntimeAssets, ShopOverlayAsset
         statVialOverlay = loadFirst(BASE + "ui/stat_vial_glass_overlay.png");
         statVialEndCap = loadFirst(BAKED + "ui/stat_vial_end_cap.png", BASE + "ui/stat_vial_end_cap.png");
         walletPouch = loadFirst(BASE + "wallet_pouch_gold.png");
+        haloWallet = loadFirst(main.java.com.witcher.chapter1.assets.Chapter1AssetPaths.HALO_WALLET);
+        haloPotion = loadFirst(main.java.com.witcher.chapter1.assets.Chapter1AssetPaths.HALO_POTION);
+        haloMap = loadFirst(main.java.com.witcher.chapter1.assets.Chapter1AssetPaths.HALO_MAP);
+        haloWeapon = loadFirst(main.java.com.witcher.chapter1.assets.Chapter1AssetPaths.HALO_WEAPON);
         for (int i = 0; i < statIcons.length; i++) {
             statIcons[i] = loadGdxUi(STAT_ICON_GDX_KEYS[i], loadStatIconFallback(STAT_ICON_FILES[i]));
         }

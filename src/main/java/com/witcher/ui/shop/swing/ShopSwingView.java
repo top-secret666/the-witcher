@@ -316,12 +316,12 @@ public final class ShopSwingView implements ShopView {
         int appearEnd = WALLET_APPEAR_TICKS;
         int flyEnd = appearEnd + WALLET_FLY_TICKS;
         int fadeEnd = flyEnd + WALLET_FADE_TICKS;
+        int ticks = ui.battleCardRevealTicks;
 
-        if (ui.battleCardRevealTicks > fadeEnd) {
+        if (ticks > fadeEnd) {
             return;
         }
 
-        float appearT = smoothstep(ui.battleCardRevealTicks / (float) appearEnd);
         float maxSize = 80f;
         float minSize = 13f;
 
@@ -335,14 +335,18 @@ public final class ShopSwingView implements ShopView {
         float py;
         float pw;
         float alpha;
+        float flyT = 0f;
+        float tuckT = 0f;
 
-        if (ui.battleCardRevealTicks <= appearEnd) {
-            pw = maxSize * (0.32f + appearT * 0.68f);
+        if (ticks <= appearEnd) {
+            float appearT = smoothstep(ticks / (float) appearEnd);
+            pw = maxSize * (0.55f + appearT * 0.45f);
             px = centerX - pw / 2f;
             py = centerY - pw / 2f;
-            alpha = Math.min(1f, appearT * 1.15f);
+            alpha = 1f;
         } else {
-            float posT = smoothstep((ui.battleCardRevealTicks - appearEnd) / (float) WALLET_FLY_TICKS);
+            flyT = Math.min(1f, (ticks - appearEnd) / (float) WALLET_FLY_TICKS);
+            float posT = smoothstep(flyT);
             float sizeT = posT * posT * (3f - 2f * posT);
             pw = maxSize + (minSize - maxSize) * sizeT;
             float cx = centerX + (bagCenterX - centerX) * posT;
@@ -350,12 +354,12 @@ public final class ShopSwingView implements ShopView {
             px = cx - pw / 2f;
             py = cy - pw / 2f;
             alpha = 1f;
-            if (ui.battleCardRevealTicks > flyEnd) {
-                float fadeT = smoothstep((ui.battleCardRevealTicks - flyEnd) / (float) WALLET_FADE_TICKS);
+            if (ticks > flyEnd) {
+                tuckT = smoothstep((ticks - flyEnd) / (float) WALLET_FADE_TICKS);
                 pw = minSize;
                 px = bagCenterX - pw / 2f;
                 py = bagCenterY - pw / 2f;
-                alpha = Math.max(0f, 1f - fadeT);
+                alpha = Math.max(0f, 1f - tuckT);
             }
         }
 
@@ -367,16 +371,44 @@ public final class ShopSwingView implements ShopView {
         int iph = Math.round(pw * 1.33f);
         int ipx = Math.round(px);
         int ipy = Math.round(py);
+        int cx = ipx + ipw / 2;
+        int cy = ipy + iph / 2;
+        float angle = ticks * 0.07f;
 
-        float glowAppearT = ui.battleCardRevealTicks <= appearEnd ? appearT : 1f;
-        float glowFlyT = ui.battleCardRevealTicks <= appearEnd ? 0f
-            : Math.min(1f, (ui.battleCardRevealTicks - appearEnd) / (float) WALLET_FLY_TICKS);
-        float glowTuckT = ui.battleCardRevealTicks > flyEnd
-            ? smoothstep((ui.battleCardRevealTicks - flyEnd) / (float) WALLET_FADE_TICKS) : 0f;
-        drawPouchGlow(g, ipx, ipy, ipw, iph, alpha, glowAppearT, glowFlyT, glowTuckT);
+        int seedEnd = WALLET_SEED_GLOW_TICKS;
+        int haloEnd = seedEnd + WALLET_HALO_IN_TICKS;
+
+        if (ticks < seedEnd) {
+            float seedT = smoothstep(ticks / (float) Math.max(1, seedEnd));
+            ShopItemHaloDraw.drawSeedGlow(g, cx, cy, ipw, alpha * seedT);
+            return;
+        }
+
+        float haloIn = ticks <= haloEnd
+            ? smoothstep((ticks - seedEnd) / (float) Math.max(1, WALLET_HALO_IN_TICKS))
+            : 1f;
+        float seedRemain = ticks <= haloEnd ? (1f - haloIn) * 0.55f : 0f;
+        if (seedRemain > 0.02f) {
+            ShopItemHaloDraw.drawSeedGlow(g, cx, cy, ipw, alpha * seedRemain);
+        }
+
+        ShopItemHaloDraw.drawOrbitingHalo(
+            g, assets.haloMap, cx, cy, ipw, alpha * haloIn, flyT, tuckT, angle);
+
+        float iconAlpha = alpha;
+        if (ticks <= appearEnd) {
+            if (ticks < haloEnd) {
+                return;
+            }
+            float iconIn = smoothstep((ticks - haloEnd) / (float) Math.max(1, WALLET_ICON_IN_TICKS));
+            iconAlpha = alpha * iconIn;
+        }
+        if (iconAlpha <= 0.02f) {
+            return;
+        }
 
         Composite prev = g.getComposite();
-        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, iconAlpha));
         g.drawImage(card, ipx, ipy, ipx + ipw, ipy + iph, 0, 0, card.getWidth(), card.getHeight(), null);
         g.setComposite(prev);
     }
@@ -422,13 +454,12 @@ public final class ShopSwingView implements ShopView {
         int appearEnd = PURCHASE_APPEAR_TICKS;
         int flyEnd = appearEnd + PURCHASE_FLY_TICKS;
         int fadeEnd = flyEnd + PURCHASE_FADE_TICKS;
-        int tuckEnd = fadeEnd + PURCHASE_CLOSE_TICKS;
+        int ticks = ui.purchaseRevealTicks;
 
-        if (ui.purchaseRevealTicks > fadeEnd) {
+        if (ticks > fadeEnd) {
             return;
         }
 
-        float appearT = smoothstep(ui.purchaseRevealTicks / (float) appearEnd);
         float maxSize = 76f;
         float minSize = 14f;
 
@@ -442,28 +473,31 @@ public final class ShopSwingView implements ShopView {
         float py;
         float pw;
         float alpha;
+        float flyT = 0f;
+        float tuckT = 0f;
+        float appearT = smoothstep(ticks / (float) appearEnd);
 
-        if (ui.purchaseRevealTicks <= appearEnd) {
-            pw = maxSize * (0.28f + appearT * 0.72f);
+        if (ticks <= appearEnd) {
+            pw = maxSize * (0.55f + appearT * 0.45f);
             px = centerX - pw / 2f;
             py = centerY - pw / 2f;
-            alpha = Math.min(1f, appearT * 1.1f);
+            alpha = 1f;
         } else {
-            float posT = smoothstep((ui.purchaseRevealTicks - appearEnd) / (float) PURCHASE_FLY_TICKS);
+            flyT = Math.min(1f, (ticks - appearEnd) / (float) PURCHASE_FLY_TICKS);
+            float posT = smoothstep(flyT);
             float sizeT = posT * posT * (3f - 2f * posT);
-
             pw = maxSize + (minSize - maxSize) * sizeT;
             float cx = centerX + (bagCenterX - centerX) * posT;
             float cy = centerY + (bagCenterY - centerY) * posT;
             px = cx - pw / 2f;
             py = cy - pw / 2f;
             alpha = 1f;
-            if (ui.purchaseRevealTicks > flyEnd) {
-                float fadeT = smoothstep((ui.purchaseRevealTicks - flyEnd) / (float) PURCHASE_FADE_TICKS);
+            if (ticks > flyEnd) {
+                tuckT = smoothstep((ticks - flyEnd) / (float) PURCHASE_FADE_TICKS);
                 pw = minSize;
                 px = bagCenterX - pw / 2f;
                 py = bagCenterY - pw / 2f;
-                alpha = Math.max(0f, 1f - fadeT);
+                alpha = Math.max(0f, 1f - tuckT);
             }
         }
 
@@ -474,14 +508,63 @@ public final class ShopSwingView implements ShopView {
         int ipw = Math.round(pw);
         int ipx = Math.round(px);
         int ipy = Math.round(py);
+        int cx = ipx + ipw / 2;
+        int cy = ipy + ipw / 2;
 
-        float glowAppearT = ui.purchaseRevealTicks <= appearEnd ? appearT : 1f;
-        float glowFlyT = ui.purchaseRevealTicks <= appearEnd ? 0f
-            : Math.min(1f, (ui.purchaseRevealTicks - appearEnd) / (float) PURCHASE_FLY_TICKS);
-        float glowTuckT = ui.purchaseRevealTicks > flyEnd
-            ? smoothstep((ui.purchaseRevealTicks - flyEnd) / (float) PURCHASE_FADE_TICKS) : 0f;
-        drawItemRevealGlow(g, ipx, ipy, ipw, alpha, glowAppearT, glowFlyT, glowTuckT);
+        BufferedImage specialHalo = specialPurchaseHalo(ui.purchaseRevealCategory);
+        if (specialHalo != null) {
+            float angle = ticks * 0.07f;
+            int seedEnd = WALLET_SEED_GLOW_TICKS;
+            int haloEnd = seedEnd + WALLET_HALO_IN_TICKS;
+            int iconInTicks = Math.max(1, appearEnd - haloEnd);
 
+            if (ticks < seedEnd) {
+                float seedT = smoothstep(ticks / (float) Math.max(1, seedEnd));
+                ShopItemHaloDraw.drawSeedGlow(g, cx, cy, ipw, alpha * seedT);
+                return;
+            }
+
+            float haloIn = ticks <= haloEnd
+                ? smoothstep((ticks - seedEnd) / (float) Math.max(1, WALLET_HALO_IN_TICKS))
+                : 1f;
+            float seedRemain = ticks <= haloEnd ? (1f - haloIn) * 0.55f : 0f;
+            if (seedRemain > 0.02f) {
+                ShopItemHaloDraw.drawSeedGlow(g, cx, cy, ipw, alpha * seedRemain);
+            }
+            ShopItemHaloDraw.drawOrbitingHalo(
+                g, specialHalo, cx, cy, ipw, alpha * haloIn, flyT, tuckT, angle);
+
+            float iconAlpha = alpha;
+            if (ticks <= appearEnd) {
+                if (ticks < haloEnd) {
+                    return;
+                }
+                iconAlpha = alpha * smoothstep((ticks - haloEnd) / (float) iconInTicks);
+            }
+            if (iconAlpha <= 0.02f) {
+                return;
+            }
+            drawPurchaseIcon(g, ipx, ipy, ipw, iconAlpha);
+            return;
+        }
+
+        float glowAppearT = ticks <= appearEnd ? appearT : 1f;
+        drawItemRevealGlow(g, ipx, ipy, ipw, alpha, glowAppearT, flyT, tuckT);
+        drawPurchaseIcon(g, ipx, ipy, ipw, alpha);
+    }
+
+    private BufferedImage specialPurchaseHalo(ShopCategory category) {
+        if (category == null) {
+            return null;
+        }
+        return switch (category) {
+            case POTION -> assets.haloPotion;
+            case WEAPON -> assets.haloWeapon;
+            default -> null;
+        };
+    }
+
+    private void drawPurchaseIcon(Graphics2D g, int ipx, int ipy, int ipw, float alpha) {
         Rectangle crop = ShopImageBounds.compute(ui.purchaseRevealIcon);
         Composite comp = g.getComposite();
         g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
@@ -943,13 +1026,12 @@ public final class ShopSwingView implements ShopView {
         int appearEnd = WALLET_APPEAR_TICKS;
         int flyEnd = appearEnd + WALLET_FLY_TICKS;
         int fadeEnd = flyEnd + WALLET_FADE_TICKS;
-        int closeEnd = fadeEnd + WALLET_CLOSE_TICKS;
+        int ticks = ui.walletRevealTicks;
 
-        if (ui.walletRevealTicks > fadeEnd) {
+        if (ticks > fadeEnd) {
             return;
         }
 
-        float appearT = smoothstep(ui.walletRevealTicks / (float) appearEnd);
         float maxSize = 80f;
         float minSize = 13f;
 
@@ -963,28 +1045,31 @@ public final class ShopSwingView implements ShopView {
         float py;
         float pw;
         float alpha;
+        float flyT = 0f;
+        float tuckT = 0f;
 
-        if (ui.walletRevealTicks <= appearEnd) {
-            pw = maxSize * (0.32f + appearT * 0.68f);
+        if (ticks <= appearEnd) {
+            float appearT = smoothstep(ticks / (float) appearEnd);
+            pw = maxSize * (0.55f + appearT * 0.45f);
             px = centerX - pw / 2f;
             py = centerY - pw / 2f;
-            alpha = Math.min(1f, appearT * 1.15f);
+            alpha = 1f;
         } else {
-            float posT = smoothstep((ui.walletRevealTicks - appearEnd) / (float) WALLET_FLY_TICKS);
+            flyT = Math.min(1f, (ticks - appearEnd) / (float) WALLET_FLY_TICKS);
+            float posT = smoothstep(flyT);
             float sizeT = posT * posT * (3f - 2f * posT);
-
             pw = maxSize + (minSize - maxSize) * sizeT;
             float cx = centerX + (bagCenterX - centerX) * posT;
             float cy = centerY + (bagCenterY - centerY) * posT;
             px = cx - pw / 2f;
             py = cy - pw / 2f;
             alpha = 1f;
-            if (ui.walletRevealTicks > flyEnd) {
-                float fadeT = smoothstep((ui.walletRevealTicks - flyEnd) / (float) WALLET_FADE_TICKS);
+            if (ticks > flyEnd) {
+                tuckT = smoothstep((ticks - flyEnd) / (float) WALLET_FADE_TICKS);
                 pw = minSize;
                 px = bagCenterX - pw / 2f;
                 py = bagCenterY - pw / 2f;
-                alpha = Math.max(0f, 1f - fadeT);
+                alpha = Math.max(0f, 1f - tuckT);
             }
         }
 
@@ -996,17 +1081,45 @@ public final class ShopSwingView implements ShopView {
         int iph = ipw;
         int ipx = Math.round(px);
         int ipy = Math.round(py);
+        int cx = ipx + ipw / 2;
+        int cy = ipy + iph / 2;
+        float angle = ticks * 0.07f;
 
-        float glowAppearT = ui.walletRevealTicks <= appearEnd ? appearT : 1f;
-        float glowFlyT = ui.walletRevealTicks <= appearEnd ? 0f
-            : Math.min(1f, (ui.walletRevealTicks - appearEnd) / (float) WALLET_FLY_TICKS);
-        float glowTuckT = ui.walletRevealTicks > flyEnd
-            ? smoothstep((ui.walletRevealTicks - flyEnd) / (float) WALLET_FADE_TICKS) : 0f;
-        drawPouchGlow(g, ipx, ipy, ipw, iph, alpha, glowAppearT, glowFlyT, glowTuckT);
+        int seedEnd = WALLET_SEED_GLOW_TICKS;
+        int haloEnd = seedEnd + WALLET_HALO_IN_TICKS;
+
+        if (ticks < seedEnd) {
+            float seedT = smoothstep(ticks / (float) Math.max(1, seedEnd));
+            ShopItemHaloDraw.drawSeedGlow(g, cx, cy, ipw, alpha * seedT);
+            return;
+        }
+
+        float haloIn = ticks <= haloEnd
+            ? smoothstep((ticks - seedEnd) / (float) Math.max(1, WALLET_HALO_IN_TICKS))
+            : 1f;
+        float seedRemain = ticks <= haloEnd ? (1f - haloIn) * 0.55f : 0f;
+        if (seedRemain > 0.02f) {
+            ShopItemHaloDraw.drawSeedGlow(g, cx, cy, ipw, alpha * seedRemain);
+        }
+
+        ShopItemHaloDraw.drawOrbitingHalo(
+            g, assets.haloWallet, cx, cy, ipw, alpha * haloIn, flyT, tuckT, angle);
+
+        float iconAlpha = alpha;
+        if (ticks <= appearEnd) {
+            if (ticks < haloEnd) {
+                return;
+            }
+            float iconIn = smoothstep((ticks - haloEnd) / (float) Math.max(1, WALLET_ICON_IN_TICKS));
+            iconAlpha = alpha * iconIn;
+        }
+        if (iconAlpha <= 0.02f) {
+            return;
+        }
 
         Rectangle crop = ShopImageBounds.compute(assets.walletPouch);
         Composite prev = g.getComposite();
-        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, iconAlpha));
         if (crop.width > 0 && crop.height > 0) {
             g.drawImage(assets.walletPouch, ipx, ipy, ipx + ipw, ipy + iph,
                 crop.x, crop.y, crop.x + crop.width, crop.y + crop.height, null);

@@ -2,6 +2,7 @@ package main.java.com.witcher.ui.shop.presenter;
 
 import main.java.com.witcher.ui.shop.EquipmentFilter;
 import main.java.com.witcher.ui.shop.ShopCatalogEntry;
+import main.java.com.witcher.ui.shop.ShopCategory;
 import main.java.com.witcher.shop.EquipSlot;
 import main.java.com.witcher.ui.shop.view.ShopShowcaseItem;
 
@@ -36,6 +37,7 @@ public final class ShopSessionState {
     public int battleCardRevealTicks;
     public int purchaseRevealTicks;
     public BufferedImage purchaseRevealIcon;
+    public ShopCategory purchaseRevealCategory;
     public int purchaseRevealKeepRow = -1;
     public boolean inventoryOpen;
     public boolean equipmentOpen;

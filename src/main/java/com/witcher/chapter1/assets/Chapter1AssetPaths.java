@@ -11,6 +11,7 @@ public final class Chapter1AssetPaths {
   public static final String BOOT_BG = SPRITES + "escape_boot_bg.png";
 
   public static final String BATTLE = SPRITES + "battle/";
+  public static final String UI = SPRITES + "ui/";
   public static final String CARD_ICON = BATTLE + "card_icon.png";
   public static final String CARD_CLOSED = BATTLE + "card_closed.png";
   public static final String CARD_MAP_OPEN = BATTLE + "card_map_open.png";
@@ -19,6 +20,11 @@ public final class Chapter1AssetPaths {
   public static final String BOSS_WAKE_FOREST = BATTLE + "boss_wake_forest.png";
   public static final String SWORD_SLASH_SHEET_A = BATTLE + "sword_slash_sheet_a.png";
   public static final String SWORD_SLASH_SHEET_B = BATTLE + "sword_slash_sheet_b.png";
+
+  public static final String HALO_WALLET = UI + "halo_wallet.png";
+  public static final String HALO_POTION = UI + "halo_potion.png";
+  public static final String HALO_MAP = UI + "halo_map.png";
+  public static final String HALO_WEAPON = UI + "halo_weapon.png";
 
   private Chapter1AssetPaths() {
   }
