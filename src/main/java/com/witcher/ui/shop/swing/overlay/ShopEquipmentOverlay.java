@@ -116,14 +116,7 @@ public final class ShopEquipmentOverlay {
             }
             int iconX = cell.x + (EQUIP_GRID_CELL - EQUIP_GRID_ICON) / 2;
             int iconY = cell.y + (EQUIP_GRID_CELL - EQUIP_GRID_ICON) / 2;
-            if (itemIcon != null) {
-                Object interp = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
-                g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
-                g.drawImage(itemIcon, iconX, iconY, EQUIP_GRID_ICON, EQUIP_GRID_ICON, null);
-                if (interp != null) {
-                    g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, interp);
-                }
-            }
+            drawCrispIcon(g, itemIcon, iconX, iconY, EQUIP_GRID_ICON);
             if (hovered) {
                 if (entry.isKit()) {
                     tooltipSet = entry.armourSet();
@@ -168,11 +161,11 @@ public final class ShopEquipmentOverlay {
             }
             if (equipped != null && icon != null) {
                 int iconSz = 30;
-                g.drawImage(icon, slotX + (slotSize - iconSz) / 2, sy + 7, iconSz, iconSz, null);
+                drawCrispIcon(g, icon, slotX + (slotSize - iconSz) / 2, sy + 7, iconSz);
             } else if (icon != null) {
                 g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.35f));
                 int iconSz = 26;
-                g.drawImage(icon, slotX + (slotSize - iconSz) / 2, sy + 9, iconSz, iconSz, null);
+                drawCrispIcon(g, icon, slotX + (slotSize - iconSz) / 2, sy + 9, iconSz);
                 g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.97f));
             }
             String slotLabel = slot.label;
@@ -225,17 +218,24 @@ public final class ShopEquipmentOverlay {
         g.drawRoundRect(slotBounds.x, slotBounds.y, slotBounds.width, slotBounds.height, 4, 4);
 
         BufferedImage icon = ctx.assets().weaponIcon();
+        if (weapon != null) {
+            BufferedImage product = ctx.armourIcons().iconForName(
+                weapon.title(), ShopCategory.WEAPON, 30);
+            if (product != null) {
+                icon = product;
+            }
+        }
         if (weapon != null && icon != null) {
             int iconSz = 30;
-            g.drawImage(icon,
+            drawCrispIcon(g, icon,
                 slotBounds.x + (slotBounds.width - iconSz) / 2,
-                slotBounds.y + 7, iconSz, iconSz, null);
+                slotBounds.y + 7, iconSz);
         } else if (icon != null) {
             g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.35f));
             int iconSz = 26;
-            g.drawImage(icon,
+            drawCrispIcon(g, icon,
                 slotBounds.x + (slotBounds.width - iconSz) / 2,
-                slotBounds.y + 9, iconSz, iconSz, null);
+                slotBounds.y + 9, iconSz);
             g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.97f));
         }
 
@@ -246,6 +246,19 @@ public final class ShopEquipmentOverlay {
             slotBounds.x + (slotBounds.width - sfm.stringWidth(slotLabel)) / 2,
             slotBounds.y + slotBounds.height - 4,
             new Color(170, 140, 90));
+    }
+
+    /** Pixel-sharp item art — без размытия при даунскейле в сетке/слотах. */
+    private static void drawCrispIcon(Graphics2D g, BufferedImage icon, int x, int y, int size) {
+        if (icon == null || size <= 0) {
+            return;
+        }
+        Object interp = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
+        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+        g.drawImage(icon, x, y, size, size, null);
+        if (interp != null) {
+            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, interp);
+        }
     }
 
     private static void drawPortraitFit(Graphics2D g, SpriteCallbacks sprites, BufferedImage img,
