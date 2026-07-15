@@ -18,9 +18,12 @@ public class SetRepository {
         initialSets.add(new BearSchoolSet());
         initialSets.add(new GriffinSchoolSet());
         initialSets.add(new ManticoreSchoolSet());
-        initialSets.add(new BeauclaireGuardSet());
-        initialSets.add(new ThousandFlowersSet());
+        // Региональные комплекты лавки (эмблемы + pieces в kits/)
         initialSets.add(new WhiteTigerSet());
+        initialSets.add(new TouissantSet());
+        initialSets.add(new BeauclaireGuardSet());
+        initialSets.add(new TemerianKitSet());
+        initialSets.add(new ThousandFlowersSet());
         initialSets.add(new HenGaidthSet());
         initialSets.add(new ForgottenWolfSet());
         return initialSets;
