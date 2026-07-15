@@ -77,6 +77,9 @@ public final class ArmourIconRegistry implements ShopEntryIcons {
         if (entry == null) {
             return null;
         }
+        if (entry.armourSet != null) {
+            return iconForName(entry.armourSet.getName(), category, size);
+        }
         if (entry.armour != null) {
             return iconFor(entry.armour, category, size);
         }
@@ -106,6 +109,7 @@ public final class ArmourIconRegistry implements ShopEntryIcons {
         return iconForName(armourName, null, iconSize);
     }
 
+    @Override
     public BufferedImage iconForName(String armourName, ShopCategory category, int size) {
         if (armourName == null || armourName.isBlank()) {
             return null;

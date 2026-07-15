@@ -40,4 +40,14 @@ public final class DelegatingShopIcons implements ShopEntryIcons {
         icon = gdx != null ? gdx.iconForArmour(armour, category, size) : null;
         return GdxIconBaker.isUsable(icon) ? icon : null;
     }
+
+    @Override
+    public BufferedImage iconForName(String name, ShopCategory category, int size) {
+        BufferedImage icon = swing.iconForName(name, category, size);
+        if (icon != null) {
+            return icon;
+        }
+        icon = gdx != null ? gdx.iconForName(name, category, size) : null;
+        return GdxIconBaker.isUsable(icon) ? icon : null;
+    }
 }

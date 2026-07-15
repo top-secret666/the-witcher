@@ -61,6 +61,9 @@ public final class GdxArmourIconRegistry implements ShopEntryIcons {
         if (entry == null) {
             return null;
         }
+        if (entry.armourSet != null) {
+            return iconForName(entry.armourSet.getName(), category);
+        }
         if (entry.armour != null) {
             return iconForName(entry.armour.getName(), category);
         }
@@ -82,6 +85,7 @@ public final class GdxArmourIconRegistry implements ShopEntryIcons {
         return iconForName(armourName, category, iconSize);
     }
 
+    @Override
     public BufferedImage iconForName(String armourName, ShopCategory category, int size) {
         if (armourName == null || armourName.isBlank()) {
             return null;
@@ -115,64 +119,7 @@ public final class GdxArmourIconRegistry implements ShopEntryIcons {
     }
 
     private static boolean matchesCategory(String fileName, ShopCategory category) {
-        if (category == null) {
-            return true;
-        }
-        return switch (category) {
-            case CHEST -> isChestIcon(fileName);
-            case LEGS -> isLegsIcon(fileName);
-            case GLOVES -> isGlovesIcon(fileName);
-            case BOOTS -> isBootsIcon(fileName);
-            case SETS -> isSetIcon(fileName);
-            case POTION -> isPotionIcon(fileName);
-            case WEAPON -> isWeaponIcon(fileName);
-        };
-    }
-
-    private static boolean isGlovesIcon(String fileName) {
-        String lower = fileName.toLowerCase(Locale.ROOT);
-        return lower.contains("gauntlets") || lower.contains("gloves");
-    }
-
-    private static boolean isBootsIcon(String fileName) {
-        String lower = fileName.toLowerCase(Locale.ROOT);
-        return lower.contains("boots") || lower.contains("shoes") || lower.contains("slippers");
-    }
-
-    private static boolean isSetIcon(String fileName) {
-        String lower = fileName.toLowerCase(Locale.ROOT);
-        return lower.contains("school") || lower.contains("szkola") || lower.contains("szkoła")
-            || lower.contains("cechu");
-    }
-
-    private static boolean isPotionIcon(String fileName) {
-        String lower = fileName.toLowerCase(Locale.ROOT);
-        return lower.contains("potion") || lower.contains("elixir") || lower.contains("decoction");
-    }
-
-    private static boolean isWeaponIcon(String fileName) {
-        String lower = fileName.toLowerCase(Locale.ROOT);
-        return lower.contains("sword") || lower.contains("crossbow") || lower.contains("laymore");
-    }
-
-    private static boolean isLegsIcon(String fileName) {
-        String lower = fileName.toLowerCase(Locale.ROOT);
-        return lower.contains("trousers")
-            || lower.contains("breeches")
-            || lower.contains("sharovary");
-    }
-
-    private static boolean isChestIcon(String fileName) {
-        if (isLegsIcon(fileName)) {
-            return false;
-        }
-        String lower = fileName.toLowerCase(Locale.ROOT);
-        return lower.startsWith("chest_")
-            || lower.contains("armor")
-            || lower.contains("cuirass")
-            || lower.contains("aketon")
-            || lower.contains("gambeson")
-            || lower.contains("halberdier");
+        return main.java.com.witcher.ui.shop.ArmourIconMap.matchesCategory(fileName, category);
     }
 
     private String resolveFile(String armourName) {

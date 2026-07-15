@@ -93,19 +93,55 @@ public final class ArmourIconMap {
     }
 
     private static boolean isGlovesIcon(String fileName) {
+        Integer kitSlot = kitPieceIndex(fileName);
+        if (kitSlot != null) {
+            return kitSlot == 3;
+        }
         String lower = fileName.toLowerCase(Locale.ROOT);
         return lower.contains("gauntlets") || lower.contains("gloves");
     }
 
     private static boolean isBootsIcon(String fileName) {
+        Integer kitSlot = kitPieceIndex(fileName);
+        if (kitSlot != null) {
+            return kitSlot == 4;
+        }
         String lower = fileName.toLowerCase(Locale.ROOT);
         return lower.contains("boots") || lower.contains("shoes") || lower.contains("slippers");
     }
 
     private static boolean isSetIcon(String fileName) {
+        if (kitPieceIndex(fileName) != null) {
+            return false;
+        }
         String lower = fileName.toLowerCase(Locale.ROOT);
         return lower.contains("school") || lower.contains("szkola") || lower.contains("szkoła")
-            || lower.contains("cechu");
+            || lower.contains("cechu") || lower.contains("kit") || lower.contains("set_of")
+            || lower.contains("the_set");
+    }
+
+    /** kits/Name-01..04 → 1 кираса, 2 штаны, 3 перчатки, 4 сапоги. */
+    private static Integer kitPieceIndex(String fileName) {
+        if (fileName == null) {
+            return null;
+        }
+        String lower = fileName.toLowerCase(Locale.ROOT).replace('\\', '/');
+        if (!lower.contains("kits/")) {
+            return null;
+        }
+        if (lower.endsWith("-01.png")) {
+            return 1;
+        }
+        if (lower.endsWith("-02.png")) {
+            return 2;
+        }
+        if (lower.endsWith("-03.png")) {
+            return 3;
+        }
+        if (lower.endsWith("-04.png")) {
+            return 4;
+        }
+        return null;
     }
 
     private static boolean isPotionIcon(String fileName) {
@@ -119,6 +155,10 @@ public final class ArmourIconMap {
     }
 
     private static boolean isLegsIcon(String fileName) {
+        Integer kitSlot = kitPieceIndex(fileName);
+        if (kitSlot != null) {
+            return kitSlot == 2;
+        }
         String lower = fileName.toLowerCase(Locale.ROOT);
         return lower.contains("trousers")
             || lower.contains("breeches")
@@ -126,6 +166,10 @@ public final class ArmourIconMap {
     }
 
     private static boolean isChestIcon(String fileName) {
+        Integer kitSlot = kitPieceIndex(fileName);
+        if (kitSlot != null) {
+            return kitSlot == 1;
+        }
         if (isLegsIcon(fileName)) {
             return false;
         }

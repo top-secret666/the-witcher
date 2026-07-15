@@ -52,6 +52,9 @@ public final class GdxBakedArmourIconRegistry implements ShopEntryIcons {
         if (entry == null) {
             return null;
         }
+        if (entry.armourSet != null) {
+            return iconForName(entry.armourSet.getName(), category, size);
+        }
         if (entry.armour != null) {
             return iconForArmour(entry.armour, category, size);
         }
@@ -61,6 +64,7 @@ public final class GdxBakedArmourIconRegistry implements ShopEntryIcons {
         return null;
     }
 
+    @Override
     public BufferedImage iconForName(String armourName, ShopCategory category, int size) {
         if (armourName == null || armourName.isBlank()) {
             return null;

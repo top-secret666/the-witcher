@@ -10,4 +10,6 @@ public interface ShopEntryIcons {
     BufferedImage iconForEntry(ShopCatalogEntry entry, ShopCategory category);
 
     BufferedImage iconForArmour(Armour armour, ShopCategory category, int size);
+
+    BufferedImage iconForName(String name, ShopCategory category, int size);
 }
