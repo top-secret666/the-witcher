@@ -20,11 +20,11 @@ public final class SwordSlashShowTimeline {
     }
   }
 
-  /** Быстрая раскадровка дуэли: 60 кадров ≈ 1.1 с. */
+  /** Быстрая раскадровка дуэли: 60 кадров ≈ 1.7 с. */
   public static final int RUSH_COLS = 5;
   public static final int RUSH_ROWS = 12;
   public static final int RUSH_FRAMES = RUSH_COLS * RUSH_ROWS;
-  public static final int RUSH_FRAME_MS = 18;
+  public static final int RUSH_FRAME_MS = 28;
   public static final long RUSH_START_MS = 40;
 
   private static final Clip RUSH_CLIP =
