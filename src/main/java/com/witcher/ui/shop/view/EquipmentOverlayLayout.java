@@ -139,20 +139,21 @@ public final class EquipmentOverlayLayout {
 
     public Rectangle filterButton(int index, int colX, int colY, int colW) {
         int filterCount = EquipmentFilter.values().length;
-        int padX = 5;
-        int cellW = (colW - padX * 2) / filterCount;
+        int padX = 4;
+        int gap = 2;
         int btnSize = EQUIP_FILTER_ICON + 4;
+        int usable = colW - padX * 2 - gap * Math.max(0, filterCount - 1);
+        int cellW = Math.max(btnSize, usable / filterCount);
+        int rowW = filterCount * cellW + gap * Math.max(0, filterCount - 1);
+        int startX = colX + Math.max(padX, (colW - rowW) / 2);
         int iconY = colY + 2;
-        int cellX = colX + padX + index * cellW;
+        int cellX = startX + index * (cellW + gap);
         return new Rectangle(cellX + (cellW - btnSize) / 2, iconY - 1, btnSize, btnSize);
     }
 
     public int filterIconX(int index, int colX, int colW) {
-        int filterCount = EquipmentFilter.values().length;
-        int padX = 5;
-        int cellW = (colW - padX * 2) / filterCount;
-        int cellX = colX + padX + index * cellW;
-        return cellX + (cellW - EQUIP_FILTER_ICON) / 2;
+        return filterButton(index, colX, filterY, colW).x
+            + (EQUIP_FILTER_ICON + 4 - EQUIP_FILTER_ICON) / 2;
     }
 
     public Rectangle equipSlot(int index) {

@@ -89,8 +89,8 @@ public final class ShopViewConstants {
     public static final int EQUIP_GRID_COLS = 4;
     public static final int EQUIP_GRID_CELL = 32;
     public static final int EQUIP_GRID_ICON = 28;
-    /** Ширина левой панели «Куплено» — 5 фильтров + 4 колонки иконок. */
-    public static final int EQUIP_LIST_W = 168;
+    /** Ширина левой панели «Куплено» — 7 фильтров без наложений + 4 колонки иконок. */
+    public static final int EQUIP_LIST_W = 214;
     /** Колбочки в левой колонке (компакт). */
     public static final int EQUIP_STATS_W = EQUIP_LIST_W - 8;
     public static final int EQUIP_STATS_H = 74;
