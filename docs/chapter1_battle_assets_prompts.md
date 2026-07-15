@@ -24,6 +24,6 @@ Paths are defined in `Chapter1AssetPaths.java`.
 | `boss_duke_map.png` | `BossCatalog` → `BossMapView` marker |
 | `boss_duke_portrait.png` | `BossMapView.drawBossPanel` hover/selected panel |
 
-**Flow:** full equip → `CARD_REVEAL` → card icon in shop → click → `BOSS_MAP` → click Duke → `LOOP_SEQUENCE` (loop_wake → eyes → illusion_wrong) → `LOOP_HOLD`.
+**Flow (canon):** equip → shop `BATTLE_CARD_REVEAL` (like wallet) → card icon in bag → click → `BOSS_MAP` → click Duke → `LOOP_SEQUENCE` (loop_wake) → `BOSS_ENCOUNTER` → `SWORD_CUTSCENE` → `BATTLE_RESULT` → `SHOP`.
 
-Hack `BREAK_LOOP` success → `LOOP_SEQUENCE` with eyes opening first (same chain).
+Hack `BREAK_LOOP` success → `LOOP_SEQUENCE` (legacy prelude; not the cinematic bag path).
