@@ -64,6 +64,7 @@ public final class Chapter1Presenter {
   private List<BossMapLayout.BossHit> bossHits = List.of();
   private BossEntry hoveredBoss;
   private BossEntry selectedBoss;
+  private boolean bossMapBackHovered;
   private boolean battleVictory;
   private boolean swordGlitchFrozen;
   private int hackShakeTick;
@@ -150,6 +151,10 @@ public final class Chapter1Presenter {
 
   public BossEntry selectedBoss() {
     return selectedBoss;
+  }
+
+  public boolean bossMapBackHovered() {
+    return bossMapBackHovered;
   }
 
   public List<VnChoiceLayout.ChoiceRect> choiceRects() {
@@ -319,6 +324,7 @@ public final class Chapter1Presenter {
     bossHits = BossMapLayout.layoutHits(Chapter1Layout.VIRTUAL_W, Chapter1Layout.VIRTUAL_H);
     hoveredBoss = null;
     selectedBoss = null;
+    bossMapBackHovered = false;
     Chapter1AssetPrewarm.warmBossMapDrawables();
     Chapter1AssetPrewarm.warmCutscenesAsync();
   }
@@ -343,7 +349,16 @@ public final class Chapter1Presenter {
   }
 
   private void updateBossMap(int mouseX, int mouseY, boolean clicked) {
-    hoveredBoss = BossMapLayout.hitBoss(bossHits, mouseX, mouseY);
+    var back = BossMapLayout.backButton(Chapter1Layout.VIRTUAL_W, Chapter1Layout.VIRTUAL_H);
+    bossMapBackHovered = back.contains(mouseX, mouseY);
+    if (clicked && bossMapBackHovered) {
+      hoveredBoss = null;
+      selectedBoss = null;
+      director.enterShop();
+      onPhaseEntered();
+      return;
+    }
+    hoveredBoss = bossMapBackHovered ? null : BossMapLayout.hitBoss(bossHits, mouseX, mouseY);
     if (!clicked || hoveredBoss == null) {
       return;
     }

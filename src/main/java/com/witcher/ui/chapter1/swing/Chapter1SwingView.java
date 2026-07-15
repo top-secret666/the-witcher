@@ -47,7 +47,8 @@ public final class Chapter1SwingView implements Chapter1View {
       case BOSS_MAP -> {
         Graphics2D g = screen.createGraphics();
         try {
-          BossMapView.draw(g, sw, sh, presenter.hoveredBoss(), presenter.selectedBoss());
+          BossMapView.draw(g, sw, sh, presenter.hoveredBoss(), presenter.selectedBoss(),
+              presenter.bossMapBackHovered());
         } finally {
           g.dispose();
         }

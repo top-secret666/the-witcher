@@ -5,9 +5,11 @@ import main.java.com.witcher.chapter1.battle.BossEntry;
 import main.java.com.witcher.ui.chapter1.view.BossMapLayout;
 import main.java.com.witcher.ui.chapter1.view.Chapter1ViewConstants;
 import main.java.com.witcher.ui.graphics.GameFonts;
+import main.java.com.witcher.ui.graphics.UiChrome;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 
 /** Полноэкранная карта боссов (только отрисовка). */
@@ -18,7 +20,8 @@ public final class BossMapView {
   private BossMapView() {
   }
 
-  public static void draw(Graphics2D g, int sw, int sh, BossEntry hovered, BossEntry selected) {
+  public static void draw(Graphics2D g, int sw, int sh, BossEntry hovered, BossEntry selected,
+                          boolean backHovered) {
     g.setColor(new Color(8, 6, 5));
     g.fillRect(0, 0, sw, sh);
 
@@ -59,9 +62,8 @@ public final class BossMapView {
       drawBossPanel(g, sw, sh, panelBoss);
     }
 
-    g.setFont(GameFonts.get().uiPlain(8));
-    g.setColor(new Color(200, 190, 170));
-    g.drawString("Выберите противника — клик для боя", 12, sh - 10);
+    Rectangle back = BossMapLayout.backButton(sw, sh);
+    UiChrome.drawArrowBackButton(g, back, backHovered, 1f);
   }
 
   private static void drawBossPanel(Graphics2D g, int sw, int sh, BossEntry boss) {

@@ -2,6 +2,7 @@ package main.java.com.witcher.ui.chapter1.view;
 
 import main.java.com.witcher.chapter1.battle.BossCatalog;
 import main.java.com.witcher.chapter1.battle.BossEntry;
+import main.java.com.witcher.ui.graphics.UiChrome;
 
 import java.awt.Rectangle;
 import java.util.ArrayList;
@@ -16,6 +17,10 @@ public final class BossMapLayout {
   }
 
   private BossMapLayout() {
+  }
+
+  public static Rectangle backButton(int sw, int sh) {
+    return new Rectangle(10, 10, UiChrome.BTN_SIZE, UiChrome.BTN_SIZE);
   }
 
   public static List<BossHit> layoutHits(int sw, int sh) {
