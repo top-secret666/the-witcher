@@ -11,14 +11,14 @@ public final class ShopViewConstants {
     public static final int REVEAL_DURATION_TICKS = 84;
     public static final int CATEGORY_OPEN_DURATION_TICKS = 28;
 
-    public static final int WALLET_APPEAR_TICKS = 42;
-    /** До ореола — только маленькое свечение. */
-    public static final int WALLET_SEED_GLOW_TICKS = 12;
-    /** Ореол набирает яркость; иконка ещё скрыта. */
-    public static final int WALLET_HALO_IN_TICKS = 14;
-    /** Появление иконки поверх ореола (остаток appear-фазы). */
-    public static final int WALLET_ICON_IN_TICKS =
-        WALLET_APPEAR_TICKS - WALLET_SEED_GLOW_TICKS - WALLET_HALO_IN_TICKS;
+    public static final int WALLET_APPEAR_TICKS = 40;
+    /** Сначала появляется сама иконка. */
+    public static final int WALLET_ICON_IN_TICKS = 14;
+    /** Затем маленькое свечение вокруг иконки. */
+    public static final int WALLET_SEED_GLOW_TICKS = 10;
+    /** У особых предметов после свечения — крутящийся ореол. */
+    public static final int WALLET_HALO_IN_TICKS =
+        WALLET_APPEAR_TICKS - WALLET_ICON_IN_TICKS - WALLET_SEED_GLOW_TICKS;
     public static final int WALLET_FLY_TICKS = 40;
     public static final int WALLET_FADE_TICKS = 10;
     public static final int WALLET_CLOSE_TICKS = 8;
@@ -27,7 +27,7 @@ public final class ShopViewConstants {
     public static final int WALLET_REVEAL_TOTAL =
         WALLET_APPEAR_TICKS + WALLET_FLY_TICKS + WALLET_BAG_CLOSE_TICKS + WALLET_COUNT_TICKS;
 
-    public static final int PURCHASE_APPEAR_TICKS = 36;
+    public static final int PURCHASE_APPEAR_TICKS = 34;
     public static final int PURCHASE_FLY_TICKS = 34;
     public static final int PURCHASE_FADE_TICKS = 8;
     /** Сразу после fade — без мёртвой паузы закрытия сумки. */

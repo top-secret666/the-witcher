@@ -375,34 +375,34 @@ public final class ShopSwingView implements ShopView {
         int cy = ipy + iph / 2;
         float angle = ticks * 0.07f;
 
-        int seedEnd = WALLET_SEED_GLOW_TICKS;
+        int iconEnd = WALLET_ICON_IN_TICKS;
+        int seedEnd = iconEnd + WALLET_SEED_GLOW_TICKS;
         int haloEnd = seedEnd + WALLET_HALO_IN_TICKS;
-
-        if (ticks < seedEnd) {
-            float seedT = smoothstep(ticks / (float) Math.max(1, seedEnd));
-            ShopItemHaloDraw.drawSeedGlow(g, cx, cy, ipw, alpha * seedT);
-            return;
-        }
-
-        float haloIn = ticks <= haloEnd
-            ? smoothstep((ticks - seedEnd) / (float) Math.max(1, WALLET_HALO_IN_TICKS))
-            : 1f;
-        float seedRemain = ticks <= haloEnd ? (1f - haloIn) * 0.55f : 0f;
-        if (seedRemain > 0.02f) {
-            ShopItemHaloDraw.drawSeedGlow(g, cx, cy, ipw, alpha * seedRemain);
-        }
-
-        ShopItemHaloDraw.drawOrbitingHalo(
-            g, assets.haloMap, cx, cy, ipw, alpha * haloIn, flyT, tuckT, angle);
 
         float iconAlpha = alpha;
         if (ticks <= appearEnd) {
-            if (ticks < haloEnd) {
-                return;
-            }
-            float iconIn = smoothstep((ticks - haloEnd) / (float) Math.max(1, WALLET_ICON_IN_TICKS));
-            iconAlpha = alpha * iconIn;
+            iconAlpha = alpha * smoothstep(ticks / (float) Math.max(1, iconEnd));
         }
+
+        // Эффекты поверх уже видимой иконки: glow → ореол.
+        if (ticks > iconEnd) {
+            float seedT = ticks <= seedEnd
+                ? smoothstep((ticks - iconEnd) / (float) Math.max(1, WALLET_SEED_GLOW_TICKS))
+                : 1f;
+            float haloT = ticks <= seedEnd ? 0f
+                : (ticks <= haloEnd
+                    ? smoothstep((ticks - seedEnd) / (float) Math.max(1, WALLET_HALO_IN_TICKS))
+                    : 1f);
+            float seedAlpha = alpha * seedT * (ticks <= seedEnd ? 1f : (1f - haloT * 0.45f));
+            if (seedAlpha > 0.02f) {
+                ShopItemHaloDraw.drawSeedGlow(g, cx, cy, ipw, seedAlpha);
+            }
+            if (haloT > 0.02f) {
+                ShopItemHaloDraw.drawOrbitingHalo(
+                    g, assets.haloMap, cx, cy, ipw, alpha * haloT, flyT, tuckT, angle);
+            }
+        }
+
         if (iconAlpha <= 0.02f) {
             return;
         }
@@ -514,59 +514,52 @@ public final class ShopSwingView implements ShopView {
         BufferedImage specialHalo = specialPurchaseHalo(ui.purchaseRevealCategory);
         if (specialHalo != null) {
             float angle = ticks * 0.07f;
-            int seedEnd = WALLET_SEED_GLOW_TICKS;
-            int haloEnd = seedEnd + WALLET_HALO_IN_TICKS;
-            int iconInTicks = Math.max(1, appearEnd - haloEnd);
-
-            if (ticks < seedEnd) {
-                float seedT = smoothstep(ticks / (float) Math.max(1, seedEnd));
-                ShopItemHaloDraw.drawSeedGlow(g, cx, cy, ipw, alpha * seedT);
-                return;
-            }
-
-            float haloIn = ticks <= haloEnd
-                ? smoothstep((ticks - seedEnd) / (float) Math.max(1, WALLET_HALO_IN_TICKS))
-                : 1f;
-            float seedRemain = ticks <= haloEnd ? (1f - haloIn) * 0.55f : 0f;
-            if (seedRemain > 0.02f) {
-                ShopItemHaloDraw.drawSeedGlow(g, cx, cy, ipw, alpha * seedRemain);
-            }
-            ShopItemHaloDraw.drawOrbitingHalo(
-                g, specialHalo, cx, cy, ipw, alpha * haloIn, flyT, tuckT, angle);
+            int iconEnd = WALLET_ICON_IN_TICKS;
+            int seedEnd = iconEnd + WALLET_SEED_GLOW_TICKS;
+            int haloEnd = seedEnd + Math.max(1, appearEnd - seedEnd);
 
             float iconAlpha = alpha;
             if (ticks <= appearEnd) {
-                if (ticks < haloEnd) {
-                    return;
+                iconAlpha = alpha * smoothstep(ticks / (float) Math.max(1, iconEnd));
+            }
+
+            if (ticks > iconEnd) {
+                float seedT = ticks <= seedEnd
+                    ? smoothstep((ticks - iconEnd) / (float) Math.max(1, WALLET_SEED_GLOW_TICKS))
+                    : 1f;
+                float haloT = ticks <= seedEnd ? 0f
+                    : (ticks <= haloEnd
+                        ? smoothstep((ticks - seedEnd) / (float) Math.max(1, haloEnd - seedEnd))
+                        : 1f);
+                float seedAlpha = alpha * seedT * (ticks <= seedEnd ? 1f : (1f - haloT * 0.45f));
+                if (seedAlpha > 0.02f) {
+                    ShopItemHaloDraw.drawSeedGlow(g, cx, cy, ipw, seedAlpha);
                 }
-                iconAlpha = alpha * smoothstep((ticks - haloEnd) / (float) iconInTicks);
+                if (haloT > 0.02f) {
+                    ShopItemHaloDraw.drawOrbitingHalo(
+                        g, specialHalo, cx, cy, ipw, alpha * haloT, flyT, tuckT, angle);
+                }
             }
-            if (iconAlpha <= 0.02f) {
-                return;
+
+            if (iconAlpha > 0.02f) {
+                drawPurchaseIcon(g, ipx, ipy, ipw, iconAlpha);
             }
-            drawPurchaseIcon(g, ipx, ipy, ipw, iconAlpha);
             return;
         }
 
-        // Обычная броня: сначала свечение, потом иконка поверх.
-        int seedEnd = Math.min(WALLET_SEED_GLOW_TICKS + 2, appearEnd / 2);
-        int iconStart = seedEnd;
-        int iconInTicks = Math.max(1, appearEnd - iconStart);
-        if (ticks < seedEnd) {
-            float seedT = smoothstep(ticks / (float) Math.max(1, seedEnd));
-            drawItemRevealGlow(g, ipx, ipy, ipw, alpha * seedT, seedT, flyT, tuckT,
-                ui.purchaseRevealCategory);
-            return;
-        }
-        float glowAppearT = ticks <= appearEnd
-            ? smoothstep((ticks - seedEnd) / (float) Math.max(1, appearEnd - seedEnd))
-            : 1f;
-        glowAppearT = Math.max(0.55f, glowAppearT);
-        drawItemRevealGlow(g, ipx, ipy, ipw, alpha, glowAppearT, flyT, tuckT, ui.purchaseRevealCategory);
-
+        // Обычная броня: сначала иконка, потом цветное свечение.
+        int iconEnd = Math.min(WALLET_ICON_IN_TICKS, appearEnd / 2);
         float iconAlpha = alpha;
         if (ticks <= appearEnd) {
-            iconAlpha = alpha * smoothstep((ticks - iconStart) / (float) iconInTicks);
+            iconAlpha = alpha * smoothstep(ticks / (float) Math.max(1, iconEnd));
+        }
+        float glowAppearT = 0f;
+        if (ticks > iconEnd) {
+            glowAppearT = ticks <= appearEnd
+                ? smoothstep((ticks - iconEnd) / (float) Math.max(1, appearEnd - iconEnd))
+                : 1f;
+            drawItemRevealGlow(g, ipx, ipy, ipw, alpha, glowAppearT, flyT, tuckT,
+                ui.purchaseRevealCategory);
         }
         if (iconAlpha > 0.02f) {
             drawPurchaseIcon(g, ipx, ipy, ipw, iconAlpha);
@@ -1123,34 +1116,33 @@ public final class ShopSwingView implements ShopView {
         int cy = ipy + iph / 2;
         float angle = ticks * 0.07f;
 
-        int seedEnd = WALLET_SEED_GLOW_TICKS;
+        int iconEnd = WALLET_ICON_IN_TICKS;
+        int seedEnd = iconEnd + WALLET_SEED_GLOW_TICKS;
         int haloEnd = seedEnd + WALLET_HALO_IN_TICKS;
-
-        if (ticks < seedEnd) {
-            float seedT = smoothstep(ticks / (float) Math.max(1, seedEnd));
-            ShopItemHaloDraw.drawSeedGlow(g, cx, cy, ipw, alpha * seedT);
-            return;
-        }
-
-        float haloIn = ticks <= haloEnd
-            ? smoothstep((ticks - seedEnd) / (float) Math.max(1, WALLET_HALO_IN_TICKS))
-            : 1f;
-        float seedRemain = ticks <= haloEnd ? (1f - haloIn) * 0.55f : 0f;
-        if (seedRemain > 0.02f) {
-            ShopItemHaloDraw.drawSeedGlow(g, cx, cy, ipw, alpha * seedRemain);
-        }
-
-        ShopItemHaloDraw.drawOrbitingHalo(
-            g, assets.haloWallet, cx, cy, ipw, alpha * haloIn, flyT, tuckT, angle);
 
         float iconAlpha = alpha;
         if (ticks <= appearEnd) {
-            if (ticks < haloEnd) {
-                return;
-            }
-            float iconIn = smoothstep((ticks - haloEnd) / (float) Math.max(1, WALLET_ICON_IN_TICKS));
-            iconAlpha = alpha * iconIn;
+            iconAlpha = alpha * smoothstep(ticks / (float) Math.max(1, iconEnd));
         }
+
+        if (ticks > iconEnd) {
+            float seedT = ticks <= seedEnd
+                ? smoothstep((ticks - iconEnd) / (float) Math.max(1, WALLET_SEED_GLOW_TICKS))
+                : 1f;
+            float haloT = ticks <= seedEnd ? 0f
+                : (ticks <= haloEnd
+                    ? smoothstep((ticks - seedEnd) / (float) Math.max(1, WALLET_HALO_IN_TICKS))
+                    : 1f);
+            float seedAlpha = alpha * seedT * (ticks <= seedEnd ? 1f : (1f - haloT * 0.45f));
+            if (seedAlpha > 0.02f) {
+                ShopItemHaloDraw.drawSeedGlow(g, cx, cy, ipw, seedAlpha);
+            }
+            if (haloT > 0.02f) {
+                ShopItemHaloDraw.drawOrbitingHalo(
+                    g, assets.haloWallet, cx, cy, ipw, alpha * haloT, flyT, tuckT, angle);
+            }
+        }
+
         if (iconAlpha <= 0.02f) {
             return;
         }
