@@ -522,13 +522,7 @@ public final class ShopPresenter {
                 } else if (ui.inventoryEquipButtonBounds.contains(mouseX, mouseY)) {
                     handleInventoryAction(slots);
                 } else if (ui.inventoryHoveredIndex >= 0) {
-                    ShopInventorySlot slot = slots.get(ui.inventoryHoveredIndex);
-                    if (slot.kind() == ShopInventoryKind.BATTLE_CARD && chapterBridge != null) {
-                        chapterBridge.useBattleCard();
-                        ui.inventoryOpen = false;
-                    } else {
-                        ui.inventoryFocusedIndex = ui.inventoryHoveredIndex;
-                    }
+                    ui.inventoryFocusedIndex = ui.inventoryHoveredIndex;
                 } else if (!ui.inventoryPanelBounds.contains(mouseX, mouseY)) {
                     ui.inventoryOpen = false;
                     ui.inventoryFocusedIndex = 0;
