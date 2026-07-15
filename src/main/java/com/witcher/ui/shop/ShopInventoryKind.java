@@ -5,5 +5,14 @@ public enum ShopInventoryKind {
     WALLET,
     BATTLE_CARD,
     POTION,
-    WEAPON
+    WEAPON,
+    ARMOUR;
+
+    public String actionLabel() {
+        return switch (this) {
+            case POTION -> "Выпить";
+            case BATTLE_CARD -> "Открыть";
+            default -> "Экипировка";
+        };
+    }
 }

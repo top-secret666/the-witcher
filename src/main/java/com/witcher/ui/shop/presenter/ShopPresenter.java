@@ -281,7 +281,20 @@ public final class ShopPresenter {
         if (chapterBridge != null && chapterBridge.battleCardInInventory()) {
             slots.add(ShopInventorySlot.battleCard());
         }
-        slots.addAll(model.pouchConsumables());
+        List<ShopInventorySlot> potions = new ArrayList<>();
+        List<ShopInventorySlot> weapons = new ArrayList<>();
+        for (ShopInventorySlot pouch : model.pouchConsumables()) {
+            if (pouch.kind() == ShopInventoryKind.WEAPON) {
+                weapons.add(pouch);
+            } else {
+                potions.add(pouch);
+            }
+        }
+        slots.addAll(potions);
+        slots.addAll(weapons);
+        for (Armour armour : model.ownedArmour()) {
+            slots.add(ShopInventorySlot.armour(armour));
+        }
         return slots;
     }
 
@@ -503,12 +516,7 @@ public final class ShopPresenter {
                     ui.inventoryOpen = false;
                     ui.inventoryFocusedIndex = 0;
                 } else if (ui.inventoryEquipButtonBounds.contains(mouseX, mouseY)) {
-                    ui.equipmentOpen = true;
-                    ui.inventoryOpen = false;
-                    ui.equipmentFilter = EquipmentFilter.ALL;
-                    ui.equipmentHoveredRow = -1;
-                    ui.equipmentHoveredSlot = -1;
-                    ui.equipmentHoveredFilter = -1;
+                    handleInventoryAction(slots);
                 } else if (ui.inventoryHoveredIndex >= 0) {
                     ShopInventorySlot slot = slots.get(ui.inventoryHoveredIndex);
                     if (slot.kind() == ShopInventoryKind.BATTLE_CARD && chapterBridge != null) {
@@ -526,6 +534,48 @@ public final class ShopPresenter {
             ui.inventoryOpen = true;
             ui.inventoryFocusedIndex = Math.min(ui.inventoryFocusedIndex, Math.max(0, slots.size() - 1));
         }
+    }
+
+    private void handleInventoryAction(List<ShopInventorySlot> slots) {
+        ShopInventorySlot focused = null;
+        if (ui.inventoryFocusedIndex >= 0 && ui.inventoryFocusedIndex < slots.size()) {
+            focused = slots.get(ui.inventoryFocusedIndex);
+        }
+        if (focused == null) {
+            openEquipmentFromInventory();
+            return;
+        }
+        switch (focused.kind()) {
+            case POTION -> {
+                if (model.drinkPotion(focused.title())) {
+                    ui.currentDialog = DukeLines.potionDrunk(focused.title());
+                    ui.inventoryFocusedIndex = Math.min(ui.inventoryFocusedIndex,
+                        Math.max(0, inventorySlots().size() - 1));
+                }
+            }
+            case BATTLE_CARD -> {
+                if (chapterBridge != null) {
+                    chapterBridge.useBattleCard();
+                    ui.inventoryOpen = false;
+                }
+            }
+            case ARMOUR -> {
+                if (focused.armour() != null) {
+                    model.equipArmour(focused.armour());
+                }
+                openEquipmentFromInventory();
+            }
+            default -> openEquipmentFromInventory();
+        }
+    }
+
+    private void openEquipmentFromInventory() {
+        ui.equipmentOpen = true;
+        ui.inventoryOpen = false;
+        ui.equipmentFilter = EquipmentFilter.ALL;
+        ui.equipmentHoveredRow = -1;
+        ui.equipmentHoveredSlot = -1;
+        ui.equipmentHoveredFilter = -1;
     }
 
     private void updateEquipmentInput(int mouseX, int mouseY, boolean clicked) {

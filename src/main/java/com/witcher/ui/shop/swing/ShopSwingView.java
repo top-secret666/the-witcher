@@ -827,8 +827,8 @@ public final class ShopSwingView implements ShopView {
                 }
 
                 @Override
-                public int drawDetail(Graphics2D gg, ShopInventorySlot slot, int x, int y, int maxW) {
-                    return drawInventorySlotDetail(gg, slot, x, y, maxW);
+                public int drawDetail(Graphics2D gg, ShopInventorySlot slot, int x, int y, int maxW, int maxH) {
+                    return drawInventorySlotDetail(gg, slot, x, y, maxW, maxH);
                 }
             }, sw, sh);
     }
@@ -855,16 +855,22 @@ public final class ShopSwingView implements ShopView {
                     g.drawImage(icon, x, y, size, size, null);
                 }
             }
+            case ARMOUR -> {
+                BufferedImage icon = armourIcons.iconForArmour(slot.armour(), slot.iconCategory(), size);
+                if (icon != null) {
+                    g.drawImage(icon, x, y, size, size, null);
+                }
+            }
         }
         g.setComposite(prev);
     }
 
-    private int drawInventorySlotDetail(Graphics2D g, ShopInventorySlot slot, int x, int y, int maxW) {
-        int large = INVENTORY_POUCH_LARGE;
+    private int drawInventorySlotDetail(Graphics2D g, ShopInventorySlot slot, int x, int y, int maxW, int maxH) {
+        int large = Math.min(INVENTORY_POUCH_LARGE, Math.max(64, maxW - 8));
         int iconY = y;
         int iconX = x + (maxW - large) / 2;
         Shape prevClip = g.getClip();
-        g.clipRect(x, y, maxW, large + 56);
+        g.clipRect(x, y, maxW, Math.max(1, maxH));
 
         switch (slot.kind()) {
             case WALLET -> {
@@ -885,16 +891,25 @@ public final class ShopSwingView implements ShopView {
                     g.drawImage(icon, iconX, iconY, large, large, null);
                 }
             }
+            case ARMOUR -> {
+                BufferedImage icon = armourIcons.iconForArmour(slot.armour(), slot.iconCategory(), large);
+                if (icon != null) {
+                    g.drawImage(icon, iconX, iconY, large, large, null);
+                }
+            }
         }
 
         g.setFont(GameFonts.get().uiBold(11));
         g.setColor(new Color(255, 220, 140));
         int textY = iconY + large + 14;
-        g.drawString(slot.title(), x, textY);
+        g.drawString(truncateToWidth(slot.title(), g.getFontMetrics(), maxW), x, textY);
         g.setFont(GameFonts.get().uiPlain(10));
         g.setColor(new Color(220, 195, 130));
         textY += 14;
         for (String line : slot.detailLines()) {
+            if (textY > y + maxH - 4) {
+                break;
+            }
             g.drawString(truncateToWidth(line, g.getFontMetrics(), maxW), x, textY);
             textY += 13;
         }

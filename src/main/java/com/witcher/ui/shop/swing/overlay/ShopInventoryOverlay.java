@@ -12,12 +12,15 @@ import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.util.List;
 
+import static main.java.com.witcher.ui.shop.view.ShopViewConstants.INVENTORY_ACTION_BTN_H;
+import static main.java.com.witcher.ui.shop.view.ShopViewConstants.INVENTORY_DETAIL_W;
+import static main.java.com.witcher.ui.shop.view.ShopViewConstants.INVENTORY_GRID_COLS;
 import static main.java.com.witcher.ui.shop.view.ShopViewConstants.INVENTORY_PANEL_H;
 import static main.java.com.witcher.ui.shop.view.ShopViewConstants.INVENTORY_PANEL_W;
 import static main.java.com.witcher.ui.shop.view.ShopViewConstants.INVENTORY_POUCH_ICON;
 
 /**
- * Слой инвентаря поверх лавки — иконки (кошелёк, карта, зелья, оружие).
+ * Инвентарь: слева арт + описание + действие, справа сетка иконок без линий.
  */
 public final class ShopInventoryOverlay {
 
@@ -25,7 +28,7 @@ public final class ShopInventoryOverlay {
     void drawIcon(Graphics2D g, ShopInventorySlot slot, int x, int y, int size,
                   boolean focused, boolean hovered);
 
-    int drawDetail(Graphics2D g, ShopInventorySlot slot, int x, int y, int maxW);
+    int drawDetail(Graphics2D g, ShopInventorySlot slot, int x, int y, int maxW, int maxH);
   }
 
   private ShopInventoryOverlay() {
@@ -47,7 +50,7 @@ public final class ShopInventoryOverlay {
     g.fillRect(0, 0, sw, sh);
 
     int px = (sw - INVENTORY_PANEL_W) / 2;
-    int py = (sh - INVENTORY_PANEL_H) / 2 - 16;
+    int py = (sh - INVENTORY_PANEL_H) / 2 - 8;
     ctx.ui().inventoryPanelBounds.setBounds(px, py, INVENTORY_PANEL_W, INVENTORY_PANEL_H);
 
     g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.96f));
@@ -64,45 +67,56 @@ public final class ShopInventoryOverlay {
     ctx.ui().inventoryCloseBounds.setBounds(UiChrome.closeButtonRect(px, py, INVENTORY_PANEL_W));
     UiChrome.drawCloseButton(g, ctx.ui().inventoryCloseBounds, ctx.ui().inventoryCloseHovered, 1f);
 
+    int contentTop = py + 30;
+    int contentBottom = py + INVENTORY_PANEL_H - 10;
+    int detailX = px + 12;
+    int detailW = INVENTORY_DETAIL_W;
+    int gap = 10;
+    int gridX = detailX + detailW + gap;
+    int gridW = px + INVENTORY_PANEL_W - 12 - gridX;
+    int cell = INVENTORY_POUCH_ICON;
+    int cellGap = 6;
+    int cols = Math.max(1, Math.min(INVENTORY_GRID_COLS, Math.max(1, (gridW + cellGap) / (cell + cellGap))));
+
     slotBoundsOut.clear();
-    int iconX = px + 12;
-    int iconY = py + 34;
-    int gap = 6;
     for (int i = 0; i < slots.size(); i++) {
-      Rectangle bounds = new Rectangle(iconX, iconY, INVENTORY_POUCH_ICON, INVENTORY_POUCH_ICON);
+      int col = i % cols;
+      int row = i / cols;
+      int x = gridX + col * (cell + cellGap);
+      int y = contentTop + row * (cell + cellGap);
+      if (y + cell > contentBottom) {
+        break;
+      }
+      Rectangle bounds = new Rectangle(x, y, cell, cell);
       slotBoundsOut.add(bounds);
       boolean focused = i == focusedIndex;
       boolean hovered = i == hoveredIndex;
-      callbacks.drawIcon(g, slots.get(i), iconX, iconY, INVENTORY_POUCH_ICON, focused, hovered);
-      iconX += INVENTORY_POUCH_ICON + gap;
-      if (iconX + INVENTORY_POUCH_ICON > px + INVENTORY_PANEL_W - 12) {
-        iconX = px + 12;
-        iconY += INVENTORY_POUCH_ICON + gap;
-      }
+      callbacks.drawIcon(g, slots.get(i), x, y, cell, focused, hovered);
     }
 
-    int detailX = px + 12;
-    int detailY = iconY + INVENTORY_POUCH_ICON + 10;
-    int detailW = INVENTORY_PANEL_W - 24;
-    int detailBottom = detailY;
+    int actionH = INVENTORY_ACTION_BTN_H;
+    int actionY = contentBottom - actionH;
+    int detailMaxH = actionY - contentTop - 8;
+    int detailBottom = contentTop;
+    String actionLabel = "Экипировка";
     if (!slots.isEmpty() && focusedIndex >= 0 && focusedIndex < slots.size()) {
-      detailBottom = callbacks.drawDetail(g, slots.get(focusedIndex), detailX, detailY, detailW);
+      ShopInventorySlot focused = slots.get(focusedIndex);
+      actionLabel = focused.actionLabel();
+      detailBottom = callbacks.drawDetail(g, focused, detailX, contentTop, detailW, detailMaxH);
     }
 
-    int equipBtnW = 108;
-    int equipBtnH = 22;
-    int equipBtnX = px + INVENTORY_PANEL_W - equipBtnW - 10;
-    int equipBtnY = py + INVENTORY_PANEL_H - equipBtnH - 8;
-    ctx.ui().inventoryEquipButtonBounds.setBounds(equipBtnX, equipBtnY, equipBtnW, equipBtnH);
+    int equipBtnW = Math.min(detailW, 120);
+    int equipBtnX = detailX + (detailW - equipBtnW) / 2;
+    int equipBtnY = Math.max(actionY, Math.min(contentBottom - actionH, detailBottom + 6));
+    ctx.ui().inventoryEquipButtonBounds.setBounds(equipBtnX, equipBtnY, equipBtnW, actionH);
     g.setFont(GameFonts.get().uiBold(10));
     g.setColor(new Color(28, 18, 8, 220));
-    g.fillRoundRect(equipBtnX, equipBtnY, equipBtnW, equipBtnH, 5, 5);
+    g.fillRoundRect(equipBtnX, equipBtnY, equipBtnW, actionH, 5, 5);
     g.setColor(new Color(170, 125, 55));
-    g.drawRoundRect(equipBtnX, equipBtnY, equipBtnW, equipBtnH, 5, 5);
+    g.drawRoundRect(equipBtnX, equipBtnY, equipBtnW, actionH, 5, 5);
     g.setColor(new Color(255, 225, 150));
-    String equipLabel = "Экипировка";
     FontMetrics efm = g.getFontMetrics();
-    g.drawString(equipLabel, equipBtnX + (equipBtnW - efm.stringWidth(equipLabel)) / 2, equipBtnY + 15);
+    g.drawString(actionLabel, equipBtnX + (equipBtnW - efm.stringWidth(actionLabel)) / 2, equipBtnY + 16);
 
     g.setComposite(prev);
   }

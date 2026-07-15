@@ -208,6 +208,20 @@ public final class ShopModel implements EquippedGear {
         return List.copyOf(pouchConsumables);
     }
 
+    public boolean drinkPotion(String name) {
+        if (name == null) {
+            return false;
+        }
+        for (int i = 0; i < pouchConsumables.size(); i++) {
+            ShopInventorySlot slot = pouchConsumables.get(i);
+            if (slot.kind() == ShopInventoryKind.POTION && name.equals(slot.title())) {
+                pouchConsumables.remove(i);
+                return true;
+            }
+        }
+        return false;
+    }
+
     public int inventoryItemCount() {
         return purchasedLabels.size();
     }

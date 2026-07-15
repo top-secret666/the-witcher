@@ -127,6 +127,13 @@ public final class DukeLines {
         );
     }
 
+    public static String potionDrunk(String name) {
+        return pick(
+            "Выпил «" + name + "». Полегчало — или вам так кажется.",
+            "Эликсир сделал своё дело. Пустая склянка больше не нужна."
+        );
+    }
+
     private static String pick(String... lines) {
         return lines[ThreadLocalRandom.current().nextInt(lines.length)];
     }

@@ -74,10 +74,13 @@ public final class ShopViewConstants {
     public static final int PRODUCT_CARD_ICON_TEXT_GAP = 5;
     public static final int PRODUCT_CARD_NAME_PRICE_GAP = 5;
 
-    public static final int INVENTORY_PANEL_W = 280;
-    public static final int INVENTORY_PANEL_H = 238;
-    public static final int INVENTORY_POUCH_ICON = 32;
-    public static final int INVENTORY_POUCH_LARGE = 96;
+    public static final int INVENTORY_PANEL_W = 420;
+    public static final int INVENTORY_PANEL_H = 292;
+    public static final int INVENTORY_POUCH_ICON = 34;
+    public static final int INVENTORY_POUCH_LARGE = 112;
+    public static final int INVENTORY_GRID_COLS = 4;
+    public static final int INVENTORY_DETAIL_W = 196;
+    public static final int INVENTORY_ACTION_BTN_H = 24;
     public static final int EQUIP_MARGIN = 2;
     public static final int EQUIP_FILTER_ICON = 20;
     public static final int EQUIP_FILTER_GAP = 4;
