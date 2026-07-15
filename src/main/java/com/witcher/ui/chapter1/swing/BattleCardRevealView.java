@@ -15,14 +15,8 @@ public final class BattleCardRevealView {
     if (icon != null) {
       g.drawImage(ScaledImageCache.get(icon, size, size), x, y, null);
     } else {
-      g.setColor(new Color(100, 30, 25));
+      g.setColor(hovered ? new Color(120, 40, 32) : new Color(100, 30, 25));
       g.fillRoundRect(x, y, size, size, 6, 6);
-      g.setColor(new Color(220, 180, 80));
-      g.drawRoundRect(x, y, size - 1, size - 1, 6, 6);
-    }
-    if (hovered) {
-      g.setColor(new Color(255, 230, 140, 160));
-      g.drawRect(x - 1, y - 1, size + 2, size + 2);
     }
   }
 }

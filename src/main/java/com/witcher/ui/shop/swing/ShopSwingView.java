@@ -857,8 +857,6 @@ public final class ShopSwingView implements ShopView {
             g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.92f));
             g.setColor(selected ? new Color(120, 90, 40, 230) : new Color(80, 60, 30, 200));
             g.fillRoundRect(x, y, size, size, 6, 6);
-            g.setColor(selected ? new Color(200, 160, 70) : new Color(140, 110, 55));
-            g.drawRoundRect(x, y, size - 1, size - 1, 6, 6);
         }
         g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
         int inset = (selected || hovered) ? 3 : 1;
