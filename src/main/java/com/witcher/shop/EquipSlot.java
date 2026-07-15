@@ -6,7 +6,7 @@ import main.java.com.witcher.model.armour.Chestpiece;
 import main.java.com.witcher.model.armour.Gloves;
 import main.java.com.witcher.model.armour.Trousers;
 
-/** Слоты экипировки Геральта (лавка и прогресс главы 1). */
+/** Слоты брони Геральта (лавка и прогресс главы 1). Оружие — отдельно в UI экипировки. */
 public enum EquipSlot {
   CHEST(0, "Кираса"),
   LEGS(1, "Штаны"),

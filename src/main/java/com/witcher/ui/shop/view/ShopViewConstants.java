@@ -90,11 +90,13 @@ public final class ShopViewConstants {
     public static final int EQUIP_GRID_CELL = 32;
     public static final int EQUIP_GRID_ICON = 28;
     /** Ширина левой панели «Куплено» — 5 фильтров + 4 колонки иконок. */
-    public static final int EQUIP_LIST_W = 154;
+    public static final int EQUIP_LIST_W = 168;
     /** Колбочки в левой колонке (компакт). */
     public static final int EQUIP_STATS_W = EQUIP_LIST_W - 8;
     public static final int EQUIP_STATS_H = 74;
     public static final int EQUIP_RIGHT_COL_W = 58;
+    /** Отдельный слот оружия под слотами брони. */
+    public static final int EQUIP_WEAPON_SLOT_GAP = 10;
 
     public static final int GRID_COLS = 5;
     public static final int TOP_ROW_COLS = 4;

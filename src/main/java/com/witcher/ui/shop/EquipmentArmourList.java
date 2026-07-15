@@ -13,12 +13,16 @@ public final class EquipmentArmourList {
     }
 
     public static List<Armour> filter(List<Armour> owned, EquipmentFilter filter) {
+        return filter(owned, filter, null);
+    }
+
+    public static List<Armour> filter(List<Armour> owned, EquipmentFilter filter, ShopModel model) {
         if (filter == null || filter == EquipmentFilter.ALL) {
             return owned;
         }
         List<Armour> out = new ArrayList<>();
         for (Armour armour : owned) {
-            if (filter.matches(armour)) {
+            if (filter.matches(armour, model)) {
                 out.add(armour);
             }
         }

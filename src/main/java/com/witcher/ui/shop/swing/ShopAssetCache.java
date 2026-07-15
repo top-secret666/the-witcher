@@ -590,6 +590,20 @@ public final class ShopAssetCache implements ShopRuntimeAssets, ShopOverlayAsset
         if (filter == EquipmentFilter.ALL) {
             return inventoryBagIcon;
         }
+        if (filter == EquipmentFilter.SETS) {
+            return setsIcon;
+        }
+        if (filter == EquipmentFilter.WEAPON) {
+            return weaponIcon;
+        }
         return equipSlotPlaceholder(filter.iconIndex);
+    }
+
+    public BufferedImage weaponIcon() {
+        return this.weaponIcon;
+    }
+
+    public BufferedImage setsIcon() {
+        return this.setsIcon;
     }
 }

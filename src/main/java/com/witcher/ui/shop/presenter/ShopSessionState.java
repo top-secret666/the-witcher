@@ -57,6 +57,8 @@ public final class ShopSessionState {
     public final Rectangle equipmentPanelBounds = new Rectangle();
     public final Rectangle equipmentBackButtonBounds = new Rectangle();
     public final Rectangle[] equipmentSlotBounds = new Rectangle[EquipSlot.values().length];
+    public final Rectangle equipmentWeaponSlotBounds = new Rectangle();
+    public boolean equipmentWeaponHovered;
     public final List<Rectangle> equipmentRowBounds = new ArrayList<>();
     public int equipmentHoveredRow = -1;
     public int equipmentHoveredSlot = -1;

@@ -9,10 +9,12 @@ public enum EquipmentFilter {
     CHEST("Кираса", 0),
     LEGS("Штаны", 1),
     GLOVES("Перчатки", 2),
-    BOOTS("Сапоги", 3);
+    BOOTS("Сапоги", 3),
+    SETS("Комплекты", -2),
+    WEAPON("Оружие", -3);
 
     public final String sectionLabel;
-    /** {@link ShopAssetCache#equipSlotPlaceholder(int)} или -1 для «всё». */
+    /** {@link ShopAssetCache#equipSlotPlaceholder(int)} или спец. код &lt; 0. */
     public final int iconIndex;
 
     EquipmentFilter(String sectionLabel, int iconIndex) {
@@ -21,8 +23,18 @@ public enum EquipmentFilter {
     }
 
     public boolean matches(Armour armour) {
+        return matches(armour, null);
+    }
+
+    public boolean matches(Armour armour, ShopModel model) {
         if (this == ALL) {
             return true;
+        }
+        if (this == WEAPON) {
+            return false;
+        }
+        if (this == SETS) {
+            return model != null && model.isSetPiece(armour);
         }
         EquipSlot slot = EquipSlot.forArmour(armour);
         return slot != null && slot.iconIndex == iconIndex;

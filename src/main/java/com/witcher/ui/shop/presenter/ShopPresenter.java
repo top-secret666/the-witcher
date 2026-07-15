@@ -565,6 +565,10 @@ public final class ShopPresenter {
                 }
                 openEquipmentFromInventory();
             }
+            case WEAPON -> {
+                model.equipWeapon(focused);
+                openEquipmentFromInventory();
+            }
             default -> openEquipmentFromInventory();
         }
     }
@@ -582,6 +586,7 @@ public final class ShopPresenter {
         ui.equipmentHoveredRow = -1;
         ui.equipmentHoveredSlot = -1;
         ui.equipmentHoveredFilter = -1;
+        ui.equipmentWeaponHovered = ui.equipmentWeaponSlotBounds.contains(mouseX, mouseY);
         ui.equipmentBackHovered = ui.equipmentBackButtonBounds.contains(mouseX, mouseY);
         EquipmentFilter[] filters = EquipmentFilter.values();
         for (int i = 0; i < filters.length; i++) {
@@ -619,7 +624,8 @@ public final class ShopPresenter {
             ui.equipmentHoveredRow = -1;
             return;
         }
-        List<Armour> visible = EquipmentArmourList.filter(model.ownedArmour(), ui.equipmentFilter);
+        List<Armour> visible = EquipmentArmourList.filter(
+            model.ownedArmour(), ui.equipmentFilter, model);
         if (ui.equipmentHoveredRow >= 0) {
             if (ui.equipmentHoveredRow < visible.size()) {
                 Armour armour = visible.get(ui.equipmentHoveredRow);
@@ -628,6 +634,10 @@ public final class ShopPresenter {
                     chapterBridge.onEquip();
                 }
             }
+            return;
+        }
+        if (ui.equipmentWeaponHovered && model.getEquippedWeapon() != null) {
+            model.unequipWeapon();
             return;
         }
         if (ui.equipmentHoveredSlot >= 0) {

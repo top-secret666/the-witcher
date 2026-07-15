@@ -11,6 +11,8 @@ public interface ShopOverlayAssets {
 
     BufferedImage equipmentFilterIcon(EquipmentFilter filter);
 
+    BufferedImage weaponIcon();
+
     BufferedImage statVialEmpty();
 
     BufferedImage statVialOverlay();

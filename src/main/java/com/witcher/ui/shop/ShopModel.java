@@ -46,6 +46,7 @@ public final class ShopModel implements EquippedGear {
     private final List<String> purchasedLabels = new ArrayList<>();
     private final List<ShopInventorySlot> pouchConsumables = new ArrayList<>();
     private final Map<EquipSlot, Armour> equipped = new EnumMap<>(EquipSlot.class);
+    private ShopInventorySlot equippedWeapon;
 
     private int wallet;
     private boolean hideWalletAmount;
@@ -216,6 +217,46 @@ public final class ShopModel implements EquippedGear {
             ShopInventorySlot slot = pouchConsumables.get(i);
             if (slot.kind() == ShopInventoryKind.POTION && name.equals(slot.title())) {
                 pouchConsumables.remove(i);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public ShopInventorySlot getEquippedWeapon() {
+        return equippedWeapon;
+    }
+
+    public void equipWeapon(ShopInventorySlot weapon) {
+        if (weapon == null || weapon.kind() != ShopInventoryKind.WEAPON) {
+            return;
+        }
+        if (equippedWeapon != null) {
+            pouchConsumables.add(equippedWeapon);
+        }
+        for (int i = 0; i < pouchConsumables.size(); i++) {
+            ShopInventorySlot slot = pouchConsumables.get(i);
+            if (slot.kind() == ShopInventoryKind.WEAPON && weapon.title().equals(slot.title())) {
+                pouchConsumables.remove(i);
+                break;
+            }
+        }
+        equippedWeapon = weapon;
+    }
+
+    public void unequipWeapon() {
+        if (equippedWeapon != null) {
+            pouchConsumables.add(equippedWeapon);
+            equippedWeapon = null;
+        }
+    }
+
+    public boolean isSetPiece(Armour armour) {
+        if (armour == null) {
+            return false;
+        }
+        for (ArmourSet set : soldSets) {
+            if (set.getArmorPieces().contains(armour)) {
                 return true;
             }
         }

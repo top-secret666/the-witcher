@@ -6,6 +6,7 @@ import main.java.com.witcher.ui.shop.ShopOverlayAssets;
 import main.java.com.witcher.ui.shop.swing.ShopStatBarRenderer;
 import main.java.com.witcher.ui.graphics.UiChrome;
 import main.java.com.witcher.ui.shop.EquipmentArmourList;
+import main.java.com.witcher.ui.shop.ShopInventorySlot;
 import main.java.com.witcher.ui.shop.EquipmentFilter;
 import main.java.com.witcher.ui.shop.ShopCategory;
 import main.java.com.witcher.shop.EquipSlot;
@@ -75,7 +76,7 @@ public final class ShopEquipmentOverlay {
         int tooltipAnchorY = layout.gridY0;
 
         List<Armour> owned = EquipmentArmourList.filter(
-            ctx.presenter().model().ownedArmour(), ctx.ui().equipmentFilter);
+            ctx.presenter().model().ownedArmour(), ctx.ui().equipmentFilter, ctx.presenter().model());
 
         for (int i = 0; i < owned.size(); i++) {
             if (!layout.gridCellFits(i)) {
@@ -170,6 +171,8 @@ public final class ShopEquipmentOverlay {
                 new Color(170, 140, 90));
         }
 
+        drawWeaponSlot(g, ctx, layout);
+
         if (tooltipArmour == null && ctx.ui().equipmentHoveredSlot >= 0) {
             EquipSlot slot = EquipSlot.values()[ctx.ui().equipmentHoveredSlot];
             tooltipArmour = ctx.presenter().model().getEquipped(slot);
@@ -187,6 +190,42 @@ public final class ShopEquipmentOverlay {
         }
 
         g.setComposite(prev);
+    }
+
+    private static void drawWeaponSlot(Graphics2D g, ShopOverlayContext ctx, EquipmentOverlayLayout layout) {
+        Rectangle slotBounds = layout.weaponSlot;
+        ctx.ui().equipmentWeaponSlotBounds.setBounds(slotBounds);
+        boolean hovered = ctx.ui().equipmentWeaponHovered;
+        ShopInventorySlot weapon = ctx.presenter().model().getEquippedWeapon();
+
+        g.setColor(new Color(22, 14, 8, 220));
+        g.fillRoundRect(slotBounds.x, slotBounds.y, slotBounds.width, slotBounds.height, 4, 4);
+        g.setColor(hovered || ctx.ui().equipmentFilter == EquipmentFilter.WEAPON
+            ? new Color(200, 160, 70) : new Color(120, 90, 45));
+        g.drawRoundRect(slotBounds.x, slotBounds.y, slotBounds.width, slotBounds.height, 4, 4);
+
+        BufferedImage icon = ctx.assets().weaponIcon();
+        if (weapon != null && icon != null) {
+            int iconSz = 30;
+            g.drawImage(icon,
+                slotBounds.x + (slotBounds.width - iconSz) / 2,
+                slotBounds.y + 7, iconSz, iconSz, null);
+        } else if (icon != null) {
+            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.35f));
+            int iconSz = 26;
+            g.drawImage(icon,
+                slotBounds.x + (slotBounds.width - iconSz) / 2,
+                slotBounds.y + 9, iconSz, iconSz, null);
+            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.97f));
+        }
+
+        String slotLabel = "Оружие";
+        Font slotFont = GameFonts.get().uiPlain(8);
+        FontMetrics sfm = g.getFontMetrics(slotFont);
+        ShopOverlayText.drawEquipText(g, slotFont, slotLabel,
+            slotBounds.x + (slotBounds.width - sfm.stringWidth(slotLabel)) / 2,
+            slotBounds.y + slotBounds.height - 4,
+            new Color(170, 140, 90));
     }
 
     private static void drawPortraitFit(Graphics2D g, SpriteCallbacks sprites, BufferedImage img,

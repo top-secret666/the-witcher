@@ -14,12 +14,13 @@ import static main.java.com.witcher.ui.shop.view.ShopViewConstants.EQUIP_MARGIN;
 import static main.java.com.witcher.ui.shop.view.ShopViewConstants.EQUIP_RIGHT_COL_W;
 import static main.java.com.witcher.ui.shop.view.ShopViewConstants.EQUIP_STATS_H;
 import static main.java.com.witcher.ui.shop.view.ShopViewConstants.EQUIP_STATS_W;
+import static main.java.com.witcher.ui.shop.view.ShopViewConstants.EQUIP_WEAPON_SLOT_GAP;
 
 /** Геометрия оверлея экипировки — без отрисовки и без логики. */
 public final class EquipmentOverlayLayout {
 
-    public static final int SLOT_SIZE = 48;
-    private static final int SLOT_GAP = 8;
+    public static final int SLOT_SIZE = 44;
+    private static final int SLOT_GAP = 6;
 
     public final Rectangle panel;
     public final Rectangle backButton;
@@ -42,11 +43,13 @@ public final class EquipmentOverlayLayout {
     public final int slotX;
     public final int slotY0;
     public final int contentTop;
+    public final Rectangle weaponSlot;
 
     private EquipmentOverlayLayout(Rectangle panel, Rectangle backButton, int listX, int listW, int listY,
                                    int leftPanelH, int filterY, int statsX, int statsY, int statsW, int statsH,
                                    int gridX0, int gridY0, int gridBottom, int portraitX, int portraitY,
-                                   int portraitW, int portraitH, int slotX, int slotY0, int contentTop) {
+                                   int portraitW, int portraitH, int slotX, int slotY0, int contentTop,
+                                   Rectangle weaponSlot) {
         this.panel = panel;
         this.backButton = backButton;
         this.listX = listX;
@@ -68,6 +71,7 @@ public final class EquipmentOverlayLayout {
         this.slotX = slotX;
         this.slotY0 = slotY0;
         this.contentTop = contentTop;
+        this.weaponSlot = weaponSlot;
     }
 
     public static EquipmentOverlayLayout compute(int sw, int sh) {
@@ -107,6 +111,10 @@ public final class EquipmentOverlayLayout {
         int portraitW = rightX - portraitX - 6;
         int portraitH = contentBottom - contentTop;
 
+        int armourSlotsH = EquipSlot.values().length * (SLOT_SIZE + SLOT_GAP) - SLOT_GAP;
+        int weaponY = contentTop + armourSlotsH + EQUIP_WEAPON_SLOT_GAP;
+        Rectangle weaponSlot = new Rectangle(slotX, weaponY, SLOT_SIZE, SLOT_SIZE);
+
         return new EquipmentOverlayLayout(
             new Rectangle(px, py, panelW, panelH),
             new Rectangle(backX, backY, 18, 18),
@@ -114,7 +122,7 @@ public final class EquipmentOverlayLayout {
             statsX, statsY, statsW, statsH,
             gridX0, gridY0, gridBottom,
             portraitX, portraitY, portraitW, portraitH,
-            slotX, contentTop, contentTop);
+            slotX, contentTop, contentTop, weaponSlot);
     }
 
     public Rectangle gridCell(int index) {
