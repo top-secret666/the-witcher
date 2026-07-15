@@ -16,7 +16,7 @@ public final class BossCatalog {
           Chapter1AssetPaths.BOSS_DUKE_MAP,
           Chapter1AssetPaths.BOSS_DUKE_MAP_HOVER,
           Chapter1AssetPaths.BOSS_DUKE_PORTRAIT,
-          280, 150
+          80, 168
       )
   );
 
