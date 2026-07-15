@@ -210,7 +210,7 @@ public final class Chapter1Presenter {
       case BOSS_MAP -> updateBossMap(mouseX, mouseY, clicked);
       case LOOP_SEQUENCE -> updateLoopSequence();
       case LOOP_HOLD -> { }
-      case BOSS_ENCOUNTER -> updateBossEncounter(clicked);
+      case BOSS_ENCOUNTER -> updateBossEncounter(mouseX, mouseY, clicked, wheelNotches);
       case SWORD_CUTSCENE -> updateSwordCutscene();
       case BATTLE_RESULT -> updateBattleResult(clicked);
       case VN_BATTLE -> updateBattle(mouseX, mouseY, clicked);
@@ -228,6 +228,12 @@ public final class Chapter1Presenter {
       return;
     }
     int code = e.getKeyCode();
+    if (director.phase() == Chapter1Phase.BOSS_ENCOUNTER && encounter != null) {
+      if (code == KeyEvent.VK_ENTER || code == KeyEvent.VK_SPACE) {
+        encounter.updateDialog(0, 0, false, 0, true);
+      }
+      return;
+    }
     if (director.phase() == Chapter1Phase.SHOP) {
       if (isDukeDialogActive() && dukeDialog.scene().waitingForChoice()) {
         int choice = keyToChoiceIndex(code);
@@ -385,14 +391,14 @@ public final class Chapter1Presenter {
     }
   }
 
-  private void updateBossEncounter(boolean clicked) {
+  private void updateBossEncounter(int mouseX, int mouseY, boolean clicked, int wheelNotches) {
     if (encounter == null) {
       encounter = new BossEncounterController(selectedBoss);
     }
+    encounter.setLayoutSize(Chapter1Layout.VIRTUAL_W, Chapter1Layout.VIRTUAL_H);
     encounter.tick();
-    if (clicked && encounter.showDialog() && !encounter.isReadyForSword()) {
-      encounter.dismissDialog();
-    }
+    boolean advanceKey = false;
+    encounter.updateDialog(mouseX, mouseY, clicked, wheelNotches, advanceKey);
     if (encounter.isReadyForSword()) {
       director.enterSwordCutscene();
       onPhaseEntered();

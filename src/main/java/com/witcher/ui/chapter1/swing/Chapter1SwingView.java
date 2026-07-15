@@ -56,7 +56,7 @@ public final class Chapter1SwingView implements Chapter1View {
       case BOSS_ENCOUNTER -> {
         Graphics2D g = screen.createGraphics();
         try {
-          BossEncounterView.draw(g, sw, sh, presenter.encounter());
+          BossEncounterView.draw(g, sw, sh, presenter.encounter(), mouseX, mouseY);
         } finally {
           g.dispose();
         }

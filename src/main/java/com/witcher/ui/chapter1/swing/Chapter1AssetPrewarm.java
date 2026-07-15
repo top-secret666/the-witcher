@@ -37,7 +37,6 @@ public final class Chapter1AssetPrewarm {
       Chapter1UiAssets.bossMapIcon(boss.mapIconPath());
       Chapter1UiAssets.bossMapIcon(boss.mapHoverIconPath());
       Chapter1UiAssets.bossPortrait(boss.portraitPath());
-      // Прогрев nearest-кэша не нужен: рисуем напрямую из capped-ассета.
       if (boss.mapIconPath() != null) {
         ScaledImageCache.get(Chapter1UiAssets.bossMapIcon(boss.mapIconPath()), icon, icon);
       }
@@ -47,6 +46,10 @@ public final class Chapter1AssetPrewarm {
       ScaledImageCache.get(
           Chapter1UiAssets.bossPortrait(boss.portraitPath()), PORTRAIT_W, PORTRAIT_H);
     }
+    Chapter1UiAssets.volkDukeSprite(main.java.com.witcher.chapter1.assets.Chapter1AssetPaths.VOLK_DUKE_MAP);
+    Chapter1UiAssets.volkDukeSprite(main.java.com.witcher.chapter1.assets.Chapter1AssetPaths.VOLK_DUKE_MAP_ATTACK);
+    Chapter1UiAssets.volkDukeSprite(main.java.com.witcher.chapter1.assets.Chapter1AssetPaths.VOLK_DUKE_MAP_INTERESTED);
+    Chapter1UiAssets.bossWakeForest();
     mapDrawablesReady = true;
   }
 

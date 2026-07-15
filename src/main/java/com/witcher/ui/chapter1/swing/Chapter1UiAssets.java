@@ -12,6 +12,8 @@ public final class Chapter1UiAssets {
 
   private static final int MAX_MAP_EDGE = 640;
   private static final int MAX_PORTRAIT_EDGE = 512;
+  /** Полноростовые volk-спрайты — почти без ужимания, как портреты интро. */
+  private static final int MAX_VOLK_EDGE = 1280;
   private static final int MAX_ICON_EDGE = 256;
 
   private static BufferedImage terminalFrame;
@@ -76,6 +78,9 @@ public final class Chapter1UiAssets {
   private static BufferedImage bossDukeMapIcon;
   private static BufferedImage bossDukeMapHoverIcon;
   private static BufferedImage bossDukePortrait;
+  private static BufferedImage volkDukeMap;
+  private static BufferedImage volkDukeMapAttack;
+  private static BufferedImage volkDukeMapInterested;
   private static BufferedImage bossWakeForest;
   private static SpriteSheet swordSlashSheetA;
   private static SpriteSheet swordSlashSheetB;
@@ -132,6 +137,33 @@ public final class Chapter1UiAssets {
     return loadCappedCrisp(path, MAX_PORTRAIT_EDGE);
   }
 
+  /** Полноростовые спрайты герцога для VN пробуждения (эмоции). */
+  public static BufferedImage volkDukeSprite(String path) {
+    if (path == null) {
+      return null;
+    }
+    if (path.contains("volk_duke_map_attack") || path.equals(Chapter1AssetPaths.VOLK_DUKE_MAP_ATTACK)) {
+      if (volkDukeMapAttack == null) {
+        volkDukeMapAttack = loadCappedSharp(path, MAX_VOLK_EDGE);
+      }
+      return volkDukeMapAttack;
+    }
+    if (path.contains("volk_duke_map_interested")
+        || path.equals(Chapter1AssetPaths.VOLK_DUKE_MAP_INTERESTED)) {
+      if (volkDukeMapInterested == null) {
+        volkDukeMapInterested = loadCappedSharp(path, MAX_VOLK_EDGE);
+      }
+      return volkDukeMapInterested;
+    }
+    if (path.contains("volk_duke_map") || path.equals(Chapter1AssetPaths.VOLK_DUKE_MAP)) {
+      if (volkDukeMap == null) {
+        volkDukeMap = loadCappedSharp(path, MAX_VOLK_EDGE);
+      }
+      return volkDukeMap;
+    }
+    return loadCappedSharp(path, MAX_VOLK_EDGE);
+  }
+
   /** Кадр проблеска меча: лист A (6×4) или B (2×4), чёрный фон вырезан. */
   public static BufferedImage swordSlashFrame(
       main.java.com.witcher.chapter1.battle.SwordSlashShowTimeline.SheetId sheet, int index) {
@@ -175,6 +207,14 @@ public final class Chapter1UiAssets {
     return capEdgeCrisp(sprite.getImage(), maxEdge);
   }
 
+  private static BufferedImage loadCappedSharp(String path, int maxEdge) {
+    Sprite sprite = Sprite.loadOptional(path);
+    if (sprite == null) {
+      return null;
+    }
+    return capEdgeSharp(sprite.getImage(), maxEdge);
+  }
+
   /** Ужимает оригинал один раз при загрузке — дальше ScaledImageCache не аллоцирует гигантские half. */
   static BufferedImage capEdge(BufferedImage src, int maxEdge) {
     if (src == null || maxEdge <= 0) {
@@ -205,5 +245,21 @@ public final class Chapter1UiAssets {
     int dw = Math.max(1, Math.round(w * scale));
     int dh = Math.max(1, Math.round(h * scale));
     return PixelScaler.crispScale(src, dw, dh);
+  }
+
+  /** Крупные painted-спрайты (volk) — sharpScale, без лишнего ужима. */
+  static BufferedImage capEdgeSharp(BufferedImage src, int maxEdge) {
+    if (src == null || maxEdge <= 0) {
+      return src;
+    }
+    int w = src.getWidth();
+    int h = src.getHeight();
+    if (w <= maxEdge && h <= maxEdge) {
+      return src;
+    }
+    float scale = Math.min((float) maxEdge / w, (float) maxEdge / h);
+    int dw = Math.max(1, Math.round(w * scale));
+    int dh = Math.max(1, Math.round(h * scale));
+    return PixelScaler.sharpScale(src, dw, dh);
   }
 }
