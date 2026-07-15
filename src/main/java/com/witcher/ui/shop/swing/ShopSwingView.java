@@ -879,21 +879,36 @@ public final class ShopSwingView implements ShopView {
             }
             case BATTLE_CARD -> BattleCardRevealView.drawCardIcon(g, ix, iy, isz, hovered);
             case POTION, WEAPON -> {
-                BufferedImage icon = assets.iconForCategory(slot.iconCategory());
+                BufferedImage icon = productIcon(slot, isz);
                 if (icon != null) {
+                    Object interp = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
+                    g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
                     g.drawImage(icon, ix, iy, isz, isz, null);
+                    if (interp != null) {
+                        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, interp);
+                    }
                 }
             }
             case ARMOUR -> {
                 BufferedImage icon = armourIcons.iconForArmour(slot.armour(), slot.iconCategory(), isz);
                 if (icon != null) {
+                    Object interp = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
+                    g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
                     g.drawImage(icon, ix, iy, isz, isz, null);
+                    if (interp != null) {
+                        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, interp);
+                    }
                 }
             }
             case SET -> {
                 BufferedImage icon = armourIcons.iconForName(slot.title(), ShopCategory.SETS, isz);
                 if (icon != null) {
+                    Object interp = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
+                    g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
                     g.drawImage(icon, ix, iy, isz, isz, null);
+                    if (interp != null) {
+                        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, interp);
+                    }
                 }
             }
         }
@@ -901,6 +916,18 @@ public final class ShopSwingView implements ShopView {
             g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, prevAa);
         }
         g.setComposite(prev);
+    }
+
+    /** Иконка самого товара (зелье/меч), иначе запасной значок категории. */
+    private BufferedImage productIcon(ShopInventorySlot slot, int size) {
+        if (slot == null || slot.title() == null) {
+            return assets.iconForCategory(slot != null ? slot.iconCategory() : null);
+        }
+        BufferedImage icon = armourIcons.iconForName(slot.title(), slot.iconCategory(), size);
+        if (icon != null) {
+            return icon;
+        }
+        return assets.iconForCategory(slot.iconCategory());
     }
 
     private int drawInventorySlotDetail(Graphics2D g, ShopInventorySlot slot, int x, int y, int maxW, int maxH) {
@@ -924,21 +951,36 @@ public final class ShopSwingView implements ShopView {
             }
             case BATTLE_CARD -> BattleCardRevealView.drawCardIcon(g, iconX, iconY, large, false);
             case POTION, WEAPON -> {
-                BufferedImage icon = assets.iconForCategory(slot.iconCategory());
+                BufferedImage icon = productIcon(slot, large);
                 if (icon != null) {
+                    Object interp = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
+                    g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
                     g.drawImage(icon, iconX, iconY, large, large, null);
+                    if (interp != null) {
+                        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, interp);
+                    }
                 }
             }
             case ARMOUR -> {
                 BufferedImage icon = armourIcons.iconForArmour(slot.armour(), slot.iconCategory(), large);
                 if (icon != null) {
+                    Object interp = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
+                    g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
                     g.drawImage(icon, iconX, iconY, large, large, null);
+                    if (interp != null) {
+                        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, interp);
+                    }
                 }
             }
             case SET -> {
                 BufferedImage icon = armourIcons.iconForName(slot.title(), ShopCategory.SETS, large);
                 if (icon != null) {
+                    Object interp = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
+                    g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
                     g.drawImage(icon, iconX, iconY, large, large, null);
+                    if (interp != null) {
+                        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, interp);
+                    }
                 }
             }
         }
