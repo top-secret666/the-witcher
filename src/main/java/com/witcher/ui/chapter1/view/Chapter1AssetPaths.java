@@ -19,6 +19,9 @@ public final class Chapter1AssetPaths {
   public static final String BOSS_DUKE_MAP = main.java.com.witcher.chapter1.assets.Chapter1AssetPaths.BOSS_DUKE_MAP;
   public static final String BOSS_DUKE_MAP_HOVER = main.java.com.witcher.chapter1.assets.Chapter1AssetPaths.BOSS_DUKE_MAP_HOVER;
   public static final String BOSS_DUKE_PORTRAIT = main.java.com.witcher.chapter1.assets.Chapter1AssetPaths.BOSS_DUKE_PORTRAIT;
+  public static final String VOLK_DUKE_MAP = main.java.com.witcher.chapter1.assets.Chapter1AssetPaths.VOLK_DUKE_MAP;
+  public static final String VOLK_DUKE_MAP_ATTACK = main.java.com.witcher.chapter1.assets.Chapter1AssetPaths.VOLK_DUKE_MAP_ATTACK;
+  public static final String VOLK_DUKE_MAP_INTERESTED = main.java.com.witcher.chapter1.assets.Chapter1AssetPaths.VOLK_DUKE_MAP_INTERESTED;
   public static final String BOSS_WAKE_FOREST = main.java.com.witcher.chapter1.assets.Chapter1AssetPaths.BOSS_WAKE_FOREST;
   public static final String SWORD_SLASH_SHEET_A = main.java.com.witcher.chapter1.assets.Chapter1AssetPaths.SWORD_SLASH_SHEET_A;
   public static final String SWORD_SLASH_SHEET_B = main.java.com.witcher.chapter1.assets.Chapter1AssetPaths.SWORD_SLASH_SHEET_B;
