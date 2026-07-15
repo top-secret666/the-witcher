@@ -44,7 +44,6 @@ public final class Chapter1SwingView implements Chapter1View {
         }
       }
       case HACK -> presenter.shopScreen().render(screen, mouseX, mouseY);
-      case CARD_REVEAL -> presenter.shopScreen().render(screen, mouseX, mouseY);
       case BOSS_MAP -> {
         Graphics2D g = screen.createGraphics();
         try {

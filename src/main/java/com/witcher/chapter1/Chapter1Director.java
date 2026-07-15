@@ -7,6 +7,10 @@ import main.java.com.witcher.chapter1.loop.LoopRules;
 /**
  * State machine главы 1: какая фаза активна и что делать после событий.
  * Отрисовка — в {@code ui.chapter1.swing}; здесь только переходы.
+ *
+ * <p>Канонический cinematic-путь:
+ * SHOP → BOSS_MAP → LOOP_SEQUENCE → BOSS_ENCOUNTER → SWORD_CUTSCENE → BATTLE_RESULT → SHOP.
+ * Выдача карты — shop state {@code BATTLE_CARD_REVEAL}, не фаза директора.
  */
 public final class Chapter1Director {
 
@@ -142,42 +146,35 @@ public final class Chapter1Director {
     beginLoopSequence(true);
   }
 
-  public void beginCardReveal() {
-    phase = Chapter1Phase.CARD_REVEAL;
-    pendingCutscene = null;
-    cutsceneFinished = false;
-  }
-
+  /** Канон: карта боссов после клика по карте в сумке. */
   public void enterBossMap() {
     phase = Chapter1Phase.BOSS_MAP;
     pendingCutscene = null;
     cutsceneFinished = false;
   }
 
-  public void enterBossSplash() {
-    phase = Chapter1Phase.BOSS_SPLASH;
-    pendingCutscene = null;
-    cutsceneFinished = false;
-  }
-
+  /** Канон: появление злодея после loop_wake. */
   public void enterBossEncounter() {
     phase = Chapter1Phase.BOSS_ENCOUNTER;
     pendingCutscene = null;
     cutsceneFinished = false;
   }
 
+  /** Канон: спрайт-проблески мечей. */
   public void enterSwordCutscene() {
     phase = Chapter1Phase.SWORD_CUTSCENE;
     pendingCutscene = null;
     cutsceneFinished = false;
   }
 
+  /** Канон: победа/поражение → клик возвращает в лавку. */
   public void enterBattleResult() {
     phase = Chapter1Phase.BATTLE_RESULT;
     pendingCutscene = null;
     cutsceneFinished = false;
   }
 
+  /** Канон: loop_wake после выбора босса на карте. */
   public void beginLoopSequence(boolean eyesPrelude) {
     phase = Chapter1Phase.LOOP_SEQUENCE;
     loopEyesPrelude = eyesPrelude;

@@ -197,7 +197,6 @@ public final class Chapter1Presenter {
           maybeStartDukeDialog();
         }
       }
-      case CARD_REVEAL -> { }
       case BOSS_MAP -> updateBossMap(mouseX, mouseY, clicked);
       case LOOP_SEQUENCE -> updateLoopSequence();
       case LOOP_HOLD -> { }
