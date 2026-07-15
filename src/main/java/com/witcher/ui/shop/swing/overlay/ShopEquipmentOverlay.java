@@ -1,11 +1,13 @@
 package main.java.com.witcher.ui.shop.swing.overlay;
 
 import main.java.com.witcher.model.armour.Armour;
+import main.java.com.witcher.model.sets.ArmourSet;
 import main.java.com.witcher.ui.graphics.GameFonts;
 import main.java.com.witcher.ui.shop.ShopOverlayAssets;
 import main.java.com.witcher.ui.shop.swing.ShopStatBarRenderer;
 import main.java.com.witcher.ui.graphics.UiChrome;
 import main.java.com.witcher.ui.shop.EquipmentArmourList;
+import main.java.com.witcher.ui.shop.EquipmentGridEntry;
 import main.java.com.witcher.ui.shop.ShopInventorySlot;
 import main.java.com.witcher.ui.shop.EquipmentFilter;
 import main.java.com.witcher.ui.shop.ShopCategory;
@@ -73,21 +75,24 @@ public final class ShopEquipmentOverlay {
         drawFilterButtons(g, ctx, layout);
 
         Armour tooltipArmour = null;
+        ArmourSet tooltipSet = null;
         int tooltipAnchorY = layout.gridY0;
 
-        List<Armour> owned = EquipmentArmourList.filter(
-            ctx.presenter().model().ownedArmour(), ctx.ui().equipmentFilter, ctx.presenter().model());
+        List<EquipmentGridEntry> entries = EquipmentArmourList.gridEntries(
+            ctx.presenter().model(), ctx.ui().equipmentFilter);
 
-        for (int i = 0; i < owned.size(); i++) {
+        for (int i = 0; i < entries.size(); i++) {
             if (!layout.gridCellFits(i)) {
                 break;
             }
 
-            Armour armour = owned.get(i);
+            EquipmentGridEntry entry = entries.get(i);
             Rectangle cell = layout.gridCell(i);
             ctx.ui().equipmentRowBounds.add(cell);
             boolean hovered = i == ctx.ui().equipmentHoveredRow;
-            boolean equipped = ctx.presenter().model().isEquipped(armour);
+            boolean equipped = entry.isKit()
+                ? ctx.presenter().model().isSetEquipped(entry.armourSet())
+                : ctx.presenter().model().isEquipped(entry.armour());
 
             if (hovered || equipped) {
                 g.setColor(equipped ? new Color(48, 62, 82, 220) : new Color(36, 48, 68, 190));
@@ -101,8 +106,14 @@ public final class ShopEquipmentOverlay {
                 g.drawRoundRect(cell.x, cell.y, cell.width, cell.height, 3, 3);
             }
 
-            ShopCategory cat = EquipmentArmourList.categoryFor(armour);
-            BufferedImage itemIcon = ctx.armourIcons().iconForArmour(armour, cat, EQUIP_GRID_ICON);
+            BufferedImage itemIcon;
+            if (entry.isKit()) {
+                itemIcon = ctx.armourIcons().iconForName(
+                    entry.armourSet().getName(), ShopCategory.SETS, EQUIP_GRID_ICON);
+            } else {
+                ShopCategory cat = EquipmentArmourList.categoryFor(entry.armour());
+                itemIcon = ctx.armourIcons().iconForArmour(entry.armour(), cat, EQUIP_GRID_ICON);
+            }
             int iconX = cell.x + (EQUIP_GRID_CELL - EQUIP_GRID_ICON) / 2;
             int iconY = cell.y + (EQUIP_GRID_CELL - EQUIP_GRID_ICON) / 2;
             if (itemIcon != null) {
@@ -114,11 +125,15 @@ public final class ShopEquipmentOverlay {
                 }
             }
             if (hovered) {
-                tooltipArmour = armour;
+                if (entry.isKit()) {
+                    tooltipSet = entry.armourSet();
+                } else {
+                    tooltipArmour = entry.armour();
+                }
                 tooltipAnchorY = cell.y;
             }
         }
-        if (owned.isEmpty()) {
+        if (entries.isEmpty()) {
             ShopOverlayText.drawEquipText(g, GameFonts.get().uiPlain(9), "Пусто",
                 layout.listX + 10, layout.gridY0 + 12, new Color(130, 145, 165));
         }
@@ -170,7 +185,7 @@ public final class ShopEquipmentOverlay {
 
         drawWeaponSlot(g, ctx, layout);
 
-        if (tooltipArmour == null && ctx.ui().equipmentHoveredSlot >= 0) {
+        if (tooltipArmour == null && tooltipSet == null && ctx.ui().equipmentHoveredSlot >= 0) {
             EquipSlot slot = EquipSlot.values()[ctx.ui().equipmentHoveredSlot];
             tooltipArmour = ctx.presenter().model().getEquipped(slot);
             if (tooltipArmour != null && ctx.ui().equipmentSlotBounds[ctx.ui().equipmentHoveredSlot] != null) {
@@ -178,7 +193,14 @@ public final class ShopEquipmentOverlay {
             }
         }
 
-        if (tooltipArmour != null) {
+        if (tooltipSet != null) {
+            int tipW = Math.min(ShopEquipmentTooltipRenderer.preferredWidth(),
+                Math.max(120, layout.portraitW - 8));
+            int tipX = layout.portraitX + (layout.portraitW - tipW) / 2;
+            int tipY = Math.max(layout.portraitY + 4,
+                Math.min(tooltipAnchorY, layout.portraitY + layout.portraitH - 110));
+            ShopEquipmentTooltipRenderer.drawKit(g, tipX, tipY, tipW, tooltipSet);
+        } else if (tooltipArmour != null) {
             int tipW = Math.min(ShopEquipmentTooltipRenderer.preferredWidth(),
                 Math.max(120, layout.portraitW - 8));
             int tipX = layout.portraitX + (layout.portraitW - tipW) / 2;

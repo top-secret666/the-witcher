@@ -5,6 +5,7 @@ import main.java.com.witcher.model.sets.ArmourSet;
 import main.java.com.witcher.chapter1.shop.Chapter1ShopBridge;
 import main.java.com.witcher.ui.shop.EquipmentArmourList;
 import main.java.com.witcher.ui.shop.EquipmentFilter;
+import main.java.com.witcher.ui.shop.EquipmentGridEntry;
 import main.java.com.witcher.ui.shop.DukeLines;
 import main.java.com.witcher.ui.shop.ShopCatalogEntry;
 import main.java.com.witcher.ui.shop.ShopCategory;
@@ -682,12 +683,15 @@ public final class ShopPresenter {
             ui.equipmentHoveredRow = -1;
             return;
         }
-        List<Armour> visible = EquipmentArmourList.filter(
-            model.ownedArmour(), ui.equipmentFilter, model);
+        List<EquipmentGridEntry> visible = EquipmentArmourList.gridEntries(model, ui.equipmentFilter);
         if (ui.equipmentHoveredRow >= 0) {
             if (ui.equipmentHoveredRow < visible.size()) {
-                Armour armour = visible.get(ui.equipmentHoveredRow);
-                model.equipArmour(armour);
+                EquipmentGridEntry entry = visible.get(ui.equipmentHoveredRow);
+                if (entry.isKit()) {
+                    model.equipSet(entry.armourSet());
+                } else if (entry.armour() != null) {
+                    model.equipArmour(entry.armour());
+                }
                 if (chapterBridge != null) {
                     chapterBridge.onEquip();
                 }

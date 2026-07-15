@@ -323,6 +323,19 @@ public final class ShopModel implements EquippedGear {
         }
     }
 
+    public boolean isSetEquipped(ArmourSet set) {
+        if (set == null) {
+            return false;
+        }
+        for (Armour piece : set.getArmorPieces()) {
+            EquipSlot slot = EquipSlot.forArmour(piece);
+            if (slot == null || equipped.get(slot) != piece) {
+                return false;
+            }
+        }
+        return !set.getArmorPieces().isEmpty();
+    }
+
     public List<ArmourSet> ownedSets() {
         return List.copyOf(soldSets);
     }

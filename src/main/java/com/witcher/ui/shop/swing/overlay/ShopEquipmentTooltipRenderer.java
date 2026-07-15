@@ -2,6 +2,7 @@ package main.java.com.witcher.ui.shop.swing.overlay;
 
 import main.java.com.witcher.model.armour.Armour;
 import main.java.com.witcher.model.enums.ArmourType;
+import main.java.com.witcher.model.sets.ArmourSet;
 import main.java.com.witcher.ui.graphics.GameFonts;
 import main.java.com.witcher.ui.shop.EquipmentArmourList;
 import main.java.com.witcher.shop.EquipSlot;
@@ -138,6 +139,62 @@ public final class ShopEquipmentTooltipRenderer {
         if (interp != null) {
             g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, interp);
         }
+    }
+
+    public static void drawKit(Graphics2D g, int x, int y, int maxW, ArmourSet set) {
+        if (set == null || maxW < 80) {
+            return;
+        }
+        GameFonts.applyGothicHints(g);
+        int pad = 8;
+        int innerW = Math.max(24, maxW - pad * 2);
+        Color accent = ShopCategoryGlow.descriptionColor(ShopCategory.SETS);
+        Color border = ShopCategoryGlow.borderColor(ShopCategory.SETS);
+
+        Font titleFont = GameFonts.get().uiBold(10);
+        Font catFont = GameFonts.get().uiPlain(8);
+        Font bodyFont = GameFonts.get().uiPlain(8);
+        FontMetrics titleFm = g.getFontMetrics(titleFont);
+        FontMetrics catFm = g.getFontMetrics(catFont);
+        FontMetrics bodyFm = g.getFontMetrics(bodyFont);
+
+        List<String> titleLines = wrapLines(set.getName().toUpperCase(Locale.ROOT), titleFm, innerW);
+        List<String> bodyLines = wrapLines(
+            "Эмблема комплекта. Клик — надеть все 4 части (кираса, штаны, перчатки, сапоги).",
+            bodyFm, innerW);
+
+        int h = pad + titleLines.size() * titleFm.getHeight() + 4 + catFm.getHeight()
+            + bodyLines.size() * (bodyFm.getHeight() + 1) + pad;
+
+        Composite prev = g.getComposite();
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.96f));
+        g.setColor(BG);
+        g.fillRoundRect(x, y, maxW, h, 4, 4);
+        g.setColor(border);
+        g.drawRoundRect(x, y, maxW, h, 4, 4);
+
+        int ty = y + pad;
+        g.setFont(titleFont);
+        g.setColor(accent);
+        for (String line : titleLines) {
+            ty += titleFm.getAscent();
+            g.drawString(line, x + pad, ty);
+            ty += titleFm.getDescent() + titleFm.getLeading();
+        }
+        ty += 4;
+        g.setFont(catFont);
+        g.setColor(new Color(180, 150, 210));
+        ty += catFm.getAscent();
+        g.drawString("КОМПЛЕКТ · 4 ЧАСТИ", x + pad, ty);
+        ty += catFm.getDescent() + 4;
+        g.setFont(bodyFont);
+        g.setColor(BODY);
+        for (String line : bodyLines) {
+            ty += bodyFm.getAscent();
+            g.drawString(line, x + pad, ty);
+            ty += bodyFm.getDescent() + bodyFm.getLeading() + 1;
+        }
+        g.setComposite(prev);
     }
 
     public static int preferredWidth() {

@@ -1,12 +1,16 @@
 package main.java.com.witcher.ui.shop;
 
 import main.java.com.witcher.model.armour.Armour;
+import main.java.com.witcher.model.sets.ArmourSet;
 import main.java.com.witcher.shop.EquipSlot;
 
 import java.util.ArrayList;
 import java.util.List;
 
-/** Список купленной брони с фильтрацией по слоту. */
+/**
+ * Список купленной брони для экрана экипировки.
+ * Комплекты — только эмблемой; части из kits/ в слотах после клика по эмблеме.
+ */
 public final class EquipmentArmourList {
 
     private EquipmentArmourList() {
@@ -17,13 +21,42 @@ public final class EquipmentArmourList {
     }
 
     public static List<Armour> filter(List<Armour> owned, EquipmentFilter filter, ShopModel model) {
-        if (filter == null || filter == EquipmentFilter.ALL) {
-            return owned;
-        }
         List<Armour> out = new ArrayList<>();
         for (Armour armour : owned) {
-            if (filter.matches(armour, model)) {
+            if (model != null && model.isSetPiece(armour)) {
+                continue;
+            }
+            if (filter == null || filter == EquipmentFilter.ALL || filter.matches(armour, model)) {
                 out.add(armour);
+            }
+        }
+        return out;
+    }
+
+    /** Полный список ячеек: эмблемы комплектов + обычная броня (без кусков комплекта). */
+    public static List<EquipmentGridEntry> gridEntries(ShopModel model, EquipmentFilter filter) {
+        List<EquipmentGridEntry> out = new ArrayList<>();
+        if (model == null) {
+            return out;
+        }
+        EquipmentFilter f = filter == null ? EquipmentFilter.ALL : filter;
+        if (f == EquipmentFilter.ALL || f == EquipmentFilter.SETS) {
+            for (ArmourSet set : model.ownedSets()) {
+                out.add(EquipmentGridEntry.kit(set));
+            }
+        }
+        if (f == EquipmentFilter.SETS) {
+            return out;
+        }
+        if (f == EquipmentFilter.WEAPON) {
+            return out;
+        }
+        for (Armour armour : model.ownedArmour()) {
+            if (model.isSetPiece(armour)) {
+                continue;
+            }
+            if (f == EquipmentFilter.ALL || f.matches(armour, model)) {
+                out.add(EquipmentGridEntry.piece(armour));
             }
         }
         return out;
