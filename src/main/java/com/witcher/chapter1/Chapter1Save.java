@@ -12,8 +12,13 @@ import java.util.Properties;
 /**
  * Автосохранение мета-прогресса главы 1 (счётчики, фрагменты).
  * Лавка ({@code ShopModel}) сохраняется отдельно, когда понадобится.
+ *
+ * <p>Пока выключено: каждый вход в игру — чистая сессия с нулевыми счётчиками.
  */
 public final class Chapter1Save {
+
+  /** Временно: не читать и не писать {@code chapter1_session.properties}. */
+  private static final boolean DISABLED_FOR_TESTING = true;
 
   private static final String FILE_NAME = "chapter1_session.properties";
   private static final String KEY_LOOP = "loop";
@@ -37,7 +42,7 @@ public final class Chapter1Save {
   }
 
   public static void save(Chapter1Session session) {
-    if (session == null) {
+    if (DISABLED_FOR_TESTING || session == null) {
       return;
     }
     Chapter1Session.Chapter1Snapshot snap = session.snapshot();
@@ -67,6 +72,10 @@ public final class Chapter1Save {
   }
 
   public static Chapter1Session loadOrNew() {
+    if (DISABLED_FOR_TESTING) {
+      deleteSaveFileQuietly();
+      return Chapter1Session.newGame();
+    }
     Path path = defaultPath();
     if (!Files.isRegularFile(path)) {
       return Chapter1Session.newGame();
@@ -98,6 +107,14 @@ public final class Chapter1Save {
         Boolean.parseBoolean(props.getProperty(KEY_BATTLE_CARD, "false")),
         Boolean.parseBoolean(props.getProperty(KEY_BATTLE_ICON, "false"))));
     return session;
+  }
+
+  private static void deleteSaveFileQuietly() {
+    try {
+      Files.deleteIfExists(defaultPath());
+    } catch (IOException ignored) {
+      // тест-режим: старый файл не обязателен
+    }
   }
 
   private static int parseInt(Properties props, String key, int fallback) {
