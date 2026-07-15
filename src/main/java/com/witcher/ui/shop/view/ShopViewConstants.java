@@ -104,8 +104,8 @@ public final class ShopViewConstants {
     /** Ширина левой панели «Куплено» — 7 фильтров без наложений + 4 колонки иконок. */
     public static final int EQUIP_LIST_W = 214;
     /** Колбочки в левой колонке (компакт). */
-    public static final int EQUIP_STATS_W = EQUIP_LIST_W - 8;
-    public static final int EQUIP_STATS_H = 74;
+    public static final int EQUIP_STATS_W = EQUIP_LIST_W - 4;
+    public static final int EQUIP_STATS_H = 112;
     public static final int EQUIP_RIGHT_COL_W = 58;
     /** Отдельный слот оружия под слотами брони. */
     public static final int EQUIP_WEAPON_SLOT_GAP = 10;

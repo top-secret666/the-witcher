@@ -124,19 +124,20 @@ public final class ShopStatBarRenderer {
                                             BufferedImage vialEmpty, BufferedImage vialOverlay,
                                             BufferedImage vialEndCap, int animTick) {
         drawCardText(g);
-        int fontSize = 6;
+        int fontSize = 7;
         g.setFont(GameFonts.get().uiBold(fontSize));
         FontMetrics fm = g.getFontMetrics();
 
         String header = "СТАТЫ";
-        int headerY = y + 6 + fm.getAscent();
+        int headerY = y + 5 + fm.getAscent();
         int headerX = x + (w - fm.stringWidth(header)) / 2;
         g.setColor(new Color(200, 185, 150));
         g.drawString(header, headerX, headerY);
 
-        int barW = w - 8;
-        int rowH = Math.max(16, (h - 14) / 3);
-        int startY = headerY + 3;
+        int labelW = Math.max(18, fm.stringWidth("Зщ") + 4);
+        int barW = Math.max(40, w - labelW - 6);
+        int rowH = Math.max(28, (h - 12) / 3);
+        int startY = headerY + 4;
         String[] labels = {"Зщ", "Вн", "Зн"};
         Color[] colors = {
             new Color(210, 52, 58),
@@ -145,23 +146,29 @@ public final class ShopStatBarRenderer {
         };
 
         boolean useVials = vialEmpty != null;
-        int vialH = Math.max(6, Math.min(8, vialHeight(barW, vialEmpty, h)));
+        // Раньше 6–8px — вода была тонкой ниткой; нужно заметно толще.
+        int vialH = Math.max(16, Math.min(22, rowH - fm.getHeight() - 2));
+        if (useVials) {
+            vialH = Math.max(vialH, Math.min(22, vialHeight(barW, vialEmpty, h)));
+        }
 
         for (int i = 0; i < preview.rows().length; i++) {
             ShopModel.StatRow row = preview.rows()[i];
             int ry = startY + i * rowH;
             g.setColor(new Color(175, 168, 150));
-            g.drawString(labels[i], x + 4, ry + fm.getAscent());
-            int barY = ry + fm.getHeight();
+            g.drawString(labels[i], x + 2, ry + fm.getAscent() + 2);
+            int barX = x + labelW;
+            int barY = ry + Math.max(0, (rowH - vialH) / 2 - 1);
             int baseValue = row.value() - row.delta();
             if (useVials) {
-                drawVialComparison(g, x + 4, barY, barW, vialH, vialEmpty, vialOverlay, vialEndCap,
+                drawVialComparison(g, barX, barY, barW, vialH, vialEmpty, vialOverlay, vialEndCap,
                     colors[i], baseValue, row.value(), row.max(), animTick, i);
             }
             String delta = formatDelta(row.delta());
-            if (!delta.isEmpty() && rowH >= 18) {
+            if (!delta.isEmpty()) {
                 g.setColor(DELTA_YELLOW);
-                g.drawString(delta, x + barW - fm.stringWidth(delta), barY + vialH + fm.getAscent() - 1);
+                int dx = barX + barW - fm.stringWidth(delta);
+                g.drawString(delta, dx, barY - 1);
             }
         }
     }
@@ -169,12 +176,12 @@ public final class ShopStatBarRenderer {
     private static int vialHeight(int barW, BufferedImage vialEmpty, int cardH) {
         Rectangle crop = cropOf(vialEmpty, true);
         if (crop.width <= 0 || crop.height <= 0) {
-            return Math.max(12, Math.min(16, Math.round(barW * 0.34f)));
+            return Math.max(16, Math.min(22, Math.round(barW * 0.12f)));
         }
         float aspect = crop.width / (float) crop.height;
         int fromAspect = Math.round(barW / aspect);
-        int cap = cardH > 200 ? 16 : 14;
-        return Math.max(12, Math.min(cap, fromAspect));
+        int cap = cardH > 200 ? 22 : 20;
+        return Math.max(14, Math.min(cap, Math.max(fromAspect, 16)));
     }
 
     private static Rectangle cropOf(BufferedImage img, boolean empty) {
@@ -207,16 +214,17 @@ public final class ShopStatBarRenderer {
         Rectangle emptyCrop = cropOf(vialEmpty, true);
         // Caps уже в стеклянном арте — жидкости только в середине трубки.
         boolean glassSheet = vialOverlay == null && vialEndCap == null;
-        float padXRatio = glassSheet ? 0.13f : 0.11f;
-        float padYRatio = glassSheet ? 0.22f : 0.20f;
-        int padX = Math.max(4, Math.round(w * padXRatio));
-        int padY = Math.max(2, Math.round(h * padYRatio));
+        float padXRatio = glassSheet ? 0.12f : 0.11f;
+        // Меньше вертикальный паддинг — вода заполняет почти всю высоту колбы.
+        float padYRatio = glassSheet ? 0.08f : 0.18f;
+        int padX = Math.max(3, Math.round(w * padXRatio));
+        int padY = Math.max(1, Math.round(h * padYRatio));
         int cavityX = x + padX;
         int cavityY = y + padY;
         int cavityW = Math.max(1, w - padX * 2);
         int cavityH = Math.max(1, h - padY * 2);
 
-        g.setColor(new Color(12, 8, 6, glassSheet ? 160 : 210));
+        g.setColor(new Color(12, 8, 6, glassSheet ? 120 : 210));
         g.fillRoundRect(cavityX, cavityY, cavityW, cavityH, cavityH, cavityH);
 
         Shape savedClip = g.getClip();
