@@ -548,9 +548,29 @@ public final class ShopSwingView implements ShopView {
             return;
         }
 
-        float glowAppearT = ticks <= appearEnd ? appearT : 1f;
+        // Обычная броня: сначала свечение, потом иконка поверх.
+        int seedEnd = Math.min(WALLET_SEED_GLOW_TICKS + 2, appearEnd / 2);
+        int iconStart = seedEnd;
+        int iconInTicks = Math.max(1, appearEnd - iconStart);
+        if (ticks < seedEnd) {
+            float seedT = smoothstep(ticks / (float) Math.max(1, seedEnd));
+            drawItemRevealGlow(g, ipx, ipy, ipw, alpha * seedT, seedT, flyT, tuckT,
+                ui.purchaseRevealCategory);
+            return;
+        }
+        float glowAppearT = ticks <= appearEnd
+            ? smoothstep((ticks - seedEnd) / (float) Math.max(1, appearEnd - seedEnd))
+            : 1f;
+        glowAppearT = Math.max(0.55f, glowAppearT);
         drawItemRevealGlow(g, ipx, ipy, ipw, alpha, glowAppearT, flyT, tuckT, ui.purchaseRevealCategory);
-        drawPurchaseIcon(g, ipx, ipy, ipw, alpha);
+
+        float iconAlpha = alpha;
+        if (ticks <= appearEnd) {
+            iconAlpha = alpha * smoothstep((ticks - iconStart) / (float) iconInTicks);
+        }
+        if (iconAlpha > 0.02f) {
+            drawPurchaseIcon(g, ipx, ipy, ipw, iconAlpha);
+        }
     }
 
     private BufferedImage specialPurchaseHalo(ShopCategory category) {
