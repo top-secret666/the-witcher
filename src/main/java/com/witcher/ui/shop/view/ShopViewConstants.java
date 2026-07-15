@@ -11,11 +11,11 @@ public final class ShopViewConstants {
     public static final int REVEAL_DURATION_TICKS = 84;
     public static final int CATEGORY_OPEN_DURATION_TICKS = 28;
 
-    public static final int WALLET_APPEAR_TICKS = 40;
+    public static final int WALLET_APPEAR_TICKS = 32;
     /** Сначала появляется сама иконка. */
-    public static final int WALLET_ICON_IN_TICKS = 14;
-    /** Затем маленькое свечение вокруг иконки. */
-    public static final int WALLET_SEED_GLOW_TICKS = 10;
+    public static final int WALLET_ICON_IN_TICKS = 12;
+    /** Затем маленькое свечение вокруг иконки (задержка до ореола). */
+    public static final int WALLET_SEED_GLOW_TICKS = 4;
     /** У особых предметов после свечения — крутящийся ореол. */
     public static final int WALLET_HALO_IN_TICKS =
         WALLET_APPEAR_TICKS - WALLET_ICON_IN_TICKS - WALLET_SEED_GLOW_TICKS;
