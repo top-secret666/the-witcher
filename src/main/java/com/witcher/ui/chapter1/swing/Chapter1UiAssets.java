@@ -84,6 +84,7 @@ public final class Chapter1UiAssets {
   private static BufferedImage bossWakeForest;
   private static SpriteSheet swordSlashSheetA;
   private static SpriteSheet swordSlashSheetB;
+  private static SpriteSheet swordSlashSheetRush;
   private static boolean swordSlashTried;
 
   public static BufferedImage bossMapOpen() {
@@ -164,19 +165,21 @@ public final class Chapter1UiAssets {
     return loadCappedSharp(path, MAX_VOLK_EDGE);
   }
 
-  /** Кадр проблеска меча: лист A (6×4) или B (2×4), чёрный фон вырезан. */
+  /** Кадр проблеска меча: rush 5×12, иначе A (6×4) / B (2×4). */
   public static BufferedImage swordSlashFrame(
       main.java.com.witcher.chapter1.battle.SwordSlashShowTimeline.SheetId sheet, int index) {
     ensureSwordSlashSheets();
-    SpriteSheet frames = sheet == main.java.com.witcher.chapter1.battle.SwordSlashShowTimeline.SheetId.A
-        ? swordSlashSheetA
-        : swordSlashSheetB;
+    SpriteSheet frames = switch (sheet) {
+      case RUSH -> swordSlashSheetRush;
+      case A -> swordSlashSheetA;
+      case B -> swordSlashSheetB;
+    };
     return frames != null ? frames.getFrame(index) : null;
   }
 
   public static boolean swordSlashSheetsReady() {
     ensureSwordSlashSheets();
-    return swordSlashSheetA != null || swordSlashSheetB != null;
+    return swordSlashSheetRush != null || swordSlashSheetA != null || swordSlashSheetB != null;
   }
 
   private static void ensureSwordSlashSheets() {
@@ -185,10 +188,17 @@ public final class Chapter1UiAssets {
     }
     swordSlashTried = true;
     // чёрный → прозрачный, чтобы рисовать поверх чёрного кадра катсцены
+    swordSlashSheetRush = SpriteSheet.loadOptional(
+        Chapter1AssetPaths.SWORD_SLASH_SHEET_RUSH,
+        main.java.com.witcher.chapter1.battle.SwordSlashShowTimeline.RUSH_COLS,
+        main.java.com.witcher.chapter1.battle.SwordSlashShowTimeline.RUSH_ROWS,
+        1, true);
     swordSlashSheetA = SpriteSheet.loadOptional(
         Chapter1AssetPaths.SWORD_SLASH_SHEET_A, 6, 4, 1, true);
     swordSlashSheetB = SpriteSheet.loadOptional(
         Chapter1AssetPaths.SWORD_SLASH_SHEET_B, 2, 4, 1, true);
+    main.java.com.witcher.chapter1.battle.SwordSlashShowTimeline.setPreferRush(
+        swordSlashSheetRush != null);
   }
 
   private static BufferedImage loadCapped(String path, int maxEdge) {
