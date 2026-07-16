@@ -61,13 +61,6 @@ public final class Chapter1SwingView implements Chapter1View {
           g.dispose();
         }
       }
-      case SWORD_CUTSCENE -> SwordCutsceneView.draw(
-          screen, sw, sh,
-          presenter.swordGlint(),
-          presenter.swordGlint().getShakeOffsetX(),
-          presenter.swordGlint().getShakeOffsetY(),
-          presenter.director().session(),
-          presenter.swordGlitchFrozen());
       case BOSS_GLITCH_REVEAL -> {
         Graphics2D g = screen.createGraphics();
         try {

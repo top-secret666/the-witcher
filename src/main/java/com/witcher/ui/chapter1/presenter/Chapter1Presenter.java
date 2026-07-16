@@ -11,8 +11,6 @@ import main.java.com.witcher.chapter1.battle.BattleOutcome;
 import main.java.com.witcher.chapter1.battle.BattleResolver;
 import main.java.com.witcher.chapter1.battle.BattleVnController;
 import main.java.com.witcher.chapter1.battle.BossEntry;
-import main.java.com.witcher.chapter1.battle.SwordCutsceneTiming;
-import main.java.com.witcher.chapter1.loop.LoopRules;
 import main.java.com.witcher.chapter1.loop.LoopSequenceController;
 import main.java.com.witcher.chapter1.cutscene.CutsceneId;
 import main.java.com.witcher.chapter1.cutscene.CutsceneCatalog;
@@ -28,8 +26,6 @@ import main.java.com.witcher.chapter1.vn.VnSceneState;
 import main.java.com.witcher.ui.chapter1.swing.Chapter1AssetPrewarm;
 import main.java.com.witcher.ui.chapter1.swing.CutscenePlayer;
 import main.java.com.witcher.ui.chapter1.swing.EyesBlinkEffect;
-import main.java.com.witcher.ui.chapter1.swing.SwordGlintOverlay;
-import main.java.com.witcher.chapter1.loop.WakeAwakeningTimeline;
 import main.java.com.witcher.ui.shop.ShopModel;
 import main.java.com.witcher.ui.shop.swing.ShopScreen;
 
@@ -54,7 +50,6 @@ public final class Chapter1Presenter {
   private final BattleCardController battleCard = new BattleCardController();
   private final LoopSequenceController loopSequence = new LoopSequenceController();
   private final EyesBlinkEffect eyesEffect = new EyesBlinkEffect();
-  private final SwordGlintOverlay swordGlint = new SwordGlintOverlay();
   private final BossGlitchRevealController bossGlitchReveal = new BossGlitchRevealController();
 
   private BattleVnController battle;
@@ -68,7 +63,6 @@ public final class Chapter1Presenter {
   private BossEntry selectedBoss;
   private boolean bossMapBackHovered;
   private boolean battleVictory;
-  private boolean swordGlitchFrozen;
   private int hackShakeTick;
   private boolean exitRequested;
   /** Не стартовать VN «тюрьмы» посреди fly-in покупки. */
@@ -125,20 +119,12 @@ public final class Chapter1Presenter {
     return encounter;
   }
 
-  public SwordGlintOverlay swordGlint() {
-    return swordGlint;
-  }
-
   public BossGlitchRevealController bossGlitchReveal() {
     return bossGlitchReveal;
   }
 
   public boolean battleVictory() {
     return battleVictory;
-  }
-
-  public boolean swordGlitchFrozen() {
-    return swordGlitchFrozen;
   }
 
   public BattleCardController battleCard() {
@@ -217,7 +203,6 @@ public final class Chapter1Presenter {
       case LOOP_SEQUENCE -> updateLoopSequence();
       case LOOP_HOLD -> { }
       case BOSS_ENCOUNTER -> updateBossEncounter(mouseX, mouseY, clicked, wheelNotches);
-      case SWORD_CUTSCENE -> updateSwordCutscene();
       case BOSS_GLITCH_REVEAL -> updateBossGlitchReveal();
       case BATTLE_RESULT -> updateBattleResult(clicked);
       case VN_BATTLE -> updateBattle(mouseX, mouseY, clicked);
@@ -423,25 +408,9 @@ public final class Chapter1Presenter {
     boolean advanceKey = false;
     encounter.updateDialog(mouseX, mouseY, clicked, wheelNotches, advanceKey);
     if (encounter.isReadyForSword()) {
-      director.enterSwordCutscene();
-      onPhaseEntered();
-    }
-  }
-
-  private void updateSwordCutscene() {
-    swordGlint.update(WakeAwakeningTimeline.MS_PER_TICK,
-        Chapter1Layout.VIRTUAL_W, Chapter1Layout.VIRTUAL_H);
-    if (!swordGlitchFrozen && battleVictory
-        && swordGlint.elapsedMs() > SwordCutsceneTiming.freezeAfterMs()) {
-      swordGlint.freezeFinalGlint();
-      swordGlitchFrozen = true;
+      // Битву на мечах убрали: сразу глитч-катсцена.
+      battleVictory = true;
       director.enterBossGlitchReveal();
-      onPhaseEntered();
-      return;
-    }
-    if (swordGlint.elapsedMs() >= SwordCutsceneTiming.TOTAL_MS && !battleVictory) {
-      LoopRules.onBattleDefeat(director.session());
-      director.enterBattleResult();
       onPhaseEntered();
     }
   }
@@ -527,12 +496,9 @@ public final class Chapter1Presenter {
       startLoopCutscene(CutsceneId.LOOP_WAKE);
     } else if (director.phase() == Chapter1Phase.BOSS_ENCOUNTER) {
       encounter = new BossEncounterController(selectedBoss);
-    } else if (director.phase() == Chapter1Phase.SWORD_CUTSCENE) {
-      swordGlint.reset();
-      battleVictory = BattleResolver.meetsSwordCutsceneVictory(loadoutStats());
-      swordGlitchFrozen = false;
     } else if (director.phase() == Chapter1Phase.BOSS_GLITCH_REVEAL) {
       bossGlitchReveal.reset();
+      battleVictory = true;
     } else if (director.phase() == Chapter1Phase.SHOP) {
       doorLoopPlayer.stop();
       maybeStartDukeDialog();

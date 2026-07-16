@@ -9,7 +9,7 @@ import main.java.com.witcher.chapter1.loop.LoopRules;
  * Отрисовка — в {@code ui.chapter1.swing}; здесь только переходы.
  *
  * <p>Канонический cinematic-путь:
- * SHOP → BOSS_MAP → LOOP_SEQUENCE → BOSS_ENCOUNTER → SWORD_CUTSCENE → BATTLE_RESULT → SHOP.
+ * SHOP → BOSS_MAP → LOOP_SEQUENCE → BOSS_ENCOUNTER → BOSS_GLITCH_REVEAL → BATTLE_RESULT → SHOP.
  * Выдача карты — shop state {@code BATTLE_CARD_REVEAL}, не фаза директора.
  */
 public final class Chapter1Director {
@@ -160,14 +160,13 @@ public final class Chapter1Director {
     cutsceneFinished = false;
   }
 
-  /** Канон: спрайт-проблески мечей. */
+  /** @deprecated битва на мечах убрана — используйте {@link #enterBossGlitchReveal()}. */
+  @Deprecated
   public void enterSwordCutscene() {
-    phase = Chapter1Phase.SWORD_CUTSCENE;
-    pendingCutscene = null;
-    cutsceneFinished = false;
+    enterBossGlitchReveal();
   }
 
-  /** Глитч-пробуждение Волка после freeze на катсцене мечей. */
+  /** Глитч-пробуждение Волка сразу после диалога энкоунтера. */
   public void enterBossGlitchReveal() {
     phase = Chapter1Phase.BOSS_GLITCH_REVEAL;
     pendingCutscene = null;

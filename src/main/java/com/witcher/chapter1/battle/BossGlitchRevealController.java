@@ -2,7 +2,7 @@ package main.java.com.witcher.chapter1.battle;
 
 import java.util.List;
 
-/** Логика глитч-пробуждения после победы в катсцене мечей. */
+/** Логика глитч-пробуждения после диалога энкоунтера. */
 public final class BossGlitchRevealController {
 
   private static final int TICKS_PER_CHAR = 2;
