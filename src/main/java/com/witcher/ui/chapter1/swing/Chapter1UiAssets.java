@@ -134,35 +134,35 @@ public final class Chapter1UiAssets {
 
   public static BufferedImage bossBloodCorridor() {
     if (bossBloodCorridor == null) {
-      bossBloodCorridor = loadCappedSharp(Chapter1AssetPaths.BOSS_BLOOD_CORRIDOR, MAX_VOLK_EDGE);
+      bossBloodCorridor = loadCappedSharpPaletted(Chapter1AssetPaths.BOSS_BLOOD_CORRIDOR, MAX_VOLK_EDGE);
     }
     return bossBloodCorridor;
   }
 
   public static BufferedImage bossGlitchAwakenSheet() {
     if (bossGlitchAwakenSheet == null) {
-      bossGlitchAwakenSheet = loadCappedSharp(Chapter1AssetPaths.BOSS_GLITCH_AWAKEN_SHEET, MAX_VOLK_EDGE);
+      bossGlitchAwakenSheet = loadCappedSharpPaletted(Chapter1AssetPaths.BOSS_GLITCH_AWAKEN_SHEET, MAX_VOLK_EDGE);
     }
     return bossGlitchAwakenSheet;
   }
 
   public static BufferedImage wolfShardReveal() {
     if (wolfShardReveal == null) {
-      wolfShardReveal = loadCappedSharp(Chapter1AssetPaths.WOLF_SHARD_REVEAL, MAX_VOLK_EDGE);
+      wolfShardReveal = loadCappedSharpPaletted(Chapter1AssetPaths.WOLF_SHARD_REVEAL, MAX_VOLK_EDGE);
     }
     return wolfShardReveal;
   }
 
   public static BufferedImage wolfShardAwaken() {
     if (wolfShardAwaken == null) {
-      wolfShardAwaken = loadCappedSharp(Chapter1AssetPaths.WOLF_SHARD_AWAKEN, MAX_VOLK_EDGE);
+      wolfShardAwaken = loadCappedSharpPaletted(Chapter1AssetPaths.WOLF_SHARD_AWAKEN, MAX_VOLK_EDGE);
     }
     return wolfShardAwaken;
   }
 
   public static BufferedImage wolfForestEyes() {
     if (wolfForestEyes == null) {
-      wolfForestEyes = loadCappedSharp(Chapter1AssetPaths.WOLF_FOREST_EYES, MAX_VOLK_EDGE);
+      wolfForestEyes = loadCappedSharpPaletted(Chapter1AssetPaths.WOLF_FOREST_EYES, MAX_VOLK_EDGE);
     }
     return wolfForestEyes;
   }
@@ -263,6 +263,12 @@ public final class Chapter1UiAssets {
       return null;
     }
     return capEdgeSharp(sprite.getImage(), maxEdge);
+  }
+
+  /** Глитч/horror-ассеты — после ужимания единая палитра главы 1. */
+  private static BufferedImage loadCappedSharpPaletted(String path, int maxEdge) {
+    BufferedImage capped = loadCappedSharp(path, maxEdge);
+    return WitcherGlitchPalette.apply(capped);
   }
 
   /** Ужимает оригинал один раз при загрузке — дальше ScaledImageCache не аллоцирует гигантские half. */

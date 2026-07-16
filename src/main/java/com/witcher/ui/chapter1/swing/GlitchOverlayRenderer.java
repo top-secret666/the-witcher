@@ -50,7 +50,7 @@ public final class GlitchOverlayRenderer {
   private static BufferedImage cachedHeavy() {
     if (heavy == null) {
       var sprite = Sprite.loadOptional(Chapter1AssetPaths.GLITCH_HEAVY);
-      heavy = sprite != null ? sprite.getImage() : null;
+      heavy = sprite != null ? WitcherGlitchPalette.apply(sprite.getImage()) : null;
     }
     return heavy;
   }
