@@ -55,6 +55,7 @@ public final class Chapter1AssetPrewarm {
     Chapter1UiAssets.wolfShardReveal();
     Chapter1UiAssets.wolfShardAwaken();
     Chapter1UiAssets.wolfForestEyes();
+    Chapter1UiAssets.wolfMistForest();
     mapDrawablesReady = true;
   }
 

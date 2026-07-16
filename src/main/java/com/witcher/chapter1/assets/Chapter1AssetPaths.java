@@ -32,6 +32,8 @@ public final class Chapter1AssetPaths {
   public static final String WOLF_SHARD_AWAKEN = BATTLE + "wolf_shard_awaken.png";
   /** Туманный лес с множеством глаз — фон в глитч-диалоге. */
   public static final String WOLF_FOREST_EYES = BATTLE + "wolf_forest_eyes.png";
+  /** Холодный туманный лес (без глаз) — цикл фонов под листом. */
+  public static final String WOLF_MIST_FOREST = BATTLE + "wolf_mist_forest.png";
   public static final String BOSS_WAKE_FOREST = BATTLE + "boss_wake_forest.png";
   public static final String SWORD_SLASH_SHEET_A = BATTLE + "sword_slash_sheet_a.png";
   public static final String SWORD_SLASH_SHEET_B = BATTLE + "sword_slash_sheet_b.png";
