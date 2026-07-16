@@ -142,8 +142,8 @@ public final class BossGlitchRevealView {
   }
 
   /**
-   * Много мелких «ВЫХОД» сразу по всему экрану, сеткой без наложений друг на друга.
-   * {@code fillT} 0..1 — насколько густо заполняем ячейки.
+   * Много мелких «ВЫХОД» случайно по всему экрану (не столбцами), без наложений.
+   * {@code fillT} 0..1 — сколько копий успели лечь.
    */
   private static void drawScatteredExitWords(Graphics2D g, int sw, int sh, float fillT, long seed) {
     if (fillT <= 0.01f) {
@@ -156,35 +156,43 @@ public final class BossGlitchRevealView {
     FontMetrics fm = g.getFontMetrics();
     int tw = fm.stringWidth(EXIT_WORD);
     int th = fm.getHeight();
-    int gapX = Math.max(8, tw / 3);
-    int gapY = Math.max(6, th / 2);
-    int cellW = tw + gapX;
-    int cellH = th + gapY;
-    int cols = Math.max(1, sw / cellW);
-    int rows = Math.max(1, sh / cellH);
+    int minGap = Math.max(4, Math.round(fontSize * 0.35f));
 
-    // Стабильная сетка: jitter только внутри ячейки, слова не пересекаются.
-    Random rnd = new Random(7703L);
-    int target = Math.round(cols * rows * (0.35f + fill * 0.65f));
-    int drawn = 0;
-    for (int row = 0; row < rows && drawn < target; row++) {
-      for (int col = 0; col < cols && drawn < target; col++) {
-        // Псевдо-разброс: пропускаем часть ячеек, но при высоком fill почти все.
-        float keep = 0.25f + fill * 0.8f;
-        if (rnd.nextFloat() > keep && fill < 0.92f) {
-          continue;
+    // Сколько нужно, чтобы визуально «минимально заполнить» экран.
+    float areaPerWord = (tw + minGap * 2f) * (th + minGap * 2f);
+    int capacity = Math.max(40, Math.round((sw * sh) / areaPerWord * 0.85f));
+    int target = Math.round(capacity * (0.4f + fill * 0.6f));
+
+    // Стабильный набор позиций: один seed на фазу, без сетки/столбцов.
+    Random rnd = new Random(9041L);
+    int[] xs = new int[capacity];
+    int[] ys = new int[capacity];
+    int placed = 0;
+    int attempts = capacity * 40;
+    for (int a = 0; a < attempts && placed < capacity; a++) {
+      int x = rnd.nextInt(Math.max(1, sw - tw));
+      int y = th + rnd.nextInt(Math.max(1, sh - th));
+      boolean ok = true;
+      for (int i = 0; i < placed; i++) {
+        int dx = Math.abs(xs[i] - x);
+        int dy = Math.abs(ys[i] - y);
+        if (dx < tw + minGap && dy < th + minGap) {
+          ok = false;
+          break;
         }
-        int jitterX = rnd.nextInt(Math.max(1, gapX / 2));
-        int jitterY = rnd.nextInt(Math.max(1, gapY / 2));
-        int x = col * cellW + jitterX;
-        int y = row * cellH + fm.getAscent() + jitterY;
-        if (x + tw > sw || y > sh) {
-          continue;
-        }
-        g.setColor(RED_TEXT);
-        g.drawString(EXIT_WORD, x, y);
-        drawn++;
       }
+      if (!ok) {
+        continue;
+      }
+      xs[placed] = x;
+      ys[placed] = y;
+      placed++;
+    }
+
+    int drawCount = Math.min(target, placed);
+    g.setColor(RED_TEXT);
+    for (int i = 0; i < drawCount; i++) {
+      g.drawString(EXIT_WORD, xs[i], ys[i]);
     }
     g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
   }
