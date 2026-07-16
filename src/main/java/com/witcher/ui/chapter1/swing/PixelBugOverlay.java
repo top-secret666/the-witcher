@@ -3,13 +3,17 @@ package main.java.com.witcher.ui.chapter1.swing;
 import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Composite;
+import java.awt.Font;
+import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 import java.util.Random;
 
-/** Процедурное «багование» экрана: блоки, полосы, хроматика — intensity 0..1. */
+/** Пиксельные помехи: ТВ-статика (красно-бело-чёрные) и цифровой «дождь» 0/1/букв. */
 public final class PixelBugOverlay {
+
+  private static final char[] CODE_CHARS = "01ABCDEFGHIJKLMNOPQRSTUVWXYZ".toCharArray();
 
   private static BufferedImage[] baked;
   private static int cachedW;
@@ -19,54 +23,99 @@ public final class PixelBugOverlay {
   private PixelBugOverlay() {
   }
 
+  /** Старый общий режим (для прочих мест). */
   public static void draw(Graphics2D g, int sw, int sh, float intensity, long seedMs) {
+    drawTvStatic(g, sw, sh, intensity, seedMs);
+  }
+
+  /** Красно-бело-чёрные ТВ-помехи. intensity 0..1. */
+  public static void drawTvStatic(Graphics2D g, int sw, int sh, float intensity, long seedMs) {
     if (g == null || intensity <= 0.01f || sw <= 0 || sh <= 0) {
       return;
     }
     ensure(sw, sh);
     float clamped = Math.max(0f, Math.min(1f, intensity));
-
     Composite prev = g.getComposite();
-    g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.35f + clamped * 0.55f));
+
+    g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.25f + clamped * 0.7f));
     g.drawImage(baked[animFrame % baked.length], 0, 0, null);
     g.setComposite(prev);
     animFrame++;
 
     Random rnd = new Random(seedMs * 131L + animFrame * 17L);
-    int blocks = Math.round(6 + clamped * 48);
+    int blocks = Math.round(10 + clamped * 90);
     for (int i = 0; i < blocks; i++) {
-      int bw = 4 + rnd.nextInt(Math.max(4, Math.round(sw * 0.08f * clamped)));
-      int bh = 2 + rnd.nextInt(Math.max(2, Math.round(sh * 0.04f * clamped)));
+      int bw = 2 + rnd.nextInt(Math.max(2, Math.round(sw * 0.1f * clamped)));
+      int bh = 1 + rnd.nextInt(Math.max(1, Math.round(sh * 0.05f * clamped)));
       int bx = rnd.nextInt(Math.max(1, sw - bw));
       int by = rnd.nextInt(Math.max(1, sh - bh));
-      int tone = rnd.nextInt(220);
-      int alpha = Math.round(80 + clamped * 175);
-      g.setColor(new Color(tone, tone, tone, alpha));
+      Color c = switch (rnd.nextInt(5)) {
+        case 0, 1 -> new Color(200 + rnd.nextInt(55), 20 + rnd.nextInt(40), 20 + rnd.nextInt(30),
+            Math.round(100 + clamped * 155));
+        case 2 -> new Color(240, 240, 245, Math.round(90 + clamped * 150));
+        default -> new Color(0, 0, 0, Math.round(120 + clamped * 135));
+      };
+      g.setColor(c);
       g.fillRect(bx, by, bw, bh);
     }
 
-    int bands = Math.round(2 + clamped * 10);
+    int bands = Math.round(3 + clamped * 16);
     for (int i = 0; i < bands; i++) {
       int by = rnd.nextInt(sh);
-      int bh = 1 + rnd.nextInt(Math.max(1, Math.round(3 + clamped * 8)));
-      Color c = switch (rnd.nextInt(3)) {
-        case 0 -> new Color(255, 40, 40, Math.round(60 + clamped * 140));
-        case 1 -> new Color(40, 255, 120, Math.round(50 + clamped * 120));
-        default -> new Color(60, 120, 255, Math.round(50 + clamped * 120));
-      };
-      g.setColor(c);
+      int bh = 1 + rnd.nextInt(Math.max(1, Math.round(2 + clamped * 10)));
+      boolean red = rnd.nextFloat() < 0.7f;
+      g.setColor(red
+          ? new Color(255, 30, 30, Math.round(70 + clamped * 160))
+          : new Color(230, 230, 235, Math.round(50 + clamped * 120)));
       g.fillRect(0, by, sw, bh);
     }
 
-    int shift = Math.round(clamped * 6);
+    int shift = Math.round(clamped * 5);
     if (shift > 0) {
-      g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.25f * clamped));
-      g.setColor(new Color(255, 0, 0, 120));
+      g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.2f * clamped));
+      g.setColor(new Color(255, 0, 0, 140));
       g.fillRect(shift, 0, sw, sh);
-      g.setColor(new Color(0, 255, 255, 90));
-      g.fillRect(-shift, 0, sw, sh);
       g.setComposite(prev);
     }
+  }
+
+  /**
+   * Цифры/буквы/нули-единицы поверх статики.
+   * densityScale &lt; 1 — слабее прошлого «полного забития», но всё равно почти ничего не видно.
+   */
+  public static void drawDigitalRain(Graphics2D g, int sw, int sh, float intensity, long seedMs,
+                                     float densityScale) {
+    if (g == null || intensity <= 0.01f) {
+      return;
+    }
+    float clamped = Math.max(0f, Math.min(1f, intensity));
+    float dens = Math.max(0.15f, Math.min(1f, densityScale));
+    drawTvStatic(g, sw, sh, clamped * 0.85f, seedMs);
+
+    Random rnd = new Random(seedMs * 97L + animFrame * 31L);
+    int fontSize = Math.max(8, Math.round(sh * 0.035f));
+    Font font = new Font(Font.MONOSPACED, Font.PLAIN, fontSize);
+    g.setFont(font);
+    FontMetrics fm = g.getFontMetrics();
+    int stepX = Math.max(fm.charWidth('0') + 2, 8);
+    int stepY = Math.max(fm.getHeight(), 10);
+    int cols = Math.max(1, sw / stepX);
+    int rows = Math.max(1, sh / stepY);
+    int count = Math.round(cols * rows * (0.18f + clamped * 0.55f) * dens);
+
+    Composite prev = g.getComposite();
+    for (int i = 0; i < count; i++) {
+      int cx = rnd.nextInt(cols) * stepX;
+      int cy = rnd.nextInt(rows) * stepY + fm.getAscent();
+      char ch = CODE_CHARS[rnd.nextInt(CODE_CHARS.length)];
+      boolean red = rnd.nextFloat() < 0.65f;
+      int alpha = Math.round(90 + clamped * 150);
+      g.setColor(red
+          ? new Color(220, 40, 40, alpha)
+          : new Color(220, 220, 225, alpha));
+      g.drawString(String.valueOf(ch), cx, cy);
+    }
+    g.setComposite(prev);
   }
 
   private static void ensure(int sw, int sh) {
@@ -78,20 +127,25 @@ public final class PixelBugOverlay {
     animFrame = 0;
     baked = new BufferedImage[6];
     for (int i = 0; i < baked.length; i++) {
-      baked[i] = bake(sw, sh, 900 + i * 113);
+      baked[i] = bakeRedStatic(sw, sh, 900 + i * 113);
     }
   }
 
-  private static BufferedImage bake(int sw, int sh, int seed) {
+  private static BufferedImage bakeRedStatic(int sw, int sh, int seed) {
     BufferedImage img = new BufferedImage(sw, sh, BufferedImage.TYPE_INT_ARGB);
     int[] px = ((DataBufferInt) img.getRaster().getDataBuffer()).getData();
     Random r = new Random(seed);
-    int count = Math.max(1, Math.round(sw * sh * 0.004f));
+    int count = Math.max(1, Math.round(sw * sh * 0.006f));
     for (int i = 0; i < count; i++) {
       int idx = r.nextInt(px.length);
-      int tone = 40 + r.nextInt(200);
-      int alpha = 40 + r.nextInt(180);
-      px[idx] = (alpha << 24) | (tone << 16) | (tone << 8) | tone;
+      int pick = r.nextInt(4);
+      int alpha = 50 + r.nextInt(180);
+      int rgb = switch (pick) {
+        case 0 -> 0xE02020;
+        case 1 -> 0xF0F0F4;
+        default -> 0x000000;
+      };
+      px[idx] = (alpha << 24) | rgb;
     }
     return img;
   }

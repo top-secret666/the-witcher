@@ -14,15 +14,16 @@ import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.awt.image.RescaleOp;
+import java.util.Random;
 
 /**
- * Глитч-пробуждение Волка после победы.
- * Тряска экрана есть, но фон рисуется с запасом (pad), чтобы по краям не было дыр.
+ * Порядок слоёв (без наложений «картинка на картинку» не по сценарию):
+ * чёрный → ТВ-баги → ТОЛЬКО heavy → «...» → код-баги → corridor+диалог+тряска
+ * → быстрый цикл 3 лесов + sheet → БАЦ чёрный → shard из шума → пропадает.
  */
 public final class BossGlitchRevealView {
 
-  /** Запас вокруг экрана — тряска не открывает чёрные края. */
-  private static final int SHAKE_PAD = 10;
+  private static final int SHAKE_PAD = 12;
 
   private BossGlitchRevealView() {
   }
@@ -37,17 +38,21 @@ public final class BossGlitchRevealView {
     Stage stage = ctrl.stage();
     int local = ctrl.stageElapsedMs();
     long seed = ctrl.elapsedMs();
-    int shakeX = screenShakeX(ctrl);
-    int shakeY = screenShakeY(ctrl);
 
     switch (stage) {
-      case GLITCH_BUILDUP -> drawBuildup(g, sw, sh, local, seed, shakeX, shakeY);
-      case CORRIDOR_DIALOG -> drawCorridorDialog(g, sw, sh, ctrl, seed, shakeX, shakeY);
-      case BLINK -> drawBlink(g, sw, sh, ctrl, local, seed, shakeX, shakeY);
-      case AWAKEN_SHEET -> drawAwakenSheet(g, sw, sh, local, seed, shakeX, shakeY);
-      case SHARPEN -> drawSharpen(g, sw, sh, local, seed);
-      case FADE_DARK -> drawFadeDark(g, sw, sh, local);
-      case EYELID_OPEN -> drawEyelidOpen(g, sw, sh, ctrl);
+      case STATIC_FILL -> drawStaticFill(g, sw, sh, local, seed);
+      case HEAVY_REVEAL -> drawHeavyReveal(g, sw, sh, local, seed);
+      case DOTS_DIALOG -> drawDotsDialog(g, sw, sh);
+      case CODE_FILL -> drawCodeFill(g, sw, sh, local, seed);
+      case CODE_FADE -> drawCodeFade(g, sw, sh, local, seed);
+      case CORRIDOR_DIALOG -> drawCorridorDialog(g, sw, sh, ctrl, seed);
+      case CYCLE_SHEET -> drawCycleSheet(g, sw, sh, local, seed);
+      case BLACK_BANG -> {
+        g.setColor(Color.BLACK);
+        g.fillRect(0, 0, sw, sh);
+      }
+      case SHARD_EMERGE -> drawShardEmerge(g, sw, sh, local, seed);
+      case SHARD_OUT -> drawShardOut(g, sw, sh, local);
       default -> {
         g.setColor(Color.BLACK);
         g.fillRect(0, 0, sw, sh);
@@ -55,116 +60,143 @@ public final class BossGlitchRevealView {
     }
   }
 
-  private static void drawBuildup(Graphics2D g, int sw, int sh, int localMs, long seed,
-                                  int shakeX, int shakeY) {
+  private static void drawStaticFill(Graphics2D g, int sw, int sh, int localMs, long seed) {
     g.setColor(Color.BLACK);
     g.fillRect(0, 0, sw, sh);
+    float intensity = BossGlitchRevealTimeline.rise01(localMs, BossGlitchRevealTimeline.STATIC_FILL_MS);
+    PixelBugOverlay.drawTvStatic(g, sw, sh, intensity, seed);
+  }
 
-    float corridorA = BossGlitchRevealTimeline.buildupCorridorAlpha(localMs);
-    float mediumA = BossGlitchRevealTimeline.buildupMediumAlpha(localMs);
-    float heavyA = BossGlitchRevealTimeline.buildupHeavyAlpha(localMs);
-    float bugs = BossGlitchRevealTimeline.buildupIntensity(localMs);
-
-    // Коридор → medium с кучей багов → мягко всплывает heavy.
-    drawFullBleedShaken(g, Chapter1UiAssets.bossBloodCorridor(), sw, sh, corridorA, shakeX, shakeY);
-    PixelBugOverlay.draw(g, sw, sh, Math.min(1f, 0.35f + bugs * 0.85f), seed);
-    GlitchOverlayRenderer.drawMediumForced(g, sw, sh, mediumA);
-    PixelBugOverlay.draw(g, sw, sh, Math.min(1f, bugs * 0.55f), seed + 91);
-    GlitchOverlayRenderer.drawHeavyForced(g, sw, sh, heavyA);
-    if (heavyA > 0.2f) {
-      PixelBugOverlay.draw(g, sw, sh, heavyA * 0.4f, seed + 17);
+  private static void drawHeavyReveal(Graphics2D g, int sw, int sh, int localMs, long seed) {
+    // ТОЛЬКО heavy — без corridor под ним.
+    float heavyA = BossGlitchRevealTimeline.rise01(localMs, BossGlitchRevealTimeline.HEAVY_REVEAL_MS);
+    float staticA = BossGlitchRevealTimeline.fall01(localMs, BossGlitchRevealTimeline.HEAVY_REVEAL_MS);
+    g.setColor(Color.BLACK);
+    g.fillRect(0, 0, sw, sh);
+    GlitchOverlayRenderer.drawHeavyForced(g, sw, sh, Math.max(0.35f, heavyA));
+    if (staticA > 0.05f) {
+      PixelBugOverlay.drawTvStatic(g, sw, sh, staticA * 0.85f, seed);
     }
+  }
+
+  private static void drawDotsDialog(Graphics2D g, int sw, int sh) {
+    // Только heavy + три красные точки. Без тряски.
+    g.setColor(Color.BLACK);
+    g.fillRect(0, 0, sw, sh);
+    GlitchOverlayRenderer.drawHeavyForced(g, sw, sh, 0.85f);
+    drawThreeRedDots(g, sw, sh);
+  }
+
+  private static void drawCodeFill(Graphics2D g, int sw, int sh, int localMs, long seed) {
+    // После «...» снова только баги (пиксели + 0/1/буквы) — без heavy и без corridor.
+    g.setColor(Color.BLACK);
+    g.fillRect(0, 0, sw, sh);
+    float intensity = BossGlitchRevealTimeline.rise01(localMs, BossGlitchRevealTimeline.CODE_FILL_MS);
+    PixelBugOverlay.drawDigitalRain(g, sw, sh, intensity, seed, 0.72f);
+  }
+
+  private static void drawCodeFade(Graphics2D g, int sw, int sh, int localMs, long seed) {
+    // Рассеивание: помехи слабеют, но остаются. Corridor ещё нет.
+    g.setColor(Color.BLACK);
+    g.fillRect(0, 0, sw, sh);
+    float residual = 0.22f + BossGlitchRevealTimeline.fall01(localMs, BossGlitchRevealTimeline.CODE_FADE_MS) * 0.65f;
+    PixelBugOverlay.drawDigitalRain(g, sw, sh, residual, seed, 0.5f);
   }
 
   private static void drawCorridorDialog(
-      Graphics2D g, int sw, int sh, BossGlitchRevealController ctrl, long seed,
-      int shakeX, int shakeY) {
-    int variant = ctrl.dialogBgVariant();
-    BufferedImage bg = switch (variant) {
-      case 1 -> Chapter1UiAssets.wolfForestEyes();
-      case 2 -> Chapter1UiAssets.wolfShardReveal();
-      default -> Chapter1UiAssets.bossBloodCorridor();
+      Graphics2D g, int sw, int sh, BossGlitchRevealController ctrl, long seed) {
+    int shakeX = dialogShakeX(ctrl.elapsedMs());
+    int shakeY = dialogShakeY(ctrl.elapsedMs());
+    // Только corridor — без heavy сверху.
+    drawFullBleedShaken(g, Chapter1UiAssets.bossBloodCorridor(), sw, sh, 1f, shakeX, shakeY);
+    PixelBugOverlay.drawTvStatic(g, sw, sh, 0.08f, seed);
+    drawThreatDialog(g, sw, sh, ctrl.visibleDialogText());
+  }
+
+  private static void drawCycleSheet(Graphics2D g, int sw, int sh, int localMs, long seed) {
+    float peak = BossGlitchRevealTimeline.cycleGlitchPeak(localMs);
+    int shakeX = Math.round((float) Math.sin(localMs * 0.09) * (3f + peak * 14f));
+    int shakeY = Math.round((float) Math.sin(localMs * 0.11 + 1.1) * (2f + peak * 10f));
+
+    BufferedImage bg = switch (BossGlitchRevealTimeline.bgCycleIndex(localMs)) {
+      case 1 -> Chapter1UiAssets.bossWakeForest();
+      case 2 -> Chapter1UiAssets.wolfMistForest();
+      default -> Chapter1UiAssets.wolfForestEyes();
     };
     drawFullBleedShaken(g, bg, sw, sh, 1f, shakeX, shakeY);
-    float glitch = variant == 0 ? 0.12f : (variant == 1 ? 0.22f : 0.05f);
-    if (glitch > 0.01f) {
-      PixelBugOverlay.draw(g, sw, sh, glitch, seed);
-    }
-    drawThreatDialog(g, sw, sh, ctrl.visibleDialogText());
-  }
 
-  private static void drawBlink(Graphics2D g, int sw, int sh, BossGlitchRevealController ctrl,
-                                int localMs, long seed, int shakeX, int shakeY) {
-    float t = BossGlitchRevealTimeline.corridorToSheetT(localMs);
-    float bugs = BossGlitchRevealTimeline.corridorToSheetBugs(localMs);
     int frame = BossGlitchRevealTimeline.sheetFrameIndex(
-        Math.round(t * (BossGlitchRevealTimeline.SHEET_MS - 1)));
-
-    // Мягкий кроссфейд: коридор уходит → лист проявляется, баги/пиксели в пике.
-    drawFullBleedShaken(g, Chapter1UiAssets.bossBloodCorridor(), sw, sh, 1f - t * 0.85f, shakeX, shakeY);
-    drawSheetFrameBright(g, sw, sh, frame, Math.max(0.05f, t), shakeX, shakeY);
-    PixelBugOverlay.draw(g, sw, sh, bugs, seed);
-    if (bugs > 0.35f) {
-      CutsceneNoiseOverlay.draw(g, sw, sh, bugs * 0.7f);
-    }
-    if (t > 0.55f) {
-      GlitchOverlayRenderer.drawMediumForced(g, sw, sh, (t - 0.55f) / 0.45f * 0.45f);
-    }
-    drawThreatDialog(g, sw, sh, ctrl.visibleDialogText());
-  }
-
-  private static void drawAwakenSheet(Graphics2D g, int sw, int sh, int localMs, long seed,
-                                      int shakeX, int shakeY) {
-    int frame = BossGlitchRevealTimeline.sheetFrameIndex(localMs);
-    float heavyA = BossGlitchRevealTimeline.sheetToHeavyAlpha(localMs);
-    float bugs = BossGlitchRevealTimeline.sheetToHeavyBugs(localMs);
-
+        Math.min(localMs, BossGlitchRevealTimeline.SHEET_MS - 1));
     drawSheetFrameBright(g, sw, sh, frame, 1f, shakeX, shakeY);
-    PixelBugOverlay.draw(g, sw, sh, bugs, seed);
-    if (bugs > 0.4f) {
-      CutsceneNoiseOverlay.draw(g, sw, sh, Math.min(0.8f, bugs * 0.55f));
-    }
-    // Мягкий переход лист → heavy: heavy всплывает под конец с багами.
-    GlitchOverlayRenderer.drawHeavyForced(g, sw, sh, heavyA);
-    if (heavyA > 0.15f) {
-      PixelBugOverlay.draw(g, sw, sh, heavyA * 0.5f, seed + 41);
+
+    PixelBugOverlay.drawTvStatic(g, sw, sh, 0.15f + peak * 0.85f, seed);
+    if (peak > 0.45f) {
+      // Вспышки + неровности на пике глюка — без второго фонового ассета.
+      flashBands(g, sw, sh, peak, seed);
     }
   }
 
-  private static void drawSharpen(Graphics2D g, int sw, int sh, int localMs, long seed) {
+  private static void drawShardEmerge(Graphics2D g, int sw, int sh, int localMs, long seed) {
+    g.setColor(Color.BLACK);
+    g.fillRect(0, 0, sw, sh);
     float sharp = BossGlitchRevealTimeline.sharpenT(localMs);
-    // Как при пробуждении GIF: картинка из «мыла» в резкость + пиксельный шум сходит.
     BufferedImage scaled = ScaledImageCache.get(Chapter1UiAssets.wolfShardReveal(), sw, sh);
-    if (scaled == null) {
-      drawFullBleed(g, Chapter1UiAssets.wolfShardReveal(), sw, sh, 1f);
-    } else {
+    if (scaled != null) {
       WakeVisionRenderer.drawFrame(g, scaled, 0, 0, sharp);
+    } else {
+      drawFullBleed(g, Chapter1UiAssets.wolfShardReveal(), sw, sh, sharp);
     }
-    // Большой шум в начале → 0 на максимальной чёткости. Без glitch_overlay_heavy / PixelBug.
-    float noise = sharp >= 0.97f ? 0f : (1f - sharp) * 0.92f + 0.06f;
+    float noise = sharp >= 0.97f ? 0f : (1f - sharp) * 0.9f + 0.05f;
     if (noise > 0.02f) {
       CutsceneNoiseOverlay.draw(g, sw, sh, Math.min(1f, noise));
     }
   }
 
-  private static void drawFadeDark(Graphics2D g, int sw, int sh, int localMs) {
-    drawFullBleed(g, Chapter1UiAssets.wolfShardReveal(), sw, sh, 1f);
-    float alpha = BossGlitchRevealTimeline.fadeDarkAlpha(localMs);
-    g.setColor(new Color(0, 0, 0, Math.round(255 * alpha)));
-    g.fillRect(0, 0, sw, sh);
+  private static void drawShardOut(Graphics2D g, int sw, int sh, int localMs) {
+    float a = BossGlitchRevealTimeline.shardOutAlpha(localMs);
+    drawFullBleed(g, Chapter1UiAssets.wolfShardReveal(), sw, sh, a);
+    if (a < 0.99f) {
+      g.setColor(new Color(0, 0, 0, Math.round(255 * (1f - a))));
+      g.fillRect(0, 0, sw, sh);
+    }
   }
 
-  private static void drawEyelidOpen(Graphics2D g, int sw, int sh, BossGlitchRevealController ctrl) {
-    drawFullBleed(g, Chapter1UiAssets.wolfShardAwaken(), sw, sh, 1f);
-    EyelidOverlay.renderBlack(g, sw, sh, ctrl.eyelidOpenT());
+  private static void drawThreeRedDots(Graphics2D g, int sw, int sh) {
+    int dialogH = Math.round(sh * 0.22f);
+    int y0 = sh - dialogH;
+    g.setColor(new Color(0, 0, 0, 210));
+    g.fillRect(0, y0, sw, dialogH);
+    g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+    int fontSize = Math.max(16, Math.round(sh * 0.06f));
+    g.setFont(GameFonts.get().bold(fontSize));
+    FontMetrics fm = g.getFontMetrics();
+    String dots = "...";
+    int tx = (sw - fm.stringWidth(dots)) / 2;
+    int ty = y0 + (dialogH + fm.getAscent() - fm.getDescent()) / 2;
+    g.setColor(new Color(200, 18, 28));
+    g.drawString(dots, tx, ty);
+    g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
+  }
+
+  private static void flashBands(Graphics2D g, int sw, int sh, float peak, long seed) {
+    Random rnd = new Random(seed * 19L);
+    int flashes = Math.round(2 + peak * 8);
+    for (int i = 0; i < flashes; i++) {
+      int y = rnd.nextInt(sh);
+      int h = 2 + rnd.nextInt(Math.max(2, Math.round(sh * 0.08f * peak)));
+      g.setColor(new Color(255, 255, 255, Math.round(40 + peak * 140)));
+      g.fillRect(0, y, sw, h);
+      if (rnd.nextBoolean()) {
+        g.setColor(new Color(255, 40, 40, Math.round(50 + peak * 120)));
+        g.fillRect(0, Math.min(sh - 1, y + h), sw, 1 + rnd.nextInt(3));
+      }
+    }
   }
 
   private static void drawSheetFrameBright(Graphics2D g, int sw, int sh, int frameIndex,
                                            float alpha, int shakeX, int shakeY) {
     BufferedImage sheet = Chapter1UiAssets.bossGlitchAwakenSheet();
     if (sheet == null) {
-      g.setColor(Color.BLACK);
-      g.fillRect(0, 0, sw, sh);
       return;
     }
     int cols = BossGlitchRevealTimeline.SHEET_COLS;
@@ -174,7 +206,6 @@ public final class BossGlitchRevealView {
     int col = frameIndex % cols;
     int row = frameIndex / cols;
 
-    // Копируем в ARGB — иначе RescaleOp падает на RGB/indexed листах.
     BufferedImage cell = sheet.getSubimage(col * cellW, row * cellH, cellW, cellH);
     BufferedImage argb = new BufferedImage(cellW, cellH, BufferedImage.TYPE_INT_ARGB);
     Graphics2D cg = argb.createGraphics();
@@ -184,8 +215,8 @@ public final class BossGlitchRevealView {
       cg.dispose();
     }
     RescaleOp brighten = new RescaleOp(
-        new float[] {1.45f, 1.45f, 1.45f, 1f},
-        new float[] {12f, 12f, 12f, 0f},
+        new float[] {1.4f, 1.4f, 1.4f, 1f},
+        new float[] {10f, 10f, 10f, 0f},
         null);
     BufferedImage bright = brighten.filter(argb, null);
 
@@ -193,18 +224,13 @@ public final class BossGlitchRevealView {
     g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
     Object interp = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
     g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
-    // oversized + shake — без чёрных краёв
-    g.drawImage(bright,
-        shakeX - SHAKE_PAD, shakeY - SHAKE_PAD,
-        sw + SHAKE_PAD * 2, sh + SHAKE_PAD * 2,
-        null);
+    g.drawImage(bright, shakeX - SHAKE_PAD, shakeY - SHAKE_PAD, sw + SHAKE_PAD * 2, sh + SHAKE_PAD * 2, null);
     if (interp != null) {
       g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, interp);
     }
     g.setComposite(prev);
   }
 
-  /** Фон на весь экран с запасом и тряской — края никогда не «дырявые». */
   private static void drawFullBleedShaken(Graphics2D g, BufferedImage img, int sw, int sh,
                                           float alpha, int shakeX, int shakeY) {
     if (img == null) {
@@ -217,18 +243,10 @@ public final class BossGlitchRevealView {
       g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, Math.max(0f, Math.min(1f, alpha))));
     }
     Object interp = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
-    Object render = g.getRenderingHint(RenderingHints.KEY_RENDERING);
     g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
-    g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-    g.drawImage(img,
-        shakeX - SHAKE_PAD, shakeY - SHAKE_PAD,
-        sw + SHAKE_PAD * 2, sh + SHAKE_PAD * 2,
-        null);
+    g.drawImage(img, shakeX - SHAKE_PAD, shakeY - SHAKE_PAD, sw + SHAKE_PAD * 2, sh + SHAKE_PAD * 2, null);
     if (interp != null) {
       g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, interp);
-    }
-    if (render != null) {
-      g.setRenderingHint(RenderingHints.KEY_RENDERING, render);
     }
     g.setComposite(prev);
   }
@@ -245,11 +263,9 @@ public final class BossGlitchRevealView {
     int y0 = sh - dialogH;
     g.setColor(new Color(0, 0, 0, 215));
     g.fillRect(0, y0, sw, dialogH);
-
     g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
     int fontSize = Math.max(12, Math.round(sh * 0.042f));
-    Font font = GameFonts.get().plain(fontSize);
-    g.setFont(font);
+    g.setFont(GameFonts.get().plain(fontSize));
     FontMetrics fm = g.getFontMetrics();
     g.setColor(new Color(190, 18, 28));
     int x = Math.round(sw * 0.06f);
@@ -286,37 +302,11 @@ public final class BossGlitchRevealView {
     return out;
   }
 
-  private static int screenShakeX(BossGlitchRevealController ctrl) {
-    Stage stage = ctrl.stage();
-    if (stage != Stage.CORRIDOR_DIALOG && stage != Stage.BLINK
-        && stage != Stage.GLITCH_BUILDUP && stage != Stage.AWAKEN_SHEET) {
-      return 0;
-    }
-    float amp = 3f;
-    if (stage == Stage.BLINK) {
-      amp = 2.5f + BossGlitchRevealTimeline.corridorToSheetBugs(ctrl.stageElapsedMs()) * 5f;
-    } else if (stage == Stage.AWAKEN_SHEET) {
-      amp = 3f + BossGlitchRevealTimeline.sheetToHeavyAlpha(ctrl.stageElapsedMs()) * 4f;
-    } else if (stage == Stage.GLITCH_BUILDUP) {
-      amp = 2f + BossGlitchRevealTimeline.buildupIntensity(ctrl.stageElapsedMs()) * 4f;
-    }
-    return Math.round((float) Math.sin(ctrl.elapsedMs() * 0.042) * amp);
+  private static int dialogShakeX(long elapsedMs) {
+    return Math.round((float) Math.sin(elapsedMs * 0.04) * 4f);
   }
 
-  private static int screenShakeY(BossGlitchRevealController ctrl) {
-    Stage stage = ctrl.stage();
-    if (stage != Stage.CORRIDOR_DIALOG && stage != Stage.BLINK
-        && stage != Stage.GLITCH_BUILDUP && stage != Stage.AWAKEN_SHEET) {
-      return 0;
-    }
-    float amp = 2f;
-    if (stage == Stage.BLINK) {
-      amp = 2f + BossGlitchRevealTimeline.corridorToSheetBugs(ctrl.stageElapsedMs()) * 3.5f;
-    } else if (stage == Stage.AWAKEN_SHEET) {
-      amp = 2.5f + BossGlitchRevealTimeline.sheetToHeavyAlpha(ctrl.stageElapsedMs()) * 3f;
-    } else if (stage == Stage.GLITCH_BUILDUP) {
-      amp = 1.5f + BossGlitchRevealTimeline.buildupIntensity(ctrl.stageElapsedMs()) * 3f;
-    }
-    return Math.round((float) Math.sin(ctrl.elapsedMs() * 0.055 + 1.2) * amp);
+  private static int dialogShakeY(long elapsedMs) {
+    return Math.round((float) Math.sin(elapsedMs * 0.055 + 1.2) * 3f);
   }
 }

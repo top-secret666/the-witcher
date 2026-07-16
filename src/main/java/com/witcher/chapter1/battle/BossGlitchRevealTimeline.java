@@ -1,40 +1,55 @@
 package main.java.com.witcher.chapter1.battle;
 
-import main.java.com.witcher.chapter1.loop.WakeAwakeningTimeline;
-
-/** Таймлайн глитч-пробуждения Волка после катсцены мечей (победа). */
+/** Таймлайн глитч-пробуждения Волка — строгий порядок слоёв, без наложений «картинка на картинку». */
 public final class BossGlitchRevealTimeline {
 
   public static final int MS_PER_TICK = 16;
 
-  public static final int BUILDUP_MS = 1400;
-  public static final int DIALOG_MS = 3600;
-  /** Мягкий кроссфейд коридор ↔ лист (тряска + баги в пике). */
-  public static final int BLINK_MS = 980;
-  public static final int SHEET_FRAME_MS = 95;
+  /** Чёрный экран → ТВ-помехи красно-бело-чёрные до заполнения. */
+  public static final int STATIC_FILL_MS = 1100;
+  /** Рассеивание → ТОЛЬКО glitch_overlay_heavy (без corridor). */
+  public static final int HEAVY_REVEAL_MS = 650;
+  /** Три красные точки, без тряски. */
+  public static final int DOTS_MS = 1400;
+  /** Снова заполнение: пиксели + 0/1/буквы. */
+  public static final int CODE_FILL_MS = 900;
+  /** Помехи слабеют, но ещё есть. */
+  public static final int CODE_FADE_MS = 750;
+  /** corridor + тряска + диалог. */
+  public static final int CORRIDOR_DIALOG_MS = 3800;
+  public static final int SHEET_FRAME_MS = 85;
   public static final int SHEET_COLS = 3;
   public static final int SHEET_ROWS = 3;
   public static final int SHEET_FRAMES = SHEET_COLS * SHEET_ROWS;
   public static final int SHEET_MS = SHEET_FRAME_MS * SHEET_FRAMES;
-  /** Долго: большой шум → чёткость без багов → затемнение. */
-  public static final int SHARPEN_MS = 2200;
-  public static final int FADE_DARK_MS = 450;
-  public static final int EYELID_MS = WakeAwakeningTimeline.TOTAL_MS;
+  /** Смена трёх фонов под листом + финальный глюк-пик. */
+  public static final int CYCLE_MS = SHEET_MS + 700;
+  public static final int BG_CYCLE_MS = 180;
+  /** БАЦ — тишина, чёрный. */
+  public static final int BLACK_BANG_MS = 450;
+  /** Из черноты под шумом → чёткость wolf_shard_reveal. */
+  public static final int SHARD_EMERGE_MS = 2000;
+  /** Полное качество → быстро пропадает. */
+  public static final int SHARD_OUT_MS = 420;
 
   public static final int TOTAL_MS =
-      BUILDUP_MS + DIALOG_MS + BLINK_MS + SHEET_MS + SHARPEN_MS + FADE_DARK_MS + EYELID_MS;
+      STATIC_FILL_MS + HEAVY_REVEAL_MS + DOTS_MS + CODE_FILL_MS + CODE_FADE_MS
+          + CORRIDOR_DIALOG_MS + CYCLE_MS + BLACK_BANG_MS + SHARD_EMERGE_MS + SHARD_OUT_MS;
 
   private BossGlitchRevealTimeline() {
   }
 
   public enum Stage {
-    GLITCH_BUILDUP,
+    STATIC_FILL,
+    HEAVY_REVEAL,
+    DOTS_DIALOG,
+    CODE_FILL,
+    CODE_FADE,
     CORRIDOR_DIALOG,
-    BLINK,
-    AWAKEN_SHEET,
-    SHARPEN,
-    FADE_DARK,
-    EYELID_OPEN,
+    CYCLE_SHEET,
+    BLACK_BANG,
+    SHARD_EMERGE,
+    SHARD_OUT,
     DONE
   }
 
@@ -43,87 +58,66 @@ public final class BossGlitchRevealTimeline {
       return Stage.DONE;
     }
     int t = 0;
-    t += BUILDUP_MS;
-    if (elapsedMs < t) {
-      return Stage.GLITCH_BUILDUP;
+    if (elapsedMs < (t += STATIC_FILL_MS)) {
+      return Stage.STATIC_FILL;
     }
-    t += DIALOG_MS;
-    if (elapsedMs < t) {
+    if (elapsedMs < (t += HEAVY_REVEAL_MS)) {
+      return Stage.HEAVY_REVEAL;
+    }
+    if (elapsedMs < (t += DOTS_MS)) {
+      return Stage.DOTS_DIALOG;
+    }
+    if (elapsedMs < (t += CODE_FILL_MS)) {
+      return Stage.CODE_FILL;
+    }
+    if (elapsedMs < (t += CODE_FADE_MS)) {
+      return Stage.CODE_FADE;
+    }
+    if (elapsedMs < (t += CORRIDOR_DIALOG_MS)) {
       return Stage.CORRIDOR_DIALOG;
     }
-    t += BLINK_MS;
-    if (elapsedMs < t) {
-      return Stage.BLINK;
+    if (elapsedMs < (t += CYCLE_MS)) {
+      return Stage.CYCLE_SHEET;
     }
-    t += SHEET_MS;
-    if (elapsedMs < t) {
-      return Stage.AWAKEN_SHEET;
+    if (elapsedMs < (t += BLACK_BANG_MS)) {
+      return Stage.BLACK_BANG;
     }
-    t += SHARPEN_MS;
-    if (elapsedMs < t) {
-      return Stage.SHARPEN;
+    if (elapsedMs < (t += SHARD_EMERGE_MS)) {
+      return Stage.SHARD_EMERGE;
     }
-    t += FADE_DARK_MS;
-    if (elapsedMs < t) {
-      return Stage.FADE_DARK;
-    }
-    return Stage.EYELID_OPEN;
+    return Stage.SHARD_OUT;
   }
 
   public static int stageElapsed(int elapsedMs, Stage stage) {
-    int start = stageStartMs(stage);
-    return Math.max(0, elapsedMs - start);
+    return Math.max(0, elapsedMs - stageStartMs(stage));
   }
 
   public static int stageStartMs(Stage stage) {
     return switch (stage) {
-      case GLITCH_BUILDUP -> 0;
-      case CORRIDOR_DIALOG -> BUILDUP_MS;
-      case BLINK -> BUILDUP_MS + DIALOG_MS;
-      case AWAKEN_SHEET -> BUILDUP_MS + DIALOG_MS + BLINK_MS;
-      case SHARPEN -> BUILDUP_MS + DIALOG_MS + BLINK_MS + SHEET_MS;
-      case FADE_DARK -> BUILDUP_MS + DIALOG_MS + BLINK_MS + SHEET_MS + SHARPEN_MS;
-      case EYELID_OPEN -> BUILDUP_MS + DIALOG_MS + BLINK_MS + SHEET_MS + SHARPEN_MS + FADE_DARK_MS;
+      case STATIC_FILL -> 0;
+      case HEAVY_REVEAL -> STATIC_FILL_MS;
+      case DOTS_DIALOG -> STATIC_FILL_MS + HEAVY_REVEAL_MS;
+      case CODE_FILL -> STATIC_FILL_MS + HEAVY_REVEAL_MS + DOTS_MS;
+      case CODE_FADE -> STATIC_FILL_MS + HEAVY_REVEAL_MS + DOTS_MS + CODE_FILL_MS;
+      case CORRIDOR_DIALOG -> STATIC_FILL_MS + HEAVY_REVEAL_MS + DOTS_MS + CODE_FILL_MS + CODE_FADE_MS;
+      case CYCLE_SHEET -> STATIC_FILL_MS + HEAVY_REVEAL_MS + DOTS_MS + CODE_FILL_MS + CODE_FADE_MS
+          + CORRIDOR_DIALOG_MS;
+      case BLACK_BANG -> STATIC_FILL_MS + HEAVY_REVEAL_MS + DOTS_MS + CODE_FILL_MS + CODE_FADE_MS
+          + CORRIDOR_DIALOG_MS + CYCLE_MS;
+      case SHARD_EMERGE -> STATIC_FILL_MS + HEAVY_REVEAL_MS + DOTS_MS + CODE_FILL_MS + CODE_FADE_MS
+          + CORRIDOR_DIALOG_MS + CYCLE_MS + BLACK_BANG_MS;
+      case SHARD_OUT -> STATIC_FILL_MS + HEAVY_REVEAL_MS + DOTS_MS + CODE_FILL_MS + CODE_FADE_MS
+          + CORRIDOR_DIALOG_MS + CYCLE_MS + BLACK_BANG_MS + SHARD_EMERGE_MS;
       case DONE -> TOTAL_MS;
     };
   }
 
-  public static float buildupIntensity(int localMs) {
-    float t = clamp(localMs / (float) BUILDUP_MS, 0f, 1f);
-    return easeInCubic(t);
+  public static float rise01(int localMs, int duration) {
+    return easeInCubic(clamp(localMs / (float) Math.max(1, duration), 0f, 1f));
   }
 
-  /** 0..1: фаза medium-помех (баги поверх коридора). */
-  public static float buildupMediumAlpha(int localMs) {
-    float t = clamp(localMs / (float) BUILDUP_MS, 0f, 1f);
-    if (t < 0.15f) {
-      return easeOutCubic(t / 0.15f) * 0.85f;
-    }
-    if (t < 0.55f) {
-      return 0.85f;
-    }
-    // Soft handoff → heavy.
-    float fade = (t - 0.55f) / 0.45f;
-    return 0.85f * (1f - easeInCubic(fade));
-  }
-
-  /** 0..1: появление heavy поверх medium. */
-  public static float buildupHeavyAlpha(int localMs) {
-    float t = clamp(localMs / (float) BUILDUP_MS, 0f, 1f);
-    if (t < 0.45f) {
-      return 0f;
-    }
-    return easeOutCubic((t - 0.45f) / 0.55f) * 0.75f;
-  }
-
-  /** Насколько виден коридор под помехами. */
-  public static float buildupCorridorAlpha(int localMs) {
-    float t = clamp(localMs / (float) BUILDUP_MS, 0f, 1f);
-    if (t < 0.08f) {
-      return easeOutCubic(t / 0.08f);
-    }
-    // К концу чуть тускнеет под heavy, но остаётся.
-    return 1f - easeInCubic(Math.max(0f, (t - 0.7f) / 0.3f)) * 0.25f;
+  public static float fall01(int localMs, int duration) {
+    return 1f - easeOutCubic(clamp(localMs / (float) Math.max(1, duration), 0f, 1f));
   }
 
   public static int sheetFrameIndex(int localMs) {
@@ -131,58 +125,30 @@ public final class BossGlitchRevealTimeline {
     return Math.max(0, Math.min(SHEET_FRAMES - 1, idx));
   }
 
-  public static float sheetNoise(int frameIndex) {
-    return clamp((frameIndex + 1f) / SHEET_FRAMES, 0f, 1f);
+  /** 0..2 индекс фоновой тройки (быстрая смена). */
+  public static int bgCycleIndex(int localMs) {
+    return (localMs / BG_CYCLE_MS) % 3;
+  }
+
+  /** Пик глюка в конце CYCLE_SHEET. */
+  public static float cycleGlitchPeak(int localMs) {
+    float t = clamp(localMs / (float) CYCLE_MS, 0f, 1f);
+    if (t < 0.72f) {
+      return 0.12f + t * 0.2f;
+    }
+    return easeInCubic((t - 0.72f) / 0.28f);
   }
 
   public static float sharpenT(int localMs) {
-    float t = clamp(localMs / (float) SHARPEN_MS, 0f, 1f);
-    return easeOutCubic(t);
+    return easeOutCubic(clamp(localMs / (float) SHARD_EMERGE_MS, 0f, 1f));
   }
 
-  public static float fadeDarkAlpha(int localMs) {
-    float t = clamp(localMs / (float) FADE_DARK_MS, 0f, 1f);
-    return easeInCubic(t);
-  }
-
-  public static float blinkVisible(int localMs) {
-    return (localMs / 80) % 2 == 0 ? 1f : 0f;
-  }
-
-  /** 0..1 прогресс мягкого перехода коридор → лист. */
-  public static float corridorToSheetT(int localMs) {
-    return easeInOutCubic(clamp(localMs / (float) BLINK_MS, 0f, 1f));
-  }
-
-  /** Баги/пиксели: пик в середине кроссфейда. */
-  public static float corridorToSheetBugs(int localMs) {
-    float t = clamp(localMs / (float) BLINK_MS, 0f, 1f);
-    return (float) Math.sin(t * Math.PI) * 0.95f;
-  }
-
-  /** 0..1: появление heavy в конце листа (мягкий handoff sheet → heavy). */
-  public static float sheetToHeavyAlpha(int localMs) {
-    float t = clamp(localMs / (float) SHEET_MS, 0f, 1f);
-    if (t < 0.55f) {
-      return 0f;
+  public static float shardOutAlpha(int localMs) {
+    float t = clamp(localMs / (float) SHARD_OUT_MS, 0f, 1f);
+    if (t < 0.35f) {
+      return 1f;
     }
-    return easeOutCubic((t - 0.55f) / 0.45f) * 0.8f;
-  }
-
-  /** Баги на handoff sheet → heavy. */
-  public static float sheetToHeavyBugs(int localMs) {
-    float heavy = sheetToHeavyAlpha(localMs);
-    if (heavy <= 0.01f) {
-      return sheetNoise(sheetFrameIndex(localMs)) * 0.45f;
-    }
-    return 0.35f + heavy * 0.55f;
-  }
-
-  private static float easeInOutCubic(float t) {
-    float c = clamp(t, 0f, 1f);
-    return c < 0.5f
-        ? 4f * c * c * c
-        : 1f - (float) Math.pow(-2f * c + 2f, 3) / 2f;
+    return 1f - easeInCubic((t - 0.35f) / 0.65f);
   }
 
   private static float easeInCubic(float t) {

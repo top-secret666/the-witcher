@@ -1,14 +1,12 @@
 package main.java.com.witcher.chapter1.battle;
 
-import main.java.com.witcher.chapter1.loop.WakeAwakeningTimeline;
-
 import java.util.List;
 
 /** Логика глитч-пробуждения после победы в катсцене мечей. */
 public final class BossGlitchRevealController {
 
   private static final int TICKS_PER_CHAR = 2;
-  private static final int LINE_PAUSE_TICKS = 35;
+  private static final int LINE_PAUSE_TICKS = 40;
 
   private int ticks;
   private int dialogLine;
@@ -56,12 +54,8 @@ public final class BossGlitchRevealController {
     return BossGlitchRevealTimeline.stageElapsed(elapsedMs(), stage());
   }
 
-  public int dialogLine() {
-    return dialogLine;
-  }
-
   public String visibleDialogText() {
-    List<BossGlitchRevealScript.Line> lines = BossGlitchRevealScript.lines();
+    List<BossGlitchRevealScript.Line> lines = BossGlitchRevealScript.corridorLines();
     if (dialogLine < 0 || dialogLine >= lines.size()) {
       return "";
     }
@@ -70,24 +64,8 @@ public final class BossGlitchRevealController {
     return full.substring(0, end);
   }
 
-  public int dialogBgVariant() {
-    List<BossGlitchRevealScript.Line> lines = BossGlitchRevealScript.lines();
-    if (dialogLine < 0 || dialogLine >= lines.size()) {
-      return 0;
-    }
-    return lines.get(dialogLine).bgVariant();
-  }
-
-  public int eyelidElapsedMs() {
-    return BossGlitchRevealTimeline.stageElapsed(elapsedMs(), BossGlitchRevealTimeline.Stage.EYELID_OPEN);
-  }
-
-  public float eyelidOpenT() {
-    return WakeAwakeningTimeline.eyelidOpenT(eyelidElapsedMs());
-  }
-
   private void tickDialog() {
-    List<BossGlitchRevealScript.Line> lines = BossGlitchRevealScript.lines();
+    List<BossGlitchRevealScript.Line> lines = BossGlitchRevealScript.corridorLines();
     if (dialogLine >= lines.size()) {
       return;
     }
