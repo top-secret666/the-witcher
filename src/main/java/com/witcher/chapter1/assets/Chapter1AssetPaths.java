@@ -19,9 +19,11 @@ public final class Chapter1AssetPaths {
   public static final String BOSS_DUKE_MAP = BATTLE + "boss_duke_map.png";
   public static final String BOSS_DUKE_MAP_HOVER = BATTLE + "boss_duke_map_hover.png";
   public static final String BOSS_DUKE_PORTRAIT = BATTLE + "boss_duke_portrait.png";
-  public static final String VOLK_DUKE_MAP = BATTLE + "volk_duke_map.png";
-  public static final String VOLK_DUKE_MAP_ATTACK = BATTLE + "volk_duke_map_attack.png";
-  public static final String VOLK_DUKE_MAP_INTERESTED = BATTLE + "volk_duke_map_interested.png";
+  public static final String VOLK_DUKE_MAP = BATTLE + "volk_duke_dialog_stand.png";
+  public static final String VOLK_DUKE_MAP_ATTACK = BATTLE + "volk_duke_dialog_knife.png";
+  public static final String VOLK_DUKE_MAP_INTERESTED = BATTLE + "volk_duke_dialog_reach.png";
+  /** Бросок/хватание — агрессивный жест в диалоге. */
+  public static final String VOLK_DUKE_MAP_LUNGE = BATTLE + "volk_duke_dialog_lunge.png";
   /** Кровавый коридор — глитч-диалог после победы в катсцене мечей. */
   public static final String BOSS_BLOOD_CORRIDOR = BATTLE + "boss_blood_corridor.png";
   /** 3×3: глаза/улыбка в глитче. */

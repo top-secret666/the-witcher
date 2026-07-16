@@ -5,13 +5,15 @@ import main.java.com.witcher.ui.intro.IntroTheme;
 import java.util.List;
 
 /**
- * Диалог пробуждения со злодеем: реплики + эмоция спрайта (map / interested / attack).
+ * Диалог пробуждения со злодеем: реплики + эмоция спрайта
+ * (stand / reach / lunge / knife).
  */
 public final class BossEncounterScript {
 
   public enum Expression {
     MAP,
     INTERESTED,
+    LUNGE,
     ATTACK
   }
 
@@ -35,7 +37,7 @@ public final class BossEncounterScript {
           IntroTheme.narratorRgb(), Expression.MAP),
       new DialogEntry("Герцог",
           "Я ждал. А ты всё ещё думаешь, что уйдёшь\nиз этой петли на двух ногах.",
-          IntroTheme.dukeRgb(), Expression.INTERESTED),
+          IntroTheme.dukeRgb(), Expression.LUNGE),
       new DialogEntry("Герцог",
           "Покажи клыки, Белый Волк.\nИли я покажу свои.",
           IntroTheme.dukeRgb(), Expression.ATTACK)

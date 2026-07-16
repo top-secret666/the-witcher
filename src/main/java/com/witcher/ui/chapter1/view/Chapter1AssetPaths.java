@@ -23,6 +23,7 @@ public final class Chapter1AssetPaths {
   public static final String VOLK_DUKE_MAP = main.java.com.witcher.chapter1.assets.Chapter1AssetPaths.VOLK_DUKE_MAP;
   public static final String VOLK_DUKE_MAP_ATTACK = main.java.com.witcher.chapter1.assets.Chapter1AssetPaths.VOLK_DUKE_MAP_ATTACK;
   public static final String VOLK_DUKE_MAP_INTERESTED = main.java.com.witcher.chapter1.assets.Chapter1AssetPaths.VOLK_DUKE_MAP_INTERESTED;
+  public static final String VOLK_DUKE_MAP_LUNGE = main.java.com.witcher.chapter1.assets.Chapter1AssetPaths.VOLK_DUKE_MAP_LUNGE;
   public static final String BOSS_BLOOD_CORRIDOR = main.java.com.witcher.chapter1.assets.Chapter1AssetPaths.BOSS_BLOOD_CORRIDOR;
   public static final String BOSS_GLITCH_AWAKEN_SHEET = main.java.com.witcher.chapter1.assets.Chapter1AssetPaths.BOSS_GLITCH_AWAKEN_SHEET;
   public static final String WOLF_SHARD_REVEAL = main.java.com.witcher.chapter1.assets.Chapter1AssetPaths.WOLF_SHARD_REVEAL;

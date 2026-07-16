@@ -237,6 +237,7 @@ public final class BossEncounterController {
     return switch (expr) {
       case ATTACK -> Chapter1AssetPaths.VOLK_DUKE_MAP_ATTACK;
       case INTERESTED -> Chapter1AssetPaths.VOLK_DUKE_MAP_INTERESTED;
+      case LUNGE -> Chapter1AssetPaths.VOLK_DUKE_MAP_LUNGE;
       case MAP -> Chapter1AssetPaths.VOLK_DUKE_MAP;
     };
   }

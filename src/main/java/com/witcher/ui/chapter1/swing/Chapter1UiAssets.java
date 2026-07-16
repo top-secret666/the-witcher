@@ -81,6 +81,7 @@ public final class Chapter1UiAssets {
   private static BufferedImage volkDukeMap;
   private static BufferedImage volkDukeMapAttack;
   private static BufferedImage volkDukeMapInterested;
+  private static BufferedImage volkDukeMapLunge;
   private static BufferedImage bossBloodCorridor;
   private static BufferedImage bossGlitchAwakenSheet;
   private static BufferedImage wolfShardReveal;
@@ -193,20 +194,28 @@ public final class Chapter1UiAssets {
     if (path == null) {
       return null;
     }
-    if (path.contains("volk_duke_map_attack") || path.equals(Chapter1AssetPaths.VOLK_DUKE_MAP_ATTACK)) {
+    if (path.contains("volk_duke_dialog_knife") || path.contains("volk_duke_map_attack")
+        || path.equals(Chapter1AssetPaths.VOLK_DUKE_MAP_ATTACK)) {
       if (volkDukeMapAttack == null) {
         volkDukeMapAttack = loadCappedSharp(path, MAX_VOLK_EDGE);
       }
       return volkDukeMapAttack;
     }
-    if (path.contains("volk_duke_map_interested")
+    if (path.contains("volk_duke_dialog_lunge") || path.equals(Chapter1AssetPaths.VOLK_DUKE_MAP_LUNGE)) {
+      if (volkDukeMapLunge == null) {
+        volkDukeMapLunge = loadCappedSharp(path, MAX_VOLK_EDGE);
+      }
+      return volkDukeMapLunge;
+    }
+    if (path.contains("volk_duke_dialog_reach") || path.contains("volk_duke_map_interested")
         || path.equals(Chapter1AssetPaths.VOLK_DUKE_MAP_INTERESTED)) {
       if (volkDukeMapInterested == null) {
         volkDukeMapInterested = loadCappedSharp(path, MAX_VOLK_EDGE);
       }
       return volkDukeMapInterested;
     }
-    if (path.contains("volk_duke_map") || path.equals(Chapter1AssetPaths.VOLK_DUKE_MAP)) {
+    if (path.contains("volk_duke_dialog_stand") || path.contains("volk_duke_map")
+        || path.equals(Chapter1AssetPaths.VOLK_DUKE_MAP)) {
       if (volkDukeMap == null) {
         volkDukeMap = loadCappedSharp(path, MAX_VOLK_EDGE);
       }
