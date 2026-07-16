@@ -167,6 +167,13 @@ public final class Chapter1Director {
     cutsceneFinished = false;
   }
 
+  /** Глитч-пробуждение Волка после freeze на катсцене мечей. */
+  public void enterBossGlitchReveal() {
+    phase = Chapter1Phase.BOSS_GLITCH_REVEAL;
+    pendingCutscene = null;
+    cutsceneFinished = false;
+  }
+
   /** Канон: победа/поражение → клик возвращает в лавку. */
   public void enterBattleResult() {
     phase = Chapter1Phase.BATTLE_RESULT;

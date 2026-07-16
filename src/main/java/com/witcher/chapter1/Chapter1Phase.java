@@ -21,6 +21,8 @@ public enum Chapter1Phase {
   LOOP_HOLD,
   BOSS_ENCOUNTER,
   SWORD_CUTSCENE,
+  /** Глитч-пробуждение осколка Волка после победы в катсцене мечей. */
+  BOSS_GLITCH_REVEAL,
   BATTLE_RESULT,
   VN_BATTLE,
   VN_DIALOG,

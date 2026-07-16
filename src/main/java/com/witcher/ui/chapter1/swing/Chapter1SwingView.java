@@ -68,6 +68,14 @@ public final class Chapter1SwingView implements Chapter1View {
           presenter.swordGlint().getShakeOffsetY(),
           presenter.director().session(),
           presenter.swordGlitchFrozen());
+      case BOSS_GLITCH_REVEAL -> {
+        Graphics2D g = screen.createGraphics();
+        try {
+          BossGlitchRevealView.draw(g, sw, sh, presenter.bossGlitchReveal());
+        } finally {
+          g.dispose();
+        }
+      }
       case BATTLE_RESULT -> {
         Graphics2D g = screen.createGraphics();
         try {
@@ -112,6 +120,7 @@ public final class Chapter1SwingView implements Chapter1View {
         || phase == Chapter1Phase.BOSS_MAP
         || phase == Chapter1Phase.BOSS_ENCOUNTER
         || phase == Chapter1Phase.SWORD_CUTSCENE
+        || phase == Chapter1Phase.BOSS_GLITCH_REVEAL
         || phase == Chapter1Phase.BATTLE_RESULT;
   }
 

@@ -4,6 +4,7 @@ import main.java.com.witcher.chapter1.Chapter1Director;
 import main.java.com.witcher.chapter1.Chapter1Phase;
 import main.java.com.witcher.chapter1.Chapter1Save;
 import main.java.com.witcher.chapter1.battle.BossCatalog;
+import main.java.com.witcher.chapter1.battle.BossGlitchRevealController;
 import main.java.com.witcher.chapter1.battle.BossEncounterController;
 import main.java.com.witcher.chapter1.battle.BattleCardController;
 import main.java.com.witcher.chapter1.battle.BattleOutcome;
@@ -54,6 +55,7 @@ public final class Chapter1Presenter {
   private final LoopSequenceController loopSequence = new LoopSequenceController();
   private final EyesBlinkEffect eyesEffect = new EyesBlinkEffect();
   private final SwordGlintOverlay swordGlint = new SwordGlintOverlay();
+  private final BossGlitchRevealController bossGlitchReveal = new BossGlitchRevealController();
 
   private BattleVnController battle;
   private BossEncounterController encounter;
@@ -125,6 +127,10 @@ public final class Chapter1Presenter {
 
   public SwordGlintOverlay swordGlint() {
     return swordGlint;
+  }
+
+  public BossGlitchRevealController bossGlitchReveal() {
+    return bossGlitchReveal;
   }
 
   public boolean battleVictory() {
@@ -212,6 +218,7 @@ public final class Chapter1Presenter {
       case LOOP_HOLD -> { }
       case BOSS_ENCOUNTER -> updateBossEncounter(mouseX, mouseY, clicked, wheelNotches);
       case SWORD_CUTSCENE -> updateSwordCutscene();
+      case BOSS_GLITCH_REVEAL -> updateBossGlitchReveal();
       case BATTLE_RESULT -> updateBattleResult(clicked);
       case VN_BATTLE -> updateBattle(mouseX, mouseY, clicked);
       case VN_DIALOG -> updateDukeDialog(mouseX, mouseY, clicked);
@@ -428,12 +435,22 @@ public final class Chapter1Presenter {
         && swordGlint.elapsedMs() > SwordCutsceneTiming.freezeAfterMs()) {
       swordGlint.freezeFinalGlint();
       swordGlitchFrozen = true;
+      director.enterBossGlitchReveal();
+      onPhaseEntered();
+      return;
     }
-    if (swordGlint.elapsedMs() >= SwordCutsceneTiming.TOTAL_MS) {
-      if (!battleVictory) {
-        LoopRules.onBattleDefeat(director.session());
-      }
+    if (swordGlint.elapsedMs() >= SwordCutsceneTiming.TOTAL_MS && !battleVictory) {
+      LoopRules.onBattleDefeat(director.session());
       director.enterBattleResult();
+      onPhaseEntered();
+    }
+  }
+
+  private void updateBossGlitchReveal() {
+    bossGlitchReveal.tick();
+    if (bossGlitchReveal.isComplete()) {
+      director.enterBattleResult();
+      onPhaseEntered();
     }
   }
 
@@ -514,6 +531,8 @@ public final class Chapter1Presenter {
       swordGlint.reset();
       battleVictory = BattleResolver.meetsSwordCutsceneVictory(loadoutStats());
       swordGlitchFrozen = false;
+    } else if (director.phase() == Chapter1Phase.BOSS_GLITCH_REVEAL) {
+      bossGlitchReveal.reset();
     } else if (director.phase() == Chapter1Phase.SHOP) {
       doorLoopPlayer.stop();
       maybeStartDukeDialog();
