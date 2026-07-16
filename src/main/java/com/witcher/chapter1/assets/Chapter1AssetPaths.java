@@ -29,6 +29,8 @@ public final class Chapter1AssetPaths {
   public static final String WOLF_SHARD_REVEAL = BATTLE + "wolf_shard_reveal.png";
   /** Спрайт Волка после открытия век. */
   public static final String WOLF_SHARD_AWAKEN = BATTLE + "wolf_shard_awaken.png";
+  /** Туманный лес с множеством глаз — фон в глитч-диалоге. */
+  public static final String WOLF_FOREST_EYES = BATTLE + "wolf_forest_eyes.png";
   public static final String BOSS_WAKE_FOREST = BATTLE + "boss_wake_forest.png";
   public static final String SWORD_SLASH_SHEET_A = BATTLE + "sword_slash_sheet_a.png";
   public static final String SWORD_SLASH_SHEET_B = BATTLE + "sword_slash_sheet_b.png";

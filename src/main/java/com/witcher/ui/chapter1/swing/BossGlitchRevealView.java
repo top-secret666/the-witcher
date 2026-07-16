@@ -73,7 +73,7 @@ public final class BossGlitchRevealView {
       int shakeX, int shakeY) {
     int variant = ctrl.dialogBgVariant();
     BufferedImage bg = switch (variant) {
-      case 1 -> Chapter1UiAssets.bossWakeForest();
+      case 1 -> Chapter1UiAssets.wolfForestEyes();
       case 2 -> Chapter1UiAssets.wolfShardReveal();
       default -> Chapter1UiAssets.bossBloodCorridor();
     };

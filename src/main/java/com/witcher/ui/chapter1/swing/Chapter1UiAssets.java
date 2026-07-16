@@ -85,6 +85,7 @@ public final class Chapter1UiAssets {
   private static BufferedImage bossGlitchAwakenSheet;
   private static BufferedImage wolfShardReveal;
   private static BufferedImage wolfShardAwaken;
+  private static BufferedImage wolfForestEyes;
   private static BufferedImage bossWakeForest;
   private static SpriteSheet swordSlashSheetA;
   private static SpriteSheet swordSlashSheetB;
@@ -157,6 +158,13 @@ public final class Chapter1UiAssets {
       wolfShardAwaken = loadCappedSharp(Chapter1AssetPaths.WOLF_SHARD_AWAKEN, MAX_VOLK_EDGE);
     }
     return wolfShardAwaken;
+  }
+
+  public static BufferedImage wolfForestEyes() {
+    if (wolfForestEyes == null) {
+      wolfForestEyes = loadCappedSharp(Chapter1AssetPaths.WOLF_FOREST_EYES, MAX_VOLK_EDGE);
+    }
+    return wolfForestEyes;
   }
 
   public static BufferedImage bossPortrait(String path) {
