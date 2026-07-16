@@ -11,15 +11,13 @@ import java.awt.Composite;
 import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
-import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.awt.image.RescaleOp;
 import java.util.Random;
 
 /**
- * Порядок: чёрный → ТВ-шум → спад (heavy уже под шумом) → «...» на heavy
- * → занавес багов + растущий «ВЫХОД» → быстрый спад → corridor+диалог
- * → цикл лесов + sheet → БАЦ → shard → выход.
+ * Порядок: чёрный → плотный ТВ-шум → медленный спад (heavy под шумом) → «...» / «ВЫХОД» в диалоге
+ * → вирусный занавес слов → быстрый спад → corridor+диалог → цикл → БАЦ → shard.
  */
 public final class BossGlitchRevealView {
 
@@ -43,7 +41,7 @@ public final class BossGlitchRevealView {
     switch (stage) {
       case STATIC_FILL -> drawStaticFill(g, sw, sh, local, seed);
       case HEAVY_REVEAL -> drawHeavyReveal(g, sw, sh, local, seed);
-      case DOTS_DIALOG -> drawDotsDialog(g, sw, sh);
+      case DOTS_DIALOG -> drawDotsDialog(g, sw, sh, local);
       case EXIT_CURTAIN -> drawExitCurtain(g, sw, sh, local, seed);
       case EXIT_DROP -> drawExitDrop(g, sw, sh, local, seed);
       case CORRIDOR_DIALOG -> drawCorridorDialog(g, sw, sh, ctrl, seed);
@@ -65,44 +63,40 @@ public final class BossGlitchRevealView {
     g.setColor(Color.BLACK);
     g.fillRect(0, 0, sw, sh);
     float intensity = BossGlitchRevealTimeline.rise01(localMs, BossGlitchRevealTimeline.STATIC_FILL_MS);
-    // К концу заполнения heavy уже под шумом — спад только снимет занавес помех.
-    if (intensity > 0.82f) {
+    // Heavy под шумом заранее — на пике занавеса картинки не видно.
+    if (intensity > 0.55f) {
       GlitchOverlayRenderer.drawHeavyForced(g, sw, sh, 1f);
     }
-    PixelBugOverlay.drawTvStatic(g, sw, sh, intensity, seed);
+    PixelBugOverlay.drawTvStatic(g, sw, sh, Math.min(1f, intensity * 1.15f), seed, true);
   }
 
   private static void drawHeavyReveal(Graphics2D g, int sw, int sh, int localMs, long seed) {
-    float staticA = BossGlitchRevealTimeline.fall01(localMs, BossGlitchRevealTimeline.HEAVY_REVEAL_MS);
+    float staticA = BossGlitchRevealTimeline.heavyStaticFall(localMs);
     g.setColor(Color.BLACK);
     g.fillRect(0, 0, sw, sh);
-    // Картинка уже стоит; помехи выше и уходят.
     GlitchOverlayRenderer.drawHeavyForced(g, sw, sh, 1f);
-    if (staticA > 0.04f) {
-      PixelBugOverlay.drawTvStatic(g, sw, sh, staticA, seed);
+    if (staticA > 0.03f) {
+      PixelBugOverlay.drawTvStatic(g, sw, sh, staticA, seed, true);
     }
   }
 
-  private static void drawDotsDialog(Graphics2D g, int sw, int sh) {
+  private static void drawDotsDialog(Graphics2D g, int sw, int sh, int localMs) {
     g.setColor(Color.BLACK);
     g.fillRect(0, 0, sw, sh);
     GlitchOverlayRenderer.drawHeavyForced(g, sw, sh, 1f);
-    drawThreeRedDots(g, sw, sh);
+    String text = BossGlitchRevealTimeline.dotsShowsExitWord(localMs) ? "ВЫХОД" : "...";
+    drawDialogLine(g, sw, sh, text);
   }
 
   private static void drawExitCurtain(Graphics2D g, int sw, int sh, int localMs, long seed) {
     g.setColor(Color.BLACK);
     g.fillRect(0, 0, sw, sh);
     GlitchOverlayRenderer.drawHeavyForced(g, sw, sh, 1f);
-    float intensity = BossGlitchRevealTimeline.rise01(localMs, BossGlitchRevealTimeline.EXIT_CURTAIN_MS);
-    PixelBugOverlay.drawDigitalRain(g, sw, sh, intensity, seed, 0.7f);
-
-    float grow = BossGlitchRevealTimeline.exitWordGrowT(localMs);
-    if (grow <= 0.001f) {
-      drawThreeRedDots(g, sw, sh);
-    } else {
-      drawGrowingExitWord(g, sw, sh, grow, 1f);
+    float virus = BossGlitchRevealTimeline.virusSpreadT(localMs);
+    if (virus < 0.55f) {
+      drawDialogLine(g, sw, sh, "ВЫХОД");
     }
+    PixelBugOverlay.drawVirusWordCurtain(g, sw, sh, virus, seed);
   }
 
   private static void drawExitDrop(Graphics2D g, int sw, int sh, int localMs, long seed) {
@@ -111,8 +105,7 @@ public final class BossGlitchRevealView {
     GlitchOverlayRenderer.drawHeavyForced(g, sw, sh, 1f);
     float curtain = BossGlitchRevealTimeline.exitDropT(localMs);
     if (curtain > 0.03f) {
-      PixelBugOverlay.drawDigitalRain(g, sw, sh, curtain, seed, 0.7f);
-      drawGrowingExitWord(g, sw, sh, 1f, curtain);
+      PixelBugOverlay.drawVirusWordCurtain(g, sw, sh, curtain, seed);
     }
   }
 
@@ -172,53 +165,20 @@ public final class BossGlitchRevealView {
     }
   }
 
-  private static void drawThreeRedDots(Graphics2D g, int sw, int sh) {
+  /** Обычная строка диалога («...» или «ВЫХОД»), без тряски. */
+  private static void drawDialogLine(Graphics2D g, int sw, int sh, String text) {
     int dialogH = Math.round(sh * 0.22f);
     int y0 = sh - dialogH;
     g.setColor(new Color(0, 0, 0, 210));
     g.fillRect(0, y0, sw, dialogH);
     g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-    int fontSize = Math.max(16, Math.round(sh * 0.06f));
+    int fontSize = Math.max(16, Math.round(sh * 0.055f));
     g.setFont(GameFonts.get().bold(fontSize));
     FontMetrics fm = g.getFontMetrics();
-    String dots = "...";
-    int tx = (sw - fm.stringWidth(dots)) / 2;
+    int tx = (sw - fm.stringWidth(text)) / 2;
     int ty = y0 + (dialogH + fm.getAscent() - fm.getDescent()) / 2;
     g.setColor(RED_TEXT);
-    g.drawString(dots, tx, ty);
-    g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
-  }
-
-  /** «ВЫХОД» растёт и вместе с багами закрывает heavy как занавес. */
-  private static void drawGrowingExitWord(Graphics2D g, int sw, int sh, float growT, float alpha) {
-    if (alpha < 0.02f) {
-      return;
-    }
-    float t = Math.max(0f, Math.min(1f, growT));
-    float scale = 1f + t * 16f;
-    int baseSize = Math.max(18, Math.round(sh * 0.07f));
-    g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-    g.setFont(GameFonts.get().bold(baseSize));
-    FontMetrics fm = g.getFontMetrics();
-    String word = "ВЫХОД";
-    int tw = fm.stringWidth(word);
-    float cx = sw * 0.5f;
-    float cy = sh * 0.52f;
-
-    AffineTransform prev = g.getTransform();
-    Composite prevC = g.getComposite();
-    g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, Math.min(1f, alpha)));
-    g.translate(cx, cy);
-    g.scale(scale, scale);
-    g.setColor(RED_TEXT);
-    g.drawString(word, -tw / 2f, fm.getAscent() * 0.35f);
-    // Лёгкий второй слой для «цифрового» перегруза на пике.
-    if (t > 0.55f) {
-      g.setColor(new Color(255, 60, 60, Math.round(90 * t * alpha)));
-      g.drawString(word, -tw / 2f + 1.5f, fm.getAscent() * 0.35f + 1.2f);
-    }
-    g.setTransform(prev);
-    g.setComposite(prevC);
+    g.drawString(text, tx, ty);
     g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
   }
 

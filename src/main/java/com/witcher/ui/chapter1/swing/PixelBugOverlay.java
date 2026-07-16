@@ -30,6 +30,14 @@ public final class PixelBugOverlay {
 
   /** Красно-бело-чёрные ТВ-помехи. intensity 0..1. */
   public static void drawTvStatic(Graphics2D g, int sw, int sh, float intensity, long seedMs) {
+    drawTvStatic(g, sw, sh, intensity, seedMs, false);
+  }
+
+  /**
+   * ТВ-помехи. {@code opaqueCurtain} — первый занавес: на пике ничего не видно под шумом.
+   */
+  public static void drawTvStatic(Graphics2D g, int sw, int sh, float intensity, long seedMs,
+                                  boolean opaqueCurtain) {
     if (g == null || intensity <= 0.01f || sw <= 0 || sh <= 0) {
       return;
     }
@@ -37,13 +45,24 @@ public final class PixelBugOverlay {
     float clamped = Math.max(0f, Math.min(1f, intensity));
     Composite prev = g.getComposite();
 
-    g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.25f + clamped * 0.7f));
+    if (opaqueCurtain && clamped > 0.35f) {
+      float veil = (clamped - 0.35f) / 0.65f;
+      g.setColor(new Color(8, 0, 0, Math.round(120 + veil * 135)));
+      g.fillRect(0, 0, sw, sh);
+    }
+
+    float bakeA = opaqueCurtain ? (0.4f + clamped * 0.6f) : (0.25f + clamped * 0.7f);
+    g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, bakeA));
     g.drawImage(baked[animFrame % baked.length], 0, 0, null);
+    if (opaqueCurtain && clamped > 0.55f) {
+      g.drawImage(baked[(animFrame + 2) % baked.length], 0, 0, null);
+    }
     g.setComposite(prev);
     animFrame++;
 
     Random rnd = new Random(seedMs * 131L + animFrame * 17L);
-    int blocks = Math.round(10 + clamped * 90);
+    float blockMul = opaqueCurtain ? 1.85f : 1f;
+    int blocks = Math.round((10 + clamped * 90) * blockMul);
     for (int i = 0; i < blocks; i++) {
       int bw = 2 + rnd.nextInt(Math.max(2, Math.round(sw * 0.1f * clamped)));
       int bh = 1 + rnd.nextInt(Math.max(1, Math.round(sh * 0.05f * clamped)));
@@ -59,7 +78,7 @@ public final class PixelBugOverlay {
       g.fillRect(bx, by, bw, bh);
     }
 
-    int bands = Math.round(3 + clamped * 16);
+    int bands = Math.round((3 + clamped * 16) * (opaqueCurtain ? 1.6f : 1f));
     for (int i = 0; i < bands; i++) {
       int by = rnd.nextInt(sh);
       int bh = 1 + rnd.nextInt(Math.max(1, Math.round(2 + clamped * 10)));
@@ -70,12 +89,55 @@ public final class PixelBugOverlay {
       g.fillRect(0, by, sw, bh);
     }
 
-    int shift = Math.round(clamped * 5);
+    int shift = Math.round(clamped * (opaqueCurtain ? 8 : 5));
     if (shift > 0) {
-      g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.2f * clamped));
-      g.setColor(new Color(255, 0, 0, 140));
+      g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER,
+          (opaqueCurtain ? 0.35f : 0.2f) * clamped));
+      g.setColor(new Color(255, 0, 0, opaqueCurtain ? 180 : 140));
       g.fillRect(shift, 0, sw, sh);
       g.setComposite(prev);
+    }
+  }
+
+  private static final String[] VIRUS_WORDS = {
+      "ВЫХОД", "СМЕРТЬ", "ПЛЕН", "ПЕТЛЯ", "ВОЛК", "ГЛАЗ", "КРОВЬ", "ТИШИНА",
+      "ЛОЖЬ", "СТРАХ", "ИМЯ", "СОН", "РЁВ", "КОСТИ", "ТЕНЬ", "ГОЛОД"
+  };
+
+  /**
+   * Вирусный занавес: слова (ВЫХОД/СМЕРТЬ/ПЛЕН…) + буквы/цифры, на пике экран глухой.
+   */
+  public static void drawVirusWordCurtain(Graphics2D g, int sw, int sh, float intensity, long seedMs) {
+    if (g == null || intensity <= 0.01f) {
+      return;
+    }
+    float clamped = Math.max(0f, Math.min(1f, intensity));
+    drawDigitalRain(g, sw, sh, clamped, seedMs, 0.55f + clamped * 0.55f);
+
+    if (clamped > 0.45f) {
+      float veil = (clamped - 0.45f) / 0.55f;
+      g.setColor(new Color(10, 0, 0, Math.round(40 + veil * 160)));
+      g.fillRect(0, 0, sw, sh);
+    }
+
+    Random rnd = new Random(seedMs * 53L + animFrame * 11L);
+    int wordCount = Math.round(8 + clamped * 70);
+    int baseSize = Math.max(10, Math.round(sh * 0.028f));
+    for (int i = 0; i < wordCount; i++) {
+      String word = VIRUS_WORDS[rnd.nextInt(VIRUS_WORDS.length)];
+      float scale = 0.7f + rnd.nextFloat() * (0.8f + clamped * 2.2f);
+      int size = Math.max(9, Math.round(baseSize * scale));
+      g.setFont(new Font(Font.MONOSPACED, Font.BOLD, size));
+      FontMetrics fm = g.getFontMetrics();
+      int tw = fm.stringWidth(word);
+      int x = rnd.nextInt(Math.max(1, sw + tw)) - tw / 2;
+      int y = rnd.nextInt(Math.max(1, sh));
+      boolean red = rnd.nextFloat() < 0.75f;
+      int alpha = Math.round(70 + clamped * 185);
+      g.setColor(red
+          ? new Color(220, 25, 30, alpha)
+          : new Color(230, 230, 235, alpha));
+      g.drawString(word, x, y);
     }
   }
 

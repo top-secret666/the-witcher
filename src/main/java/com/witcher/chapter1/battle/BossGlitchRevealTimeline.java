@@ -5,17 +5,16 @@ public final class BossGlitchRevealTimeline {
 
   public static final int MS_PER_TICK = 16;
 
-  /** Чёрный → ТВ-помехи (без букв) до заполнения. */
-  public static final int STATIC_FILL_MS = 1100;
-  /** Спад помех: heavy уже под ними. */
-  public static final int HEAVY_REVEAL_MS = 700;
-  /** Три красные точки на heavy, без тряски. */
-  public static final int DOTS_MS = 1100;
-  /** Занавес: баги+буквы поверх heavy, «...» → растущий «ВЫХОД». */
-  public static final int EXIT_CURTAIN_MS = 1700;
-  /** Быстрый спад занавеса → corridor. */
-  public static final int EXIT_DROP_MS = 280;
-  /** corridor + тряска + диалог. */
+  /** Чёрный → плотные ТВ-помехи (без букв) до полной непрозрачности. */
+  public static final int STATIC_FILL_MS = 1200;
+  /** Медленный спад первого занавеса: heavy уже под шумом, картинка проявляется. */
+  public static final int HEAVY_REVEAL_MS = 1500;
+  /** «...», потом «ВЫХОД» обычным текстом в диалоге. */
+  public static final int DOTS_MS = 1400;
+  /** Второй занавес: вирус слов + буквы до полной плотности. */
+  public static final int EXIT_CURTAIN_MS = 1600;
+  /** Быстрый спад второго занавеса → corridor + диалог. */
+  public static final int EXIT_DROP_MS = 240;
   public static final int CORRIDOR_DIALOG_MS = 3800;
   public static final int SHEET_FRAME_MS = 85;
   public static final int SHEET_COLS = 3;
@@ -28,8 +27,10 @@ public final class BossGlitchRevealTimeline {
   public static final int SHARD_EMERGE_MS = 2000;
   public static final int SHARD_OUT_MS = 420;
 
-  /** Доля EXIT_CURTAIN, пока ещё «...», потом «ВЫХОД». */
-  public static final float EXIT_WORD_START = 0.22f;
+  /** Доля DOTS_MS: сначала «...», потом «ВЫХОД» в диалоге. */
+  public static final float EXIT_DIALOG_WORD_AT = 0.42f;
+  /** Доля EXIT_CURTAIN: диалог ещё виден, потом вирус разъедает экран. */
+  public static final float VIRUS_SPREAD_AT = 0.12f;
 
   public static final int TOTAL_MS =
       STATIC_FILL_MS + HEAVY_REVEAL_MS + DOTS_MS + EXIT_CURTAIN_MS + EXIT_DROP_MS
@@ -120,19 +121,36 @@ public final class BossGlitchRevealTimeline {
     return 1f - easeOutCubic(clamp(localMs / (float) Math.max(1, duration), 0f, 1f));
   }
 
-  /** Быстрый почти линейный спад занавеса. */
+  /**
+   * Медленный спад первого занавеса: долго держит полную плотность, потом плавно открывает heavy.
+   */
+  public static float heavyStaticFall(int localMs) {
+    float t = clamp(localMs / (float) Math.max(1, HEAVY_REVEAL_MS), 0f, 1f);
+    if (t < 0.22f) {
+      return 1f;
+    }
+    float u = (t - 0.22f) / 0.78f;
+    return 1f - easeOutCubic(u);
+  }
+
+  /** Быстрый спад второго занавеса. */
   public static float exitDropT(int localMs) {
     float t = clamp(localMs / (float) Math.max(1, EXIT_DROP_MS), 0f, 1f);
     return 1f - easeInCubic(t);
   }
 
-  /** 0 = ещё «...», &gt;0 = рост «ВЫХОД» (0..1). */
-  public static float exitWordGrowT(int localMs) {
-    int start = Math.round(EXIT_CURTAIN_MS * EXIT_WORD_START);
+  /** В фазе DOTS: false = «...», true = «ВЫХОД» в диалоге. */
+  public static boolean dotsShowsExitWord(int localMs) {
+    return localMs >= Math.round(DOTS_MS * EXIT_DIALOG_WORD_AT);
+  }
+
+  /** 0..1 плотность вирусного занавеса поверх heavy. */
+  public static float virusSpreadT(int localMs) {
+    int start = Math.round(EXIT_CURTAIN_MS * VIRUS_SPREAD_AT);
     if (localMs < start) {
-      return 0f;
+      return rise01(localMs, Math.max(1, start)) * 0.15f;
     }
-    return easeInCubic(clamp((localMs - start) / (float) Math.max(1, EXIT_CURTAIN_MS - start), 0f, 1f));
+    return rise01(localMs - start, Math.max(1, EXIT_CURTAIN_MS - start));
   }
 
   public static int sheetFrameIndex(int localMs) {
