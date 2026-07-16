@@ -121,8 +121,8 @@ public final class BossGlitchRevealView {
   }
 
   private static void drawEyelidOpen(Graphics2D g, int sw, int sh, BossGlitchRevealController ctrl) {
-    drawCoverSharp(g, Chapter1UiAssets.wolfShardReveal(), sw, sh, 1f);
-    drawCenterPortrait(g, sw, sh, Chapter1UiAssets.wolfShardAwaken(), 0.96f);
+    // wolf_shard_awaken — на весь экран под веками (не портрет).
+    drawCoverSharp(g, Chapter1UiAssets.wolfShardAwaken(), sw, sh, 1f);
     EyelidOverlay.renderBlack(g, sw, sh, ctrl.eyelidOpenT());
   }
 
@@ -165,23 +165,13 @@ public final class BossGlitchRevealView {
     g.setComposite(prev);
   }
 
+  /** Stretch to full virtual screen — edge to edge, no letterbox. */
   private static void drawCoverSharp(Graphics2D g, BufferedImage img, int sw, int sh, float sharp) {
     if (img == null) {
       g.setColor(Color.BLACK);
       g.fillRect(0, 0, sw, sh);
       return;
     }
-    float cover = 0.98f;
-    int dw = Math.round(sw * cover);
-    int dh = Math.round(sh * cover);
-    float aspect = img.getWidth() / (float) Math.max(1, img.getHeight());
-    if (dw / (float) dh > aspect) {
-      dw = Math.round(dh * aspect);
-    } else {
-      dh = Math.round(dw / aspect);
-    }
-    int x = (sw - dw) / 2;
-    int y = (sh - dh) / 2;
     Object interp = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
     Object render = g.getRenderingHint(RenderingHints.KEY_RENDERING);
     if (sharp >= 0.65f) {
@@ -191,30 +181,7 @@ public final class BossGlitchRevealView {
       g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
       g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
     }
-    g.drawImage(img, x, y, dw, dh, null);
-    if (interp != null) {
-      g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, interp);
-    }
-    if (render != null) {
-      g.setRenderingHint(RenderingHints.KEY_RENDERING, render);
-    }
-  }
-
-  private static void drawCenterPortrait(Graphics2D g, int sw, int sh, BufferedImage portrait, float heightRatio) {
-    if (portrait == null) {
-      return;
-    }
-    float baseCharScale = (sh * heightRatio) / Math.max(1, portrait.getHeight());
-    int cw = Math.round(portrait.getWidth() * baseCharScale);
-    int ch = Math.round(portrait.getHeight() * baseCharScale);
-    int dialogZone = Math.round(sh * 0.15f);
-    int x = (sw - cw) / 2;
-    int y = sh - dialogZone - ch + Math.round(ch * 0.15f);
-    Object interp = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
-    Object render = g.getRenderingHint(RenderingHints.KEY_RENDERING);
-    g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
-    g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-    g.drawImage(portrait, x, y, cw, ch, null);
+    g.drawImage(img, 0, 0, sw, sh, null);
     if (interp != null) {
       g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, interp);
     }
