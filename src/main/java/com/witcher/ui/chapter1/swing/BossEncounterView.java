@@ -72,8 +72,8 @@ public final class BossEncounterView {
     if (portrait == null) {
       return;
     }
-    // Как в интро: ~85% высоты экрана, ноги уходят в зону диалога.
-    float baseCharScale = (sh * 0.85f) / Math.max(1, portrait.getHeight());
+    // Как в интро, но чуть «приблизим» Волка: ~88% высоты экрана.
+    float baseCharScale = (sh * 0.88f) / Math.max(1, portrait.getHeight());
     float charScale = baseCharScale * encounter.portraitScale();
     int cw = Math.round(portrait.getWidth() * charScale);
     int ch = Math.round(portrait.getHeight() * charScale);
