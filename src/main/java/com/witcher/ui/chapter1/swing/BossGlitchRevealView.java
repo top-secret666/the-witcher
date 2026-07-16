@@ -161,7 +161,8 @@ public final class BossGlitchRevealView {
     // Сколько нужно, чтобы визуально «минимально заполнить» экран.
     float areaPerWord = (tw + minGap * 2f) * (th + minGap * 2f);
     int capacity = Math.max(40, Math.round((sw * sh) / areaPerWord * 0.85f));
-    int target = Math.round(capacity * (0.4f + fill * 0.6f));
+    // Постепенно: от горстки до почти полного покрытия.
+    int target = Math.max(1, Math.round(capacity * (0.04f + fill * 0.96f)));
 
     // Стабильный набор позиций: один seed на фазу, без сетки/столбцов.
     Random rnd = new Random(9041L);

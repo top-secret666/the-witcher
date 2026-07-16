@@ -33,10 +33,12 @@ public final class BossGlitchRevealTimeline {
    * Доли EXIT_CURTAIN:
    * 0 → normal, 1 → больше, 2 → ещё больше (одно слово), 3 → мелкий разброс по экрану, 4 → шум-занавес.
    */
-  public static final float EXIT_SIZE_BIG_AT = 0.12f;
-  public static final float EXIT_SIZE_HUGE_AT = 0.24f;
-  public static final float EXIT_SCATTER_AT = 0.36f;
-  public static final float EXIT_NOISE_AT = 0.58f;
+  public static final float EXIT_SIZE_BIG_AT = 0.10f;
+  public static final float EXIT_SIZE_HUGE_AT = 0.20f;
+  /** Мелкий разброс «ВЫХОД» постепенно заполняет экран. */
+  public static final float EXIT_SCATTER_AT = 0.30f;
+  /** После заполнения — быстрый старт шумового занавеса. */
+  public static final float EXIT_NOISE_AT = 0.68f;
 
   public static final int TOTAL_MS =
       STATIC_FILL_MS + HEAVY_REVEAL_MS + DOTS_MS + EXIT_CURTAIN_MS + EXIT_DROP_MS
@@ -169,7 +171,7 @@ public final class BossGlitchRevealTimeline {
     return 4;
   }
 
-  /** 0..1 насколько густо мелкие «ВЫХОД» заполнили экран (без наложений). Сразу плотно. */
+  /** 0..1 густота мелких «ВЫХОД»: постепенно от почти пусто до полного заполнения. */
   public static float exitScatterFillT(int localMs) {
     float t = exitBuildT(localMs);
     if (t < EXIT_SCATTER_AT) {
@@ -178,21 +180,24 @@ public final class BossGlitchRevealTimeline {
     if (t >= EXIT_NOISE_AT) {
       return 1f;
     }
-    float u = rise01(
-        Math.round((t - EXIT_SCATTER_AT) * EXIT_CURTAIN_MS),
-        Math.max(1, Math.round((EXIT_NOISE_AT - EXIT_SCATTER_AT) * EXIT_CURTAIN_MS)));
-    return 0.55f + 0.45f * u;
+    float u = clamp(
+        (t - EXIT_SCATTER_AT) / Math.max(0.001f, EXIT_NOISE_AT - EXIT_SCATTER_AT),
+        0f, 1f);
+    // Линейно/мягко — видно, как экран постепенно забивается словами.
+    return easeOutCubic(u);
   }
 
-  /** 0..1 плотность шумового занавеса после разброса слов. */
+  /** 0..1 плотность шумового занавеса: старт резкий (быстро закрывает экран). */
   public static float virusSpreadT(int localMs) {
     float t = exitBuildT(localMs);
     if (t < EXIT_NOISE_AT) {
       return 0f;
     }
-    return rise01(
-        Math.round((t - EXIT_NOISE_AT) * EXIT_CURTAIN_MS),
-        Math.max(1, Math.round((1f - EXIT_NOISE_AT) * EXIT_CURTAIN_MS)));
+    float u = clamp(
+        (t - EXIT_NOISE_AT) / Math.max(0.001f, 1f - EXIT_NOISE_AT),
+        0f, 1f);
+    // Быстрый набор в начале занавеса.
+    return easeOutCubic(Math.min(1f, u * 1.55f));
   }
 
   public static int sheetFrameIndex(int localMs) {
