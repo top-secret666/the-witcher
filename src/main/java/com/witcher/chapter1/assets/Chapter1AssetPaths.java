@@ -21,6 +21,14 @@ public final class Chapter1AssetPaths {
   public static final String VOLK_DUKE_MAP = BATTLE + "volk_duke_map.png";
   public static final String VOLK_DUKE_MAP_ATTACK = BATTLE + "volk_duke_map_attack.png";
   public static final String VOLK_DUKE_MAP_INTERESTED = BATTLE + "volk_duke_map_interested.png";
+  /** Кровавый коридор — глитч-диалог после победы в катсцене мечей. */
+  public static final String BOSS_BLOOD_CORRIDOR = BATTLE + "boss_blood_corridor.png";
+  /** 3×3: глаза/улыбка в глитче. */
+  public static final String BOSS_GLITCH_AWAKEN_SHEET = BATTLE + "boss_glitch_awaken_sheet.png";
+  /** Финальный кадр осколка Волка (резкость нарастает). */
+  public static final String WOLF_SHARD_REVEAL = BATTLE + "wolf_shard_reveal.png";
+  /** Спрайт Волка после открытия век. */
+  public static final String WOLF_SHARD_AWAKEN = BATTLE + "wolf_shard_awaken.png";
   public static final String BOSS_WAKE_FOREST = BATTLE + "boss_wake_forest.png";
   public static final String SWORD_SLASH_SHEET_A = BATTLE + "sword_slash_sheet_a.png";
   public static final String SWORD_SLASH_SHEET_B = BATTLE + "sword_slash_sheet_b.png";

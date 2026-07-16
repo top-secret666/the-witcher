@@ -81,6 +81,10 @@ public final class Chapter1UiAssets {
   private static BufferedImage volkDukeMap;
   private static BufferedImage volkDukeMapAttack;
   private static BufferedImage volkDukeMapInterested;
+  private static BufferedImage bossBloodCorridor;
+  private static BufferedImage bossGlitchAwakenSheet;
+  private static BufferedImage wolfShardReveal;
+  private static BufferedImage wolfShardAwaken;
   private static BufferedImage bossWakeForest;
   private static SpriteSheet swordSlashSheetA;
   private static SpriteSheet swordSlashSheetB;
@@ -125,6 +129,34 @@ public final class Chapter1UiAssets {
       bossWakeForest = loadCapped(Chapter1AssetPaths.BOSS_WAKE_FOREST, MAX_MAP_EDGE);
     }
     return bossWakeForest;
+  }
+
+  public static BufferedImage bossBloodCorridor() {
+    if (bossBloodCorridor == null) {
+      bossBloodCorridor = loadCappedSharp(Chapter1AssetPaths.BOSS_BLOOD_CORRIDOR, MAX_VOLK_EDGE);
+    }
+    return bossBloodCorridor;
+  }
+
+  public static BufferedImage bossGlitchAwakenSheet() {
+    if (bossGlitchAwakenSheet == null) {
+      bossGlitchAwakenSheet = loadCappedSharp(Chapter1AssetPaths.BOSS_GLITCH_AWAKEN_SHEET, MAX_VOLK_EDGE);
+    }
+    return bossGlitchAwakenSheet;
+  }
+
+  public static BufferedImage wolfShardReveal() {
+    if (wolfShardReveal == null) {
+      wolfShardReveal = loadCappedSharp(Chapter1AssetPaths.WOLF_SHARD_REVEAL, MAX_VOLK_EDGE);
+    }
+    return wolfShardReveal;
+  }
+
+  public static BufferedImage wolfShardAwaken() {
+    if (wolfShardAwaken == null) {
+      wolfShardAwaken = loadCappedSharp(Chapter1AssetPaths.WOLF_SHARD_AWAKEN, MAX_VOLK_EDGE);
+    }
+    return wolfShardAwaken;
   }
 
   public static BufferedImage bossPortrait(String path) {
