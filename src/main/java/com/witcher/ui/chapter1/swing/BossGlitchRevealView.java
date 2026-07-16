@@ -16,13 +16,14 @@ import java.awt.image.RescaleOp;
 import java.util.Random;
 
 /**
- * Порядок: чёрный → плотный ТВ-шум → медленный спад (heavy под шумом) → «...» / «ВЫХОД» в диалоге
- * → вирусный занавес слов → быстрый спад → corridor+диалог → цикл → БАЦ → shard.
+ * Порядок: чёрный → плотный ТВ-шум → очень медленный спад → «...» → «ВЫХОД» растёт в диалоге
+ * → дубли в панели → разлёт по экрану → быстрый спад → corridor+диалог → …
  */
 public final class BossGlitchRevealView {
 
   private static final int SHAKE_PAD = 12;
   private static final Color RED_TEXT = new Color(200, 18, 28);
+  private static final String EXIT_WORD = "ВЫХОД";
 
   private BossGlitchRevealView() {
   }
@@ -41,7 +42,7 @@ public final class BossGlitchRevealView {
     switch (stage) {
       case STATIC_FILL -> drawStaticFill(g, sw, sh, local, seed);
       case HEAVY_REVEAL -> drawHeavyReveal(g, sw, sh, local, seed);
-      case DOTS_DIALOG -> drawDotsDialog(g, sw, sh, local);
+      case DOTS_DIALOG -> drawDotsDialog(g, sw, sh);
       case EXIT_CURTAIN -> drawExitCurtain(g, sw, sh, local, seed);
       case EXIT_DROP -> drawExitDrop(g, sw, sh, local, seed);
       case CORRIDOR_DIALOG -> drawCorridorDialog(g, sw, sh, ctrl, seed);
@@ -63,7 +64,6 @@ public final class BossGlitchRevealView {
     g.setColor(Color.BLACK);
     g.fillRect(0, 0, sw, sh);
     float intensity = BossGlitchRevealTimeline.rise01(localMs, BossGlitchRevealTimeline.STATIC_FILL_MS);
-    // Heavy под шумом заранее — на пике занавеса картинки не видно.
     if (intensity > 0.55f) {
       GlitchOverlayRenderer.drawHeavyForced(g, sw, sh, 1f);
     }
@@ -80,23 +80,27 @@ public final class BossGlitchRevealView {
     }
   }
 
-  private static void drawDotsDialog(Graphics2D g, int sw, int sh, int localMs) {
+  private static void drawDotsDialog(Graphics2D g, int sw, int sh) {
     g.setColor(Color.BLACK);
     g.fillRect(0, 0, sw, sh);
     GlitchOverlayRenderer.drawHeavyForced(g, sw, sh, 1f);
-    String text = BossGlitchRevealTimeline.dotsShowsExitWord(localMs) ? "ВЫХОД" : "...";
-    drawDialogLine(g, sw, sh, text);
+    drawDialogLine(g, sw, sh, "...", 1f);
   }
 
   private static void drawExitCurtain(Graphics2D g, int sw, int sh, int localMs, long seed) {
     g.setColor(Color.BLACK);
     g.fillRect(0, 0, sw, sh);
     GlitchOverlayRenderer.drawHeavyForced(g, sw, sh, 1f);
+
+    int step = BossGlitchRevealTimeline.exitBuildStep(localMs);
     float virus = BossGlitchRevealTimeline.virusSpreadT(localMs);
-    if (virus < 0.55f) {
-      drawDialogLine(g, sw, sh, "ВЫХОД");
+
+    if (step <= 3) {
+      drawExitDialogBuild(g, sw, sh, step, localMs, seed);
     }
-    PixelBugOverlay.drawVirusWordCurtain(g, sw, sh, virus, seed);
+    if (virus > 0.01f) {
+      PixelBugOverlay.drawVirusWordCurtain(g, sw, sh, virus, seed);
+    }
   }
 
   private static void drawExitDrop(Graphics2D g, int sw, int sh, int localMs, long seed) {
@@ -107,6 +111,49 @@ public final class BossGlitchRevealView {
     if (curtain > 0.03f) {
       PixelBugOverlay.drawVirusWordCurtain(g, sw, sh, curtain, seed);
     }
+  }
+
+  /** «ВЫХОД» в диалоге: обычный → больше → ещё больше → дубли только в панели. */
+  private static void drawExitDialogBuild(Graphics2D g, int sw, int sh, int step, int localMs,
+                                          long seed) {
+    int dialogH = Math.round(sh * 0.22f);
+    int y0 = sh - dialogH;
+    g.setColor(new Color(0, 0, 0, 210));
+    g.fillRect(0, y0, sw, dialogH);
+
+    g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+    float scale = switch (step) {
+      case 1 -> 1.55f;
+      case 2, 3 -> 2.15f;
+      default -> 1f;
+    };
+    int baseSize = Math.max(16, Math.round(sh * 0.055f));
+    int fontSize = Math.max(14, Math.round(baseSize * scale));
+    g.setFont(GameFonts.get().bold(fontSize));
+    FontMetrics fm = g.getFontMetrics();
+    g.setColor(RED_TEXT);
+
+    if (step < 3) {
+      int tx = (sw - fm.stringWidth(EXIT_WORD)) / 2;
+      int ty = y0 + (dialogH + fm.getAscent() - fm.getDescent()) / 2;
+      g.drawString(EXIT_WORD, tx, ty);
+    } else {
+      int copies = BossGlitchRevealTimeline.exitDialogDupCount(localMs);
+      Random rnd = new Random(seed / 8 * 41L + copies * 17L);
+      int padX = Math.round(sw * 0.04f);
+      int padY = Math.round(dialogH * 0.18f);
+      for (int i = 0; i < copies; i++) {
+        int tw = fm.stringWidth(EXIT_WORD);
+        int maxX = Math.max(1, sw - padX * 2 - tw);
+        int x = padX + rnd.nextInt(maxX);
+        int y = y0 + padY + fm.getAscent()
+            + rnd.nextInt(Math.max(1, dialogH - padY * 2 - fm.getHeight()));
+        int a = 160 + rnd.nextInt(95);
+        g.setColor(new Color(200, 18, 28, a));
+        g.drawString(EXIT_WORD, x, y);
+      }
+    }
+    g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
   }
 
   private static void drawCorridorDialog(
@@ -165,14 +212,14 @@ public final class BossGlitchRevealView {
     }
   }
 
-  /** Обычная строка диалога («...» или «ВЫХОД»), без тряски. */
-  private static void drawDialogLine(Graphics2D g, int sw, int sh, String text) {
+  /** Обычная строка диалога («...»), без тряски. */
+  private static void drawDialogLine(Graphics2D g, int sw, int sh, String text, float scale) {
     int dialogH = Math.round(sh * 0.22f);
     int y0 = sh - dialogH;
     g.setColor(new Color(0, 0, 0, 210));
     g.fillRect(0, y0, sw, dialogH);
     g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-    int fontSize = Math.max(16, Math.round(sh * 0.055f));
+    int fontSize = Math.max(16, Math.round(sh * 0.055f * Math.max(0.5f, scale)));
     g.setFont(GameFonts.get().bold(fontSize));
     FontMetrics fm = g.getFontMetrics();
     int tx = (sw - fm.stringWidth(text)) / 2;

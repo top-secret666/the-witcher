@@ -8,11 +8,13 @@ public final class BossGlitchRevealTimeline {
   /** Чёрный → плотные ТВ-помехи (без букв) до полной непрозрачности. */
   public static final int STATIC_FILL_MS = 1200;
   /** Медленный спад первого занавеса: heavy уже под шумом, картинка проявляется. */
-  public static final int HEAVY_REVEAL_MS = 1500;
-  /** «...», потом «ВЫХОД» обычным текстом в диалоге. */
-  public static final int DOTS_MS = 1400;
-  /** Второй занавес: вирус слов + буквы до полной плотности. */
-  public static final int EXIT_CURTAIN_MS = 1600;
+  public static final int HEAVY_REVEAL_MS = 2600;
+  /** Только «...». */
+  public static final int DOTS_MS = 900;
+  /**
+   * Второй занавес: «ВЫХОД» обычный → больше → ещё больше → дубли в панели → разлёт по экрану.
+   */
+  public static final int EXIT_CURTAIN_MS = 2400;
   /** Быстрый спад второго занавеса → corridor + диалог. */
   public static final int EXIT_DROP_MS = 240;
   public static final int CORRIDOR_DIALOG_MS = 3800;
@@ -27,10 +29,14 @@ public final class BossGlitchRevealTimeline {
   public static final int SHARD_EMERGE_MS = 2000;
   public static final int SHARD_OUT_MS = 420;
 
-  /** Доля DOTS_MS: сначала «...», потом «ВЫХОД» в диалоге. */
-  public static final float EXIT_DIALOG_WORD_AT = 0.42f;
-  /** Доля EXIT_CURTAIN: диалог ещё виден, потом вирус разъедает экран. */
-  public static final float VIRUS_SPREAD_AT = 0.12f;
+  /**
+   * Доли EXIT_CURTAIN:
+   * 0 → normal «ВЫХОД», 1 → больше, 2 → ещё больше, 3 → дубли в панели, 4 → разлёт по экрану.
+   */
+  public static final float EXIT_SIZE_BIG_AT = 0.14f;
+  public static final float EXIT_SIZE_HUGE_AT = 0.28f;
+  public static final float EXIT_DUP_AT = 0.42f;
+  public static final float EXIT_SPREAD_AT = 0.62f;
 
   public static final int TOTAL_MS =
       STATIC_FILL_MS + HEAVY_REVEAL_MS + DOTS_MS + EXIT_CURTAIN_MS + EXIT_DROP_MS
@@ -122,15 +128,16 @@ public final class BossGlitchRevealTimeline {
   }
 
   /**
-   * Медленный спад первого занавеса: долго держит полную плотность, потом плавно открывает heavy.
+   * Очень медленный спад первого занавеса: долго держит полную плотность, потом мягко уходит.
    */
   public static float heavyStaticFall(int localMs) {
     float t = clamp(localMs / (float) Math.max(1, HEAVY_REVEAL_MS), 0f, 1f);
-    if (t < 0.22f) {
+    if (t < 0.38f) {
       return 1f;
     }
-    float u = (t - 0.22f) / 0.78f;
-    return 1f - easeOutCubic(u);
+    float u = (t - 0.38f) / 0.62f;
+    // ease-in падения: сначала почти не двигается, потом уходит.
+    return 1f - easeInCubic(u);
   }
 
   /** Быстрый спад второго занавеса. */
@@ -139,18 +146,52 @@ public final class BossGlitchRevealTimeline {
     return 1f - easeInCubic(t);
   }
 
-  /** В фазе DOTS: false = «...», true = «ВЫХОД» в диалоге. */
-  public static boolean dotsShowsExitWord(int localMs) {
-    return localMs >= Math.round(DOTS_MS * EXIT_DIALOG_WORD_AT);
+  public static float exitBuildT(int localMs) {
+    return clamp(localMs / (float) Math.max(1, EXIT_CURTAIN_MS), 0f, 1f);
   }
 
-  /** 0..1 плотность вирусного занавеса поверх heavy. */
-  public static float virusSpreadT(int localMs) {
-    int start = Math.round(EXIT_CURTAIN_MS * VIRUS_SPREAD_AT);
-    if (localMs < start) {
-      return rise01(localMs, Math.max(1, start)) * 0.15f;
+  /**
+   * 0 = обычный «ВЫХОД», 1 = больше, 2 = ещё больше, 3 = дубли в диалоге, 4 = разлёт по экрану.
+   */
+  public static int exitBuildStep(int localMs) {
+    float t = exitBuildT(localMs);
+    if (t < EXIT_SIZE_BIG_AT) {
+      return 0;
     }
-    return rise01(localMs - start, Math.max(1, EXIT_CURTAIN_MS - start));
+    if (t < EXIT_SIZE_HUGE_AT) {
+      return 1;
+    }
+    if (t < EXIT_DUP_AT) {
+      return 2;
+    }
+    if (t < EXIT_SPREAD_AT) {
+      return 3;
+    }
+    return 4;
+  }
+
+  /** Сколько копий «ВЫХОД» в диалоговой панели на шаге дублей. */
+  public static int exitDialogDupCount(int localMs) {
+    float t = exitBuildT(localMs);
+    if (t < EXIT_DUP_AT) {
+      return 1;
+    }
+    if (t >= EXIT_SPREAD_AT) {
+      return 8;
+    }
+    float u = (t - EXIT_DUP_AT) / Math.max(0.001f, EXIT_SPREAD_AT - EXIT_DUP_AT);
+    return 2 + Math.round(u * 6f);
+  }
+
+  /** 0..1 плотность вирусного разлёта по экрану (после дублей в панели). */
+  public static float virusSpreadT(int localMs) {
+    float t = exitBuildT(localMs);
+    if (t < EXIT_SPREAD_AT) {
+      return 0f;
+    }
+    return rise01(
+        Math.round((t - EXIT_SPREAD_AT) * EXIT_CURTAIN_MS),
+        Math.max(1, Math.round((1f - EXIT_SPREAD_AT) * EXIT_CURTAIN_MS)));
   }
 
   public static int sheetFrameIndex(int localMs) {
