@@ -15,8 +15,9 @@ public final class BossGlitchRevealTimeline {
   public static final int SHEET_ROWS = 3;
   public static final int SHEET_FRAMES = SHEET_COLS * SHEET_ROWS;
   public static final int SHEET_MS = SHEET_FRAME_MS * SHEET_FRAMES;
-  public static final int SHARPEN_MS = 1500;
-  public static final int FADE_DARK_MS = 350;
+  /** Долго: большой шум → чёткость без багов → затемнение. */
+  public static final int SHARPEN_MS = 2200;
+  public static final int FADE_DARK_MS = 450;
   public static final int EYELID_MS = WakeAwakeningTimeline.TOTAL_MS;
 
   public static final int TOTAL_MS =
