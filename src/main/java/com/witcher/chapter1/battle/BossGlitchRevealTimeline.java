@@ -7,14 +7,14 @@ public final class BossGlitchRevealTimeline {
 
   /** Чёрный → плотные ТВ-помехи (без букв) до полной непрозрачности. */
   public static final int STATIC_FILL_MS = 1200;
-  /** Медленный спад первого занавеса: heavy уже под шумом, картинка проявляется. */
-  public static final int HEAVY_REVEAL_MS = 2600;
+  /** Спад первого занавеса: heavy уже под шумом, картинка проявляется. */
+  public static final int HEAVY_REVEAL_MS = 1950;
   /** Только «...». */
   public static final int DOTS_MS = 900;
   /**
-   * Второй занавес: «ВЫХОД» обычный → больше → ещё больше → дубли в панели → разлёт по экрану.
+   * Второй занавес: «ВЫХОД» обычный → больше → ещё больше → мелкий разброс по экрану → шум.
    */
-  public static final int EXIT_CURTAIN_MS = 2400;
+  public static final int EXIT_CURTAIN_MS = 2300;
   /** Быстрый спад второго занавеса → corridor + диалог. */
   public static final int EXIT_DROP_MS = 240;
   public static final int CORRIDOR_DIALOG_MS = 3800;
@@ -31,12 +31,12 @@ public final class BossGlitchRevealTimeline {
 
   /**
    * Доли EXIT_CURTAIN:
-   * 0 → normal «ВЫХОД», 1 → больше, 2 → ещё больше, 3 → дубли в панели, 4 → разлёт по экрану.
+   * 0 → normal, 1 → больше, 2 → ещё больше (одно слово), 3 → мелкий разброс по экрану, 4 → шум-занавес.
    */
-  public static final float EXIT_SIZE_BIG_AT = 0.14f;
-  public static final float EXIT_SIZE_HUGE_AT = 0.28f;
-  public static final float EXIT_DUP_AT = 0.42f;
-  public static final float EXIT_SPREAD_AT = 0.62f;
+  public static final float EXIT_SIZE_BIG_AT = 0.12f;
+  public static final float EXIT_SIZE_HUGE_AT = 0.24f;
+  public static final float EXIT_SCATTER_AT = 0.36f;
+  public static final float EXIT_NOISE_AT = 0.58f;
 
   public static final int TOTAL_MS =
       STATIC_FILL_MS + HEAVY_REVEAL_MS + DOTS_MS + EXIT_CURTAIN_MS + EXIT_DROP_MS
@@ -128,15 +128,14 @@ public final class BossGlitchRevealTimeline {
   }
 
   /**
-   * Очень медленный спад первого занавеса: долго держит полную плотность, потом мягко уходит.
+   * Спад первого занавеса: чуть быстрее, но всё ещё мягкий.
    */
   public static float heavyStaticFall(int localMs) {
     float t = clamp(localMs / (float) Math.max(1, HEAVY_REVEAL_MS), 0f, 1f);
-    if (t < 0.38f) {
+    if (t < 0.28f) {
       return 1f;
     }
-    float u = (t - 0.38f) / 0.62f;
-    // ease-in падения: сначала почти не двигается, потом уходит.
+    float u = (t - 0.28f) / 0.72f;
     return 1f - easeInCubic(u);
   }
 
@@ -151,7 +150,7 @@ public final class BossGlitchRevealTimeline {
   }
 
   /**
-   * 0 = обычный «ВЫХОД», 1 = больше, 2 = ещё больше, 3 = дубли в диалоге, 4 = разлёт по экрану.
+   * 0/1/2 = одно «ВЫХОД» в диалоге (разный размер), 3 = мелкий разброс по экрану, 4 = шум-занавес.
    */
   public static int exitBuildStep(int localMs) {
     float t = exitBuildT(localMs);
@@ -161,37 +160,39 @@ public final class BossGlitchRevealTimeline {
     if (t < EXIT_SIZE_HUGE_AT) {
       return 1;
     }
-    if (t < EXIT_DUP_AT) {
+    if (t < EXIT_SCATTER_AT) {
       return 2;
     }
-    if (t < EXIT_SPREAD_AT) {
+    if (t < EXIT_NOISE_AT) {
       return 3;
     }
     return 4;
   }
 
-  /** Сколько копий «ВЫХОД» в диалоговой панели на шаге дублей. */
-  public static int exitDialogDupCount(int localMs) {
+  /** 0..1 насколько густо мелкие «ВЫХОД» заполнили экран (без наложений). Сразу плотно. */
+  public static float exitScatterFillT(int localMs) {
     float t = exitBuildT(localMs);
-    if (t < EXIT_DUP_AT) {
-      return 1;
+    if (t < EXIT_SCATTER_AT) {
+      return 0f;
     }
-    if (t >= EXIT_SPREAD_AT) {
-      return 8;
+    if (t >= EXIT_NOISE_AT) {
+      return 1f;
     }
-    float u = (t - EXIT_DUP_AT) / Math.max(0.001f, EXIT_SPREAD_AT - EXIT_DUP_AT);
-    return 2 + Math.round(u * 6f);
+    float u = rise01(
+        Math.round((t - EXIT_SCATTER_AT) * EXIT_CURTAIN_MS),
+        Math.max(1, Math.round((EXIT_NOISE_AT - EXIT_SCATTER_AT) * EXIT_CURTAIN_MS)));
+    return 0.55f + 0.45f * u;
   }
 
-  /** 0..1 плотность вирусного разлёта по экрану (после дублей в панели). */
+  /** 0..1 плотность шумового занавеса после разброса слов. */
   public static float virusSpreadT(int localMs) {
     float t = exitBuildT(localMs);
-    if (t < EXIT_SPREAD_AT) {
+    if (t < EXIT_NOISE_AT) {
       return 0f;
     }
     return rise01(
-        Math.round((t - EXIT_SPREAD_AT) * EXIT_CURTAIN_MS),
-        Math.max(1, Math.round((1f - EXIT_SPREAD_AT) * EXIT_CURTAIN_MS)));
+        Math.round((t - EXIT_NOISE_AT) * EXIT_CURTAIN_MS),
+        Math.max(1, Math.round((1f - EXIT_NOISE_AT) * EXIT_CURTAIN_MS)));
   }
 
   public static int sheetFrameIndex(int localMs) {

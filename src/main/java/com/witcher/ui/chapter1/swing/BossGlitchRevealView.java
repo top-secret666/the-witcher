@@ -16,8 +16,8 @@ import java.awt.image.RescaleOp;
 import java.util.Random;
 
 /**
- * Порядок: чёрный → плотный ТВ-шум → очень медленный спад → «...» → «ВЫХОД» растёт в диалоге
- * → дубли в панели → разлёт по экрану → быстрый спад → corridor+диалог → …
+ * Порядок: чёрный → плотный ТВ-шум → спад → «...» → «ВЫХОД» (одно слово, растёт)
+ * → мелкий разброс «ВЫХОД» по экрану → шумовой занавес → corridor…
  */
 public final class BossGlitchRevealView {
 
@@ -95,8 +95,12 @@ public final class BossGlitchRevealView {
     int step = BossGlitchRevealTimeline.exitBuildStep(localMs);
     float virus = BossGlitchRevealTimeline.virusSpreadT(localMs);
 
-    if (step <= 3) {
-      drawExitDialogBuild(g, sw, sh, step, localMs, seed);
+    if (step <= 2) {
+      // Одно слово за раз — без наложений разных размеров.
+      drawExitDialogSingle(g, sw, sh, step);
+    } else {
+      float fill = BossGlitchRevealTimeline.exitScatterFillT(localMs);
+      drawScatteredExitWords(g, sw, sh, fill, seed);
     }
     if (virus > 0.01f) {
       PixelBugOverlay.drawVirusWordCurtain(g, sw, sh, virus, seed);
@@ -113,44 +117,73 @@ public final class BossGlitchRevealView {
     }
   }
 
-  /** «ВЫХОД» в диалоге: обычный → больше → ещё больше → дубли только в панели. */
-  private static void drawExitDialogBuild(Graphics2D g, int sw, int sh, int step, int localMs,
-                                          long seed) {
+  /** Одно «ВЫХОД» в диалоге: обычный / больше / ещё больше (замена, не стек). */
+  private static void drawExitDialogSingle(Graphics2D g, int sw, int sh, int step) {
     int dialogH = Math.round(sh * 0.22f);
     int y0 = sh - dialogH;
     g.setColor(new Color(0, 0, 0, 210));
     g.fillRect(0, y0, sw, dialogH);
 
-    g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
     float scale = switch (step) {
       case 1 -> 1.55f;
-      case 2, 3 -> 2.15f;
+      case 2 -> 2.15f;
       default -> 1f;
     };
+    g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
     int baseSize = Math.max(16, Math.round(sh * 0.055f));
     int fontSize = Math.max(14, Math.round(baseSize * scale));
     g.setFont(GameFonts.get().bold(fontSize));
     FontMetrics fm = g.getFontMetrics();
+    int tx = (sw - fm.stringWidth(EXIT_WORD)) / 2;
+    int ty = y0 + (dialogH + fm.getAscent() - fm.getDescent()) / 2;
     g.setColor(RED_TEXT);
+    g.drawString(EXIT_WORD, tx, ty);
+    g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
+  }
 
-    if (step < 3) {
-      int tx = (sw - fm.stringWidth(EXIT_WORD)) / 2;
-      int ty = y0 + (dialogH + fm.getAscent() - fm.getDescent()) / 2;
-      g.drawString(EXIT_WORD, tx, ty);
-    } else {
-      int copies = BossGlitchRevealTimeline.exitDialogDupCount(localMs);
-      Random rnd = new Random(seed / 8 * 41L + copies * 17L);
-      int padX = Math.round(sw * 0.04f);
-      int padY = Math.round(dialogH * 0.18f);
-      for (int i = 0; i < copies; i++) {
-        int tw = fm.stringWidth(EXIT_WORD);
-        int maxX = Math.max(1, sw - padX * 2 - tw);
-        int x = padX + rnd.nextInt(maxX);
-        int y = y0 + padY + fm.getAscent()
-            + rnd.nextInt(Math.max(1, dialogH - padY * 2 - fm.getHeight()));
-        int a = 160 + rnd.nextInt(95);
-        g.setColor(new Color(200, 18, 28, a));
+  /**
+   * Много мелких «ВЫХОД» сразу по всему экрану, сеткой без наложений друг на друга.
+   * {@code fillT} 0..1 — насколько густо заполняем ячейки.
+   */
+  private static void drawScatteredExitWords(Graphics2D g, int sw, int sh, float fillT, long seed) {
+    if (fillT <= 0.01f) {
+      return;
+    }
+    float fill = Math.max(0f, Math.min(1f, fillT));
+    g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+    int fontSize = Math.max(9, Math.round(sh * 0.026f));
+    g.setFont(GameFonts.get().bold(fontSize));
+    FontMetrics fm = g.getFontMetrics();
+    int tw = fm.stringWidth(EXIT_WORD);
+    int th = fm.getHeight();
+    int gapX = Math.max(8, tw / 3);
+    int gapY = Math.max(6, th / 2);
+    int cellW = tw + gapX;
+    int cellH = th + gapY;
+    int cols = Math.max(1, sw / cellW);
+    int rows = Math.max(1, sh / cellH);
+
+    // Стабильная сетка: jitter только внутри ячейки, слова не пересекаются.
+    Random rnd = new Random(7703L);
+    int target = Math.round(cols * rows * (0.35f + fill * 0.65f));
+    int drawn = 0;
+    for (int row = 0; row < rows && drawn < target; row++) {
+      for (int col = 0; col < cols && drawn < target; col++) {
+        // Псевдо-разброс: пропускаем часть ячеек, но при высоком fill почти все.
+        float keep = 0.25f + fill * 0.8f;
+        if (rnd.nextFloat() > keep && fill < 0.92f) {
+          continue;
+        }
+        int jitterX = rnd.nextInt(Math.max(1, gapX / 2));
+        int jitterY = rnd.nextInt(Math.max(1, gapY / 2));
+        int x = col * cellW + jitterX;
+        int y = row * cellH + fm.getAscent() + jitterY;
+        if (x + tw > sw || y > sh) {
+          continue;
+        }
+        g.setColor(RED_TEXT);
         g.drawString(EXIT_WORD, x, y);
+        drawn++;
       }
     }
     g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
