@@ -117,13 +117,11 @@ public final class ShopPresenter {
 
         ShopLayout layout = createLayout();
 
-        // Reveal кошелька нельзя пропустить кликом — анимация всегда доигрывает.
+        // Reveal кошелька/карты боя нельзя пропустить кликом — анимация всегда доигрывает.
         if (ui.state == ShopScreenState.WALLET_REVEAL) {
             return;
         }
-
-        if (ui.state == ShopScreenState.BATTLE_CARD_REVEAL && input.clicked()) {
-            ui.battleCardRevealTicks = BATTLE_CARD_REVEAL_TOTAL - 1;
+        if (ui.state == ShopScreenState.BATTLE_CARD_REVEAL) {
             return;
         }
 
@@ -700,9 +698,30 @@ public final class ShopPresenter {
             if (ui.equipmentHoveredRow < visible.size()) {
                 EquipmentGridEntry entry = visible.get(ui.equipmentHoveredRow);
                 if (entry.isKit()) {
-                    model.equipSet(entry.armourSet());
+                    var set = entry.armourSet();
+                    if (set != null) {
+                        if (model.isSetEquipped(set)) {
+                            // 2-й клик по иконке комплекта — снимаем все его части.
+                            for (Armour armour : set.getArmorPieces()) {
+                                EquipSlot slot = EquipSlot.forArmour(armour);
+                                if (slot != null) {
+                                    model.unequip(slot);
+                                }
+                            }
+                        } else {
+                            model.equipSet(set);
+                        }
+                    }
                 } else if (entry.armour() != null) {
-                    model.equipArmour(entry.armour());
+                    Armour armour = entry.armour();
+                    if (model.isEquipped(armour)) {
+                        EquipSlot slot = EquipSlot.forArmour(armour);
+                        if (slot != null) {
+                            model.unequip(slot);
+                        }
+                    } else {
+                        model.equipArmour(armour);
+                    }
                 }
                 if (chapterBridge != null) {
                     chapterBridge.onEquip();
