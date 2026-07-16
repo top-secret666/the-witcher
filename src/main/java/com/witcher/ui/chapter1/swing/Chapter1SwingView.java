@@ -99,7 +99,8 @@ public final class Chapter1SwingView implements Chapter1View {
       }
       if (presenter.director().phase() == Chapter1Phase.SHOP
           || presenter.director().phase() == Chapter1Phase.HACK) {
-        Chapter1SessionHud.draw(overlay, sw, presenter.director().session());
+        boolean adminHovered = Chapter1SessionHud.hitAdminMapButton(mouseX, mouseY, sw);
+        Chapter1SessionHud.draw(overlay, sw, presenter.director().session(), adminHovered);
       }
     } finally {
       overlay.dispose();

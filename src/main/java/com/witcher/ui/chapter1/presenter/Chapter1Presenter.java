@@ -24,6 +24,7 @@ import main.java.com.witcher.ui.chapter1.view.BossMapLayout;
 import main.java.com.witcher.ui.chapter1.view.VnChoiceLayout;
 import main.java.com.witcher.chapter1.vn.VnSceneState;
 import main.java.com.witcher.ui.chapter1.swing.Chapter1AssetPrewarm;
+import main.java.com.witcher.ui.chapter1.swing.Chapter1SessionHud;
 import main.java.com.witcher.ui.chapter1.swing.CutscenePlayer;
 import main.java.com.witcher.ui.chapter1.swing.EyesBlinkEffect;
 import main.java.com.witcher.ui.shop.ShopModel;
@@ -189,6 +190,9 @@ public final class Chapter1Presenter {
     switch (director.phase()) {
       case CUTSCENE -> updateCutscene(clicked);
       case SHOP -> {
+        if (tryAdminOpenBossMap(mouseX, mouseY, clicked)) {
+          return;
+        }
         if (dukeDialog.isActive()) {
           // Иначе PURCHASE_REVEAL зависает навечно под VN «тюрьмы».
           shopScreen.tickTimedScenes();
@@ -207,7 +211,12 @@ public final class Chapter1Presenter {
       case BATTLE_RESULT -> updateBattleResult(clicked);
       case VN_BATTLE -> updateBattle(mouseX, mouseY, clicked);
       case VN_DIALOG -> updateDukeDialog(mouseX, mouseY, clicked);
-      case HACK -> updateHack(escPressed);
+      case HACK -> {
+        if (tryAdminOpenBossMap(mouseX, mouseY, clicked)) {
+          return;
+        }
+        updateHack(escPressed);
+      }
       case ENDING -> updateEnding(mouseX, mouseY, clicked);
     }
     if (escPressed && director.phase() == Chapter1Phase.SHOP) {
@@ -336,6 +345,18 @@ public final class Chapter1Presenter {
     bossMapBackHovered = false;
     Chapter1AssetPrewarm.warmBossMapDrawables();
     Chapter1AssetPrewarm.warmCutscenesAsync();
+  }
+
+  /** Админ-кнопка hack_hidden_hint → сразу открытая карта боссов. */
+  private boolean tryAdminOpenBossMap(int mouseX, int mouseY, boolean clicked) {
+    if (!clicked) {
+      return false;
+    }
+    if (!Chapter1SessionHud.hitAdminMapButton(mouseX, mouseY, Chapter1Layout.VIRTUAL_W)) {
+      return false;
+    }
+    openBossMap();
+    return true;
   }
 
   private void tryGrantBattleCard() {
