@@ -3,7 +3,6 @@ package main.java.com.witcher.chapter1;
 import main.java.com.witcher.chapter1.cutscene.CutsceneCatalog;
 import main.java.com.witcher.chapter1.cutscene.CutsceneId;
 import main.java.com.witcher.chapter1.loop.LoopRules;
-import main.java.com.witcher.chapter1.loop.LoopSequenceKind;
 
 /**
  * State machine главы 1: какая фаза активна и что делать после событий.
@@ -21,7 +20,6 @@ public final class Chapter1Director {
   private boolean cutsceneFinished;
   private boolean chapterComplete;
   private boolean loopEyesPrelude;
-  private LoopSequenceKind loopSequenceKind = LoopSequenceKind.EYELID_WAKE;
 
   public Chapter1Director(Chapter1Session session) {
     this.session = session != null ? session : Chapter1Session.newGame();
@@ -176,25 +174,16 @@ public final class Chapter1Director {
     cutsceneFinished = false;
   }
 
-  /** Канон: loop_wake / ходьба сквозь чащу после выбора босса или хака. */
+  /** Канон: loop_wake после выбора босса на карте. */
   public void beginLoopSequence(boolean eyesPrelude) {
-    beginLoopSequence(eyesPrelude, LoopSequenceKind.EYELID_WAKE);
-  }
-
-  public void beginLoopSequence(boolean eyesPrelude, LoopSequenceKind kind) {
     phase = Chapter1Phase.LOOP_SEQUENCE;
     loopEyesPrelude = eyesPrelude;
-    loopSequenceKind = kind != null ? kind : LoopSequenceKind.EYELID_WAKE;
     pendingCutscene = null;
     cutsceneFinished = false;
   }
 
   public boolean loopEyesPrelude() {
     return loopEyesPrelude;
-  }
-
-  public LoopSequenceKind loopSequenceKind() {
-    return loopSequenceKind;
   }
 
   public void enterLoopHold() {
