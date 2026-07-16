@@ -102,28 +102,24 @@ public final class BossGlitchRevealView {
                                       int shakeX, int shakeY) {
     int frame = BossGlitchRevealTimeline.sheetFrameIndex(localMs);
     drawSheetFrameBright(g, sw, sh, frame, 1f, shakeX, shakeY);
+    // Без glitch_overlay_heavy — только лёгкие пиксельные баги по кадрам.
     float noise = BossGlitchRevealTimeline.sheetNoise(frame) * 0.75f;
     PixelBugOverlay.draw(g, sw, sh, noise, seed);
-    if (noise > 0.35f) {
-      GlitchOverlayRenderer.drawHeavyForced(g, sw, sh);
-    }
   }
 
   private static void drawSharpen(Graphics2D g, int sw, int sh, int localMs, long seed) {
     float sharp = BossGlitchRevealTimeline.sharpenT(localMs);
-    drawFullBleed(g, Chapter1UiAssets.wolfShardReveal(), sw, sh, 1f);
-
-    float muddy = 1f - sharp;
-    float noise = muddy * muddy * 1.15f;
-    float bugs = muddy * 0.95f;
+    // Как при пробуждении GIF: картинка из «мыла» в резкость + пиксельный шум сходит.
+    BufferedImage scaled = ScaledImageCache.get(Chapter1UiAssets.wolfShardReveal(), sw, sh);
+    if (scaled == null) {
+      drawFullBleed(g, Chapter1UiAssets.wolfShardReveal(), sw, sh, 1f);
+    } else {
+      WakeVisionRenderer.drawFrame(g, scaled, 0, 0, sharp);
+    }
+    // Большой шум в начале → 0 на максимальной чёткости. Без glitch_overlay_heavy / PixelBug.
+    float noise = sharp >= 0.97f ? 0f : (1f - sharp) * 0.92f + 0.06f;
     if (noise > 0.02f) {
       CutsceneNoiseOverlay.draw(g, sw, sh, Math.min(1f, noise));
-    }
-    if (bugs > 0.02f) {
-      PixelBugOverlay.draw(g, sw, sh, Math.min(1f, bugs), seed);
-    }
-    if (muddy > 0.45f) {
-      GlitchOverlayRenderer.drawHeavyForced(g, sw, sh);
     }
   }
 
