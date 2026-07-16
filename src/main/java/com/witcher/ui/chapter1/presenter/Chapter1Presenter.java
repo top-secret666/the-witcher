@@ -13,7 +13,6 @@ import main.java.com.witcher.chapter1.battle.BossEntry;
 import main.java.com.witcher.chapter1.battle.SwordCutsceneTiming;
 import main.java.com.witcher.chapter1.loop.LoopRules;
 import main.java.com.witcher.chapter1.loop.LoopSequenceController;
-import main.java.com.witcher.chapter1.loop.LoopSequenceKind;
 import main.java.com.witcher.chapter1.cutscene.CutsceneId;
 import main.java.com.witcher.chapter1.cutscene.CutsceneCatalog;
 import main.java.com.witcher.chapter1.ending.EscapeEnding;
@@ -28,7 +27,6 @@ import main.java.com.witcher.chapter1.vn.VnSceneState;
 import main.java.com.witcher.ui.chapter1.swing.Chapter1AssetPrewarm;
 import main.java.com.witcher.ui.chapter1.swing.CutscenePlayer;
 import main.java.com.witcher.ui.chapter1.swing.EyesBlinkEffect;
-import main.java.com.witcher.ui.chapter1.swing.ForestWalkScene;
 import main.java.com.witcher.ui.chapter1.swing.SwordGlintOverlay;
 import main.java.com.witcher.chapter1.loop.WakeAwakeningTimeline;
 import main.java.com.witcher.ui.shop.ShopModel;
@@ -55,7 +53,6 @@ public final class Chapter1Presenter {
   private final BattleCardController battleCard = new BattleCardController();
   private final LoopSequenceController loopSequence = new LoopSequenceController();
   private final EyesBlinkEffect eyesEffect = new EyesBlinkEffect();
-  private final ForestWalkScene forestWalk = new ForestWalkScene();
   private final SwordGlintOverlay swordGlint = new SwordGlintOverlay();
 
   private BattleVnController battle;
@@ -120,10 +117,6 @@ public final class Chapter1Presenter {
 
   public EyesBlinkEffect eyesEffect() {
     return eyesEffect;
-  }
-
-  public ForestWalkScene forestWalk() {
-    return forestWalk;
   }
 
   public BossEncounterController encounter() {
@@ -387,20 +380,12 @@ public final class Chapter1Presenter {
       return;
     }
     selectedBoss = hoveredBoss;
-    director.beginLoopSequence(false, LoopSequenceKind.FOREST_WALK);
+    director.beginLoopSequence(false);
     onPhaseEntered();
   }
 
   private void updateLoopSequence() {
     loopSequence.tick();
-    if (loopSequence.kind() == LoopSequenceKind.FOREST_WALK) {
-      if (loopSequence.forestWalkComplete()) {
-        director.enterBossEncounter();
-        onPhaseEntered();
-      }
-      return;
-    }
-
     loopCutscenePlayer.tick();
     if (loopSequence.showEyes()) {
       eyesEffect.tick();
@@ -416,12 +401,8 @@ public final class Chapter1Presenter {
     if (director.phase() != Chapter1Phase.LOOP_SEQUENCE) {
       return;
     }
-    if (loopSequence.kind() == LoopSequenceKind.FOREST_WALK) {
-      loopSequence.skipForestWalk();
-    } else {
-      eyesEffect.skip();
-      loopCutscenePlayer.stop();
-    }
+    eyesEffect.skip();
+    loopCutscenePlayer.stop();
     director.enterBossEncounter();
     onPhaseEntered();
   }
@@ -524,13 +505,9 @@ public final class Chapter1Presenter {
         doorLoopPlayer.stop();
       }
     } else if (director.phase() == Chapter1Phase.LOOP_SEQUENCE) {
-      loopSequence.start(director.loopEyesPrelude(), director.loopSequenceKind());
-      if (director.loopSequenceKind() == LoopSequenceKind.EYELID_WAKE) {
-        eyesEffect.reset(EyesBlinkEffect.Mode.AWAKENING);
-        startLoopCutscene(CutsceneId.LOOP_WAKE);
-      } else {
-        forestWalk.ensureBranches(Chapter1Layout.VIRTUAL_W, Chapter1Layout.VIRTUAL_H);
-      }
+      loopSequence.start(director.loopEyesPrelude());
+      eyesEffect.reset(EyesBlinkEffect.Mode.AWAKENING);
+      startLoopCutscene(CutsceneId.LOOP_WAKE);
     } else if (director.phase() == Chapter1Phase.BOSS_ENCOUNTER) {
       encounter = new BossEncounterController(selectedBoss);
     } else if (director.phase() == Chapter1Phase.SWORD_CUTSCENE) {
