@@ -9,7 +9,8 @@ public final class BossGlitchRevealTimeline {
 
   public static final int BUILDUP_MS = 1400;
   public static final int DIALOG_MS = 3600;
-  public static final int BLINK_MS = 650;
+  /** Мягкий кроссфейд коридор ↔ лист (тряска + баги в пике). */
+  public static final int BLINK_MS = 980;
   public static final int SHEET_FRAME_MS = 95;
   public static final int SHEET_COLS = 3;
   public static final int SHEET_ROWS = 3;
@@ -146,6 +147,42 @@ public final class BossGlitchRevealTimeline {
 
   public static float blinkVisible(int localMs) {
     return (localMs / 80) % 2 == 0 ? 1f : 0f;
+  }
+
+  /** 0..1 прогресс мягкого перехода коридор → лист. */
+  public static float corridorToSheetT(int localMs) {
+    return easeInOutCubic(clamp(localMs / (float) BLINK_MS, 0f, 1f));
+  }
+
+  /** Баги/пиксели: пик в середине кроссфейда. */
+  public static float corridorToSheetBugs(int localMs) {
+    float t = clamp(localMs / (float) BLINK_MS, 0f, 1f);
+    return (float) Math.sin(t * Math.PI) * 0.95f;
+  }
+
+  /** 0..1: появление heavy в конце листа (мягкий handoff sheet → heavy). */
+  public static float sheetToHeavyAlpha(int localMs) {
+    float t = clamp(localMs / (float) SHEET_MS, 0f, 1f);
+    if (t < 0.55f) {
+      return 0f;
+    }
+    return easeOutCubic((t - 0.55f) / 0.45f) * 0.8f;
+  }
+
+  /** Баги на handoff sheet → heavy. */
+  public static float sheetToHeavyBugs(int localMs) {
+    float heavy = sheetToHeavyAlpha(localMs);
+    if (heavy <= 0.01f) {
+      return sheetNoise(sheetFrameIndex(localMs)) * 0.45f;
+    }
+    return 0.35f + heavy * 0.55f;
+  }
+
+  private static float easeInOutCubic(float t) {
+    float c = clamp(t, 0f, 1f);
+    return c < 0.5f
+        ? 4f * c * c * c
+        : 1f - (float) Math.pow(-2f * c + 2f, 3) / 2f;
   }
 
   private static float easeInCubic(float t) {

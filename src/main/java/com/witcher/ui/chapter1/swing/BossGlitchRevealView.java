@@ -95,24 +95,40 @@ public final class BossGlitchRevealView {
 
   private static void drawBlink(Graphics2D g, int sw, int sh, BossGlitchRevealController ctrl,
                                 int localMs, long seed, int shakeX, int shakeY) {
-    int frame = BossGlitchRevealTimeline.sheetFrameIndex(localMs / 2);
-    float visible = BossGlitchRevealTimeline.blinkVisible(localMs);
-    if (visible > 0.5f) {
-      drawFullBleedShaken(g, Chapter1UiAssets.bossBloodCorridor(), sw, sh, 1f, shakeX, shakeY);
-    } else {
-      drawSheetFrameBright(g, sw, sh, frame, 1f, shakeX, shakeY);
+    float t = BossGlitchRevealTimeline.corridorToSheetT(localMs);
+    float bugs = BossGlitchRevealTimeline.corridorToSheetBugs(localMs);
+    int frame = BossGlitchRevealTimeline.sheetFrameIndex(
+        Math.round(t * (BossGlitchRevealTimeline.SHEET_MS - 1)));
+
+    // Мягкий кроссфейд: коридор уходит → лист проявляется, баги/пиксели в пике.
+    drawFullBleedShaken(g, Chapter1UiAssets.bossBloodCorridor(), sw, sh, 1f - t * 0.85f, shakeX, shakeY);
+    drawSheetFrameBright(g, sw, sh, frame, Math.max(0.05f, t), shakeX, shakeY);
+    PixelBugOverlay.draw(g, sw, sh, bugs, seed);
+    if (bugs > 0.35f) {
+      CutsceneNoiseOverlay.draw(g, sw, sh, bugs * 0.7f);
     }
-    PixelBugOverlay.draw(g, sw, sh, 0.25f + frame * 0.06f, seed);
+    if (t > 0.55f) {
+      GlitchOverlayRenderer.drawMediumForced(g, sw, sh, (t - 0.55f) / 0.45f * 0.45f);
+    }
     drawThreatDialog(g, sw, sh, ctrl.visibleDialogText());
   }
 
   private static void drawAwakenSheet(Graphics2D g, int sw, int sh, int localMs, long seed,
                                       int shakeX, int shakeY) {
     int frame = BossGlitchRevealTimeline.sheetFrameIndex(localMs);
+    float heavyA = BossGlitchRevealTimeline.sheetToHeavyAlpha(localMs);
+    float bugs = BossGlitchRevealTimeline.sheetToHeavyBugs(localMs);
+
     drawSheetFrameBright(g, sw, sh, frame, 1f, shakeX, shakeY);
-    // Без glitch_overlay_heavy — только лёгкие пиксельные баги по кадрам.
-    float noise = BossGlitchRevealTimeline.sheetNoise(frame) * 0.75f;
-    PixelBugOverlay.draw(g, sw, sh, noise, seed);
+    PixelBugOverlay.draw(g, sw, sh, bugs, seed);
+    if (bugs > 0.4f) {
+      CutsceneNoiseOverlay.draw(g, sw, sh, Math.min(0.8f, bugs * 0.55f));
+    }
+    // Мягкий переход лист → heavy: heavy всплывает под конец с багами.
+    GlitchOverlayRenderer.drawHeavyForced(g, sw, sh, heavyA);
+    if (heavyA > 0.15f) {
+      PixelBugOverlay.draw(g, sw, sh, heavyA * 0.5f, seed + 41);
+    }
   }
 
   private static void drawSharpen(Graphics2D g, int sw, int sh, int localMs, long seed) {
@@ -276,8 +292,15 @@ public final class BossGlitchRevealView {
         && stage != Stage.GLITCH_BUILDUP && stage != Stage.AWAKEN_SHEET) {
       return 0;
     }
-    float amp = stage == Stage.AWAKEN_SHEET ? 4f : 3f;
-    return Math.round((float) Math.sin(ctrl.elapsedMs() * 0.035) * amp);
+    float amp = 3f;
+    if (stage == Stage.BLINK) {
+      amp = 2.5f + BossGlitchRevealTimeline.corridorToSheetBugs(ctrl.stageElapsedMs()) * 5f;
+    } else if (stage == Stage.AWAKEN_SHEET) {
+      amp = 3f + BossGlitchRevealTimeline.sheetToHeavyAlpha(ctrl.stageElapsedMs()) * 4f;
+    } else if (stage == Stage.GLITCH_BUILDUP) {
+      amp = 2f + BossGlitchRevealTimeline.buildupIntensity(ctrl.stageElapsedMs()) * 4f;
+    }
+    return Math.round((float) Math.sin(ctrl.elapsedMs() * 0.042) * amp);
   }
 
   private static int screenShakeY(BossGlitchRevealController ctrl) {
@@ -286,7 +309,14 @@ public final class BossGlitchRevealView {
         && stage != Stage.GLITCH_BUILDUP && stage != Stage.AWAKEN_SHEET) {
       return 0;
     }
-    float amp = stage == Stage.AWAKEN_SHEET ? 3f : 2f;
-    return Math.round((float) Math.sin(ctrl.elapsedMs() * 0.05 + 1.2) * amp);
+    float amp = 2f;
+    if (stage == Stage.BLINK) {
+      amp = 2f + BossGlitchRevealTimeline.corridorToSheetBugs(ctrl.stageElapsedMs()) * 3.5f;
+    } else if (stage == Stage.AWAKEN_SHEET) {
+      amp = 2.5f + BossGlitchRevealTimeline.sheetToHeavyAlpha(ctrl.stageElapsedMs()) * 3f;
+    } else if (stage == Stage.GLITCH_BUILDUP) {
+      amp = 1.5f + BossGlitchRevealTimeline.buildupIntensity(ctrl.stageElapsedMs()) * 3f;
+    }
+    return Math.round((float) Math.sin(ctrl.elapsedMs() * 0.055 + 1.2) * amp);
   }
 }
