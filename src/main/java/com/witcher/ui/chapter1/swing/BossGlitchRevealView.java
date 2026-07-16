@@ -8,22 +8,23 @@ import main.java.com.witcher.ui.graphics.GameFonts;
 import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Composite;
-import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
+import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.awt.image.RescaleOp;
 import java.util.Random;
 
 /**
- * Порядок слоёв (без наложений «картинка на картинку» не по сценарию):
- * чёрный → ТВ-баги → ТОЛЬКО heavy → «...» → код-баги → corridor+диалог+тряска
- * → быстрый цикл 3 лесов + sheet → БАЦ чёрный → shard из шума → пропадает.
+ * Порядок: чёрный → ТВ-шум → спад (heavy уже под шумом) → «...» на heavy
+ * → занавес багов + растущий «ВЫХОД» → быстрый спад → corridor+диалог
+ * → цикл лесов + sheet → БАЦ → shard → выход.
  */
 public final class BossGlitchRevealView {
 
   private static final int SHAKE_PAD = 12;
+  private static final Color RED_TEXT = new Color(200, 18, 28);
 
   private BossGlitchRevealView() {
   }
@@ -43,8 +44,8 @@ public final class BossGlitchRevealView {
       case STATIC_FILL -> drawStaticFill(g, sw, sh, local, seed);
       case HEAVY_REVEAL -> drawHeavyReveal(g, sw, sh, local, seed);
       case DOTS_DIALOG -> drawDotsDialog(g, sw, sh);
-      case CODE_FILL -> drawCodeFill(g, sw, sh, local, seed);
-      case CODE_FADE -> drawCodeFade(g, sw, sh, local, seed);
+      case EXIT_CURTAIN -> drawExitCurtain(g, sw, sh, local, seed);
+      case EXIT_DROP -> drawExitDrop(g, sw, sh, local, seed);
       case CORRIDOR_DIALOG -> drawCorridorDialog(g, sw, sh, ctrl, seed);
       case CYCLE_SHEET -> drawCycleSheet(g, sw, sh, local, seed);
       case BLACK_BANG -> {
@@ -64,50 +65,61 @@ public final class BossGlitchRevealView {
     g.setColor(Color.BLACK);
     g.fillRect(0, 0, sw, sh);
     float intensity = BossGlitchRevealTimeline.rise01(localMs, BossGlitchRevealTimeline.STATIC_FILL_MS);
+    // К концу заполнения heavy уже под шумом — спад только снимет занавес помех.
+    if (intensity > 0.82f) {
+      GlitchOverlayRenderer.drawHeavyForced(g, sw, sh, 1f);
+    }
     PixelBugOverlay.drawTvStatic(g, sw, sh, intensity, seed);
   }
 
   private static void drawHeavyReveal(Graphics2D g, int sw, int sh, int localMs, long seed) {
-    // ТОЛЬКО heavy — без corridor под ним.
-    float heavyA = BossGlitchRevealTimeline.rise01(localMs, BossGlitchRevealTimeline.HEAVY_REVEAL_MS);
     float staticA = BossGlitchRevealTimeline.fall01(localMs, BossGlitchRevealTimeline.HEAVY_REVEAL_MS);
     g.setColor(Color.BLACK);
     g.fillRect(0, 0, sw, sh);
-    GlitchOverlayRenderer.drawHeavyForced(g, sw, sh, Math.max(0.35f, heavyA));
-    if (staticA > 0.05f) {
-      PixelBugOverlay.drawTvStatic(g, sw, sh, staticA * 0.85f, seed);
+    // Картинка уже стоит; помехи выше и уходят.
+    GlitchOverlayRenderer.drawHeavyForced(g, sw, sh, 1f);
+    if (staticA > 0.04f) {
+      PixelBugOverlay.drawTvStatic(g, sw, sh, staticA, seed);
     }
   }
 
   private static void drawDotsDialog(Graphics2D g, int sw, int sh) {
-    // Только heavy + три красные точки. Без тряски.
     g.setColor(Color.BLACK);
     g.fillRect(0, 0, sw, sh);
-    GlitchOverlayRenderer.drawHeavyForced(g, sw, sh, 0.85f);
+    GlitchOverlayRenderer.drawHeavyForced(g, sw, sh, 1f);
     drawThreeRedDots(g, sw, sh);
   }
 
-  private static void drawCodeFill(Graphics2D g, int sw, int sh, int localMs, long seed) {
-    // После «...» снова только баги (пиксели + 0/1/буквы) — без heavy и без corridor.
+  private static void drawExitCurtain(Graphics2D g, int sw, int sh, int localMs, long seed) {
     g.setColor(Color.BLACK);
     g.fillRect(0, 0, sw, sh);
-    float intensity = BossGlitchRevealTimeline.rise01(localMs, BossGlitchRevealTimeline.CODE_FILL_MS);
-    PixelBugOverlay.drawDigitalRain(g, sw, sh, intensity, seed, 0.72f);
+    GlitchOverlayRenderer.drawHeavyForced(g, sw, sh, 1f);
+    float intensity = BossGlitchRevealTimeline.rise01(localMs, BossGlitchRevealTimeline.EXIT_CURTAIN_MS);
+    PixelBugOverlay.drawDigitalRain(g, sw, sh, intensity, seed, 0.7f);
+
+    float grow = BossGlitchRevealTimeline.exitWordGrowT(localMs);
+    if (grow <= 0.001f) {
+      drawThreeRedDots(g, sw, sh);
+    } else {
+      drawGrowingExitWord(g, sw, sh, grow, 1f);
+    }
   }
 
-  private static void drawCodeFade(Graphics2D g, int sw, int sh, int localMs, long seed) {
-    // Рассеивание: помехи слабеют, но остаются. Corridor ещё нет.
+  private static void drawExitDrop(Graphics2D g, int sw, int sh, int localMs, long seed) {
     g.setColor(Color.BLACK);
     g.fillRect(0, 0, sw, sh);
-    float residual = 0.22f + BossGlitchRevealTimeline.fall01(localMs, BossGlitchRevealTimeline.CODE_FADE_MS) * 0.65f;
-    PixelBugOverlay.drawDigitalRain(g, sw, sh, residual, seed, 0.5f);
+    GlitchOverlayRenderer.drawHeavyForced(g, sw, sh, 1f);
+    float curtain = BossGlitchRevealTimeline.exitDropT(localMs);
+    if (curtain > 0.03f) {
+      PixelBugOverlay.drawDigitalRain(g, sw, sh, curtain, seed, 0.7f);
+      drawGrowingExitWord(g, sw, sh, 1f, curtain);
+    }
   }
 
   private static void drawCorridorDialog(
       Graphics2D g, int sw, int sh, BossGlitchRevealController ctrl, long seed) {
     int shakeX = dialogShakeX(ctrl.elapsedMs());
     int shakeY = dialogShakeY(ctrl.elapsedMs());
-    // Только corridor — без heavy сверху.
     drawFullBleedShaken(g, Chapter1UiAssets.bossBloodCorridor(), sw, sh, 1f, shakeX, shakeY);
     PixelBugOverlay.drawTvStatic(g, sw, sh, 0.08f, seed);
     drawThreatDialog(g, sw, sh, ctrl.visibleDialogText());
@@ -131,7 +143,6 @@ public final class BossGlitchRevealView {
 
     PixelBugOverlay.drawTvStatic(g, sw, sh, 0.15f + peak * 0.85f, seed);
     if (peak > 0.45f) {
-      // Вспышки + неровности на пике глюка — без второго фонового ассета.
       flashBands(g, sw, sh, peak, seed);
     }
   }
@@ -173,8 +184,41 @@ public final class BossGlitchRevealView {
     String dots = "...";
     int tx = (sw - fm.stringWidth(dots)) / 2;
     int ty = y0 + (dialogH + fm.getAscent() - fm.getDescent()) / 2;
-    g.setColor(new Color(200, 18, 28));
+    g.setColor(RED_TEXT);
     g.drawString(dots, tx, ty);
+    g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
+  }
+
+  /** «ВЫХОД» растёт и вместе с багами закрывает heavy как занавес. */
+  private static void drawGrowingExitWord(Graphics2D g, int sw, int sh, float growT, float alpha) {
+    if (alpha < 0.02f) {
+      return;
+    }
+    float t = Math.max(0f, Math.min(1f, growT));
+    float scale = 1f + t * 16f;
+    int baseSize = Math.max(18, Math.round(sh * 0.07f));
+    g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+    g.setFont(GameFonts.get().bold(baseSize));
+    FontMetrics fm = g.getFontMetrics();
+    String word = "ВЫХОД";
+    int tw = fm.stringWidth(word);
+    float cx = sw * 0.5f;
+    float cy = sh * 0.52f;
+
+    AffineTransform prev = g.getTransform();
+    Composite prevC = g.getComposite();
+    g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, Math.min(1f, alpha)));
+    g.translate(cx, cy);
+    g.scale(scale, scale);
+    g.setColor(RED_TEXT);
+    g.drawString(word, -tw / 2f, fm.getAscent() * 0.35f);
+    // Лёгкий второй слой для «цифрового» перегруза на пике.
+    if (t > 0.55f) {
+      g.setColor(new Color(255, 60, 60, Math.round(90 * t * alpha)));
+      g.drawString(word, -tw / 2f + 1.5f, fm.getAscent() * 0.35f + 1.2f);
+    }
+    g.setTransform(prev);
+    g.setComposite(prevC);
     g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
   }
 
@@ -267,7 +311,7 @@ public final class BossGlitchRevealView {
     int fontSize = Math.max(12, Math.round(sh * 0.042f));
     g.setFont(GameFonts.get().plain(fontSize));
     FontMetrics fm = g.getFontMetrics();
-    g.setColor(new Color(190, 18, 28));
+    g.setColor(RED_TEXT);
     int x = Math.round(sw * 0.06f);
     int y = y0 + Math.round(dialogH * 0.42f);
     for (String line : wrap(text, fm, Math.round(sw * 0.88f))) {

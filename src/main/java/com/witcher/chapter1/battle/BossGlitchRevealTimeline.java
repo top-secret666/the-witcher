@@ -1,20 +1,20 @@
 package main.java.com.witcher.chapter1.battle;
 
-/** Таймлайн глитч-пробуждения Волка — строгий порядок слоёв, без наложений «картинка на картинку». */
+/** Таймлайн глитч-пробуждения Волка — строгий порядок слоёв. */
 public final class BossGlitchRevealTimeline {
 
   public static final int MS_PER_TICK = 16;
 
-  /** Чёрный экран → ТВ-помехи красно-бело-чёрные до заполнения. */
+  /** Чёрный → ТВ-помехи (без букв) до заполнения. */
   public static final int STATIC_FILL_MS = 1100;
-  /** Рассеивание → ТОЛЬКО glitch_overlay_heavy (без corridor). */
-  public static final int HEAVY_REVEAL_MS = 650;
-  /** Три красные точки, без тряски. */
-  public static final int DOTS_MS = 1400;
-  /** Снова заполнение: пиксели + 0/1/буквы. */
-  public static final int CODE_FILL_MS = 900;
-  /** Помехи слабеют, но ещё есть. */
-  public static final int CODE_FADE_MS = 750;
+  /** Спад помех: heavy уже под ними. */
+  public static final int HEAVY_REVEAL_MS = 700;
+  /** Три красные точки на heavy, без тряски. */
+  public static final int DOTS_MS = 1100;
+  /** Занавес: баги+буквы поверх heavy, «...» → растущий «ВЫХОД». */
+  public static final int EXIT_CURTAIN_MS = 1700;
+  /** Быстрый спад занавеса → corridor. */
+  public static final int EXIT_DROP_MS = 280;
   /** corridor + тряска + диалог. */
   public static final int CORRIDOR_DIALOG_MS = 3800;
   public static final int SHEET_FRAME_MS = 85;
@@ -22,18 +22,17 @@ public final class BossGlitchRevealTimeline {
   public static final int SHEET_ROWS = 3;
   public static final int SHEET_FRAMES = SHEET_COLS * SHEET_ROWS;
   public static final int SHEET_MS = SHEET_FRAME_MS * SHEET_FRAMES;
-  /** Смена трёх фонов под листом + финальный глюк-пик. */
   public static final int CYCLE_MS = SHEET_MS + 700;
   public static final int BG_CYCLE_MS = 180;
-  /** БАЦ — тишина, чёрный. */
   public static final int BLACK_BANG_MS = 450;
-  /** Из черноты под шумом → чёткость wolf_shard_reveal. */
   public static final int SHARD_EMERGE_MS = 2000;
-  /** Полное качество → быстро пропадает. */
   public static final int SHARD_OUT_MS = 420;
 
+  /** Доля EXIT_CURTAIN, пока ещё «...», потом «ВЫХОД». */
+  public static final float EXIT_WORD_START = 0.22f;
+
   public static final int TOTAL_MS =
-      STATIC_FILL_MS + HEAVY_REVEAL_MS + DOTS_MS + CODE_FILL_MS + CODE_FADE_MS
+      STATIC_FILL_MS + HEAVY_REVEAL_MS + DOTS_MS + EXIT_CURTAIN_MS + EXIT_DROP_MS
           + CORRIDOR_DIALOG_MS + CYCLE_MS + BLACK_BANG_MS + SHARD_EMERGE_MS + SHARD_OUT_MS;
 
   private BossGlitchRevealTimeline() {
@@ -43,8 +42,8 @@ public final class BossGlitchRevealTimeline {
     STATIC_FILL,
     HEAVY_REVEAL,
     DOTS_DIALOG,
-    CODE_FILL,
-    CODE_FADE,
+    EXIT_CURTAIN,
+    EXIT_DROP,
     CORRIDOR_DIALOG,
     CYCLE_SHEET,
     BLACK_BANG,
@@ -67,11 +66,11 @@ public final class BossGlitchRevealTimeline {
     if (elapsedMs < (t += DOTS_MS)) {
       return Stage.DOTS_DIALOG;
     }
-    if (elapsedMs < (t += CODE_FILL_MS)) {
-      return Stage.CODE_FILL;
+    if (elapsedMs < (t += EXIT_CURTAIN_MS)) {
+      return Stage.EXIT_CURTAIN;
     }
-    if (elapsedMs < (t += CODE_FADE_MS)) {
-      return Stage.CODE_FADE;
+    if (elapsedMs < (t += EXIT_DROP_MS)) {
+      return Stage.EXIT_DROP;
     }
     if (elapsedMs < (t += CORRIDOR_DIALOG_MS)) {
       return Stage.CORRIDOR_DIALOG;
@@ -97,17 +96,18 @@ public final class BossGlitchRevealTimeline {
       case STATIC_FILL -> 0;
       case HEAVY_REVEAL -> STATIC_FILL_MS;
       case DOTS_DIALOG -> STATIC_FILL_MS + HEAVY_REVEAL_MS;
-      case CODE_FILL -> STATIC_FILL_MS + HEAVY_REVEAL_MS + DOTS_MS;
-      case CODE_FADE -> STATIC_FILL_MS + HEAVY_REVEAL_MS + DOTS_MS + CODE_FILL_MS;
-      case CORRIDOR_DIALOG -> STATIC_FILL_MS + HEAVY_REVEAL_MS + DOTS_MS + CODE_FILL_MS + CODE_FADE_MS;
-      case CYCLE_SHEET -> STATIC_FILL_MS + HEAVY_REVEAL_MS + DOTS_MS + CODE_FILL_MS + CODE_FADE_MS
-          + CORRIDOR_DIALOG_MS;
-      case BLACK_BANG -> STATIC_FILL_MS + HEAVY_REVEAL_MS + DOTS_MS + CODE_FILL_MS + CODE_FADE_MS
-          + CORRIDOR_DIALOG_MS + CYCLE_MS;
-      case SHARD_EMERGE -> STATIC_FILL_MS + HEAVY_REVEAL_MS + DOTS_MS + CODE_FILL_MS + CODE_FADE_MS
-          + CORRIDOR_DIALOG_MS + CYCLE_MS + BLACK_BANG_MS;
-      case SHARD_OUT -> STATIC_FILL_MS + HEAVY_REVEAL_MS + DOTS_MS + CODE_FILL_MS + CODE_FADE_MS
-          + CORRIDOR_DIALOG_MS + CYCLE_MS + BLACK_BANG_MS + SHARD_EMERGE_MS;
+      case EXIT_CURTAIN -> STATIC_FILL_MS + HEAVY_REVEAL_MS + DOTS_MS;
+      case EXIT_DROP -> STATIC_FILL_MS + HEAVY_REVEAL_MS + DOTS_MS + EXIT_CURTAIN_MS;
+      case CORRIDOR_DIALOG -> STATIC_FILL_MS + HEAVY_REVEAL_MS + DOTS_MS + EXIT_CURTAIN_MS
+          + EXIT_DROP_MS;
+      case CYCLE_SHEET -> STATIC_FILL_MS + HEAVY_REVEAL_MS + DOTS_MS + EXIT_CURTAIN_MS
+          + EXIT_DROP_MS + CORRIDOR_DIALOG_MS;
+      case BLACK_BANG -> STATIC_FILL_MS + HEAVY_REVEAL_MS + DOTS_MS + EXIT_CURTAIN_MS
+          + EXIT_DROP_MS + CORRIDOR_DIALOG_MS + CYCLE_MS;
+      case SHARD_EMERGE -> STATIC_FILL_MS + HEAVY_REVEAL_MS + DOTS_MS + EXIT_CURTAIN_MS
+          + EXIT_DROP_MS + CORRIDOR_DIALOG_MS + CYCLE_MS + BLACK_BANG_MS;
+      case SHARD_OUT -> STATIC_FILL_MS + HEAVY_REVEAL_MS + DOTS_MS + EXIT_CURTAIN_MS
+          + EXIT_DROP_MS + CORRIDOR_DIALOG_MS + CYCLE_MS + BLACK_BANG_MS + SHARD_EMERGE_MS;
       case DONE -> TOTAL_MS;
     };
   }
@@ -120,17 +120,30 @@ public final class BossGlitchRevealTimeline {
     return 1f - easeOutCubic(clamp(localMs / (float) Math.max(1, duration), 0f, 1f));
   }
 
+  /** Быстрый почти линейный спад занавеса. */
+  public static float exitDropT(int localMs) {
+    float t = clamp(localMs / (float) Math.max(1, EXIT_DROP_MS), 0f, 1f);
+    return 1f - easeInCubic(t);
+  }
+
+  /** 0 = ещё «...», &gt;0 = рост «ВЫХОД» (0..1). */
+  public static float exitWordGrowT(int localMs) {
+    int start = Math.round(EXIT_CURTAIN_MS * EXIT_WORD_START);
+    if (localMs < start) {
+      return 0f;
+    }
+    return easeInCubic(clamp((localMs - start) / (float) Math.max(1, EXIT_CURTAIN_MS - start), 0f, 1f));
+  }
+
   public static int sheetFrameIndex(int localMs) {
     int idx = localMs / SHEET_FRAME_MS;
     return Math.max(0, Math.min(SHEET_FRAMES - 1, idx));
   }
 
-  /** 0..2 индекс фоновой тройки (быстрая смена). */
   public static int bgCycleIndex(int localMs) {
     return (localMs / BG_CYCLE_MS) % 3;
   }
 
-  /** Пик глюка в конце CYCLE_SHEET. */
   public static float cycleGlitchPeak(int localMs) {
     float t = clamp(localMs / (float) CYCLE_MS, 0f, 1f);
     if (t < 0.72f) {
