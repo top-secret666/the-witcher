@@ -22,6 +22,8 @@ public final class Chapter1AssetPaths {
   public static final String VOLK_DUKE_MAP_ATTACK = BATTLE + "volk_duke_map_attack.png";
   public static final String VOLK_DUKE_MAP_INTERESTED = BATTLE + "volk_duke_map_interested.png";
   public static final String BOSS_WAKE_FOREST = BATTLE + "boss_wake_forest.png";
+  /** Туманный лес для процедурного перехода карта → босс (Волк). */
+  public static final String FOREST_WALK_MIST = BATTLE + "forest_walk_mist.png";
   public static final String SWORD_SLASH_SHEET_A = BATTLE + "sword_slash_sheet_a.png";
   public static final String SWORD_SLASH_SHEET_B = BATTLE + "sword_slash_sheet_b.png";
   /** Раскадровка дуэли 5×12 (60 кадров). */

@@ -82,6 +82,7 @@ public final class Chapter1UiAssets {
   private static BufferedImage volkDukeMapAttack;
   private static BufferedImage volkDukeMapInterested;
   private static BufferedImage bossWakeForest;
+  private static BufferedImage forestWalkMist;
   private static SpriteSheet swordSlashSheetA;
   private static SpriteSheet swordSlashSheetB;
   private static SpriteSheet swordSlashSheetRush;
@@ -125,6 +126,13 @@ public final class Chapter1UiAssets {
       bossWakeForest = loadCapped(Chapter1AssetPaths.BOSS_WAKE_FOREST, MAX_MAP_EDGE);
     }
     return bossWakeForest;
+  }
+
+  public static BufferedImage forestWalkMist() {
+    if (forestWalkMist == null) {
+      forestWalkMist = loadCapped(Chapter1AssetPaths.FOREST_WALK_MIST, MAX_MAP_EDGE);
+    }
+    return forestWalkMist;
   }
 
   public static BufferedImage bossPortrait(String path) {
