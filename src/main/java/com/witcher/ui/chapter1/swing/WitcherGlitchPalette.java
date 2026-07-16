@@ -5,24 +5,22 @@ import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 
 /**
- * Единая палитра глитч/horror-сцен главы 1 под стиль игры:
- * чёрный «мокрый камень», холодный стальной серо-синий, кровь, RGB-помехи.
- * Накладывается при загрузке ассетов — без правок исходных PNG на диске.
+ * Палитра глитч/horror главы 1: мокрый камень, холодная сталь, кровь.
+ * Кислотный neon (lime/cyan) глушится; глаза/улыбка (светлые блики) сохраняются и усиливаются.
  */
 public final class WitcherGlitchPalette {
 
-  // Целевые якоря палитры (как в глитч-кадрах + Каэр Морхен).
   private static final int[] ANCHORS = {
       0x000000, // void
-      0x0A0C10, // wet stone
-      0x1A2230, // steel shadow
-      0x3A4658, // cold steel
-      0x6A7888, // mist gray
-      0x8A1A1A, // blood
-      0xC82828, // bright blood
-      0x1A8A3A, // glitch green
-      0x28C8C8, // glitch cyan
-      0xE8E8F0  // eye white / bloom
+      0x080A0E, // wet stone
+      0x141820, // steel shadow
+      0x2A3444, // cold steel
+      0x4A5668, // mist gray
+      0x6E7888, // pale steel
+      0x6A1418, // dried blood
+      0xA82028, // blood
+      0xC8C8D4, // soft highlight
+      0xF2F2F8  // eye / smile white
   };
 
   private WitcherGlitchPalette() {
@@ -50,19 +48,50 @@ public final class WitcherGlitchPalette {
       int g = (c >>> 8) & 0xff;
       int b = c & 0xff;
 
-      // Сначала лёгкий «холодный» сдвиг, потом snap к якорям.
-      int nr = clamp((int) (r * 0.92f + b * 0.05f));
-      int ng = clamp((int) (g * 0.88f + b * 0.08f));
-      int nb = clamp((int) (b * 1.05f + r * 0.02f));
+      int max = Math.max(r, Math.max(g, b));
+      int min = Math.min(r, Math.min(g, b));
+      float lum = (r + g + b) / 3f;
+      float sat = max == 0 ? 0f : (max - min) / (float) max;
+
+      // Глаза / улыбка: яркие малонасыщенные — оставляем и чуть белим.
+      if (lum >= 165f && sat <= 0.38f) {
+        int boost = clamp((int) (lum + (255 - lum) * 0.45f));
+        dst[i] = (a << 24) | (boost << 16) | (boost << 8) | Math.min(255, boost + 4);
+        continue;
+      }
+
+      // Кислотный зелёный / лайм — в холодную сталь.
+      if (g > r + 18 && g > b + 12 && sat > 0.28f) {
+        int steel = clamp((int) (lum * 0.55f));
+        r = steel;
+        g = clamp(steel + 4);
+        b = clamp(steel + 14);
+        sat = 0.2f;
+      }
+
+      // Кислотный cyan — в приглушённый стальной синий.
+      if (b > r + 22 && g > r + 10 && sat > 0.28f) {
+        int steel = clamp((int) (lum * 0.5f));
+        r = clamp(steel - 4);
+        g = clamp(steel + 6);
+        b = clamp(steel + 18);
+      }
+
+      // Общий холодный сдвиг + десатурация неона.
+      float desat = sat > 0.55f ? 0.55f : 1f;
+      int avg = (r + g + b) / 3;
+      int nr = clamp((int) (r * desat + avg * (1f - desat) * 0.35f + b * 0.04f));
+      int ng = clamp((int) (g * desat * 0.9f + avg * (1f - desat) * 0.4f));
+      int nb = clamp((int) (b * 1.06f + avg * 0.05f));
 
       int mapped = nearestAnchor(nr, ng, nb);
-      // Смешиваем 70% якорь + 30% холодный оригинал — не теряем детали.
-      int mr = ((mapped >>> 16) & 0xff);
-      int mg = ((mapped >>> 8) & 0xff);
+      int mr = (mapped >>> 16) & 0xff;
+      int mg = (mapped >>> 8) & 0xff;
       int mb = mapped & 0xff;
-      nr = (mr * 7 + nr * 3) / 10;
-      ng = (mg * 7 + ng * 3) / 10;
-      nb = (mb * 7 + nb * 3) / 10;
+      // Сильнее якорь (80%) — меньше кислоты от оригинала.
+      nr = (mr * 8 + nr * 2) / 10;
+      ng = (mg * 8 + ng * 2) / 10;
+      nb = (mb * 8 + nb * 2) / 10;
       dst[i] = (a << 24) | (nr << 16) | (ng << 8) | nb;
     }
     return out;
