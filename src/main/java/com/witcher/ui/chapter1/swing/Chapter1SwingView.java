@@ -31,7 +31,8 @@ public final class Chapter1SwingView implements Chapter1View {
           screen, sw, sh,
           presenter.loopSequence(),
           presenter.eyesEffect(),
-          presenter.loopCutscenePlayer());
+          presenter.loopCutscenePlayer(),
+          presenter.forestWalk());
       case SHOP -> {
         presenter.shopScreen().render(screen, mouseX, mouseY);
         if (presenter.isDukeDialogActive()) {
