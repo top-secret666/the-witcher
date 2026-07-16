@@ -5,7 +5,6 @@ import main.java.com.witcher.ui.graphics.GameFonts;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
-import java.awt.image.BufferedImage;
 
 /** Отладочный HUD счётчиков главы 1 (угол экрана). */
 public final class Chapter1SessionHud {
@@ -28,13 +27,6 @@ public final class Chapter1SessionHud {
     g.drawString("Подозр. " + session.suspicion() + " / Дов. " + session.trust(), 6, y);
     y += line;
     g.drawString("Фрагм. " + session.fragmentCount() + "/4", 6, y);
-    if (session.fragmentCount() > 0 && !session.terminalAccessGranted()) {
-      BufferedImage hint = Chapter1UiAssets.hiddenHint();
-      if (hint != null) {
-        int icon = 14;
-        g.drawImage(hint, sw - icon - 6, 4, icon, icon, null);
-      }
-    }
     if (session.terminalAccessGranted()) {
       y += line;
       g.setColor(new Color(120, 255, 160, 220));
