@@ -7,6 +7,7 @@ public final class Chapter1AssetPaths {
 
   public static final String SPRITES = main.java.com.witcher.chapter1.assets.Chapter1AssetPaths.SPRITES;
   public static final String GLITCH_HEAVY = main.java.com.witcher.chapter1.assets.Chapter1AssetPaths.GLITCH_HEAVY;
+  public static final String GLITCH_MEDIUM = main.java.com.witcher.chapter1.assets.Chapter1AssetPaths.GLITCH_MEDIUM;
   public static final String HACK_FRAME = main.java.com.witcher.chapter1.assets.Chapter1AssetPaths.HACK_FRAME;
   public static final String HACK_TIMER = main.java.com.witcher.chapter1.assets.Chapter1AssetPaths.HACK_TIMER;
   public static final String HACK_HIDDEN_HINT = main.java.com.witcher.chapter1.assets.Chapter1AssetPaths.HACK_HIDDEN_HINT;

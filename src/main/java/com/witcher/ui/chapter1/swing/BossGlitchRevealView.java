@@ -59,13 +59,21 @@ public final class BossGlitchRevealView {
                                   int shakeX, int shakeY) {
     g.setColor(Color.BLACK);
     g.fillRect(0, 0, sw, sh);
-    float intensity = BossGlitchRevealTimeline.buildupIntensity(localMs);
-    if (intensity > 0.55f) {
-      float reveal = (intensity - 0.55f) / 0.45f;
-      drawFullBleedShaken(g, Chapter1UiAssets.bossBloodCorridor(), sw, sh, reveal, shakeX, shakeY);
+
+    float corridorA = BossGlitchRevealTimeline.buildupCorridorAlpha(localMs);
+    float mediumA = BossGlitchRevealTimeline.buildupMediumAlpha(localMs);
+    float heavyA = BossGlitchRevealTimeline.buildupHeavyAlpha(localMs);
+    float bugs = BossGlitchRevealTimeline.buildupIntensity(localMs);
+
+    // Коридор → medium с кучей багов → мягко всплывает heavy.
+    drawFullBleedShaken(g, Chapter1UiAssets.bossBloodCorridor(), sw, sh, corridorA, shakeX, shakeY);
+    PixelBugOverlay.draw(g, sw, sh, Math.min(1f, 0.35f + bugs * 0.85f), seed);
+    GlitchOverlayRenderer.drawMediumForced(g, sw, sh, mediumA);
+    PixelBugOverlay.draw(g, sw, sh, Math.min(1f, bugs * 0.55f), seed + 91);
+    GlitchOverlayRenderer.drawHeavyForced(g, sw, sh, heavyA);
+    if (heavyA > 0.2f) {
+      PixelBugOverlay.draw(g, sw, sh, heavyA * 0.4f, seed + 17);
     }
-    GlitchOverlayRenderer.drawHeavyForced(g, sw, sh);
-    PixelBugOverlay.draw(g, sw, sh, intensity, seed);
   }
 
   private static void drawCorridorDialog(

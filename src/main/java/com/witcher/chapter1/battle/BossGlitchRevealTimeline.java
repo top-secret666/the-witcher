@@ -7,7 +7,7 @@ public final class BossGlitchRevealTimeline {
 
   public static final int MS_PER_TICK = 16;
 
-  public static final int BUILDUP_MS = 900;
+  public static final int BUILDUP_MS = 1400;
   public static final int DIALOG_MS = 3600;
   public static final int BLINK_MS = 650;
   public static final int SHEET_FRAME_MS = 95;
@@ -90,6 +90,39 @@ public final class BossGlitchRevealTimeline {
   public static float buildupIntensity(int localMs) {
     float t = clamp(localMs / (float) BUILDUP_MS, 0f, 1f);
     return easeInCubic(t);
+  }
+
+  /** 0..1: фаза medium-помех (баги поверх коридора). */
+  public static float buildupMediumAlpha(int localMs) {
+    float t = clamp(localMs / (float) BUILDUP_MS, 0f, 1f);
+    if (t < 0.15f) {
+      return easeOutCubic(t / 0.15f) * 0.85f;
+    }
+    if (t < 0.55f) {
+      return 0.85f;
+    }
+    // Soft handoff → heavy.
+    float fade = (t - 0.55f) / 0.45f;
+    return 0.85f * (1f - easeInCubic(fade));
+  }
+
+  /** 0..1: появление heavy поверх medium. */
+  public static float buildupHeavyAlpha(int localMs) {
+    float t = clamp(localMs / (float) BUILDUP_MS, 0f, 1f);
+    if (t < 0.45f) {
+      return 0f;
+    }
+    return easeOutCubic((t - 0.45f) / 0.55f) * 0.75f;
+  }
+
+  /** Насколько виден коридор под помехами. */
+  public static float buildupCorridorAlpha(int localMs) {
+    float t = clamp(localMs / (float) BUILDUP_MS, 0f, 1f);
+    if (t < 0.08f) {
+      return easeOutCubic(t / 0.08f);
+    }
+    // К концу чуть тускнеет под heavy, но остаётся.
+    return 1f - easeInCubic(Math.max(0f, (t - 0.7f) / 0.3f)) * 0.25f;
   }
 
   public static int sheetFrameIndex(int localMs) {

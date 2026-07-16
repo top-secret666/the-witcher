@@ -8,10 +8,11 @@ import java.awt.AlphaComposite;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 
-/** Оверлей глюка по уровню подозрения. */
+/** Оверлей глюка по уровню подозрения + forced-режимы для катсцен. */
 public final class GlitchOverlayRenderer {
 
   private static BufferedImage heavy;
+  private static BufferedImage medium;
 
   private GlitchOverlayRenderer() {
   }
@@ -22,7 +23,8 @@ public final class GlitchOverlayRenderer {
     }
     BufferedImage overlay = switch (session.glitchLevel()) {
       case HEAVY -> cachedHeavy();
-      case NONE, LIGHT, MEDIUM -> null;
+      case MEDIUM -> cachedMedium();
+      case NONE, LIGHT -> null;
     };
     if (overlay == null) {
       return;
@@ -34,15 +36,28 @@ public final class GlitchOverlayRenderer {
   }
 
   public static void drawHeavyForced(Graphics2D g, int sw, int sh) {
-    if (g == null) {
+    drawOverlay(g, sw, sh, cachedHeavy(), 0.65f);
+  }
+
+  public static void drawMediumForced(Graphics2D g, int sw, int sh) {
+    drawOverlay(g, sw, sh, cachedMedium(), 0.7f);
+  }
+
+  public static void drawMediumForced(Graphics2D g, int sw, int sh, float alpha) {
+    drawOverlay(g, sw, sh, cachedMedium(), alpha);
+  }
+
+  public static void drawHeavyForced(Graphics2D g, int sw, int sh, float alpha) {
+    drawOverlay(g, sw, sh, cachedHeavy(), alpha);
+  }
+
+  private static void drawOverlay(Graphics2D g, int sw, int sh, BufferedImage overlay, float alpha) {
+    if (g == null || overlay == null || alpha <= 0.01f) {
       return;
     }
-    BufferedImage overlay = cachedHeavy();
-    if (overlay == null) {
-      return;
-    }
+    float a = Math.max(0f, Math.min(1f, alpha));
     var prev = g.getComposite();
-    g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.65f));
+    g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, a));
     g.drawImage(overlay, 0, 0, sw, sh, null);
     g.setComposite(prev);
   }
@@ -53,5 +68,13 @@ public final class GlitchOverlayRenderer {
       heavy = sprite != null ? WitcherGlitchPalette.apply(sprite.getImage()) : null;
     }
     return heavy;
+  }
+
+  private static BufferedImage cachedMedium() {
+    if (medium == null) {
+      var sprite = Sprite.loadOptional(Chapter1AssetPaths.GLITCH_MEDIUM);
+      medium = sprite != null ? WitcherGlitchPalette.apply(sprite.getImage()) : null;
+    }
+    return medium;
   }
 }
