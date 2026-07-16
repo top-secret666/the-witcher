@@ -155,14 +155,16 @@ public final class Chapter1UiAssets {
 
   public static BufferedImage wolfShardAwaken() {
     if (wolfShardAwaken == null) {
-      wolfShardAwaken = loadCappedSharpPaletted(Chapter1AssetPaths.WOLF_SHARD_AWAKEN, MAX_VOLK_EDGE);
+      // Палитру пока не трогаем — оригинальные цвета.
+      wolfShardAwaken = loadCappedSharp(Chapter1AssetPaths.WOLF_SHARD_AWAKEN, MAX_VOLK_EDGE);
     }
     return wolfShardAwaken;
   }
 
   public static BufferedImage wolfForestEyes() {
     if (wolfForestEyes == null) {
-      wolfForestEyes = loadCappedSharpPaletted(Chapter1AssetPaths.WOLF_FOREST_EYES, MAX_VOLK_EDGE);
+      // Палитру пока не трогаем — оригинальные цвета.
+      wolfForestEyes = loadCappedSharp(Chapter1AssetPaths.WOLF_FOREST_EYES, MAX_VOLK_EDGE);
     }
     return wolfForestEyes;
   }
