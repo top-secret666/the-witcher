@@ -50,7 +50,6 @@ public final class Chapter1AssetPrewarm {
     Chapter1UiAssets.volkDukeSprite(main.java.com.witcher.chapter1.assets.Chapter1AssetPaths.VOLK_DUKE_MAP_ATTACK);
     Chapter1UiAssets.volkDukeSprite(main.java.com.witcher.chapter1.assets.Chapter1AssetPaths.VOLK_DUKE_MAP_INTERESTED);
     Chapter1UiAssets.bossWakeForest();
-    Chapter1UiAssets.forestWalkMist();
     mapDrawablesReady = true;
   }
 
