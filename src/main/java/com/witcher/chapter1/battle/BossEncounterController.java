@@ -1,6 +1,5 @@
 package main.java.com.witcher.chapter1.battle;
 
-import main.java.com.witcher.chapter1.assets.Chapter1AssetPaths;
 import main.java.com.witcher.ui.intro.IntroVnUi;
 
 import java.util.ArrayList;
@@ -234,18 +233,13 @@ public final class BossEncounterController {
     } else if (eyesFullyOpen()) {
       expr = BossEncounterScript.Expression.MAP;
     }
-    return switch (expr) {
-      case ATTACK -> Chapter1AssetPaths.VOLK_DUKE_MAP_ATTACK;
-      case INTERESTED -> Chapter1AssetPaths.VOLK_DUKE_MAP_INTERESTED;
-      case LUNGE -> Chapter1AssetPaths.VOLK_DUKE_MAP_LUNGE;
-      case MAP -> Chapter1AssetPaths.VOLK_DUKE_MAP;
-    };
+    return BossEncounterScript.spritePathFor(expr);
   }
 
   /** Пока глаза закрыты / открываются — уже показываем нейтральный спрайт под веками. */
   public String spritePathForScene() {
     if (!eyesFullyOpen() || currentEntry() == null) {
-      return Chapter1AssetPaths.VOLK_DUKE_MAP;
+      return BossEncounterScript.spritePathFor(BossEncounterScript.Expression.MAP);
     }
     return spritePath();
   }
