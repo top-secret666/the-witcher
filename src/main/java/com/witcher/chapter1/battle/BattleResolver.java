@@ -77,14 +77,6 @@ public final class BattleResolver {
     return BattleOutcome.PLAYER_DEFEAT;
   }
 
-  /** Победа в катсцене мечей по сумме статов экипа (общее правило Swing/движок). */
-  public static boolean meetsSwordCutsceneVictory(LoadoutStats stats) {
-    if (stats == null) {
-      return false;
-    }
-    return stats.defense() + stats.stamina() + stats.signs() >= 6;
-  }
-
   private static int pickStat(PlayerAction action, LoadoutStats stats) {
     if (action.usesDefense) {
       return stats.defense();
