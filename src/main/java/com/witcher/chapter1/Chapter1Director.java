@@ -160,12 +160,6 @@ public final class Chapter1Director {
     cutsceneFinished = false;
   }
 
-  /** @deprecated битва на мечах убрана — используйте {@link #enterBossGlitchReveal()}. */
-  @Deprecated
-  public void enterSwordCutscene() {
-    enterBossGlitchReveal();
-  }
-
   /** Глитч-пробуждение Волка сразу после диалога энкоунтера. */
   public void enterBossGlitchReveal() {
     phase = Chapter1Phase.BOSS_GLITCH_REVEAL;

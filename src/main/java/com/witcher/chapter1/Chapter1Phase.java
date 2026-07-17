@@ -20,9 +20,6 @@ public enum Chapter1Phase {
   /** Зарезервировано под illusion_wrong / удержание после петли; сейчас не стартует из канона. */
   LOOP_HOLD,
   BOSS_ENCOUNTER,
-  /** @deprecated битва на мечах убрана; фаза больше не входит в поток. */
-  @Deprecated
-  SWORD_CUTSCENE,
   /** Глитч-пробуждение осколка Волка после диалога энкоунтера. */
   BOSS_GLITCH_REVEAL,
   BATTLE_RESULT,

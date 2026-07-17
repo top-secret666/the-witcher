@@ -113,7 +113,6 @@ public final class Chapter1SwingView implements Chapter1View {
         || phase == Chapter1Phase.LOOP_HOLD
         || phase == Chapter1Phase.BOSS_MAP
         || phase == Chapter1Phase.BOSS_ENCOUNTER
-        || phase == Chapter1Phase.SWORD_CUTSCENE
         || phase == Chapter1Phase.BOSS_GLITCH_REVEAL
         || phase == Chapter1Phase.BATTLE_RESULT;
   }
