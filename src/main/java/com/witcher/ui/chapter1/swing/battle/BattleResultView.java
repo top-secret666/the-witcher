@@ -1,4 +1,4 @@
-package main.java.com.witcher.ui.chapter1.swing;
+package main.java.com.witcher.ui.chapter1.swing.battle;
 
 import main.java.com.witcher.ui.graphics.GameFonts;
 
