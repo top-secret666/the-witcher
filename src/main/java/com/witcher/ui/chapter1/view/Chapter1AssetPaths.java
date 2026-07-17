@@ -31,9 +31,6 @@ public final class Chapter1AssetPaths {
   public static final String WOLF_FOREST_EYES = main.java.com.witcher.chapter1.assets.Chapter1AssetPaths.WOLF_FOREST_EYES;
   public static final String WOLF_MIST_FOREST = main.java.com.witcher.chapter1.assets.Chapter1AssetPaths.WOLF_MIST_FOREST;
   public static final String BOSS_WAKE_FOREST = main.java.com.witcher.chapter1.assets.Chapter1AssetPaths.BOSS_WAKE_FOREST;
-  public static final String SWORD_SLASH_SHEET_A = main.java.com.witcher.chapter1.assets.Chapter1AssetPaths.SWORD_SLASH_SHEET_A;
-  public static final String SWORD_SLASH_SHEET_B = main.java.com.witcher.chapter1.assets.Chapter1AssetPaths.SWORD_SLASH_SHEET_B;
-  public static final String SWORD_SLASH_SHEET_RUSH = main.java.com.witcher.chapter1.assets.Chapter1AssetPaths.SWORD_SLASH_SHEET_RUSH;
 
   private Chapter1AssetPaths() {
   }
