@@ -1,7 +1,9 @@
-package main.java.com.witcher.ui.chapter1.swing;
+package main.java.com.witcher.ui.chapter1.swing.battle;
 
 import main.java.com.witcher.chapter1.battle.BossCatalog;
 import main.java.com.witcher.chapter1.battle.BossEntry;
+import main.java.com.witcher.ui.chapter1.swing.Chapter1UiAssets;
+import main.java.com.witcher.ui.chapter1.swing.ScaledImageCache;
 import main.java.com.witcher.ui.chapter1.view.BossMapLayout;
 import main.java.com.witcher.ui.chapter1.view.Chapter1ViewConstants;
 import main.java.com.witcher.ui.graphics.GameFonts;
