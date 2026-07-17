@@ -1,5 +1,6 @@
 package main.java.com.witcher.chapter1.battle;
 
+import main.java.com.witcher.chapter1.assets.Chapter1AssetPaths;
 import main.java.com.witcher.ui.intro.IntroTheme;
 
 import java.util.List;
@@ -52,5 +53,14 @@ public final class BossEncounterScript {
 
   public static int entryCount() {
     return ENTRIES.size();
+  }
+
+  public static String spritePathFor(Expression expression) {
+    return switch (expression) {
+      case ATTACK -> Chapter1AssetPaths.VOLK_DUKE_MAP_ATTACK;
+      case INTERESTED -> Chapter1AssetPaths.VOLK_DUKE_MAP_INTERESTED;
+      case LUNGE -> Chapter1AssetPaths.VOLK_DUKE_MAP_LUNGE;
+      case MAP -> Chapter1AssetPaths.VOLK_DUKE_MAP;
+    };
   }
 }
