@@ -1,8 +1,7 @@
 package main.java.com.witcher.ui.chapter1.view;
 
-/**
- * Swing-фасад над {@link main.java.com.witcher.chapter1.assets.Chapter1AssetPaths}.
- */
+/** Swing-фасад над {@link main.java.com.witcher.chapter1.assets.Chapter1AssetPaths}. */
+@Deprecated
 public final class Chapter1AssetPaths {
 
   public static final String SPRITES = main.java.com.witcher.chapter1.assets.Chapter1AssetPaths.SPRITES;
