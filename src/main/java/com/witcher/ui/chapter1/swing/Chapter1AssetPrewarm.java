@@ -1,5 +1,6 @@
 package main.java.com.witcher.ui.chapter1.swing;
 
+import main.java.com.witcher.chapter1.assets.Chapter1AssetPaths;
 import main.java.com.witcher.chapter1.battle.BossCatalog;
 import main.java.com.witcher.chapter1.cutscene.CutsceneId;
 import main.java.com.witcher.ui.chapter1.view.BossMapLayout;
@@ -46,10 +47,10 @@ public final class Chapter1AssetPrewarm {
       ScaledImageCache.get(
           Chapter1UiAssets.bossPortrait(boss.portraitPath()), PORTRAIT_W, PORTRAIT_H);
     }
-    Chapter1UiAssets.volkDukeSprite(main.java.com.witcher.chapter1.assets.Chapter1AssetPaths.VOLK_DUKE_MAP);
-    Chapter1UiAssets.volkDukeSprite(main.java.com.witcher.chapter1.assets.Chapter1AssetPaths.VOLK_DUKE_MAP_ATTACK);
-    Chapter1UiAssets.volkDukeSprite(main.java.com.witcher.chapter1.assets.Chapter1AssetPaths.VOLK_DUKE_MAP_INTERESTED);
-    Chapter1UiAssets.volkDukeSprite(main.java.com.witcher.chapter1.assets.Chapter1AssetPaths.VOLK_DUKE_MAP_LUNGE);
+    Chapter1UiAssets.volkDukeSprite(Chapter1AssetPaths.VOLK_DUKE_MAP);
+    Chapter1UiAssets.volkDukeSprite(Chapter1AssetPaths.VOLK_DUKE_MAP_ATTACK);
+    Chapter1UiAssets.volkDukeSprite(Chapter1AssetPaths.VOLK_DUKE_MAP_INTERESTED);
+    Chapter1UiAssets.volkDukeSprite(Chapter1AssetPaths.VOLK_DUKE_MAP_LUNGE);
     Chapter1UiAssets.bossWakeForest();
     Chapter1UiAssets.bossBloodCorridor();
     Chapter1UiAssets.bossGlitchAwakenSheet();
