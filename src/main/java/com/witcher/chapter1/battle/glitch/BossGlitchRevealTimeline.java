@@ -1,4 +1,4 @@
-package main.java.com.witcher.chapter1.battle;
+package main.java.com.witcher.chapter1.battle.glitch;
 
 /** Таймлайн глитч-пробуждения Волка — строгий порядок слоёв. */
 public final class BossGlitchRevealTimeline {
