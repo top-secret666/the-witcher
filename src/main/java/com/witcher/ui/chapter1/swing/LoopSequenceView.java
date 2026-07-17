@@ -1,6 +1,7 @@
 package main.java.com.witcher.ui.chapter1.swing;
 
 import main.java.com.witcher.chapter1.loop.LoopSequenceController;
+import main.java.com.witcher.ui.chapter1.swing.glitch.CutsceneNoiseOverlay;
 import main.java.com.witcher.ui.chapter1.view.Chapter1ViewConstants;
 
 import java.awt.Color;
