@@ -1,4 +1,4 @@
-package main.java.com.witcher.ui.chapter1.swing;
+package main.java.com.witcher.ui.chapter1.swing.glitch;
 
 import java.awt.AlphaComposite;
 import java.awt.Graphics2D;
