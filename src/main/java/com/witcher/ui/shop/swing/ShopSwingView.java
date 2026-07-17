@@ -23,7 +23,7 @@ import main.java.com.witcher.ui.shop.view.anim.ShopCategoryAnimator;
 import main.java.com.witcher.ui.shop.view.anim.ShopRevealAnimator;
 import main.java.com.witcher.ui.shop.ShopInventoryKind;
 import main.java.com.witcher.ui.shop.ShopInventorySlot;
-import main.java.com.witcher.ui.chapter1.swing.BattleCardRevealView;
+import main.java.com.witcher.ui.chapter1.swing.battle.BattleCardRevealView;
 
 import static main.java.com.witcher.ui.shop.view.ShopViewConstants.*;
 
