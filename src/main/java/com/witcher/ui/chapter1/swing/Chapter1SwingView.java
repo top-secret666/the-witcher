@@ -2,6 +2,11 @@ package main.java.com.witcher.ui.chapter1.swing;
 
 import main.java.com.witcher.chapter1.Chapter1Phase;
 import main.java.com.witcher.ui.chapter1.presenter.Chapter1Presenter;
+import main.java.com.witcher.ui.chapter1.swing.battle.BattleResultView;
+import main.java.com.witcher.ui.chapter1.swing.battle.BossEncounterView;
+import main.java.com.witcher.ui.chapter1.swing.battle.BossGlitchRevealView;
+import main.java.com.witcher.ui.chapter1.swing.battle.BossMapView;
+import main.java.com.witcher.ui.chapter1.swing.glitch.GlitchOverlayRenderer;
 import main.java.com.witcher.ui.chapter1.view.Chapter1View;
 
 import java.awt.Color;
