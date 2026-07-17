@@ -1,8 +1,9 @@
 package main.java.com.witcher.ui.chapter1.swing;
 
-import main.java.com.witcher.ui.chapter1.view.Chapter1AssetPaths;
+import main.java.com.witcher.chapter1.assets.Chapter1AssetPaths;
 import main.java.com.witcher.ui.graphics.PixelScaler;
 import main.java.com.witcher.ui.graphics.Sprite;
+import main.java.com.witcher.ui.chapter1.swing.glitch.WitcherGlitchPalette;
 
 import java.awt.image.BufferedImage;
 
