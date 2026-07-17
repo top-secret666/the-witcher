@@ -1,7 +1,7 @@
-package main.java.com.witcher.ui.chapter1.swing;
+package main.java.com.witcher.ui.chapter1.swing.glitch;
 
 import main.java.com.witcher.chapter1.Chapter1Session;
-import main.java.com.witcher.ui.chapter1.view.Chapter1AssetPaths;
+import main.java.com.witcher.chapter1.assets.Chapter1AssetPaths;
 import main.java.com.witcher.ui.graphics.Sprite;
 
 import java.awt.AlphaComposite;
