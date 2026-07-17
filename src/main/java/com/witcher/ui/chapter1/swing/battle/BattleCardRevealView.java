@@ -1,4 +1,7 @@
-package main.java.com.witcher.ui.chapter1.swing;
+package main.java.com.witcher.ui.chapter1.swing.battle;
+
+import main.java.com.witcher.ui.chapter1.swing.Chapter1UiAssets;
+import main.java.com.witcher.ui.chapter1.swing.ScaledImageCache;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
