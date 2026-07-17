@@ -266,7 +266,7 @@ public final class BossEncounterController {
     return lines;
   }
 
-  public boolean isReadyForSword() {
+  public boolean isDialogComplete() {
     return dialogFinished && eyesFullyOpen();
   }
 

@@ -428,7 +428,7 @@ public final class Chapter1Presenter {
     encounter.tick();
     boolean advanceKey = false;
     encounter.updateDialog(mouseX, mouseY, clicked, wheelNotches, advanceKey);
-    if (encounter.isReadyForSword()) {
+    if (encounter.isDialogComplete()) {
       // Битву на мечах убрали: сразу глитч-катсцена.
       battleVictory = true;
       director.enterBossGlitchReveal();
