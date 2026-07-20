@@ -30,6 +30,8 @@ public final class Chapter1Session {
   private boolean battleCardIconVisible;
   private boolean battleCardRevealPending;
   private boolean battleMapPending;
+  private boolean wolfBossResolved;
+  private boolean wolfTrueEndingSeen;
 
   public static Chapter1Session newGame() {
     return new Chapter1Session();
@@ -116,6 +118,19 @@ public final class Chapter1Session {
 
   public void clearBattleMapPending() {
     battleMapPending = false;
+  }
+
+  public boolean wolfBossResolved() {
+    return wolfBossResolved;
+  }
+
+  public boolean wolfTrueEndingSeen() {
+    return wolfTrueEndingSeen;
+  }
+
+  public void markWolfBossResolved(boolean trueEnding) {
+    wolfBossResolved = true;
+    wolfTrueEndingSeen = trueEnding;
   }
 
   public void addPrison(int amount) {
