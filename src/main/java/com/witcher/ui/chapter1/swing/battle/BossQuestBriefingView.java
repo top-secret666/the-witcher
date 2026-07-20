@@ -55,10 +55,12 @@ public final class BossQuestBriefingView {
 
   private static void drawScene(Graphics2D g, int sw, int sh, BossQuestBriefingController ctrl,
                                 ShopLayout layout, int mouseX, int mouseY, boolean withDialog) {
-    BossQuestBriefingBackdrop.draw(g, sw, sh, layout);
+    BossQuestBriefingBackdrop.draw(g, sw, sh, layout, ctrl);
 
     if (ctrl.showNotice()) {
-      QuestNoticeRenderer.draw(g, sw, sh, ctrl.notice(), 1f);
+      QuestNoticeRenderer.Layout target = QuestNoticeRenderer.layout(sw, sh);
+      QuestNoticeAnimator anim = QuestNoticeAnimator.opening(ctrl.noticeAnimProgress(), target);
+      QuestNoticeRenderer.draw(g, sw, sh, ctrl.notice(), anim);
     }
 
     if (withDialog && ctrl.showDialog()) {

@@ -1,6 +1,7 @@
 package main.java.com.witcher.chapter1.battle;
 
 import main.java.com.witcher.ui.intro.IntroVnUi;
+import main.java.com.witcher.ui.shop.view.ShopViewConstants;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,6 +20,8 @@ public final class BossQuestBriefingController {
   private static final int AUTO_TICKS_PER_CHAR = 1;
   private static final int DISSOLVE_RAMP_MS = 2400;
   private static final int TRANSITION_TOTAL_MS = 2750;
+  private static final float SLIDE_SPEED = 0.04f;
+  private static final float ACTIVE_SPEED = 0.06f;
 
   private final BossEntry boss;
   private final BossQuestBriefingScript.NoticeContent notice;
@@ -27,6 +30,12 @@ public final class BossQuestBriefingController {
   private Phase phase = Phase.DIALOG;
   private int ticks;
   private int transitionTicks;
+  private int noticeOpenTicks;
+
+  private float geraltSlide;
+  private float dukeSlide;
+  private float leftActiveAnim;
+  private float rightActiveAnim;
 
   private int currentLine;
   private int charIndex;
@@ -68,13 +77,17 @@ public final class BossQuestBriefingController {
 
   public void tick() {
     ticks++;
+    if (phase == Phase.DIALOG) {
+      noticeOpenTicks++;
+      updateCharacterAnimation();
+    }
     if (phase == Phase.TRANSITION) {
       transitionTicks++;
     }
   }
 
   public void updateDialog(int mouseX, int mouseY, boolean clicked, int wheelNotches, boolean advanceKey) {
-    if (phase != Phase.DIALOG || dialogFinished) {
+    if (phase != Phase.DIALOG || dialogFinished || !showDialog()) {
       return;
     }
     refreshButtonLayout();
@@ -173,15 +186,38 @@ public final class BossQuestBriefingController {
   }
 
   public boolean showDialog() {
-    return phase == Phase.DIALOG && !dialogFinished;
+    return phase == Phase.DIALOG && !dialogFinished && noticeAnimProgress() >= 0.52f;
   }
 
   public boolean showNotice() {
     return phase == Phase.DIALOG || (phase == Phase.TRANSITION && noticeFade() > 0.05f);
   }
 
+  public float noticeAnimProgress() {
+    if (phase == Phase.TRANSITION) {
+      return 1f;
+    }
+    return Math.min(1f, noticeOpenTicks / (float) ShopViewConstants.CATEGORY_OPEN_DURATION_TICKS);
+  }
+
   public float noticeFade() {
     return 1f;
+  }
+
+  public float geraltSlide() {
+    return geraltSlide;
+  }
+
+  public float dukeSlide() {
+    return dukeSlide;
+  }
+
+  public float leftActiveAnim() {
+    return leftActiveAnim;
+  }
+
+  public float rightActiveAnim() {
+    return rightActiveAnim;
   }
 
   /** 0..1 — нарастающий dissolve (обратный shard_reveal). */
@@ -301,6 +337,31 @@ public final class BossQuestBriefingController {
         layout.historyPanel.width, layout.historyPanel.height);
     buttons.historyClose.set(layout.historyClose.x, layout.historyClose.y,
         layout.historyClose.width, layout.historyClose.height);
+  }
+
+  private void updateCharacterAnimation() {
+    boolean dialogVisible = showDialog();
+    boolean geraltWanted = dialogVisible;
+    boolean dukeWanted = dialogVisible;
+
+    geraltSlide = geraltWanted
+        ? Math.min(1f, geraltSlide + SLIDE_SPEED)
+        : Math.max(0f, geraltSlide - SLIDE_SPEED);
+    dukeSlide = dukeWanted
+        ? Math.min(1f, dukeSlide + SLIDE_SPEED)
+        : Math.max(0f, dukeSlide - SLIDE_SPEED * 1.5f);
+
+    BossQuestBriefingScript.DialogLine line = currentLine();
+    boolean dukeActive = dialogVisible && line != null && "Герцог".equals(line.speaker());
+    boolean geraltActive = dialogVisible && line != null
+        && line.speaker() != null && line.speaker().contains("Геральт");
+
+    leftActiveAnim = geraltActive
+        ? Math.min(1f, leftActiveAnim + ACTIVE_SPEED)
+        : Math.max(0f, leftActiveAnim - ACTIVE_SPEED);
+    rightActiveAnim = dukeActive
+        ? Math.min(1f, rightActiveAnim + ACTIVE_SPEED)
+        : Math.max(0f, rightActiveAnim - ACTIVE_SPEED);
   }
 
   private static float easeIn(float t) {
