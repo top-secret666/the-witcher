@@ -1,4 +1,4 @@
-package main.java.com.witcher.ui.chapter1.swing.battle;
+package main.java.com.witcher.ui.chapter1.swing.battle.briefing;
 
 import main.java.com.witcher.chapter1.battle.BossQuestBriefingController;
 import main.java.com.witcher.chapter1.battle.BossQuestBriefingScript;

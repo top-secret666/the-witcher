@@ -1,4 +1,4 @@
-package main.java.com.witcher.ui.chapter1.swing.battle;
+package main.java.com.witcher.ui.chapter1.swing.battle.briefing;
 
 /**
  * Появление листа заказа — как открытие категории в лавке: рост, сдвиг и лёгкий flip.

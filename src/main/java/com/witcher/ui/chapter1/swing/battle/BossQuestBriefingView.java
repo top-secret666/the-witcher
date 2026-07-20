@@ -2,6 +2,9 @@ package main.java.com.witcher.ui.chapter1.swing.battle;
 
 import main.java.com.witcher.chapter1.battle.BossQuestBriefingController;
 import main.java.com.witcher.chapter1.battle.BossQuestBriefingScript;
+import main.java.com.witcher.ui.chapter1.swing.battle.briefing.BossQuestBriefingBackdrop;
+import main.java.com.witcher.ui.chapter1.swing.battle.briefing.QuestNoticeAnimator;
+import main.java.com.witcher.ui.chapter1.swing.battle.briefing.QuestNoticeRenderer;
 import main.java.com.witcher.ui.graphics.DialogBoxRenderer;
 import main.java.com.witcher.ui.graphics.GameFonts;
 import main.java.com.witcher.ui.shop.view.ShopLayout;
