@@ -14,12 +14,12 @@ import java.util.List;
  */
 public final class BossEncounterController {
 
-  private static final int MS_PER_TICK = 16;
-  private static final int CLOSED_HOLD_MS = 900;
-  private static final int OPEN_MS = 1600;
-  private static final int TICKS_PER_CHAR = 2;
-  private static final int AUTO_DELAY_TICKS = 50;
-  private static final int AUTO_TICKS_PER_CHAR = 1;
+  private static final int MS_PER_TICK = BossEncounterConstants.MS_PER_TICK;
+  private static final int CLOSED_HOLD_MS = BossEncounterConstants.CLOSED_HOLD_MS;
+  private static final int OPEN_MS = BossEncounterConstants.OPEN_MS;
+  private static final int TICKS_PER_CHAR = BossEncounterConstants.TICKS_PER_CHAR;
+  private static final int AUTO_DELAY_TICKS = BossEncounterConstants.AUTO_DELAY_TICKS;
+  private static final int AUTO_TICKS_PER_CHAR = BossEncounterConstants.AUTO_TICKS_PER_CHAR;
 
   private final BossEntry boss;
   private final List<BossEncounterScript.DialogEntry> entries;
