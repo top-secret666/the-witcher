@@ -1,13 +1,15 @@
 package main.java.com.witcher.chapter1.battle;
 
+import main.java.com.witcher.chapter1.Chapter1Session;
+import main.java.com.witcher.chapter1.vn.VnChoice;
+import main.java.com.witcher.chapter1.vn.VnSceneState;
 import main.java.com.witcher.ui.intro.IntroVnUi;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * После loop_wake: тьма → веки открываются поверх леса и злодея.
- * Диалог — как интро VN (typewriter, Назад / История / Авто), спрайт по центру.
+ * После loop_wake: тьма → веки → VN с выбором и ветвлением (Волк).
  */
 public final class BossEncounterController {
 
@@ -19,7 +21,10 @@ public final class BossEncounterController {
   private static final int AUTO_TICKS_PER_CHAR = 1;
 
   private final BossEntry boss;
-  private final List<BossEncounterScript.DialogEntry> entries = BossEncounterScript.entries();
+  private final List<BossEncounterScript.DialogEntry> entries =
+      new ArrayList<>(WolfBossEncounterScript.introLines());
+
+  private WolfBossEncounterScript.Branch branch = WolfBossEncounterScript.Branch.NONE;
 
   private int ticks;
   private boolean dialogFinished;
@@ -29,6 +34,9 @@ public final class BossEncounterController {
   private int typeTickCounter;
   private boolean waitingForAdvance;
   private boolean vnStarted;
+
+  private boolean awaitingFirstChoice;
+  private VnSceneState choiceScene;
 
   private boolean historyOpen;
   private boolean autoMode;
@@ -48,6 +56,14 @@ public final class BossEncounterController {
     return boss;
   }
 
+  public WolfBossEncounterScript.Branch branch() {
+    return branch;
+  }
+
+  public boolean choseListenPath() {
+    return branch == WolfBossEncounterScript.Branch.LISTEN;
+  }
+
   public int elapsedMs() {
     return ticks * MS_PER_TICK;
   }
@@ -56,7 +72,6 @@ public final class BossEncounterController {
     ticks++;
   }
 
-  /** Вызывать каждый кадр после tick — ввод VN и typewriter. */
   public void updateDialog(int mouseX, int mouseY, boolean clicked, int wheelNotches, boolean advanceKey) {
     if (!eyesFullyOpen()) {
       return;
@@ -66,6 +81,10 @@ public final class BossEncounterController {
       resetEntry(0);
     }
     refreshButtonLayout();
+
+    if (awaitingFirstChoice) {
+      return;
+    }
 
     if (historyOpen) {
       if (clicked) {
@@ -144,6 +163,37 @@ public final class BossEncounterController {
     }
   }
 
+  public void choose(int index, Chapter1Session session) {
+    if (!awaitingFirstChoice || choiceScene == null || !choiceScene.waitingForChoice()) {
+      return;
+    }
+    choiceScene.select(index);
+    VnChoice choice = choiceScene.selectedChoice();
+    if (choice != null && session != null) {
+      if (choice.suspicionDelta() > 0) {
+        session.addSuspicion(choice.suspicionDelta());
+      }
+      if (choice.trustDelta() > 0) {
+        session.addTrust(choice.trustDelta());
+      }
+    }
+    branch = index == 0
+        ? WolfBossEncounterScript.Branch.HURRY
+        : WolfBossEncounterScript.Branch.LISTEN;
+    entries.addAll(WolfBossEncounterScript.continuation(branch));
+    awaitingFirstChoice = false;
+    choiceScene = null;
+    resetEntry(WolfBossEncounterScript.CHOICE_GATE_INDEX + 1);
+  }
+
+  public boolean waitingForChoice() {
+    return awaitingFirstChoice && choiceScene != null && choiceScene.waitingForChoice();
+  }
+
+  public VnSceneState choiceScene() {
+    return choiceScene;
+  }
+
   public float eyelidOpenT() {
     int ms = elapsedMs();
     if (ms < CLOSED_HOLD_MS) {
@@ -165,7 +215,7 @@ public final class BossEncounterController {
   }
 
   public boolean showDialog() {
-    return eyesFullyOpen() && vnStarted && !dialogFinished;
+    return eyesFullyOpen() && vnStarted && !dialogFinished && !awaitingFirstChoice;
   }
 
   public BossEncounterScript.DialogEntry currentEntry() {
@@ -217,7 +267,7 @@ public final class BossEncounterController {
   }
 
   public boolean backEnabled() {
-    return currentEntry > 0;
+    return currentEntry > 0 && !awaitingFirstChoice;
   }
 
   public IntroVnUi.ButtonLayout buttons() {
@@ -236,7 +286,6 @@ public final class BossEncounterController {
     return BossEncounterScript.spritePathFor(expr);
   }
 
-  /** Пока глаза закрыты / открываются — уже показываем нейтральный спрайт под веками. */
   public String spritePathForScene() {
     if (!eyesFullyOpen() || currentEntry() == null) {
       return BossEncounterScript.spritePathFor(BossEncounterScript.Expression.MAP);
@@ -265,6 +314,13 @@ public final class BossEncounterController {
   }
 
   private void advanceDialogueEntry() {
+    if (currentEntry == WolfBossEncounterScript.CHOICE_GATE_INDEX
+        && branch == WolfBossEncounterScript.Branch.NONE) {
+      awaitingFirstChoice = true;
+      choiceScene = WolfBossEncounterScript.firstChoiceScene();
+      waitingForAdvance = false;
+      return;
+    }
     if (currentEntry >= entries.size() - 1) {
       dialogFinished = true;
       return;
@@ -273,7 +329,7 @@ public final class BossEncounterController {
   }
 
   private void goToPreviousEntry() {
-    if (currentEntry <= 0) {
+    if (currentEntry <= 0 || awaitingFirstChoice) {
       return;
     }
     resetEntry(currentEntry - 1);
@@ -302,7 +358,6 @@ public final class BossEncounterController {
         layout.historyClose.width, layout.historyClose.height);
   }
 
-  /** Layout кнопок считаем в виртуальных координатах презентера (как карта). */
   public void setLayoutSize(int sw, int sh) {
     if (sw > 0 && sh > 0) {
       layoutSw = sw;

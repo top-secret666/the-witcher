@@ -6,6 +6,7 @@ import main.java.com.witcher.ui.chapter1.swing.battle.BattleResultView;
 import main.java.com.witcher.ui.chapter1.swing.battle.BossEncounterView;
 import main.java.com.witcher.ui.chapter1.swing.battle.BossGlitchRevealView;
 import main.java.com.witcher.ui.chapter1.swing.battle.BossMapView;
+import main.java.com.witcher.ui.chapter1.swing.battle.WolfEndingView;
 import main.java.com.witcher.ui.chapter1.swing.glitch.GlitchOverlayRenderer;
 import main.java.com.witcher.ui.chapter1.view.Chapter1View;
 
@@ -74,6 +75,24 @@ public final class Chapter1SwingView implements Chapter1View {
           g.dispose();
         }
       }
+      case BOSS_FINALE -> {
+        Graphics2D g = screen.createGraphics();
+        try {
+          g.setColor(Color.BLACK);
+          g.fillRect(0, 0, sw, sh);
+          VnSceneRenderer.drawScene(g, sw, sh, presenter.activeScene());
+        } finally {
+          g.dispose();
+        }
+      }
+      case WOLF_ENDING -> {
+        Graphics2D g = screen.createGraphics();
+        try {
+          WolfEndingView.draw(g, sw, sh, presenter.wolfEndingType());
+        } finally {
+          g.dispose();
+        }
+      }
       case BATTLE_RESULT -> {
         Graphics2D g = screen.createGraphics();
         try {
@@ -119,22 +138,31 @@ public final class Chapter1SwingView implements Chapter1View {
         || phase == Chapter1Phase.BOSS_MAP
         || phase == Chapter1Phase.BOSS_ENCOUNTER
         || phase == Chapter1Phase.BOSS_GLITCH_REVEAL
+        || phase == Chapter1Phase.BOSS_FINALE
+        || phase == Chapter1Phase.WOLF_ENDING
         || phase == Chapter1Phase.BATTLE_RESULT;
   }
 
   @Override
   public void renderTextOverlay(Graphics2D g, int mouseX, int mouseY, Chapter1Presenter presenter) {
     Chapter1Phase phase = presenter.director().phase();
+    int sw = g.getClipBounds() != null ? g.getClipBounds().width : 480;
+    int sh = g.getClipBounds() != null ? g.getClipBounds().height : 360;
     // Не рисуем речь лавки поверх VN — отсюда «живой.осов?» при зависании покупки.
     if ((phase == Chapter1Phase.SHOP || phase == Chapter1Phase.HACK)
         && !presenter.isDukeDialogActive()) {
       presenter.shopScreen().renderTextOverlay(g, mouseX, mouseY);
     }
     if (presenter.hasActiveChoices()) {
+      if (phase == Chapter1Phase.BOSS_ENCOUNTER) {
+        VnSceneRenderer.drawOverlay(g, sw, sh, presenter.activeScene());
+      }
       VnSceneRenderer.drawChoices(g, presenter.activeScene(), presenter.choiceRects());
     }
     if (phase == Chapter1Phase.BOSS_MAP
         || phase == Chapter1Phase.BOSS_ENCOUNTER
+        || phase == Chapter1Phase.BOSS_FINALE
+        || phase == Chapter1Phase.WOLF_ENDING
         || phase == Chapter1Phase.BATTLE_RESULT
         || phase == Chapter1Phase.VN_BATTLE
         || phase == Chapter1Phase.VN_DIALOG

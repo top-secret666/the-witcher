@@ -27,6 +27,24 @@ public final class LoopRules {
     Chapter1Save.save(session);
   }
 
+  /** Петля сомкнулась после плохой развилки Волка. */
+  public static void onWolfBadLoop(Chapter1Session session) {
+    if (session == null) {
+      return;
+    }
+    session.markWolfBossResolved(false);
+    session.advanceLoopAfterDefeat();
+    Chapter1Save.save(session);
+  }
+
+  /** После истинного осколка Волка — сохранить прогресс без сброса петли. */
+  public static void onWolfTrueShard(Chapter1Session session) {
+    if (session == null) {
+      return;
+    }
+    Chapter1Save.save(session);
+  }
+
   public static void persist(Chapter1Session session) {
     Chapter1Save.save(session);
   }

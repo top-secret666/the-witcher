@@ -6,6 +6,9 @@ import main.java.com.witcher.chapter1.Chapter1Save;
 import main.java.com.witcher.chapter1.battle.BossCatalog;
 import main.java.com.witcher.chapter1.battle.glitch.BossGlitchRevealController;
 import main.java.com.witcher.chapter1.battle.BossEncounterController;
+import main.java.com.witcher.chapter1.battle.WolfBossFinaleController;
+import main.java.com.witcher.chapter1.ending.WolfEndingType;
+import main.java.com.witcher.chapter1.loop.LoopRules;
 import main.java.com.witcher.chapter1.battle.BattleCardController;
 import main.java.com.witcher.chapter1.battle.BattleOutcome;
 import main.java.com.witcher.chapter1.battle.BattleResolver;
@@ -55,6 +58,7 @@ public final class Chapter1Presenter {
 
   private BattleVnController battle;
   private BossEncounterController encounter;
+  private WolfBossFinaleController wolfFinale;
   private EndingVnController ending;
   private DukeDialogController dukeDialog = new DukeDialogController();
   private HackConsoleModel hack;
@@ -64,6 +68,7 @@ public final class Chapter1Presenter {
   private BossEntry selectedBoss;
   private boolean bossMapBackHovered;
   private boolean battleVictory;
+  private WolfEndingType wolfEndingType = WolfEndingType.BAD_LOOP;
   private int hackShakeTick;
   private boolean exitRequested;
   /** Не стартовать VN «тюрьмы» посреди fly-in покупки. */
@@ -128,6 +133,14 @@ public final class Chapter1Presenter {
     return battleVictory;
   }
 
+  public WolfBossFinaleController wolfFinale() {
+    return wolfFinale;
+  }
+
+  public WolfEndingType wolfEndingType() {
+    return wolfEndingType;
+  }
+
   public BattleCardController battleCard() {
     return battleCard;
   }
@@ -157,6 +170,13 @@ public final class Chapter1Presenter {
   }
 
   public VnSceneState activeScene() {
+    if (director.phase() == Chapter1Phase.BOSS_ENCOUNTER
+        && encounter != null && encounter.waitingForChoice()) {
+      return encounter.choiceScene();
+    }
+    if (director.phase() == Chapter1Phase.BOSS_FINALE && wolfFinale != null) {
+      return wolfFinale.scene();
+    }
     if (director.phase() == Chapter1Phase.VN_BATTLE && battle != null) {
       return battle.scene();
     }
@@ -208,6 +228,8 @@ public final class Chapter1Presenter {
       case LOOP_HOLD -> { }
       case BOSS_ENCOUNTER -> updateBossEncounter(mouseX, mouseY, clicked, wheelNotches);
       case BOSS_GLITCH_REVEAL -> updateBossGlitchReveal();
+      case BOSS_FINALE -> updateBossFinale(mouseX, mouseY, clicked);
+      case WOLF_ENDING -> updateWolfEnding(clicked);
       case BATTLE_RESULT -> updateBattleResult(clicked);
       case VN_BATTLE -> updateBattle(mouseX, mouseY, clicked);
       case VN_DIALOG -> updateDukeDialog(mouseX, mouseY, clicked);
@@ -236,8 +258,26 @@ public final class Chapter1Presenter {
       return;
     }
     if (director.phase() == Chapter1Phase.BOSS_ENCOUNTER && encounter != null) {
+      if (encounter.waitingForChoice()) {
+        int choice = keyToChoiceIndex(code);
+        if (choice >= 0) {
+          applyEncounterChoice(choice);
+        }
+        return;
+      }
       if (code == KeyEvent.VK_ENTER || code == KeyEvent.VK_SPACE) {
         encounter.updateDialog(0, 0, false, 0, true);
+      }
+      return;
+    }
+    if (director.phase() == Chapter1Phase.BOSS_FINALE && wolfFinale != null) {
+      if (wolfFinale.scene().waitingForChoice()) {
+        int choice = keyToChoiceIndex(code);
+        if (choice >= 0) {
+          applyWolfFinaleChoice(choice);
+        }
+      } else if (code == KeyEvent.VK_ENTER || code == KeyEvent.VK_SPACE) {
+        advanceWolfFinale();
       }
       return;
     }
@@ -426,20 +466,115 @@ public final class Chapter1Presenter {
     }
     encounter.setLayoutSize(Chapter1Layout.VIRTUAL_W, Chapter1Layout.VIRTUAL_H);
     encounter.tick();
-    boolean advanceKey = false;
-    encounter.updateDialog(mouseX, mouseY, clicked, wheelNotches, advanceKey);
+
+    if (encounter.waitingForChoice()) {
+      refreshChoiceRects();
+      if (clicked) {
+        int index = VnChoiceLayout.hitIndex(choiceRects, mouseX, mouseY);
+        if (index >= 0) {
+          applyEncounterChoice(index);
+        }
+      }
+      return;
+    }
+
+    encounter.updateDialog(mouseX, mouseY, clicked, wheelNotches, false);
+
+    if (encounter.waitingForChoice()) {
+      refreshChoiceRects();
+      return;
+    }
+
     if (encounter.isDialogComplete()) {
-      // Битву на мечах убрали: сразу глитч-катсцена.
-      battleVictory = true;
-      director.enterBossGlitchReveal();
+      battleVictory = encounter.choseListenPath();
+      if (encounter.choseListenPath()) {
+        director.enterBossGlitchReveal();
+      } else {
+        director.enterBossFinale();
+      }
       onPhaseEntered();
     }
+  }
+
+  private void applyEncounterChoice(int index) {
+    if (encounter == null) {
+      return;
+    }
+    encounter.choose(index, director.session());
+    choiceRects = List.of();
   }
 
   private void updateBossGlitchReveal() {
     bossGlitchReveal.tick();
     if (bossGlitchReveal.isComplete()) {
-      director.enterBattleResult();
+      director.enterBossFinale();
+      onPhaseEntered();
+    }
+  }
+
+  private void updateBossFinale(int mouseX, int mouseY, boolean clicked) {
+    if (wolfFinale == null) {
+      wolfFinale = new WolfBossFinaleController(director.session());
+      refreshChoiceRects();
+      return;
+    }
+    if (!clicked) {
+      return;
+    }
+    if (wolfFinale.scene().waitingForChoice()) {
+      int index = VnChoiceLayout.hitIndex(choiceRects, mouseX, mouseY);
+      if (index >= 0) {
+        applyWolfFinaleChoice(index);
+      }
+      return;
+    }
+    advanceWolfFinale();
+  }
+
+  private void applyWolfFinaleChoice(int index) {
+    if (wolfFinale == null) {
+      return;
+    }
+    wolfFinale.choose(index);
+    refreshChoiceRects();
+  }
+
+  private void advanceWolfFinale() {
+    if (wolfFinale == null) {
+      return;
+    }
+    if (wolfFinale.isDone()) {
+      finishWolfFinale();
+      return;
+    }
+    wolfFinale.advance();
+    refreshChoiceRects();
+    if (wolfFinale.isDone()) {
+      finishWolfFinale();
+    }
+  }
+
+  private void finishWolfFinale() {
+    if (wolfFinale == null) {
+      return;
+    }
+    wolfEndingType = wolfFinale.trueEnding()
+        ? WolfEndingType.TRUE_SHARD
+        : WolfEndingType.BAD_LOOP;
+    if (wolfFinale.trueEnding()) {
+      LoopRules.onWolfTrueShard(director.session());
+    } else {
+      LoopRules.onWolfBadLoop(director.session());
+    }
+    wolfFinale = null;
+    choiceRects = List.of();
+    director.enterWolfEnding();
+    onPhaseEntered();
+  }
+
+  private void updateWolfEnding(boolean clicked) {
+    if (clicked) {
+      director.enterShop();
       onPhaseEntered();
     }
   }
@@ -520,6 +655,11 @@ public final class Chapter1Presenter {
     } else if (director.phase() == Chapter1Phase.BOSS_GLITCH_REVEAL) {
       bossGlitchReveal.reset();
       battleVictory = true;
+    } else if (director.phase() == Chapter1Phase.BOSS_FINALE) {
+      wolfFinale = new WolfBossFinaleController(director.session());
+      refreshChoiceRects();
+    } else if (director.phase() == Chapter1Phase.WOLF_ENDING) {
+      encounter = null;
     } else if (director.phase() == Chapter1Phase.SHOP) {
       doorLoopPlayer.stop();
       maybeStartDukeDialog();

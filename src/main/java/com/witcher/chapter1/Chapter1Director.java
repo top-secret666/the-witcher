@@ -9,7 +9,7 @@ import main.java.com.witcher.chapter1.loop.LoopRules;
  * Отрисовка — в {@code ui.chapter1.swing}; здесь только переходы.
  *
  * <p>Канонический cinematic-путь:
- * SHOP → BOSS_MAP → LOOP_SEQUENCE → BOSS_ENCOUNTER → BOSS_GLITCH_REVEAL → BATTLE_RESULT → SHOP.
+ * SHOP → BOSS_MAP → LOOP_SEQUENCE → BOSS_ENCOUNTER → [BOSS_GLITCH_REVEAL] → BOSS_FINALE → WOLF_ENDING → SHOP.
  * Выдача карты — shop state {@code BATTLE_CARD_REVEAL}, не фаза директора.
  */
 public final class Chapter1Director {
@@ -160,9 +160,23 @@ public final class Chapter1Director {
     cutsceneFinished = false;
   }
 
-  /** Глитч-пробуждение Волка сразу после диалога энкоунтера. */
+  /** Глитч-пробуждение Волка — только на ветке «вслушаться». */
   public void enterBossGlitchReveal() {
     phase = Chapter1Phase.BOSS_GLITCH_REVEAL;
+    pendingCutscene = null;
+    cutsceneFinished = false;
+  }
+
+  /** Финальная развилка: выбор №2. */
+  public void enterBossFinale() {
+    phase = Chapter1Phase.BOSS_FINALE;
+    pendingCutscene = null;
+    cutsceneFinished = false;
+  }
+
+  /** Экран итога первого босса (петля или осколок). */
+  public void enterWolfEnding() {
+    phase = Chapter1Phase.WOLF_ENDING;
     pendingCutscene = null;
     cutsceneFinished = false;
   }
