@@ -37,6 +37,8 @@ public final class Chapter1AssetPaths {
   /** Холодный туманный лес (без глаз) — цикл фонов под листом. */
   public static final String WOLF_MIST_FOREST = BATTLE + "wolf_mist_forest.png";
   public static final String BOSS_WAKE_FOREST = BATTLE + "boss_wake_forest.png";
+  /** Лист заказа с доски (контракт на босса) — брифинг в лавке. */
+  public static final String BOSS_QUEST_NOTICE = BATTLE + "boss_quest_notice.png";
 
   public static final String HALO_WALLET = UI + "halo_wallet.png";
   public static final String HALO_POTION = UI + "halo_potion.png";

@@ -89,6 +89,14 @@ public final class Chapter1UiAssets {
   private static BufferedImage wolfForestEyes;
   private static BufferedImage wolfMistForest;
   private static BufferedImage bossWakeForest;
+  private static BufferedImage bossQuestNotice;
+
+  public static BufferedImage bossQuestNotice() {
+    if (bossQuestNotice == null) {
+      bossQuestNotice = loadCapped(Chapter1AssetPaths.BOSS_QUEST_NOTICE, MAX_PORTRAIT_EDGE);
+    }
+    return bossQuestNotice;
+  }
 
   public static BufferedImage bossMapOpen() {
     if (bossMapOpen == null) {
