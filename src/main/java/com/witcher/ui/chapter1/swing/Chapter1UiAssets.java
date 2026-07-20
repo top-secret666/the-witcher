@@ -115,7 +115,7 @@ public final class Chapter1UiAssets {
 
   public static BufferedImage bossQuestNotice() {
     if (bossQuestNotice == null) {
-      bossQuestNotice = loadCapped(Chapter1AssetPaths.BOSS_QUEST_NOTICE, MAX_PORTRAIT_EDGE);
+      bossQuestNotice = loadCappedCrisp(Chapter1AssetPaths.BOSS_QUEST_NOTICE, MAX_MAP_EDGE);
     }
     return bossQuestNotice;
   }

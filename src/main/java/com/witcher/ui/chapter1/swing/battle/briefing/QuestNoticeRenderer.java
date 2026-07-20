@@ -17,7 +17,7 @@ import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
 
-/** Лист заказа по центру экрана + текст Philosopher. */
+/** Горизонтальный лист заказа по центру экрана + текст Philosopher внутри пергамента. */
 public final class QuestNoticeRenderer {
 
   /** Разметка пергамента на виртуальном кадре 480×360. */
@@ -34,32 +34,36 @@ public final class QuestNoticeRenderer {
     BufferedImage src = Chapter1UiAssets.bossQuestNotice();
     float aspect = src != null && src.getHeight() > 0
         ? src.getWidth() / (float) src.getHeight()
-        : 0.72f;
+        : 1.5f;
 
     DialogBoxRenderer.Layout dialog = DialogBoxRenderer.computeLayout(sw, sh);
-    int reserveBottom = sh - dialog.boxY + Math.round(sh * 0.07f);
+    int reserveBottom = sh - dialog.boxY + Math.round(sh * 0.05f);
 
-    int maxW = Math.round(sw * 0.74f);
-    int maxH = sh - reserveBottom - Math.round(sh * 0.02f);
-    int h = Math.min(Math.round(sh * 0.62f), maxH);
-    int w = Math.round(h * aspect * 1.12f);
-    if (w > maxW) {
-      w = maxW;
-      h = Math.round(w / (aspect * 1.12f));
+    int maxW = Math.round(sw * 0.92f);
+    int maxH = sh - reserveBottom - Math.round(sh * 0.03f);
+    int preferredH = Math.round(sh * 0.42f);
+
+    int w = maxW;
+    int h = Math.round(w / aspect);
+    if (h > Math.min(maxH, preferredH)) {
+      h = Math.min(maxH, preferredH);
+      w = Math.round(h * aspect);
     }
 
     int x = (sw - w) / 2;
-    int y = Math.max(Math.round(sh * 0.015f), reserveBottom > 0 ? 0 : Math.round(sh * 0.02f));
+    int y = Math.max(Math.round(sh * 0.05f), (sh - reserveBottom - h) / 2);
     if (y + h > sh - reserveBottom) {
-      y = Math.max(Math.round(sh * 0.01f), sh - reserveBottom - h);
+      y = Math.max(Math.round(sh * 0.02f), sh - reserveBottom - h);
     }
 
-    int padX = Math.round(w * 0.10f);
-    int padTop = Math.round(h * 0.11f);
-    int padBottom = Math.round(h * 0.22f);
-    int textX = x + padX;
+    // Текстовая зона: слева/сверху, справа внизу — печать на ассете.
+    int padLeft = Math.round(w * 0.10f);
+    int padRightSeal = Math.round(w * 0.28f);
+    int padTop = Math.round(h * 0.15f);
+    int padBottom = Math.round(h * 0.13f);
+    int textX = x + padLeft;
     int textY = y + padTop;
-    int textMaxW = w - padX * 2;
+    int textMaxW = w - padLeft - padRightSeal;
     int textMaxH = h - padTop - padBottom;
 
     return new Layout(x, y, w, h, textX, textY, textMaxW, textMaxH);
@@ -91,14 +95,11 @@ public final class QuestNoticeRenderer {
     g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, Math.min(1f, anim.paperAlpha)));
     BufferedImage asset = Chapter1UiAssets.bossQuestNotice();
     if (asset != null && anim.w > 0 && anim.h > 0) {
-      float widthScale = 1.12f;
-      int drawW = Math.round(anim.w * widthScale);
-      int drawX = anim.x - (drawW - anim.w) / 2;
-      BufferedImage scaled = ScaledImageCache.get(asset, drawW, anim.h);
+      BufferedImage scaled = ScaledImageCache.get(asset, anim.w, anim.h);
       if (scaled != null) {
         Object interp = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
         g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
-        g.drawImage(scaled, drawX, anim.y, null);
+        g.drawImage(scaled, anim.x, anim.y, null);
         if (interp != null) {
           g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, interp);
         }
@@ -123,7 +124,6 @@ public final class QuestNoticeRenderer {
     float sy = anim.h / (float) Math.max(1, target.h());
     int padXRel = target.textX() - target.x();
     int padTop = target.textY() - target.y();
-    int padBottom = target.y() + target.h() - (target.textY() + target.textMaxH());
     return new Layout(
         anim.x, anim.y, anim.w, anim.h,
         anim.x + Math.round(padXRel * sx),
@@ -143,47 +143,51 @@ public final class QuestNoticeRenderer {
     int bottomLimit = layout.textY + layout.textMaxH;
     int centerX = layout.centerX();
 
-    Font headerFont = QuestNoticeFonts.header(Math.max(14, Math.round(layout.h * 0.068f)));
-    Font titleFont = QuestNoticeFonts.title(Math.max(18, Math.round(layout.h * 0.082f)));
-    Font bodyFont = QuestNoticeFonts.body(Math.max(12, Math.round(layout.h * 0.044f)));
-    Font sealFont = QuestNoticeFonts.seal(Math.max(10, Math.round(layout.h * 0.038f)));
+    int scaleRef = Math.max(layout.h, layout.w / 3);
+    Font headerFont = QuestNoticeFonts.header(Math.max(11, Math.round(scaleRef * 0.095f)));
+    Font titleFont = QuestNoticeFonts.title(Math.max(13, Math.round(scaleRef * 0.115f)));
+    Font bodyFont = QuestNoticeFonts.body(Math.max(9, Math.round(scaleRef * 0.072f)));
+    Font rewardFont = QuestNoticeFonts.body(Math.max(8, Math.round(scaleRef * 0.065f)));
 
     Color inkDark = new Color(28, 14, 4);
     Color inkBody = new Color(32, 18, 6);
 
     g.setFont(headerFont);
     g.setColor(inkDark);
-    cy = drawCenteredInk(g, notice.header(), centerX, cy, maxW, headerFont, 4) + 6;
+    cy = drawCenteredInk(g, notice.header(), centerX, cy, maxW + Math.round(layout.w * 0.12f),
+        headerFont, 2) + 2;
     if (cy > bottomLimit) {
       return;
     }
 
     g.setFont(titleFont);
     g.setColor(inkDark);
-    cy = drawCenteredInk(g, notice.targetName(), centerX, cy, maxW, titleFont, 5) + 8;
+    cy = drawCenteredInk(g, notice.targetName(), centerX, cy,
+        maxW + Math.round(layout.w * 0.12f), titleFont, 2) + 4;
     if (cy > bottomLimit) {
       return;
     }
 
     g.setFont(bodyFont);
     g.setColor(inkBody);
-    cy = drawWrappedInk(g, notice.threatLevel(), layout.textX, cy, maxW, bodyFont, 3) + 6;
-    cy = drawWrappedInk(g, notice.body(), layout.textX, cy, maxW, bodyFont, 3) + 8;
-    cy = drawWrappedInk(g, notice.reward(), layout.textX, cy, maxW, bodyFont, 3);
+    cy = drawWrappedInk(g, notice.threatLevel(), layout.textX, cy, maxW, bodyFont, 1) + 3;
+    cy = drawWrappedInk(g, notice.body(), layout.textX, cy, maxW, bodyFont, 1) + 4;
+    if (cy > bottomLimit) {
+      return;
+    }
 
-    g.setFont(sealFont);
-    g.setColor(new Color(48, 28, 12, 230));
-    int sealY = layout.y + layout.h - Math.round(layout.h * 0.15f);
-    drawWrappedInk(g, notice.seal(), layout.textX, sealY, Math.round(maxW * 0.72f), sealFont, 2);
+    g.setFont(rewardFont);
+    g.setColor(new Color(40, 22, 8));
+    drawWrappedInk(g, notice.reward(), layout.textX, cy, maxW, rewardFont, 1);
   }
 
   private static void drawInkString(Graphics2D g, String text, int x, int y, Color ink) {
-    g.setColor(new Color(255, 248, 235, 140));
+    g.setColor(new Color(255, 248, 235, 120));
     g.drawString(text, x - 1, y);
     g.drawString(text, x + 1, y);
     g.drawString(text, x, y - 1);
     g.drawString(text, x, y + 1);
-    g.setColor(new Color(0, 0, 0, 45));
+    g.setColor(new Color(0, 0, 0, 40));
     g.drawString(text, x + 1, y + 1);
     g.setColor(ink);
     g.drawString(text, x, y);
