@@ -1,4 +1,4 @@
-package main.java.com.witcher.ui.chapter1.swing.battle;
+package main.java.com.witcher.ui.chapter1.swing.battle.glitch;
 
 import main.java.com.witcher.chapter1.battle.glitch.BossGlitchRevealController;
 import main.java.com.witcher.chapter1.battle.glitch.BossGlitchRevealTimeline;
