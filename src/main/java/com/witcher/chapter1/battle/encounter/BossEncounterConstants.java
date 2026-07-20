@@ -9,7 +9,6 @@ public final class BossEncounterConstants {
   public static final int TICKS_PER_CHAR = 2;
   public static final int AUTO_DELAY_TICKS = 50;
   public static final int AUTO_TICKS_PER_CHAR = 1;
-  public static final int SCENE_CROSSFADE_MS = 400;
 
   private BossEncounterConstants() {
   }

@@ -22,13 +22,8 @@ public final class BossEncounterScript {
       String speaker,
       String text,
       int speakerColorRgb,
-      Expression expression,
-      String backgroundImage,
-      boolean kenBurnsDrift
+      Expression expression
   ) {
-    public DialogEntry(String speaker, String text, int speakerColorRgb, Expression expression) {
-      this(speaker, text, speakerColorRgb, expression, null, false);
-    }
   }
 
   private static final List<DialogEntry> ENTRIES = List.of(

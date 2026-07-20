@@ -1,6 +1,5 @@
 package main.java.com.witcher.chapter1.battle.wolf;
 
-import main.java.com.witcher.chapter1.assets.Chapter1AssetPaths;
 import main.java.com.witcher.chapter1.battle.encounter.BossEncounterScript;
 import main.java.com.witcher.chapter1.Chapter1Session;
 import main.java.com.witcher.chapter1.vn.VnChoice;
@@ -11,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Лес: только Волк. Два выбора здесь (настроение задаётся в лавке), финальный — в {@link WolfBossFinaleScript}.
+ * Лес: только Волк (volk-спрайты). Картинки воспоминаний — только в эпилоге с осколком.
  */
 public final class WolfBossEncounterScript {
 
@@ -19,13 +18,11 @@ public final class WolfBossEncounterScript {
 
   public enum MemoryBranch {
     NONE,
-    /** «Старые истории» — доверие лавке. */
     DISMISS,
-    /** «Было по-настоящему» — подозрение. */
     ACKNOWLEDGE
   }
 
-  /** После этой реплики — выбор №2 (последняя строка блока воспоминаний). */
+  /** После этой реплики — выбор №2. */
   public static final int CHOICE_GATE_INDEX = 7;
 
   private WolfBossEncounterScript() {
@@ -57,7 +54,7 @@ public final class WolfBossEncounterScript {
         "Волк", text, WOLF_RGB, BossEncounterScript.Expression.INTERESTED);
   }
 
-  /** Шесть кликов воспоминания — фон меняется по backgroundImage на реплике. */
+  /** Только текст — без смены фона (воспоминания-картинки в финале). */
   private static List<BossEncounterScript.DialogEntry> memoryLines() {
     return List.of(
         new BossEncounterScript.DialogEntry(
@@ -65,49 +62,37 @@ public final class WolfBossEncounterScript {
             "Ладно, к делу, пока меня не заела ностальгия.\n"
                 + "Помнишь дорогу на Ард Каррайг...",
             WOLF_RGB,
-            BossEncounterScript.Expression.INTERESTED,
-            Chapter1AssetPaths.WOLF_PORTRAIT,
-            false),
+            BossEncounterScript.Expression.INTERESTED),
         new BossEncounterScript.DialogEntry(
             "Волк",
             "...снег по колено, Плотва скользит и материт тебя всем,\n"
                 + "чем умеет материть лошадь...",
             WOLF_RGB,
-            BossEncounterScript.Expression.INTERESTED,
-            Chapter1AssetPaths.MEMORY_ARD_CARRAIG,
-            false),
+            BossEncounterScript.Expression.INTERESTED),
         new BossEncounterScript.DialogEntry(
             "Волк",
             "...а ты ей отвечаешь вслух. Взрослый мужик, разговаривающий\n"
                 + "с лошадью о смысле жизни...",
             WOLF_RGB,
-            BossEncounterScript.Expression.INTERESTED,
-            Chapter1AssetPaths.MEMORY_ARD_CARRAIG,
-            true),
+            BossEncounterScript.Expression.INTERESTED),
         new BossEncounterScript.DialogEntry(
             "Волк",
             "А потом Каэр Морхен, Весемир орёт на тебя за ледяную воду\n"
                 + "для лошади...",
             WOLF_RGB,
-            BossEncounterScript.Expression.INTERESTED,
-            Chapter1AssetPaths.MEMORY_KAER_MORHEN,
-            false),
+            BossEncounterScript.Expression.INTERESTED),
         new BossEncounterScript.DialogEntry(
             "Волк",
             "...и ты стоишь и лыбишься, как идиот, потому что после\n"
                 + "стольких лет чужое ворчание всё ещё звучит как дом.",
             WOLF_RGB,
-            BossEncounterScript.Expression.INTERESTED,
-            null,
-            false),
+            BossEncounterScript.Expression.INTERESTED),
         new BossEncounterScript.DialogEntry(
             "Волк",
             "Здесь так не бывает. Здесь никто на тебя не орёт по-настоящему...\n"
                 + "а ты как будто и не замечаешь.",
             WOLF_RGB,
-            BossEncounterScript.Expression.INTERESTED,
-            Chapter1AssetPaths.WOLF_PORTRAIT,
-            false)
+            BossEncounterScript.Expression.INTERESTED)
     );
   }
 
@@ -144,9 +129,7 @@ public final class WolfBossEncounterScript {
                 + "Последний вопрос, прежде чем начнём: ты ещё помнишь,\n"
                 + "каково это — держать что-то настоящее в руках?",
             WOLF_RGB,
-            BossEncounterScript.Expression.LUNGE,
-            Chapter1AssetPaths.WOLF_PORTRAIT,
-            false)
+            BossEncounterScript.Expression.LUNGE)
     );
   }
 
@@ -159,9 +142,7 @@ public final class WolfBossEncounterScript {
                 + "каково это — держать что-то настоящее в руках,\n"
                 + "или он уже выел это из тебя без остатка?",
             WOLF_RGB,
-            BossEncounterScript.Expression.ATTACK,
-            Chapter1AssetPaths.WOLF_PORTRAIT,
-            false)
+            BossEncounterScript.Expression.ATTACK)
     );
   }
 }

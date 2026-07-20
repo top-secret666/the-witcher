@@ -31,8 +31,6 @@ public final class BossEncounterController {
   private WolfBossEncounterScript.MemoryBranch memoryBranch =
       WolfBossEncounterScript.MemoryBranch.NONE;
 
-  private final EncounterSceneBackground sceneBackground = new EncounterSceneBackground();
-
   private int ticks;
   private boolean dialogFinished;
 
@@ -71,7 +69,6 @@ public final class BossEncounterController {
 
   public void tick() {
     ticks++;
-    sceneBackground.tick(ticks, MS_PER_TICK);
   }
 
   public void updateDialog(int mouseX, int mouseY, boolean clicked, int wheelNotches, boolean advanceKey) {
@@ -157,7 +154,6 @@ public final class BossEncounterController {
     entries.addAll(WolfBossEncounterScript.continuation(memoryBranch));
     awaitingChoice = false;
     choiceScene = null;
-    sceneBackground.reset();
     resetEntry(WolfBossEncounterScript.CHOICE_GATE_INDEX + 1);
   }
 
@@ -183,30 +179,6 @@ public final class BossEncounterController {
 
   public boolean eyesFullyOpen() {
     return eyelidOpenT() >= 1f;
-  }
-
-  public boolean useSceneImage() {
-    return sceneBackground.hasSceneImage();
-  }
-
-  public String sceneImageFrom() {
-    return sceneBackground.imageFrom();
-  }
-
-  public String sceneImageTo() {
-    return sceneBackground.imageTo();
-  }
-
-  public float sceneCrossfadeT() {
-    return sceneBackground.crossfadeT();
-  }
-
-  public boolean sceneKenBurnsDrift() {
-    return sceneBackground.kenBurnsDrift();
-  }
-
-  public float sceneKenBurnsPhase() {
-    return sceneBackground.kenBurnsPhase(ticks, MS_PER_TICK);
   }
 
   public float portraitScale() {
@@ -335,7 +307,6 @@ public final class BossEncounterController {
     currentEntry = Math.max(0, Math.min(index, entries.size() - 1));
     typing.reset();
     historyOpen = false;
-    sceneBackground.onEntryShown(ticks, entries.get(currentEntry));
   }
 
   private void refreshButtonLayout() {

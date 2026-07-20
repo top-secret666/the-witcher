@@ -34,11 +34,7 @@ public final class BossEncounterView {
     g.fillRect(0, 0, sw, sh);
 
     drawForestBackground(g, sw, sh);
-    if (encounter.useSceneImage()) {
-      EncounterSceneRenderer.drawSceneImage(g, sw, sh, encounter);
-    } else {
-      drawCenterPortrait(g, sw, sh, encounter);
-    }
+    drawCenterPortrait(g, sw, sh, encounter);
 
     if (encounter.showDialog()) {
       drawDialogBox(g, sw, sh, encounter);
