@@ -11,7 +11,7 @@ import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 
-/** Лавка без витрины: фон + портреты + центральная {@code shop_catalog_panel}. */
+/** Лавка без витрины: фон + портреты; лист заказа рисует {@link QuestNoticeRenderer}. */
 public final class BossQuestBriefingBackdrop {
 
   private BossQuestBriefingBackdrop() {
@@ -35,11 +35,6 @@ public final class BossQuestBriefingBackdrop {
       g.drawImage(assets.hudBarImage(), layout.hudX, layout.hudY, layout.hudW, layout.hudH, null);
       g.setComposite(prev);
     }
-
-    if (assets.catalogPanel() != null) {
-      g.drawImage(assets.catalogPanel(), layout.panelX, layout.panelY,
-          layout.panelW, layout.panelH, null);
-    }
   }
 
   private static void drawScaledCenter(Graphics2D g, BufferedImage img, int sw, int sh, float alpha) {
@@ -55,26 +50,27 @@ public final class BossQuestBriefingBackdrop {
   }
 
   private static void drawFocusVignette(Graphics2D g, int sw, int sh, ShopLayout layout) {
+    QuestNoticeRenderer.Layout paper = QuestNoticeRenderer.layout(sw, sh);
+
     Composite prev = g.getComposite();
-    g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.42f));
+    g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.40f));
     g.setColor(Color.BLACK);
     g.fillRect(0, 0, sw, sh);
 
-    g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.35f));
-    int pad = 8;
-    g.fillRoundRect(layout.panelX - pad, layout.panelY - pad,
-        layout.panelW + pad * 2, layout.panelH + pad * 2, 6, 6);
+    g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.32f));
+    int pad = 10;
+    g.fillRoundRect(paper.x() - pad, paper.y() - pad,
+        paper.w() + pad * 2, paper.h() + pad * 2, 8, 8);
 
-    g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.28f));
+    g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.26f));
     GradientPaint left = new GradientPaint(0, 0, new Color(0, 0, 0, 210),
-        layout.panelX - 16, 0, new Color(0, 0, 0, 0));
+        paper.x() - 12, 0, new Color(0, 0, 0, 0));
     g.setPaint(left);
-    g.fillRect(0, 0, Math.max(0, layout.panelX - 8), layout.dialogTop);
-    GradientPaint right = new GradientPaint(layout.panelX + layout.panelW + 16, 0,
+    g.fillRect(0, 0, Math.max(0, paper.x() - 6), layout.dialogTop);
+    GradientPaint right = new GradientPaint(paper.x() + paper.w() + 12, 0,
         new Color(0, 0, 0, 0), sw, 0, new Color(0, 0, 0, 210));
     g.setPaint(right);
-    g.fillRect(layout.panelX + layout.panelW + 8, 0,
-        sw - layout.panelX - layout.panelW - 8, layout.dialogTop);
+    g.fillRect(paper.x() + paper.w() + 6, 0, sw - paper.x() - paper.w() - 6, layout.dialogTop);
     g.setComposite(prev);
   }
 

@@ -58,7 +58,7 @@ public final class BossQuestBriefingView {
     BossQuestBriefingBackdrop.draw(g, sw, sh, layout);
 
     if (ctrl.showNotice()) {
-      QuestNoticeRenderer.draw(g, layout, ctrl.notice(), 1f);
+      QuestNoticeRenderer.draw(g, sw, sh, ctrl.notice(), 1f);
     }
 
     if (withDialog && ctrl.showDialog()) {
