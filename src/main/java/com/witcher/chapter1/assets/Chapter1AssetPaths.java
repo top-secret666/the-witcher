@@ -39,6 +39,12 @@ public final class Chapter1AssetPaths {
   public static final String BOSS_WAKE_FOREST = BATTLE + "boss_wake_forest.png";
   /** Лист заказа с доски (контракт на босса) — брифинг в лавке. */
   public static final String BOSS_QUEST_NOTICE = BATTLE + "boss_quest_notice.png";
+  /** Портрет Волка над диалогом (лес). */
+  public static final String WOLF_PORTRAIT = BATTLE + "wolf_portrait.png";
+  /** Воспоминание: дорога на Ард Каррайг. */
+  public static final String MEMORY_ARD_CARRAIG = BATTLE + "memory_ard_carraig.png";
+  /** Воспоминание: Каэр Морхен. */
+  public static final String MEMORY_KAER_MORHEN = BATTLE + "memory_kaer_morhen.png";
 
   public static final String HALO_WALLET = UI + "halo_wallet.png";
   public static final String HALO_POTION = UI + "halo_potion.png";

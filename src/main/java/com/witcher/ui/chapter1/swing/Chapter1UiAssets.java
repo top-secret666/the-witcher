@@ -90,6 +90,34 @@ public final class Chapter1UiAssets {
   private static BufferedImage wolfMistForest;
   private static BufferedImage bossWakeForest;
   private static BufferedImage bossQuestNotice;
+  private static BufferedImage wolfPortrait;
+  private static BufferedImage memoryArdCarraig;
+  private static BufferedImage memoryKaerMorhen;
+
+  public static BufferedImage encounterSceneImage(String path) {
+    if (path == null) {
+      return null;
+    }
+    if (path.equals(Chapter1AssetPaths.WOLF_PORTRAIT)) {
+      if (wolfPortrait == null) {
+        wolfPortrait = loadCappedCrisp(Chapter1AssetPaths.WOLF_PORTRAIT, MAX_PORTRAIT_EDGE);
+      }
+      return wolfPortrait;
+    }
+    if (path.equals(Chapter1AssetPaths.MEMORY_ARD_CARRAIG)) {
+      if (memoryArdCarraig == null) {
+        memoryArdCarraig = loadCappedCrisp(Chapter1AssetPaths.MEMORY_ARD_CARRAIG, MAX_VOLK_EDGE);
+      }
+      return memoryArdCarraig;
+    }
+    if (path.equals(Chapter1AssetPaths.MEMORY_KAER_MORHEN)) {
+      if (memoryKaerMorhen == null) {
+        memoryKaerMorhen = loadCappedCrisp(Chapter1AssetPaths.MEMORY_KAER_MORHEN, MAX_VOLK_EDGE);
+      }
+      return memoryKaerMorhen;
+    }
+    return loadCappedCrisp(path, MAX_PORTRAIT_EDGE);
+  }
 
   public static BufferedImage bossQuestNotice() {
     if (bossQuestNotice == null) {
