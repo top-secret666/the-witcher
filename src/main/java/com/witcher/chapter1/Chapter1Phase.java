@@ -4,7 +4,7 @@ package main.java.com.witcher.chapter1;
  * Фазы главы 1 — переключает {@link Chapter1Director}.
  *
  * <p>Канонический cinematic-путь (глава 1 «бой»):
- * {@code SHOP → BOSS_MAP → LOOP_SEQUENCE → BOSS_ENCOUNTER → [BOSS_GLITCH_REVEAL] → BOSS_FINALE → WOLF_ENDING → SHOP}.
+ * {@code SHOP → BOSS_MAP → BOSS_QUEST_BRIEFING → LOOP_SEQUENCE → BOSS_ENCOUNTER → ...}.
  *
  * <p>Выдача карты боя — это состояние лавки ({@code BATTLE_CARD_REVEAL} в ShopPresenter),
  * а не отдельная фаза директора.
@@ -16,6 +16,8 @@ public enum Chapter1Phase {
   CUTSCENE,
   SHOP,
   BOSS_MAP,
+  /** Ложный контракт в лавке перед уходом на босса. */
+  BOSS_QUEST_BRIEFING,
   LOOP_SEQUENCE,
   /** Зарезервировано под illusion_wrong / удержание после петли; сейчас не стартует из канона. */
   LOOP_HOLD,

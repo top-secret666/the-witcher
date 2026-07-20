@@ -9,7 +9,7 @@ import main.java.com.witcher.chapter1.loop.LoopRules;
  * Отрисовка — в {@code ui.chapter1.swing}; здесь только переходы.
  *
  * <p>Канонический cinematic-путь:
- * SHOP → BOSS_MAP → LOOP_SEQUENCE → BOSS_ENCOUNTER → [BOSS_GLITCH_REVEAL] → BOSS_FINALE → WOLF_ENDING → SHOP.
+ * SHOP → BOSS_MAP → BOSS_QUEST_BRIEFING → LOOP_SEQUENCE → BOSS_ENCOUNTER → ...
  * Выдача карты — shop state {@code BATTLE_CARD_REVEAL}, не фаза директора.
  */
 public final class Chapter1Director {
@@ -149,6 +149,13 @@ public final class Chapter1Director {
   /** Канон: карта боссов после клика по карте в сумке. */
   public void enterBossMap() {
     phase = Chapter1Phase.BOSS_MAP;
+    pendingCutscene = null;
+    cutsceneFinished = false;
+  }
+
+  /** Брифинг с ложным контрактом в лавке после выбора босса на карте. */
+  public void enterBossQuestBriefing() {
+    phase = Chapter1Phase.BOSS_QUEST_BRIEFING;
     pendingCutscene = null;
     cutsceneFinished = false;
   }

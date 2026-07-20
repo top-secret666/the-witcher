@@ -6,6 +6,7 @@ import main.java.com.witcher.ui.chapter1.swing.battle.BattleResultView;
 import main.java.com.witcher.ui.chapter1.swing.battle.BossEncounterView;
 import main.java.com.witcher.ui.chapter1.swing.battle.BossGlitchRevealView;
 import main.java.com.witcher.ui.chapter1.swing.battle.BossMapView;
+import main.java.com.witcher.ui.chapter1.swing.battle.BossQuestBriefingView;
 import main.java.com.witcher.ui.chapter1.swing.battle.WolfEndingView;
 import main.java.com.witcher.ui.chapter1.swing.glitch.GlitchOverlayRenderer;
 import main.java.com.witcher.ui.chapter1.view.Chapter1View;
@@ -55,6 +56,15 @@ public final class Chapter1SwingView implements Chapter1View {
         try {
           BossMapView.draw(g, sw, sh, presenter.hoveredBoss(), presenter.selectedBoss(),
               presenter.bossMapBackHovered());
+        } finally {
+          g.dispose();
+        }
+      }
+      case BOSS_QUEST_BRIEFING -> {
+        presenter.shopScreen().render(screen, mouseX, mouseY);
+        Graphics2D g = screen.createGraphics();
+        try {
+          BossQuestBriefingView.draw(g, sw, sh, presenter.questBriefing(), mouseX, mouseY);
         } finally {
           g.dispose();
         }
@@ -136,6 +146,7 @@ public final class Chapter1SwingView implements Chapter1View {
         || phase == Chapter1Phase.LOOP_SEQUENCE
         || phase == Chapter1Phase.LOOP_HOLD
         || phase == Chapter1Phase.BOSS_MAP
+        || phase == Chapter1Phase.BOSS_QUEST_BRIEFING
         || phase == Chapter1Phase.BOSS_ENCOUNTER
         || phase == Chapter1Phase.BOSS_GLITCH_REVEAL
         || phase == Chapter1Phase.BOSS_FINALE
@@ -160,6 +171,7 @@ public final class Chapter1SwingView implements Chapter1View {
       VnSceneRenderer.drawChoices(g, presenter.activeScene(), presenter.choiceRects());
     }
     if (phase == Chapter1Phase.BOSS_MAP
+        || phase == Chapter1Phase.BOSS_QUEST_BRIEFING
         || phase == Chapter1Phase.BOSS_ENCOUNTER
         || phase == Chapter1Phase.BOSS_FINALE
         || phase == Chapter1Phase.WOLF_ENDING

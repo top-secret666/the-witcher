@@ -6,6 +6,7 @@ import main.java.com.witcher.chapter1.Chapter1Save;
 import main.java.com.witcher.chapter1.battle.BossCatalog;
 import main.java.com.witcher.chapter1.battle.glitch.BossGlitchRevealController;
 import main.java.com.witcher.chapter1.battle.BossEncounterController;
+import main.java.com.witcher.chapter1.battle.BossQuestBriefingController;
 import main.java.com.witcher.chapter1.battle.WolfBossFinaleController;
 import main.java.com.witcher.chapter1.ending.WolfEndingType;
 import main.java.com.witcher.chapter1.loop.LoopRules;
@@ -58,6 +59,7 @@ public final class Chapter1Presenter {
 
   private BattleVnController battle;
   private BossEncounterController encounter;
+  private BossQuestBriefingController questBriefing;
   private WolfBossFinaleController wolfFinale;
   private EndingVnController ending;
   private DukeDialogController dukeDialog = new DukeDialogController();
@@ -123,6 +125,10 @@ public final class Chapter1Presenter {
 
   public BossEncounterController encounter() {
     return encounter;
+  }
+
+  public BossQuestBriefingController questBriefing() {
+    return questBriefing;
   }
 
   public BossGlitchRevealController bossGlitchReveal() {
@@ -224,6 +230,7 @@ public final class Chapter1Presenter {
         }
       }
       case BOSS_MAP -> updateBossMap(mouseX, mouseY, clicked);
+      case BOSS_QUEST_BRIEFING -> updateBossQuestBriefing(mouseX, mouseY, clicked, wheelNotches);
       case LOOP_SEQUENCE -> updateLoopSequence();
       case LOOP_HOLD -> { }
       case BOSS_ENCOUNTER -> updateBossEncounter(mouseX, mouseY, clicked, wheelNotches);
@@ -254,6 +261,15 @@ public final class Chapter1Presenter {
     if (director.phase() == Chapter1Phase.LOOP_SEQUENCE) {
       if (code == KeyEvent.VK_SPACE || code == KeyEvent.VK_ENTER) {
         skipLoopAwakening();
+      }
+      return;
+    }
+    if (director.phase() == Chapter1Phase.BOSS_QUEST_BRIEFING && questBriefing != null) {
+      if (questBriefing.inTransition()) {
+        return;
+      }
+      if (code == KeyEvent.VK_ENTER || code == KeyEvent.VK_SPACE) {
+        questBriefing.updateDialog(0, 0, false, 0, true);
       }
       return;
     }
@@ -433,8 +449,27 @@ public final class Chapter1Presenter {
       return;
     }
     selectedBoss = hoveredBoss;
-    director.beginLoopSequence(false);
+    director.enterBossQuestBriefing();
     onPhaseEntered();
+  }
+
+  private void updateBossQuestBriefing(int mouseX, int mouseY, boolean clicked, int wheelNotches) {
+    if (questBriefing == null) {
+      questBriefing = new BossQuestBriefingController(selectedBoss);
+    }
+    questBriefing.setLayoutSize(Chapter1Layout.VIRTUAL_W, Chapter1Layout.VIRTUAL_H);
+    questBriefing.tick();
+
+    if (questBriefing.inTransition()) {
+      if (questBriefing.isComplete()) {
+        questBriefing = null;
+        director.beginLoopSequence(false);
+        onPhaseEntered();
+      }
+      return;
+    }
+
+    questBriefing.updateDialog(mouseX, mouseY, clicked, wheelNotches, false);
   }
 
   private void updateLoopSequence() {
@@ -646,6 +681,8 @@ public final class Chapter1Presenter {
       } else {
         doorLoopPlayer.stop();
       }
+    } else if (director.phase() == Chapter1Phase.BOSS_QUEST_BRIEFING) {
+      questBriefing = new BossQuestBriefingController(selectedBoss);
     } else if (director.phase() == Chapter1Phase.LOOP_SEQUENCE) {
       loopSequence.start(director.loopEyesPrelude());
       eyesEffect.reset(EyesBlinkEffect.Mode.AWAKENING);
