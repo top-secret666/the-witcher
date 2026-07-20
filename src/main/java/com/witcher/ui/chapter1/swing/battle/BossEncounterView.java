@@ -7,21 +7,14 @@ import main.java.com.witcher.ui.chapter1.swing.EyelidOverlay;
 import main.java.com.witcher.ui.chapter1.swing.ScaledImageCache;
 import main.java.com.witcher.ui.graphics.DialogBoxRenderer;
 import main.java.com.witcher.ui.graphics.GameFonts;
-import main.java.com.witcher.ui.graphics.UiChrome;
-import main.java.com.witcher.ui.intro.IntroHistoryText;
 import main.java.com.witcher.ui.intro.IntroVnUi;
-import main.java.com.witcher.ui.intro.view.IntroHistoryLayout;
-import main.java.com.witcher.ui.intro.view.IntroHistoryTheme;
 
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics2D;
-import java.awt.Rectangle;
 import java.awt.RenderingHints;
-import java.awt.Shape;
 import java.awt.image.BufferedImage;
-import java.util.List;
 
 /**
  * Лес + злодей под веками. После открытия — VN как в интро (окно + Назад/История/Авто),
@@ -48,11 +41,14 @@ public final class BossEncounterView {
 
     if (encounter.showDialog()) {
       drawDialogBox(g, sw, sh, encounter);
-      drawVnButtons(g, encounter, mouseX, mouseY);
+      BossVnViewChrome.drawToolbar(
+          g, encounter.buttons(), encounter.backEnabled(), encounter.autoMode(), mouseX, mouseY);
     }
 
     if (encounter.historyOpen()) {
-      drawHistoryOverlay(g, sw, sh, encounter);
+      BossVnViewChrome.drawHistoryOverlay(
+          g, sw, sh, encounter.buttons(), encounter.historyCloseHovered(),
+          encounter.historyScroll(), encounter::setHistoryScroll, encounter.buildHistoryLogLines());
     }
 
     EyelidOverlay.renderBlack(g, sw, sh, encounter.eyelidOpenT());
@@ -122,116 +118,6 @@ public final class BossEncounterView {
         && (encounter.tickCount() / 12) % 2 == 0) {
       DialogBoxRenderer.drawHint(g, "Авто \u25B6", layout, layout.fontSize, 0.85f);
     }
-  }
-
-  private static void drawVnButtons(Graphics2D g, BossEncounterController encounter,
-                                    int mouseX, int mouseY) {
-    IntroVnUi.ButtonLayout b = encounter.buttons();
-    drawVnTextButton(g, toRect(b.backButton), "Назад",
-        encounter.backEnabled(), false,
-        encounter.backEnabled() && b.backButton.contains(mouseX, mouseY));
-    drawVnTextButton(g, toRect(b.historyButton), "История",
-        true, false, b.historyButton.contains(mouseX, mouseY));
-    drawVnTextButton(g, toRect(b.autoButton), "Авто",
-        true, encounter.autoMode(), b.autoButton.contains(mouseX, mouseY));
-  }
-
-  private static void drawVnTextButton(Graphics2D g, Rectangle r, String label, boolean enabled,
-                                       boolean active, boolean hover) {
-    int alpha255 = enabled ? 255 : 130;
-    Color textColor;
-    if (!enabled) {
-      textColor = new Color(95, 80, 58, alpha255);
-    } else if (active) {
-      textColor = new Color(255, 225, 130, alpha255);
-    } else if (hover) {
-      textColor = new Color(255, 235, 170, alpha255);
-    } else {
-      textColor = new Color(205, 180, 115, alpha255);
-    }
-
-    g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-    int fontSize = Math.max(10, r.height - 8);
-    g.setFont(active ? GameFonts.get().bold(fontSize) : GameFonts.get().plain(fontSize));
-    FontMetrics fm = g.getFontMetrics();
-    int tx = r.x + (r.width - fm.stringWidth(label)) / 2;
-    int ty = r.y + (r.height + fm.getAscent() - fm.getDescent()) / 2;
-
-    if (hover && enabled) {
-      g.setColor(new Color(0, 0, 0, 100));
-      g.drawString(label, tx + 1, ty + 1);
-    }
-    g.setColor(textColor);
-    g.drawString(label, tx, ty);
-
-    if ((hover || active) && enabled) {
-      int ulY = ty + 2;
-      g.setColor(new Color(textColor.getRed(), textColor.getGreen(), textColor.getBlue(), 180));
-      g.drawLine(tx, ulY, tx + fm.stringWidth(label), ulY);
-    }
-    g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
-  }
-
-  private static void drawHistoryOverlay(Graphics2D g, int sw, int sh,
-                                         BossEncounterController encounter) {
-    g.setColor(new Color(0, 0, 0, 158));
-    g.fillRect(0, 0, sw, sh);
-
-    IntroVnUi.ButtonLayout b = encounter.buttons();
-    Rectangle panel = toRect(b.historyPanel);
-    DialogBoxRenderer.drawBox(g, panel.x, panel.y, panel.width, panel.height, 1f);
-
-    Rectangle closeBounds = toRect(b.historyClose);
-    UiChrome.drawCloseButton(g, closeBounds, encounter.historyCloseHovered(), 1f);
-
-    g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-    IntroHistoryLayout.Metrics m = IntroHistoryLayout.compute(
-        sw, sh, panel.x, panel.y, panel.width, panel.height);
-
-    Font titleFont = GameFonts.get().bold(m.titleSize);
-    Font hintFont = GameFonts.get().italic(m.hintSize);
-    Font bodyFont = GameFonts.get().plain(m.fontSize);
-    g.setFont(bodyFont);
-    FontMetrics fm = g.getFontMetrics();
-    List<String> renderedLines = IntroHistoryText.buildRenderedLines(
-        encounter.buildHistoryLogLines(), Math.round(m.textMaxW), m.fontSize);
-    int maxScroll = IntroHistoryLayout.maxScroll(renderedLines.size(), m.lineH, m.contentH);
-    int historyScroll = IntroHistoryLayout.clampScroll(encounter.historyScroll(), maxScroll);
-    encounter.setHistoryScroll(historyScroll);
-
-    g.setFont(titleFont);
-    g.setColor(new Color(IntroHistoryTheme.TITLE_R, IntroHistoryTheme.TITLE_G, IntroHistoryTheme.TITLE_B));
-    g.drawString("История", Math.round(m.textX), m.titleBaseline);
-
-    g.setColor(new Color(IntroHistoryTheme.DIVIDER_R, IntroHistoryTheme.DIVIDER_G,
-        IntroHistoryTheme.DIVIDER_B, IntroHistoryTheme.DIVIDER_A));
-    g.drawLine(Math.round(m.textX), m.headerBottom - 4, Math.round(m.textX + m.textMaxW), m.headerBottom - 4);
-    g.drawLine(Math.round(m.textX), m.footerTop, Math.round(m.textX + m.textMaxW), m.footerTop);
-
-    Shape oldClip = g.getClip();
-    g.clipRect(Math.round(m.textX), m.contentTop, Math.round(m.textMaxW), m.contentH);
-    g.setFont(bodyFont);
-    int y = m.contentTop + fm.getAscent() - historyScroll;
-    for (String line : renderedLines) {
-      if (y > m.contentBottom) {
-        break;
-      }
-      if (y + fm.getDescent() >= m.contentTop) {
-        g.setColor(new Color(220, 200, 160));
-        g.drawString(line, Math.round(m.textX), y);
-      }
-      y += m.lineH;
-    }
-    g.setClip(oldClip);
-
-    g.setFont(hintFont);
-    g.setColor(new Color(IntroHistoryTheme.HINT_R, IntroHistoryTheme.HINT_G, IntroHistoryTheme.HINT_B));
-    g.drawString("Колесо — прокрутка", Math.round(m.textX), m.hintBaseline);
-    g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
-  }
-
-  private static Rectangle toRect(IntroVnUi.Rect r) {
-    return new Rectangle(Math.round(r.x), Math.round(r.y), Math.round(r.width), Math.round(r.height));
   }
 
   /** Та же интерполяция, что у персонажей интро — максимальная чёткость painted-арта. */
