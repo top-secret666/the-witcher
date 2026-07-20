@@ -1,6 +1,6 @@
 package main.java.com.witcher.ui.chapter1.swing.battle.briefing;
 
-import main.java.com.witcher.chapter1.battle.BossQuestBriefingScript;
+import main.java.com.witcher.chapter1.battle.briefing.BossQuestBriefingScript;
 import main.java.com.witcher.ui.chapter1.swing.Chapter1UiAssets;
 import main.java.com.witcher.ui.chapter1.swing.ScaledImageCache;
 

@@ -1,5 +1,6 @@
-package main.java.com.witcher.chapter1.battle;
+package main.java.com.witcher.chapter1.battle.briefing;
 
+import main.java.com.witcher.chapter1.battle.BossEntry;
 import main.java.com.witcher.chapter1.vn.VnChoice;
 import main.java.com.witcher.chapter1.vn.VnSceneState;
 import main.java.com.witcher.ui.intro.IntroTheme;

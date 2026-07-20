@@ -1,4 +1,4 @@
-package main.java.com.witcher.chapter1.battle;
+package main.java.com.witcher.chapter1.battle.briefing;
 
 /** Тайминги и скорости брифинга перед боссом — без логики. */
 public final class BossQuestBriefingConstants {

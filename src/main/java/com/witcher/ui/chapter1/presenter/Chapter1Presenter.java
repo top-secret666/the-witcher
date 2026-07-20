@@ -6,7 +6,7 @@ import main.java.com.witcher.chapter1.Chapter1Save;
 import main.java.com.witcher.chapter1.battle.BossCatalog;
 import main.java.com.witcher.chapter1.battle.glitch.BossGlitchRevealController;
 import main.java.com.witcher.chapter1.battle.BossEncounterController;
-import main.java.com.witcher.chapter1.battle.BossQuestBriefingController;
+import main.java.com.witcher.chapter1.battle.briefing.BossQuestBriefingController;
 import main.java.com.witcher.chapter1.battle.wolf.WolfBossFinaleController;
 import main.java.com.witcher.chapter1.ending.WolfEndingType;
 import main.java.com.witcher.chapter1.loop.LoopRules;

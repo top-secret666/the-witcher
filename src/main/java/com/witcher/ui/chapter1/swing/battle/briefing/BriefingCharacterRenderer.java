@@ -1,7 +1,7 @@
 package main.java.com.witcher.ui.chapter1.swing.battle.briefing;
 
-import main.java.com.witcher.chapter1.battle.BossQuestBriefingController;
-import main.java.com.witcher.chapter1.battle.BossQuestBriefingScript;
+import main.java.com.witcher.chapter1.battle.briefing.BossQuestBriefingController;
+import main.java.com.witcher.chapter1.battle.briefing.BossQuestBriefingScript;
 import main.java.com.witcher.ui.intro.view.IntroCharacterLayout;
 import main.java.com.witcher.ui.shop.swing.ShopAssetCache;
 
