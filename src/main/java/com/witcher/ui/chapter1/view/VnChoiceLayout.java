@@ -5,8 +5,12 @@ import main.java.com.witcher.chapter1.vn.VnChoice;
 import java.util.ArrayList;
 import java.util.List;
 
-/** Раскладка кнопок выбора VN (низ экрана). */
+/** Раскладка кнопок выбора VN — блок по центру экрана. */
 public final class VnChoiceLayout {
+
+  private static final int ROW_H = 22;
+  private static final int ROW_GAP = 6;
+  private static final float BLOCK_WIDTH_RATIO = 0.88f;
 
   public record ChoiceRect(int index, float x, float y, float width, float height) {
     public boolean contains(float px, float py) {
@@ -22,13 +26,13 @@ public final class VnChoiceLayout {
     if (choices == null || choices.isEmpty()) {
       return rects;
     }
-    int rowH = 18;
-    int pad = 8;
-    int totalH = choices.size() * rowH + pad;
-    float y0 = sh - totalH - 12;
-    float w = sw - 24;
+    float w = sw * BLOCK_WIDTH_RATIO;
+    float x0 = (sw - w) / 2f;
+    int totalH = choices.size() * ROW_H + Math.max(0, choices.size() - 1) * ROW_GAP;
+    float y0 = (sh - totalH) / 2f;
     for (int i = 0; i < choices.size(); i++) {
-      rects.add(new ChoiceRect(i, 12, y0 + i * rowH, w, rowH));
+      float y = y0 + i * (ROW_H + ROW_GAP);
+      rects.add(new ChoiceRect(i, x0, y, w, ROW_H));
     }
     return rects;
   }

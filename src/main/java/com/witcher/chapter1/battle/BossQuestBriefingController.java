@@ -21,8 +21,8 @@ public final class BossQuestBriefingController {
   private static final int TICKS_PER_CHAR = 2;
   private static final int AUTO_DELAY_TICKS = 50;
   private static final int AUTO_TICKS_PER_CHAR = 1;
-  private static final int DISSOLVE_RAMP_MS = 2400;
-  private static final int TRANSITION_TOTAL_MS = 2750;
+  private static final int DISSOLVE_RAMP_MS = 1100;
+  private static final int TRANSITION_TOTAL_MS = 1350;
   private static final float SLIDE_SPEED = 0.04f;
   private static final float ACTIVE_SPEED = 0.06f;
 

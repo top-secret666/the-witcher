@@ -74,13 +74,13 @@ public final class BossQuestBriefingView {
     float clarity = Math.max(0f, 1f - dissolveT);
     WakeVisionRenderer.drawFrame(g, snap, 0, 0, clarity);
 
-    float noise = dissolveT <= 0.03f ? 0f : (1f - clarity) * 0.92f + 0.06f;
+    float noise = dissolveT <= 0.01f ? 0f : (1f - clarity) * 0.95f + 0.08f;
     if (noise > 0.02f) {
       CutsceneNoiseOverlay.draw(g, sw, sh, Math.min(1f, noise));
     }
 
-    if (clarity < 0.55f) {
-      float fog = (0.55f - clarity) * 0.55f;
+    if (clarity < 0.48f) {
+      float fog = (0.48f - clarity) * 0.62f;
       var prev = g.getComposite();
       g.setComposite(java.awt.AlphaComposite.getInstance(java.awt.AlphaComposite.SRC_OVER, fog));
       g.setColor(new Color(0, 0, 0));
@@ -88,8 +88,8 @@ public final class BossQuestBriefingView {
       g.setComposite(prev);
     }
 
-    if (dissolveT > 0.78f) {
-      float extra = (dissolveT - 0.78f) / 0.22f;
+    if (dissolveT > 0.68f) {
+      float extra = (dissolveT - 0.68f) / 0.32f;
       g.setColor(new Color(0, 0, 0, Math.round(255 * Math.min(1f, extra))));
       g.fillRect(0, 0, sw, sh);
     }

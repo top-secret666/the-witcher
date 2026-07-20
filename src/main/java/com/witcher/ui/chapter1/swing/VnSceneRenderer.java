@@ -6,6 +6,7 @@ import main.java.com.witcher.ui.graphics.DialogBoxRenderer;
 import main.java.com.witcher.ui.graphics.GameFonts;
 
 import java.awt.Color;
+import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.util.List;
 
@@ -44,10 +45,14 @@ public final class VnSceneRenderer {
     }
     var choices = scene.choices();
     g.setFont(GameFonts.get().uiBold(10));
+    FontMetrics fm = g.getFontMetrics();
     for (VnChoiceLayout.ChoiceRect rect : choiceRects) {
       g.setColor(new Color(255, 220, 140));
       String label = (rect.index() + 1) + ". " + choices.get(rect.index()).label();
-      g.drawString(label, (int) rect.x(), (int) (rect.y() + 12));
+      int tw = fm.stringWidth(label);
+      int tx = Math.round(rect.x() + (rect.width() - tw) / 2f);
+      int ty = Math.round(rect.y() + (rect.height() + fm.getAscent() - fm.getDescent()) / 2f);
+      g.drawString(label, tx, ty);
     }
   }
 }
