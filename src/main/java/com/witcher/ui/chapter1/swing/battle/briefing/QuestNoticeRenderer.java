@@ -17,7 +17,7 @@ import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
 
-/** Лист заказа по центру экрана + текст пером (Forum). */
+/** Лист заказа по центру экрана + текст Philosopher. */
 public final class QuestNoticeRenderer {
 
   /** Разметка пергамента на виртуальном кадре 480×360. */
@@ -143,54 +143,70 @@ public final class QuestNoticeRenderer {
     int bottomLimit = layout.textY + layout.textMaxH;
     int centerX = layout.centerX();
 
-    Font headerFont = QuestNoticeFonts.header(Math.max(11, layout.h / 24));
-    Font titleFont = QuestNoticeFonts.title(Math.max(13, layout.h / 18));
-    Font bodyFont = QuestNoticeFonts.body(Math.max(9, layout.h / 34));
-    Font sealFont = QuestNoticeFonts.seal(Math.max(8, layout.h / 38));
+    Font headerFont = QuestNoticeFonts.header(Math.max(14, Math.round(layout.h * 0.068f)));
+    Font titleFont = QuestNoticeFonts.title(Math.max(18, Math.round(layout.h * 0.082f)));
+    Font bodyFont = QuestNoticeFonts.body(Math.max(12, Math.round(layout.h * 0.044f)));
+    Font sealFont = QuestNoticeFonts.seal(Math.max(10, Math.round(layout.h * 0.038f)));
+
+    Color inkDark = new Color(28, 14, 4);
+    Color inkBody = new Color(32, 18, 6);
 
     g.setFont(headerFont);
-    g.setColor(new Color(58, 32, 14));
-    cy = drawCentered(g, notice.header(), centerX, cy, maxW, headerFont, 3) + 8;
+    g.setColor(inkDark);
+    cy = drawCenteredInk(g, notice.header(), centerX, cy, maxW, headerFont, 4) + 6;
     if (cy > bottomLimit) {
       return;
     }
 
     g.setFont(titleFont);
-    g.setColor(new Color(42, 22, 8));
-    cy = drawCentered(g, notice.targetName(), centerX, cy, maxW, titleFont, 4) + 10;
+    g.setColor(inkDark);
+    cy = drawCenteredInk(g, notice.targetName(), centerX, cy, maxW, titleFont, 5) + 8;
     if (cy > bottomLimit) {
       return;
     }
 
     g.setFont(bodyFont);
-    g.setColor(new Color(52, 34, 18));
-    cy = drawWrapped(g, notice.threatLevel(), layout.textX, cy, maxW, bodyFont, 3) + 8;
-    cy = drawWrapped(g, notice.body(), layout.textX, cy, maxW, bodyFont, 4) + 10;
-    cy = drawWrapped(g, notice.reward(), layout.textX, cy, maxW, bodyFont, 3);
+    g.setColor(inkBody);
+    cy = drawWrappedInk(g, notice.threatLevel(), layout.textX, cy, maxW, bodyFont, 3) + 6;
+    cy = drawWrappedInk(g, notice.body(), layout.textX, cy, maxW, bodyFont, 3) + 8;
+    cy = drawWrappedInk(g, notice.reward(), layout.textX, cy, maxW, bodyFont, 3);
 
     g.setFont(sealFont);
-    g.setColor(new Color(68, 44, 22, 210));
-    int sealY = layout.y + layout.h - Math.round(layout.h * 0.16f);
-    drawWrapped(g, notice.seal(), layout.textX, sealY, Math.round(maxW * 0.68f), sealFont, 2);
+    g.setColor(new Color(48, 28, 12, 230));
+    int sealY = layout.y + layout.h - Math.round(layout.h * 0.15f);
+    drawWrappedInk(g, notice.seal(), layout.textX, sealY, Math.round(maxW * 0.72f), sealFont, 2);
   }
 
-  private static int drawCentered(Graphics2D g, String text, int centerX, int y,
-                                  int maxW, Font font, int lineGap) {
+  private static void drawInkString(Graphics2D g, String text, int x, int y, Color ink) {
+    g.setColor(new Color(255, 248, 235, 140));
+    g.drawString(text, x - 1, y);
+    g.drawString(text, x + 1, y);
+    g.drawString(text, x, y - 1);
+    g.drawString(text, x, y + 1);
+    g.setColor(new Color(0, 0, 0, 45));
+    g.drawString(text, x + 1, y + 1);
+    g.setColor(ink);
+    g.drawString(text, x, y);
+  }
+
+  private static int drawCenteredInk(Graphics2D g, String text, int centerX, int y,
+                                       int maxW, Font font, int lineGap) {
     g.setFont(font);
     FontMetrics fm = g.getFontMetrics();
     for (String line : wrap(text, fm, maxW)) {
       int lw = fm.stringWidth(line);
-      g.drawString(line, centerX - lw / 2, y);
+      drawInkString(g, line, centerX - lw / 2, y, g.getColor());
       y += fm.getHeight() + lineGap;
     }
     return y;
   }
 
-  private static int drawWrapped(Graphics2D g, String text, int x, int y, int maxW, Font font, int lineGap) {
+  private static int drawWrappedInk(Graphics2D g, String text, int x, int y, int maxW, Font font, int lineGap) {
     g.setFont(font);
     FontMetrics fm = g.getFontMetrics();
+    Color ink = g.getColor();
     for (String line : wrap(text, fm, maxW)) {
-      g.drawString(line, x, y);
+      drawInkString(g, line, x, y, ink);
       y += fm.getHeight() + lineGap;
     }
     return y;

@@ -1,7 +1,5 @@
 package main.java.com.witcher.ui.chapter1.swing.battle.briefing;
 
-import main.java.com.witcher.ui.graphics.GameFonts;
-
 import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
@@ -11,37 +9,35 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Рукописный, но читаемый шрифт для листа заказа — Forum (OFL, полная кириллица).
+ * Читаемые шрифты листа заказа — Philosopher (кириллица, чёткие штрихи на пергаменте).
  */
 public final class QuestNoticeFonts {
 
-  private static final String FORUM_PATH = "/assets/fonts/Forum-Regular.ttf";
+  private static final String REGULAR_PATH = "/assets/fonts/Philosopher-Regular.ttf";
+  private static final String BOLD_PATH = "/assets/fonts/Philosopher-Bold.ttf";
   private static final String CYRILLIC_PROBE = "АбвГдеЁжЗийКлмнопрстуфхцчшщъыьэюя";
 
-  private static final Font BASE = loadForum();
+  private static final Font REGULAR = loadFont(REGULAR_PATH, Font.PLAIN);
+  private static final Font BOLD = loadFont(BOLD_PATH, Font.BOLD);
   private static final Map<String, Font> CACHE = new HashMap<>();
 
   private QuestNoticeFonts() {
   }
 
-  /** Заголовок «ЗАКАЗ НА МОНСТРА». */
   public static Font header(int size) {
-    return derive(Math.max(10, size), Font.BOLD);
+    return sized(BOLD, size);
   }
 
-  /** Имя цели — крупнее, чуть жирнее. */
   public static Font title(int size) {
-    return derive(Math.max(11, size), Font.BOLD);
+    return sized(BOLD, size);
   }
 
-  /** Основной текст контракта. */
   public static Font body(int size) {
-    return derive(Math.max(8, size), Font.PLAIN);
+    return sized(REGULAR, size);
   }
 
-  /** Печать / подпись внизу. */
   public static Font seal(int size) {
-    return derive(Math.max(7, size), Font.ITALIC);
+    return sized(REGULAR, size);
   }
 
   public static void applyInkHints(Graphics2D g) {
@@ -49,19 +45,21 @@ public final class QuestNoticeFonts {
     g.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
     g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
     g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+    g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
   }
 
-  private static Font derive(int size, int style) {
-    String key = size + ":" + style;
-    return CACHE.computeIfAbsent(key, k -> BASE.deriveFont(style, (float) size));
+  private static Font sized(Font base, int size) {
+    int px = Math.max(10, size);
+    String key = base.getFontName() + ":" + px;
+    return CACHE.computeIfAbsent(key, k -> base.deriveFont((float) px));
   }
 
-  private static Font loadForum() {
-    Font loaded = tryLoad(FORUM_PATH);
+  private static Font loadFont(String resourcePath, int fallbackStyle) {
+    Font loaded = tryLoad(resourcePath);
     if (loaded != null && supportsCyrillic(loaded)) {
       return loaded;
     }
-    return GameFonts.get().plain(12);
+    return new Font(Font.SANS_SERIF, fallbackStyle, 12);
   }
 
   private static Font tryLoad(String resourcePath) {
