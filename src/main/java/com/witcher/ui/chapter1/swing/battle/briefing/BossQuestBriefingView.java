@@ -1,11 +1,9 @@
-package main.java.com.witcher.ui.chapter1.swing.battle;
+package main.java.com.witcher.ui.chapter1.swing.battle.briefing;
 
 import main.java.com.witcher.chapter1.battle.briefing.BossQuestBriefingController;
 import main.java.com.witcher.chapter1.battle.briefing.BossQuestBriefingScript;
-import main.java.com.witcher.ui.chapter1.swing.battle.briefing.BossBriefingDissolveRenderer;
-import main.java.com.witcher.ui.chapter1.swing.battle.briefing.BossQuestBriefingBackdrop;
-import main.java.com.witcher.ui.chapter1.swing.battle.briefing.QuestNoticeAnimator;
-import main.java.com.witcher.ui.chapter1.swing.battle.briefing.QuestNoticeRenderer;
+import main.java.com.witcher.ui.chapter1.swing.battle.BossVnDialogBoxRenderer;
+import main.java.com.witcher.ui.chapter1.swing.battle.BossVnViewChrome;
 import main.java.com.witcher.ui.shop.view.ShopLayout;
 
 import java.awt.Graphics2D;

@@ -5,11 +5,11 @@ import main.java.com.witcher.chapter1.Chapter1Phase;
 import main.java.com.witcher.chapter1.Chapter1Save;
 import main.java.com.witcher.chapter1.battle.BossCatalog;
 import main.java.com.witcher.chapter1.battle.glitch.BossGlitchRevealController;
-import main.java.com.witcher.chapter1.battle.encounter.BossEncounterController;
 import main.java.com.witcher.chapter1.battle.briefing.BossQuestBriefingController;
+import main.java.com.witcher.chapter1.battle.encounter.BossEncounterController;
 import main.java.com.witcher.chapter1.battle.wolf.WolfBossFinaleController;
+import main.java.com.witcher.ui.chapter1.presenter.wolf.WolfBossPhaseHandler;
 import main.java.com.witcher.chapter1.ending.WolfEndingType;
-import main.java.com.witcher.chapter1.loop.LoopRules;
 import main.java.com.witcher.chapter1.battle.BattleCardController;
 import main.java.com.witcher.chapter1.battle.BattleOutcome;
 import main.java.com.witcher.chapter1.battle.BattleResolver;
@@ -41,7 +41,7 @@ import java.util.List;
  * Логика и ввод главы 1 (фазы, VN, карта, терминал).
  * Отрисовка — {@link main.java.com.witcher.ui.chapter1.swing.Chapter1SwingView}.
  */
-public final class Chapter1Presenter {
+public final class Chapter1Presenter implements WolfBossPhaseHandler.Host {
 
   private final Chapter1Director director;
   private final Chapter1ShopBridge shopBridge;
@@ -57,10 +57,9 @@ public final class Chapter1Presenter {
   private final EyesBlinkEffect eyesEffect = new EyesBlinkEffect();
   private final BossGlitchRevealController bossGlitchReveal = new BossGlitchRevealController();
 
+  private final WolfBossPhaseHandler wolfBoss;
+
   private BattleVnController battle;
-  private BossEncounterController encounter;
-  private BossQuestBriefingController questBriefing;
-  private WolfBossFinaleController wolfFinale;
   private EndingVnController ending;
   private DukeDialogController dukeDialog = new DukeDialogController();
   private HackConsoleModel hack;
@@ -70,7 +69,6 @@ public final class Chapter1Presenter {
   private BossEntry selectedBoss;
   private boolean bossMapBackHovered;
   private boolean battleVictory;
-  private WolfEndingType wolfEndingType = WolfEndingType.BAD_LOOP;
   private int hackShakeTick;
   private boolean exitRequested;
   /** Не стартовать VN «тюрьмы» посреди fly-in покупки. */
@@ -85,6 +83,7 @@ public final class Chapter1Presenter {
     this.shopModel = shopModel;
     this.shopBridge = new Chapter1ShopBridge(director.session(), director);
     this.shopScreen = new ShopScreen(shopModel, shopBridge);
+    this.wolfBoss = new WolfBossPhaseHandler(this);
     wireBridgeListeners();
     // ShopModel.createNewSession() всегда пустой — не тащим иконку карты из старого save.
     director.session().resetBattleCardUntilEquipReveal();
@@ -124,11 +123,11 @@ public final class Chapter1Presenter {
   }
 
   public BossEncounterController encounter() {
-    return encounter;
+    return wolfBoss.encounter();
   }
 
   public BossQuestBriefingController questBriefing() {
-    return questBriefing;
+    return wolfBoss.questBriefing();
   }
 
   public BossGlitchRevealController bossGlitchReveal() {
@@ -140,11 +139,11 @@ public final class Chapter1Presenter {
   }
 
   public WolfBossFinaleController wolfFinale() {
-    return wolfFinale;
+    return wolfBoss.wolfFinale();
   }
 
   public WolfEndingType wolfEndingType() {
-    return wolfEndingType;
+    return wolfBoss.wolfEndingType();
   }
 
   public BattleCardController battleCard() {
@@ -176,16 +175,9 @@ public final class Chapter1Presenter {
   }
 
   public VnSceneState activeScene() {
-    if (director.phase() == Chapter1Phase.BOSS_QUEST_BRIEFING
-        && questBriefing != null && questBriefing.waitingForChoice()) {
-      return questBriefing.choiceScene();
-    }
-    if (director.phase() == Chapter1Phase.BOSS_ENCOUNTER
-        && encounter != null && encounter.waitingForChoice()) {
-      return encounter.choiceScene();
-    }
-    if (director.phase() == Chapter1Phase.BOSS_FINALE && wolfFinale != null) {
-      return wolfFinale.scene();
+    VnSceneState wolfScene = wolfBoss.activeChoiceScene(director.phase());
+    if (wolfScene != null) {
+      return wolfScene;
     }
     if (director.phase() == Chapter1Phase.VN_BATTLE && battle != null) {
       return battle.scene();
@@ -234,13 +226,13 @@ public final class Chapter1Presenter {
         }
       }
       case BOSS_MAP -> updateBossMap(mouseX, mouseY, clicked);
-      case BOSS_QUEST_BRIEFING -> updateBossQuestBriefing(mouseX, mouseY, clicked, wheelNotches);
+      case BOSS_QUEST_BRIEFING -> wolfBoss.updateBriefing(mouseX, mouseY, clicked, wheelNotches);
       case LOOP_SEQUENCE -> updateLoopSequence();
       case LOOP_HOLD -> { }
-      case BOSS_ENCOUNTER -> updateBossEncounter(mouseX, mouseY, clicked, wheelNotches);
-      case BOSS_GLITCH_REVEAL -> updateBossGlitchReveal();
-      case BOSS_FINALE -> updateBossFinale(mouseX, mouseY, clicked);
-      case WOLF_ENDING -> updateWolfEnding(clicked);
+      case BOSS_ENCOUNTER -> wolfBoss.updateEncounter(mouseX, mouseY, clicked, wheelNotches);
+      case BOSS_GLITCH_REVEAL -> wolfBoss.updateGlitchReveal();
+      case BOSS_FINALE -> wolfBoss.updateFinale(mouseX, mouseY, clicked);
+      case WOLF_ENDING -> wolfBoss.updateEnding(clicked);
       case BATTLE_RESULT -> updateBattleResult(clicked);
       case VN_BATTLE -> updateBattle(mouseX, mouseY, clicked);
       case VN_DIALOG -> updateDukeDialog(mouseX, mouseY, clicked);
@@ -270,47 +262,50 @@ public final class Chapter1Presenter {
     }
     if (director.phase() == Chapter1Phase.BOSS_GLITCH_REVEAL) {
       if (code == KeyEvent.VK_SPACE) {
-        skipBossGlitchReveal();
+        wolfBoss.skipGlitchReveal();
       }
       return;
     }
-    if (director.phase() == Chapter1Phase.BOSS_QUEST_BRIEFING && questBriefing != null) {
-      if (questBriefing.inTransition()) {
+    if (director.phase() == Chapter1Phase.BOSS_QUEST_BRIEFING && wolfBoss.questBriefing() != null) {
+      var briefing = wolfBoss.questBriefing();
+      if (briefing.inTransition()) {
         return;
       }
-      if (questBriefing.waitingForChoice()) {
+      if (briefing.waitingForChoice()) {
         int choice = keyToChoiceIndex(code);
         if (choice >= 0) {
-          applyBriefingChoice(choice);
+          wolfBoss.applyBriefingChoice(choice);
         }
         return;
       }
       if (code == KeyEvent.VK_ENTER || code == KeyEvent.VK_SPACE) {
-        questBriefing.updateDialog(0, 0, false, 0, true);
+        briefing.updateDialog(0, 0, false, 0, true);
       }
       return;
     }
-    if (director.phase() == Chapter1Phase.BOSS_ENCOUNTER && encounter != null) {
-      if (encounter.waitingForChoice()) {
+    if (director.phase() == Chapter1Phase.BOSS_ENCOUNTER && wolfBoss.encounter() != null) {
+      var enc = wolfBoss.encounter();
+      if (enc.waitingForChoice()) {
         int choice = keyToChoiceIndex(code);
         if (choice >= 0) {
-          applyEncounterChoice(choice);
+          wolfBoss.applyEncounterChoice(choice);
         }
         return;
       }
       if (code == KeyEvent.VK_ENTER || code == KeyEvent.VK_SPACE) {
-        encounter.updateDialog(0, 0, false, 0, true);
+        enc.updateDialog(0, 0, false, 0, true);
       }
       return;
     }
-    if (director.phase() == Chapter1Phase.BOSS_FINALE && wolfFinale != null) {
-      if (wolfFinale.scene().waitingForChoice()) {
+    if (director.phase() == Chapter1Phase.BOSS_FINALE && wolfBoss.wolfFinale() != null) {
+      var finale = wolfBoss.wolfFinale();
+      if (finale.scene().waitingForChoice()) {
         int choice = keyToChoiceIndex(code);
         if (choice >= 0) {
-          applyWolfFinaleChoice(choice);
+          wolfBoss.applyFinaleChoice(choice);
         }
       } else if (code == KeyEvent.VK_ENTER || code == KeyEvent.VK_SPACE) {
-        advanceWolfFinale();
+        wolfBoss.advanceFinale();
       }
       return;
     }
@@ -470,47 +465,6 @@ public final class Chapter1Presenter {
     onPhaseEntered();
   }
 
-  private void updateBossQuestBriefing(int mouseX, int mouseY, boolean clicked, int wheelNotches) {
-    if (questBriefing == null) {
-      questBriefing = new BossQuestBriefingController(selectedBoss);
-    }
-    questBriefing.setLayoutSize(Chapter1Layout.VIRTUAL_W, Chapter1Layout.VIRTUAL_H);
-    questBriefing.tick();
-
-    if (questBriefing.inTransition()) {
-      if (questBriefing.isComplete()) {
-        questBriefing = null;
-        director.beginLoopSequence(false);
-        onPhaseEntered();
-      }
-      return;
-    }
-
-    if (questBriefing.waitingForChoice()) {
-      refreshChoiceRects();
-      if (clicked) {
-        int index = VnChoiceLayout.hitIndex(choiceRects, mouseX, mouseY);
-        if (index >= 0) {
-          applyBriefingChoice(index);
-        }
-      }
-      return;
-    }
-
-    questBriefing.updateDialog(mouseX, mouseY, clicked, wheelNotches, false);
-    if (questBriefing.waitingForChoice()) {
-      refreshChoiceRects();
-    }
-  }
-
-  private void applyBriefingChoice(int index) {
-    if (questBriefing == null) {
-      return;
-    }
-    questBriefing.choose(index, director.session());
-    choiceRects = List.of();
-  }
-
   private void updateLoopSequence() {
     loopSequence.tick();
     loopCutscenePlayer.tick();
@@ -532,136 +486,6 @@ public final class Chapter1Presenter {
     loopCutscenePlayer.stop();
     director.enterBossEncounter();
     onPhaseEntered();
-  }
-
-  private void updateBossEncounter(int mouseX, int mouseY, boolean clicked, int wheelNotches) {
-    if (encounter == null) {
-      encounter = new BossEncounterController(selectedBoss, director.session());
-    }
-    encounter.setLayoutSize(Chapter1Layout.VIRTUAL_W, Chapter1Layout.VIRTUAL_H);
-    encounter.tick();
-
-    if (encounter.waitingForChoice()) {
-      refreshChoiceRects();
-      if (clicked) {
-        int index = VnChoiceLayout.hitIndex(choiceRects, mouseX, mouseY);
-        if (index >= 0) {
-          applyEncounterChoice(index);
-        }
-      }
-      return;
-    }
-
-    encounter.updateDialog(mouseX, mouseY, clicked, wheelNotches, false);
-
-    if (encounter.waitingForChoice()) {
-      refreshChoiceRects();
-      return;
-    }
-
-    if (encounter.isDialogComplete()) {
-      director.enterBossFinale();
-      onPhaseEntered();
-    }
-  }
-
-  private void applyEncounterChoice(int index) {
-    if (encounter == null) {
-      return;
-    }
-    encounter.choose(index, director.session());
-    choiceRects = List.of();
-  }
-
-  private void updateBossGlitchReveal() {
-    bossGlitchReveal.tick();
-    if (bossGlitchReveal.isComplete()) {
-      finishBossGlitchReveal();
-    }
-  }
-
-  private void skipBossGlitchReveal() {
-    bossGlitchReveal.skip();
-    finishBossGlitchReveal();
-  }
-
-  private void finishBossGlitchReveal() {
-    if (director.phase() != Chapter1Phase.BOSS_GLITCH_REVEAL) {
-      return;
-    }
-    director.enterWolfEnding();
-    onPhaseEntered();
-  }
-
-  private void updateBossFinale(int mouseX, int mouseY, boolean clicked) {
-    if (wolfFinale == null) {
-      wolfFinale = new WolfBossFinaleController(director.session());
-      refreshChoiceRects();
-      return;
-    }
-    if (!clicked) {
-      return;
-    }
-    if (wolfFinale.scene().waitingForChoice()) {
-      int index = VnChoiceLayout.hitIndex(choiceRects, mouseX, mouseY);
-      if (index >= 0) {
-        applyWolfFinaleChoice(index);
-      }
-      return;
-    }
-    advanceWolfFinale();
-  }
-
-  private void applyWolfFinaleChoice(int index) {
-    if (wolfFinale == null) {
-      return;
-    }
-    wolfFinale.choose(index);
-    refreshChoiceRects();
-  }
-
-  private void advanceWolfFinale() {
-    if (wolfFinale == null) {
-      return;
-    }
-    if (wolfFinale.isDone()) {
-      finishWolfFinale();
-      return;
-    }
-    wolfFinale.advance();
-    refreshChoiceRects();
-    if (wolfFinale.isDone()) {
-      finishWolfFinale();
-    }
-  }
-
-  private void finishWolfFinale() {
-    if (wolfFinale == null) {
-      return;
-    }
-    wolfEndingType = wolfFinale.trueEnding()
-        ? WolfEndingType.TRUE_SHARD
-        : WolfEndingType.BAD_LOOP;
-    if (wolfFinale.trueEnding()) {
-      LoopRules.onWolfTrueShard(director.session());
-    } else {
-      LoopRules.onWolfBadLoop(director.session());
-    }
-    wolfFinale = null;
-    choiceRects = List.of();
-    if (wolfEndingType == WolfEndingType.TRUE_SHARD) {
-      director.enterBossGlitchReveal();
-    } else {
-      director.enterWolfEnding();
-    }
-    onPhaseEntered();
-  }
-
-  private void updateWolfEnding(boolean clicked) {
-    if (clicked) {
-      director.enterShop();
-      onPhaseEntered();
-    }
   }
 
   private void updateBattleResult(boolean clicked) {
@@ -712,6 +536,7 @@ public final class Chapter1Presenter {
   }
 
   private void onPhaseEntered() {
+    wolfBoss.onPhaseEntered(director.phase());
     if (director.phase() == Chapter1Phase.CUTSCENE) {
       startCutsceneIfNeeded();
     } else if (director.phase() == Chapter1Phase.VN_BATTLE) {
@@ -731,22 +556,10 @@ public final class Chapter1Presenter {
       } else {
         doorLoopPlayer.stop();
       }
-    } else if (director.phase() == Chapter1Phase.BOSS_QUEST_BRIEFING) {
-      questBriefing = new BossQuestBriefingController(selectedBoss);
     } else if (director.phase() == Chapter1Phase.LOOP_SEQUENCE) {
       loopSequence.start(director.loopEyesPrelude());
       eyesEffect.reset(EyesBlinkEffect.Mode.AWAKENING);
       startLoopCutscene(CutsceneId.LOOP_WAKE);
-    } else if (director.phase() == Chapter1Phase.BOSS_ENCOUNTER) {
-      encounter = new BossEncounterController(selectedBoss, director.session());
-    } else if (director.phase() == Chapter1Phase.BOSS_GLITCH_REVEAL) {
-      bossGlitchReveal.reset();
-      battleVictory = true;
-    } else if (director.phase() == Chapter1Phase.BOSS_FINALE) {
-      wolfFinale = new WolfBossFinaleController(director.session());
-      refreshChoiceRects();
-    } else if (director.phase() == Chapter1Phase.WOLF_ENDING) {
-      encounter = null;
     } else if (director.phase() == Chapter1Phase.SHOP) {
       doorLoopPlayer.stop();
       maybeStartDukeDialog();
@@ -886,7 +699,23 @@ public final class Chapter1Presenter {
     refreshChoiceRects();
   }
 
-  private void refreshChoiceRects() {
+  @Override
+  public void setChoiceRects(List<VnChoiceLayout.ChoiceRect> rects) {
+    choiceRects = rects;
+  }
+
+  @Override
+  public void notifyPhaseEntered() {
+    onPhaseEntered();
+  }
+
+  @Override
+  public void setBattleVictory(boolean value) {
+    battleVictory = value;
+  }
+
+  @Override
+  public void refreshChoiceRects() {
     VnSceneState scene = activeScene();
     if (scene == null || !scene.waitingForChoice()) {
       choiceRects = List.of();
