@@ -26,6 +26,15 @@ public final class VnSceneRenderer {
         g, sw, sh, scene.speaker(), scene.body(), new Color(218, 165, 32), 1f);
   }
 
+  /** Эпилог с осколком: воспоминания на весь экран + минимальная полоска диалога. */
+  public static void drawShardEpilogueScene(Graphics2D g, int sw, int sh, VnSceneState scene) {
+    if (scene == null) {
+      return;
+    }
+    DialogBoxRenderer.drawShardEpilogueBar(
+        g, sw, sh, scene.speaker(), scene.body(), 1f);
+  }
+
   public static void drawOverlay(Graphics2D g, int sw, int sh, VnSceneState scene) {
     g.setColor(new Color(0, 0, 0, 140));
     g.fillRect(0, 0, sw, sh);

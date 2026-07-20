@@ -3,6 +3,8 @@ package main.java.com.witcher.ui.chapter1.swing;
 import main.java.com.witcher.chapter1.Chapter1Phase;
 import main.java.com.witcher.ui.chapter1.presenter.Chapter1Presenter;
 import main.java.com.witcher.ui.chapter1.swing.battle.BattleResultView;
+import main.java.com.witcher.chapter1.battle.wolf.WolfBossFinaleController;
+import main.java.com.witcher.ui.chapter1.swing.battle.encounter.EncounterSceneRenderer;
 import main.java.com.witcher.ui.chapter1.swing.battle.map.BossMapView;
 import main.java.com.witcher.ui.chapter1.swing.battle.briefing.BossQuestBriefingView;
 import main.java.com.witcher.ui.chapter1.swing.battle.encounter.BossEncounterView;
@@ -90,7 +92,15 @@ public final class Chapter1SwingView implements Chapter1View {
         try {
           g.setColor(Color.BLACK);
           g.fillRect(0, 0, sw, sh);
-          VnSceneRenderer.drawScene(g, sw, sh, presenter.activeScene());
+          WolfBossFinaleController finale = presenter.wolfFinale();
+          boolean shardEpilogue = finale != null && finale.trueEnding()
+              && finale.step() == WolfBossFinaleController.Step.RESOLVE;
+          if (shardEpilogue) {
+            EncounterSceneRenderer.drawFullBleedMontage(g, sw, sh);
+            VnSceneRenderer.drawShardEpilogueScene(g, sw, sh, presenter.activeScene());
+          } else {
+            VnSceneRenderer.drawScene(g, sw, sh, presenter.activeScene());
+          }
         } finally {
           g.dispose();
         }

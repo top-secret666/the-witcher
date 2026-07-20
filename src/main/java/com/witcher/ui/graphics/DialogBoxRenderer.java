@@ -346,6 +346,56 @@ public final class DialogBoxRenderer {
         disableTextSmoothing(g);
     }
 
+    /**
+     * Полоска внизу без золотой рамки — полупрозрачный чёрный фон, серый текст
+     * (эпилог с осколком перед заставкой).
+     */
+    public static void drawShardEpilogueBar(Graphics2D g, int sw, int sh,
+                                            String speaker, String text, float alpha) {
+        enableTextSmoothing(g);
+        Composite prev = g.getComposite();
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
+
+        int fontSize = Math.max(11, Math.round(sh * 0.034f));
+        int padX = Math.round(sw * 0.06f);
+        int barH = Math.round(sh * 0.30f);
+        int barY = sh - barH;
+
+        g.setColor(new Color(0, 0, 0, 175));
+        g.fillRect(0, barY, sw, barH);
+
+        Font textFont = GameFonts.get().plain(fontSize);
+        g.setFont(textFont);
+        FontMetrics fm = g.getFontMetrics();
+        int lineH = fm.getHeight() + 3;
+        int textMaxW = sw - padX * 2;
+        Color bodyColor = new Color(168, 162, 152);
+        Color nameColor = new Color(190, 185, 175);
+
+        int y = barY + Math.round(barH * 0.28f);
+        if (speaker != null && !speaker.isBlank()) {
+            g.setFont(GameFonts.get().bold(fontSize));
+            g.setColor(nameColor);
+            g.drawString(speaker, padX, y);
+            y += lineH;
+            g.setFont(textFont);
+        }
+
+        g.setColor(bodyColor);
+        for (String rawLine : text.split("\n", -1)) {
+            for (String wl : wrapLine(rawLine, fm, textMaxW)) {
+                if (y > barY + barH - padX) {
+                    break;
+                }
+                g.drawString(wl, padX, y);
+                y += lineH;
+            }
+        }
+
+        g.setComposite(prev);
+        disableTextSmoothing(g);
+    }
+
     public static String getLastVisibleLine(String text, FontMetrics fm, int maxW) {
         String[] lines = text.split("\n", -1);
         String last = lines[lines.length - 1];

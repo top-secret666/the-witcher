@@ -1,9 +1,11 @@
 package main.java.com.witcher.ui.chapter1.swing.battle.encounter;
 
+import main.java.com.witcher.chapter1.assets.Chapter1AssetPaths;
 import main.java.com.witcher.chapter1.battle.encounter.BossEncounterController;
 import main.java.com.witcher.ui.chapter1.swing.Chapter1UiAssets;
 
 import java.awt.AlphaComposite;
+import java.awt.Color;
 import java.awt.Composite;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
@@ -78,6 +80,37 @@ public final class EncounterSceneRenderer {
     }
     drawSharp(g, img, drawX, drawY, drawW, drawH);
     g.setComposite(prev);
+  }
+
+  public static void drawFullBleed(
+      Graphics2D g, int sw, int sh, String imagePath, float alpha) {
+    if (imagePath == null || alpha <= 0.01f) {
+      return;
+    }
+    BufferedImage img = Chapter1UiAssets.encounterSceneImage(imagePath);
+    if (img == null) {
+      return;
+    }
+    float cover = Math.max((float) sw / img.getWidth(), (float) sh / img.getHeight());
+    int drawW = Math.round(img.getWidth() * cover);
+    int drawH = Math.round(img.getHeight() * cover);
+    int drawX = (sw - drawW) / 2;
+    int drawY = (sh - drawH) / 2;
+
+    Composite prev = g.getComposite();
+    if (alpha < 0.999f) {
+      g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
+    }
+    drawSharp(g, img, drawX, drawY, drawW, drawH);
+    g.setComposite(prev);
+  }
+
+  /** Два кадра воспоминаний на весь экран (финал с осколком). */
+  public static void drawFullBleedMontage(Graphics2D g, int sw, int sh) {
+    drawFullBleed(g, sw, sh, Chapter1AssetPaths.MEMORY_ARD_CARRAIG, 0.55f);
+    drawFullBleed(g, sw, sh, Chapter1AssetPaths.MEMORY_KAER_MORHEN, 0.92f);
+    g.setColor(new Color(0, 0, 0, 80));
+    g.fillRect(0, 0, sw, sh);
   }
 
   private static void drawSharp(Graphics2D g, BufferedImage img, int x, int y, int w, int h) {
