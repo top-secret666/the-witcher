@@ -1,5 +1,6 @@
 package main.java.com.witcher.chapter1.battle;
 
+import main.java.com.witcher.chapter1.battle.BossQuestBriefingConstants;
 import main.java.com.witcher.chapter1.Chapter1Session;
 import main.java.com.witcher.chapter1.vn.VnChoice;
 import main.java.com.witcher.chapter1.vn.VnSceneState;
@@ -17,14 +18,14 @@ public final class BossQuestBriefingController {
     TRANSITION
   }
 
-  private static final int MS_PER_TICK = 16;
-  private static final int TICKS_PER_CHAR = 2;
-  private static final int AUTO_DELAY_TICKS = 50;
-  private static final int AUTO_TICKS_PER_CHAR = 1;
-  private static final int DISSOLVE_RAMP_MS = 1100;
-  private static final int TRANSITION_TOTAL_MS = 1350;
-  private static final float SLIDE_SPEED = 0.04f;
-  private static final float ACTIVE_SPEED = 0.06f;
+  private static final int MS_PER_TICK = BossQuestBriefingConstants.MS_PER_TICK;
+  private static final int TICKS_PER_CHAR = BossQuestBriefingConstants.TICKS_PER_CHAR;
+  private static final int AUTO_DELAY_TICKS = BossQuestBriefingConstants.AUTO_DELAY_TICKS;
+  private static final int AUTO_TICKS_PER_CHAR = BossQuestBriefingConstants.AUTO_TICKS_PER_CHAR;
+  private static final int DISSOLVE_RAMP_MS = BossQuestBriefingConstants.DISSOLVE_RAMP_MS;
+  private static final int TRANSITION_TOTAL_MS = BossQuestBriefingConstants.TRANSITION_TOTAL_MS;
+  private static final float SLIDE_SPEED = BossQuestBriefingConstants.SLIDE_SPEED;
+  private static final float ACTIVE_SPEED = BossQuestBriefingConstants.ACTIVE_SPEED;
 
   private final BossEntry boss;
   private final BossQuestBriefingScript.NoticeContent notice;
@@ -197,7 +198,7 @@ public final class BossQuestBriefingController {
 
   public boolean showDialog() {
     return phase == Phase.DIALOG && !dialogFinished && !awaitingChoice
-        && noticeAnimProgress() >= 0.52f;
+        && noticeAnimProgress() >= BossQuestBriefingConstants.DIALOG_REVEAL_PROGRESS;
   }
 
   public boolean waitingForChoice() {
