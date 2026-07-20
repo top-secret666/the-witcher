@@ -53,12 +53,12 @@ public final class WolfEndingView {
   private static void drawBadLoop(Graphics2D g, int sw, int sh) {
     g.setFont(GameFonts.get().uiBold(16));
     g.setColor(new Color(150, 70, 65));
-    drawCentered(g, "ПЕТЛЯ", sw, sh / 2 - 28);
+    drawCentered(g, "ПУСТАЯ ФОРМАЛЬНОСТЬ", sw, sh / 2 - 28);
 
     g.setFont(GameFonts.get().uiPlain(10));
     g.setColor(new Color(170, 150, 130));
-    drawCentered(g, "Вы поверили хозяину лавки.", sw, sh / 2 + 2);
-    drawCentered(g, "Утро начинается снова — с прилавка и улыбки.", sw, sh / 2 + 20);
+    drawCentered(g, "Лес отпустил. Прилавок — нет.", sw, sh / 2 + 2);
+    drawCentered(g, "Герцог снова предлагает «свежий товар».", sw, sh / 2 + 20);
   }
 
   private static void drawCentered(Graphics2D g, String line, int sw, int y) {

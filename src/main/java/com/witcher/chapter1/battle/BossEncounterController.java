@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * После loop_wake: тьма → веки → VN с выбором и ветвлением (Волк).
+ * После loop_wake: лес, только Волк — выбор №2, затем финал с выбором №3.
  */
 public final class BossEncounterController {
 
@@ -21,10 +21,10 @@ public final class BossEncounterController {
   private static final int AUTO_TICKS_PER_CHAR = 1;
 
   private final BossEntry boss;
-  private final List<BossEncounterScript.DialogEntry> entries =
-      new ArrayList<>(WolfBossEncounterScript.introLines());
+  private final List<BossEncounterScript.DialogEntry> entries;
 
-  private WolfBossEncounterScript.Branch branch = WolfBossEncounterScript.Branch.NONE;
+  private WolfBossEncounterScript.MemoryBranch memoryBranch =
+      WolfBossEncounterScript.MemoryBranch.NONE;
 
   private int ticks;
   private boolean dialogFinished;
@@ -35,7 +35,7 @@ public final class BossEncounterController {
   private boolean waitingForAdvance;
   private boolean vnStarted;
 
-  private boolean awaitingFirstChoice;
+  private boolean awaitingChoice;
   private VnSceneState choiceScene;
 
   private boolean historyOpen;
@@ -48,20 +48,17 @@ public final class BossEncounterController {
   private int layoutSw = 480;
   private int layoutSh = 360;
 
-  public BossEncounterController(BossEntry boss) {
+  public BossEncounterController(BossEntry boss, Chapter1Session session) {
     this.boss = boss != null ? boss : BossCatalog.byId("duke");
+    this.entries = new ArrayList<>(WolfBossEncounterScript.introLines(session));
   }
 
   public BossEntry boss() {
     return boss;
   }
 
-  public WolfBossEncounterScript.Branch branch() {
-    return branch;
-  }
-
-  public boolean choseListenPath() {
-    return branch == WolfBossEncounterScript.Branch.LISTEN;
+  public WolfBossEncounterScript.MemoryBranch memoryBranch() {
+    return memoryBranch;
   }
 
   public int elapsedMs() {
@@ -82,7 +79,7 @@ public final class BossEncounterController {
     }
     refreshButtonLayout();
 
-    if (awaitingFirstChoice) {
+    if (awaitingChoice) {
       return;
     }
 
@@ -164,7 +161,7 @@ public final class BossEncounterController {
   }
 
   public void choose(int index, Chapter1Session session) {
-    if (!awaitingFirstChoice || choiceScene == null || !choiceScene.waitingForChoice()) {
+    if (!awaitingChoice || choiceScene == null || !choiceScene.waitingForChoice()) {
       return;
     }
     choiceScene.select(index);
@@ -177,17 +174,17 @@ public final class BossEncounterController {
         session.addTrust(choice.trustDelta());
       }
     }
-    branch = index == 0
-        ? WolfBossEncounterScript.Branch.HURRY
-        : WolfBossEncounterScript.Branch.LISTEN;
-    entries.addAll(WolfBossEncounterScript.continuation(branch));
-    awaitingFirstChoice = false;
+    memoryBranch = index == 0
+        ? WolfBossEncounterScript.MemoryBranch.DISMISS
+        : WolfBossEncounterScript.MemoryBranch.ACKNOWLEDGE;
+    entries.addAll(WolfBossEncounterScript.continuation(memoryBranch));
+    awaitingChoice = false;
     choiceScene = null;
     resetEntry(WolfBossEncounterScript.CHOICE_GATE_INDEX + 1);
   }
 
   public boolean waitingForChoice() {
-    return awaitingFirstChoice && choiceScene != null && choiceScene.waitingForChoice();
+    return awaitingChoice && choiceScene != null && choiceScene.waitingForChoice();
   }
 
   public VnSceneState choiceScene() {
@@ -215,7 +212,7 @@ public final class BossEncounterController {
   }
 
   public boolean showDialog() {
-    return eyesFullyOpen() && vnStarted && !dialogFinished && !awaitingFirstChoice;
+    return eyesFullyOpen() && vnStarted && !dialogFinished && !awaitingChoice;
   }
 
   public BossEncounterScript.DialogEntry currentEntry() {
@@ -267,7 +264,7 @@ public final class BossEncounterController {
   }
 
   public boolean backEnabled() {
-    return currentEntry > 0 && !awaitingFirstChoice;
+    return currentEntry > 0 && !awaitingChoice;
   }
 
   public IntroVnUi.ButtonLayout buttons() {
@@ -280,8 +277,6 @@ public final class BossEncounterController {
     BossEncounterScript.DialogEntry entry = currentEntry();
     if (entry != null) {
       expr = entry.expression();
-    } else if (eyesFullyOpen()) {
-      expr = BossEncounterScript.Expression.MAP;
     }
     return BossEncounterScript.spritePathFor(expr);
   }
@@ -315,9 +310,9 @@ public final class BossEncounterController {
 
   private void advanceDialogueEntry() {
     if (currentEntry == WolfBossEncounterScript.CHOICE_GATE_INDEX
-        && branch == WolfBossEncounterScript.Branch.NONE) {
-      awaitingFirstChoice = true;
-      choiceScene = WolfBossEncounterScript.firstChoiceScene();
+        && memoryBranch == WolfBossEncounterScript.MemoryBranch.NONE) {
+      awaitingChoice = true;
+      choiceScene = WolfBossEncounterScript.memoryChoiceScene();
       waitingForAdvance = false;
       return;
     }
@@ -329,7 +324,7 @@ public final class BossEncounterController {
   }
 
   private void goToPreviousEntry() {
-    if (currentEntry <= 0 || awaitingFirstChoice) {
+    if (currentEntry <= 0 || awaitingChoice) {
       return;
     }
     resetEntry(currentEntry - 1);

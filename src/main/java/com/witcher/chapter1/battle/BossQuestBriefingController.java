@@ -1,5 +1,8 @@
 package main.java.com.witcher.chapter1.battle;
 
+import main.java.com.witcher.chapter1.Chapter1Session;
+import main.java.com.witcher.chapter1.vn.VnChoice;
+import main.java.com.witcher.chapter1.vn.VnSceneState;
 import main.java.com.witcher.ui.intro.IntroVnUi;
 import main.java.com.witcher.ui.shop.view.ShopViewConstants;
 
@@ -42,6 +45,9 @@ public final class BossQuestBriefingController {
   private int typeTickCounter;
   private boolean waitingForAdvance;
   private boolean dialogFinished;
+
+  private boolean awaitingChoice;
+  private VnSceneState choiceScene;
 
   private boolean historyOpen;
   private boolean autoMode;
@@ -91,6 +97,10 @@ public final class BossQuestBriefingController {
       return;
     }
     refreshButtonLayout();
+
+    if (awaitingChoice) {
+      return;
+    }
 
     if (historyOpen) {
       if (clicked) {
@@ -186,7 +196,39 @@ public final class BossQuestBriefingController {
   }
 
   public boolean showDialog() {
-    return phase == Phase.DIALOG && !dialogFinished && noticeAnimProgress() >= 0.52f;
+    return phase == Phase.DIALOG && !dialogFinished && !awaitingChoice
+        && noticeAnimProgress() >= 0.52f;
+  }
+
+  public boolean waitingForChoice() {
+    return phase == Phase.DIALOG && awaitingChoice
+        && choiceScene != null && choiceScene.waitingForChoice();
+  }
+
+  public VnSceneState choiceScene() {
+    return choiceScene;
+  }
+
+  public void choose(int index, Chapter1Session session) {
+    if (!waitingForChoice() || choiceScene == null) {
+      return;
+    }
+    choiceScene.select(index);
+    VnChoice choice = choiceScene.selectedChoice();
+    if (choice != null && session != null) {
+      if (choice.suspicionDelta() > 0) {
+        session.addSuspicion(choice.suspicionDelta());
+      }
+      if (choice.trustDelta() > 0) {
+        session.addTrust(choice.trustDelta());
+      }
+      session.setWolfEntryMood(index == 0
+          ? Chapter1Session.WolfEntryMood.RELUCTANT
+          : Chapter1Session.WolfEntryMood.CURIOUS);
+    }
+    awaitingChoice = false;
+    choiceScene = null;
+    resetLine(BossQuestBriefingScript.CHOICE_GATE_INDEX + 1);
   }
 
   public boolean showNotice() {
@@ -262,7 +304,7 @@ public final class BossQuestBriefingController {
   }
 
   public boolean backEnabled() {
-    return currentLine > 0;
+    return currentLine > 0 && !awaitingChoice;
   }
 
   public IntroVnUi.ButtonLayout buttons() {
@@ -294,6 +336,12 @@ public final class BossQuestBriefingController {
   }
 
   private void advanceLine() {
+    if (currentLine == BossQuestBriefingScript.CHOICE_GATE_INDEX && !awaitingChoice) {
+      awaitingChoice = true;
+      choiceScene = BossQuestBriefingScript.entryChoiceScene();
+      waitingForAdvance = false;
+      return;
+    }
     if (currentLine >= lines.size() - 1) {
       beginTransition();
       return;

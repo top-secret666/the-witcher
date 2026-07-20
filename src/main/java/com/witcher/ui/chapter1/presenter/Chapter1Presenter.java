@@ -176,6 +176,10 @@ public final class Chapter1Presenter {
   }
 
   public VnSceneState activeScene() {
+    if (director.phase() == Chapter1Phase.BOSS_QUEST_BRIEFING
+        && questBriefing != null && questBriefing.waitingForChoice()) {
+      return questBriefing.choiceScene();
+    }
     if (director.phase() == Chapter1Phase.BOSS_ENCOUNTER
         && encounter != null && encounter.waitingForChoice()) {
       return encounter.choiceScene();
@@ -266,6 +270,13 @@ public final class Chapter1Presenter {
     }
     if (director.phase() == Chapter1Phase.BOSS_QUEST_BRIEFING && questBriefing != null) {
       if (questBriefing.inTransition()) {
+        return;
+      }
+      if (questBriefing.waitingForChoice()) {
+        int choice = keyToChoiceIndex(code);
+        if (choice >= 0) {
+          applyBriefingChoice(choice);
+        }
         return;
       }
       if (code == KeyEvent.VK_ENTER || code == KeyEvent.VK_SPACE) {
@@ -469,7 +480,29 @@ public final class Chapter1Presenter {
       return;
     }
 
+    if (questBriefing.waitingForChoice()) {
+      refreshChoiceRects();
+      if (clicked) {
+        int index = VnChoiceLayout.hitIndex(choiceRects, mouseX, mouseY);
+        if (index >= 0) {
+          applyBriefingChoice(index);
+        }
+      }
+      return;
+    }
+
     questBriefing.updateDialog(mouseX, mouseY, clicked, wheelNotches, false);
+    if (questBriefing.waitingForChoice()) {
+      refreshChoiceRects();
+    }
+  }
+
+  private void applyBriefingChoice(int index) {
+    if (questBriefing == null) {
+      return;
+    }
+    questBriefing.choose(index, director.session());
+    choiceRects = List.of();
   }
 
   private void updateLoopSequence() {
@@ -497,7 +530,7 @@ public final class Chapter1Presenter {
 
   private void updateBossEncounter(int mouseX, int mouseY, boolean clicked, int wheelNotches) {
     if (encounter == null) {
-      encounter = new BossEncounterController(selectedBoss);
+      encounter = new BossEncounterController(selectedBoss, director.session());
     }
     encounter.setLayoutSize(Chapter1Layout.VIRTUAL_W, Chapter1Layout.VIRTUAL_H);
     encounter.tick();
@@ -521,8 +554,7 @@ public final class Chapter1Presenter {
     }
 
     if (encounter.isDialogComplete()) {
-      battleVictory = encounter.choseListenPath();
-      if (encounter.choseListenPath()) {
+      if (director.session().suspicionDominates()) {
         director.enterBossGlitchReveal();
       } else {
         director.enterBossFinale();
@@ -688,7 +720,7 @@ public final class Chapter1Presenter {
       eyesEffect.reset(EyesBlinkEffect.Mode.AWAKENING);
       startLoopCutscene(CutsceneId.LOOP_WAKE);
     } else if (director.phase() == Chapter1Phase.BOSS_ENCOUNTER) {
-      encounter = new BossEncounterController(selectedBoss);
+      encounter = new BossEncounterController(selectedBoss, director.session());
     } else if (director.phase() == Chapter1Phase.BOSS_GLITCH_REVEAL) {
       bossGlitchReveal.reset();
       battleVictory = true;

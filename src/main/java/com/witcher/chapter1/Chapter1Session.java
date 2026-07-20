@@ -32,6 +32,13 @@ public final class Chapter1Session {
   private boolean battleMapPending;
   private boolean wolfBossResolved;
   private boolean wolfTrueEndingSeen;
+  private WolfEntryMood wolfEntryMood = WolfEntryMood.NONE;
+
+  public enum WolfEntryMood {
+    NONE,
+    RELUCTANT,
+    CURIOUS
+  }
 
   public static Chapter1Session newGame() {
     return new Chapter1Session();
@@ -131,6 +138,14 @@ public final class Chapter1Session {
   public void markWolfBossResolved(boolean trueEnding) {
     wolfBossResolved = true;
     wolfTrueEndingSeen = trueEnding;
+  }
+
+  public WolfEntryMood wolfEntryMood() {
+    return wolfEntryMood;
+  }
+
+  public void setWolfEntryMood(WolfEntryMood mood) {
+    wolfEntryMood = mood != null ? mood : WolfEntryMood.NONE;
   }
 
   public void addPrison(int amount) {

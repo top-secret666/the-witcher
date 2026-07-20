@@ -5,18 +5,16 @@ import main.java.com.witcher.chapter1.shop.BossMemoryFragments;
 import main.java.com.witcher.chapter1.vn.VnChoice;
 import main.java.com.witcher.chapter1.vn.VnSceneState;
 
-/**
- * Финальная VN после энкоунтера: прелюдия → выбор №2 → исход.
- */
+/** Финальная VN: выбор №3 → «Тогда покажи» → исход. */
 public final class WolfBossFinaleController {
 
   public enum Step {
-    PRELUDE, WOLF, CHOICE, RESOLVE, DONE
+    CHOICE, CLASH, RESOLVE, DONE
   }
 
   private final Chapter1Session session;
-  private Step step = Step.PRELUDE;
-  private VnSceneState scene = WolfBossFinaleScript.prelude();
+  private Step step = Step.CHOICE;
+  private VnSceneState scene = WolfBossFinaleScript.finalChoice();
   private boolean trueEnding;
 
   public WolfBossFinaleController(Chapter1Session session) {
@@ -43,17 +41,15 @@ public final class WolfBossFinaleController {
     if (step == Step.DONE || scene.waitingForChoice()) {
       return;
     }
-    switch (step) {
-      case PRELUDE -> {
-        step = Step.WOLF;
-        scene = WolfBossFinaleScript.wolfPrompt();
-      }
-      case WOLF -> {
-        step = Step.CHOICE;
-        scene = WolfBossFinaleScript.finalChoice();
-      }
-      case RESOLVE -> step = Step.DONE;
-      default -> { }
+    if (step == Step.CLASH) {
+      step = Step.RESOLVE;
+      scene = trueEnding
+          ? WolfBossFinaleScript.trueEndingLine(BossMemoryFragments.wolfFragmentCode())
+          : WolfBossFinaleScript.badEndingLine();
+      return;
+    }
+    if (step == Step.RESOLVE) {
+      step = Step.DONE;
     }
   }
 
@@ -72,12 +68,10 @@ public final class WolfBossFinaleController {
       }
     }
     trueEnding = session.suspicionDominates();
-    step = Step.RESOLVE;
+    step = Step.CLASH;
+    scene = WolfBossFinaleScript.wolfClashLine();
     if (trueEnding) {
       BossMemoryFragments.grantWolfShard(session);
-      scene = WolfBossFinaleScript.trueEndingLine(BossMemoryFragments.wolfFragmentCode());
-    } else {
-      scene = WolfBossFinaleScript.badEndingLine();
     }
   }
 }

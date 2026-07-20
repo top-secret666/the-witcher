@@ -165,7 +165,7 @@ public final class Chapter1SwingView implements Chapter1View {
       presenter.shopScreen().renderTextOverlay(g, mouseX, mouseY);
     }
     if (presenter.hasActiveChoices()) {
-      if (phase == Chapter1Phase.BOSS_ENCOUNTER) {
+      if (phase == Chapter1Phase.BOSS_QUEST_BRIEFING || phase == Chapter1Phase.BOSS_ENCOUNTER) {
         VnSceneRenderer.drawOverlay(g, sw, sh, presenter.activeScene());
       }
       VnSceneRenderer.drawChoices(g, presenter.activeScene(), presenter.choiceRects());
