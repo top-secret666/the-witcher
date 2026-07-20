@@ -1,4 +1,4 @@
-package main.java.com.witcher.ui.chapter1.swing.battle;
+package main.java.com.witcher.ui.chapter1.swing.battle.map;
 
 import main.java.com.witcher.chapter1.battle.BossCatalog;
 import main.java.com.witcher.chapter1.battle.BossEntry;
