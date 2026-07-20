@@ -3,6 +3,7 @@ package main.java.com.witcher.ui.chapter1.swing.battle.briefing;
 import main.java.com.witcher.chapter1.battle.briefing.BossQuestBriefingScript;
 import main.java.com.witcher.ui.chapter1.swing.Chapter1UiAssets;
 import main.java.com.witcher.ui.chapter1.swing.ScaledImageCache;
+import main.java.com.witcher.ui.graphics.DialogBoxRenderer;
 
 import java.awt.AlphaComposite;
 import java.awt.Color;
@@ -35,20 +36,27 @@ public final class QuestNoticeRenderer {
         ? src.getWidth() / (float) src.getHeight()
         : 0.72f;
 
-    int h = Math.round(sh * 0.74f);
-    int w = Math.round(h * aspect);
-    int maxW = Math.round(sw * 0.56f);
+    DialogBoxRenderer.Layout dialog = DialogBoxRenderer.computeLayout(sw, sh);
+    int reserveBottom = sh - dialog.boxY + Math.round(sh * 0.07f);
+
+    int maxW = Math.round(sw * 0.74f);
+    int maxH = sh - reserveBottom - Math.round(sh * 0.02f);
+    int h = Math.min(Math.round(sh * 0.62f), maxH);
+    int w = Math.round(h * aspect * 1.12f);
     if (w > maxW) {
       w = maxW;
-      h = Math.round(w / aspect);
+      h = Math.round(w / (aspect * 1.12f));
     }
 
     int x = (sw - w) / 2;
-    int y = Math.round(sh * 0.04f);
+    int y = Math.max(Math.round(sh * 0.015f), reserveBottom > 0 ? 0 : Math.round(sh * 0.02f));
+    if (y + h > sh - reserveBottom) {
+      y = Math.max(Math.round(sh * 0.01f), sh - reserveBottom - h);
+    }
 
-    int padX = Math.round(w * 0.12f);
-    int padTop = Math.round(h * 0.13f);
-    int padBottom = Math.round(h * 0.26f);
+    int padX = Math.round(w * 0.10f);
+    int padTop = Math.round(h * 0.11f);
+    int padBottom = Math.round(h * 0.22f);
     int textX = x + padX;
     int textY = y + padTop;
     int textMaxW = w - padX * 2;
@@ -68,6 +76,7 @@ public final class QuestNoticeRenderer {
     }
 
     Layout target = layout(sw, sh);
+    Layout textLayout = layoutForAnim(anim, target);
     Composite prev = g.getComposite();
 
     AffineTransform saved = g.getTransform();
@@ -82,11 +91,14 @@ public final class QuestNoticeRenderer {
     g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, Math.min(1f, anim.paperAlpha)));
     BufferedImage asset = Chapter1UiAssets.bossQuestNotice();
     if (asset != null && anim.w > 0 && anim.h > 0) {
-      BufferedImage scaled = ScaledImageCache.get(asset, anim.w, anim.h);
+      float widthScale = 1.12f;
+      int drawW = Math.round(anim.w * widthScale);
+      int drawX = anim.x - (drawW - anim.w) / 2;
+      BufferedImage scaled = ScaledImageCache.get(asset, drawW, anim.h);
       if (scaled != null) {
         Object interp = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
         g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
-        g.drawImage(scaled, anim.x, anim.y, null);
+        g.drawImage(scaled, drawX, anim.y, null);
         if (interp != null) {
           g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, interp);
         }
@@ -96,10 +108,28 @@ public final class QuestNoticeRenderer {
 
     if (anim.textAlpha > 0.02f) {
       g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, Math.min(1f, anim.textAlpha)));
-      drawNoticeText(g, target, notice);
+      drawNoticeText(g, textLayout, notice);
     }
 
     g.setComposite(prev);
+  }
+
+  /** Текстовая зона следует за текущим размером/позицией листа (анимация открытия). */
+  private static Layout layoutForAnim(QuestNoticeAnimator anim, Layout target) {
+    if (anim == null || (Math.abs(anim.w - target.w()) < 2 && Math.abs(anim.h - target.h()) < 2)) {
+      return target;
+    }
+    float sx = anim.w / (float) Math.max(1, target.w());
+    float sy = anim.h / (float) Math.max(1, target.h());
+    int padXRel = target.textX() - target.x();
+    int padTop = target.textY() - target.y();
+    int padBottom = target.y() + target.h() - (target.textY() + target.textMaxH());
+    return new Layout(
+        anim.x, anim.y, anim.w, anim.h,
+        anim.x + Math.round(padXRel * sx),
+        anim.y + Math.round(padTop * sy),
+        Math.round(target.textMaxW() * sx),
+        Math.round(target.textMaxH() * sy));
   }
 
   private static void drawNoticeText(

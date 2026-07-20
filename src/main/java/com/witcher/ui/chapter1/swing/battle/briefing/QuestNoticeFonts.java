@@ -4,6 +4,7 @@ import main.java.com.witcher.ui.graphics.GameFonts;
 
 import java.awt.Font;
 import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.GraphicsEnvironment;
 import java.io.InputStream;
 import java.util.HashMap;
@@ -44,7 +45,10 @@ public final class QuestNoticeFonts {
   }
 
   public static void applyInkHints(Graphics2D g) {
-    GameFonts.applyGothicHints(g);
+    g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+    g.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
+    g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
+    g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
   }
 
   private static Font derive(int size, int style) {
