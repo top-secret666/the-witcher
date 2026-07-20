@@ -4,6 +4,8 @@ import main.java.com.witcher.chapter1.battle.BossQuestBriefingScript;
 import main.java.com.witcher.ui.chapter1.swing.Chapter1UiAssets;
 import main.java.com.witcher.ui.chapter1.swing.ScaledImageCache;
 import main.java.com.witcher.ui.graphics.GameFonts;
+import main.java.com.witcher.ui.shop.view.ShopLayout;
+import main.java.com.witcher.ui.shop.view.ShopViewConstants;
 
 import java.awt.AlphaComposite;
 import java.awt.Color;
@@ -16,7 +18,7 @@ import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
 
-/** Лист заказа с доски — PNG-ассет или процедурный пергамент. */
+/** Текст контракта поверх центральной {@code shop_catalog_panel}. */
 public final class QuestNoticeRenderer {
 
   private QuestNoticeRenderer() {
@@ -24,45 +26,37 @@ public final class QuestNoticeRenderer {
 
   public static void draw(
       Graphics2D g,
-      int sw,
-      int sh,
+      ShopLayout layout,
       BossQuestBriefingScript.NoticeContent notice,
       float alpha) {
-    if (notice == null || alpha <= 0.01f) {
+    if (notice == null || layout == null || alpha <= 0.01f) {
       return;
     }
-    int panelW = Math.round(sw * 0.42f);
-    int panelH = Math.round(sh * 0.72f);
-    int x = Math.round(sw * 0.06f);
-    int y = Math.round(sh * 0.08f);
+
+    int panelX = layout.panelX;
+    int panelY = layout.panelY;
+    int panelW = layout.panelW;
+    int panelH = layout.panelH;
+    int insetX = ShopViewConstants.catalogFrameInsetX(panelW);
+    int insetTop = ShopViewConstants.catalogListTopInset(panelH);
+    int innerX = panelX + insetX;
+    int innerY = panelY + insetTop;
+    int innerW = ShopViewConstants.catalogRowContentW(panelW);
+    int innerH = panelH - insetTop - Math.round(panelH * 0.14f);
 
     Composite prev = g.getComposite();
     g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, Math.min(1f, alpha)));
 
     BufferedImage asset = Chapter1UiAssets.bossQuestNotice();
     if (asset != null) {
-      BufferedImage scaled = ScaledImageCache.get(asset, panelW, panelH);
+      BufferedImage scaled = ScaledImageCache.get(asset, innerW, innerH);
       if (scaled != null) {
-        g.drawImage(scaled, x, y, null);
+        g.drawImage(scaled, innerX, innerY, null);
       }
-    } else {
-      drawProceduralParchment(g, x, y, panelW, panelH);
     }
-    drawNoticeText(g, x, y, panelW, panelH, notice);
-    g.setComposite(prev);
-  }
 
-  private static void drawProceduralParchment(Graphics2D g, int x, int y, int w, int h) {
-    g.setColor(new Color(214, 196, 158));
-    g.fillRoundRect(x, y, w, h, 10, 10);
-    g.setColor(new Color(120, 88, 48));
-    g.drawRoundRect(x, y, w, h, 10, 10);
-    g.setColor(new Color(0, 0, 0, 35));
-    g.drawRoundRect(x + 6, y + 6, w - 12, h - 12, 8, 8);
-    for (int i = 0; i < 6; i++) {
-      g.setColor(new Color(160, 130, 90, 40 + i * 8));
-      g.drawLine(x + 12, y + 18 + i * 9, x + w - 12, y + 20 + i * 9);
-    }
+    drawNoticeText(g, innerX, innerY, innerW, innerH, notice);
+    g.setComposite(prev);
   }
 
   private static void drawNoticeText(
@@ -73,33 +67,33 @@ public final class QuestNoticeRenderer {
       int h,
       BossQuestBriefingScript.NoticeContent notice) {
     g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-    int pad = Math.max(10, w / 14);
+    int pad = Math.max(8, w / 18);
     int tx = x + pad;
     int maxW = w - pad * 2;
-    int cy = y + pad + 8;
+    int cy = y + pad + 6;
 
-    Font headerFont = GameFonts.get().bold(Math.max(11, h / 22));
-    Font titleFont = GameFonts.get().bold(Math.max(13, h / 16));
-    Font bodyFont = GameFonts.get().plain(Math.max(9, h / 28));
-    Font sealFont = GameFonts.get().italic(Math.max(8, h / 32));
+    Font headerFont = GameFonts.get().bold(Math.max(11, h / 24));
+    Font titleFont = GameFonts.get().bold(Math.max(13, h / 18));
+    Font bodyFont = GameFonts.get().plain(Math.max(9, h / 30));
+    Font sealFont = GameFonts.get().italic(Math.max(8, h / 34));
 
     g.setFont(headerFont);
-    g.setColor(new Color(90, 30, 20));
-    cy = drawWrapped(g, notice.header(), tx, cy, maxW, headerFont) + 6;
+    g.setColor(new Color(210, 185, 120));
+    cy = drawWrapped(g, notice.header(), tx, cy, maxW, headerFont) + 4;
 
     g.setFont(titleFont);
-    g.setColor(new Color(40, 20, 10));
+    g.setColor(new Color(235, 220, 170));
     cy = drawWrapped(g, notice.targetName(), tx, cy, maxW, titleFont) + 4;
 
     g.setFont(bodyFont);
-    g.setColor(new Color(70, 45, 25));
-    cy = drawWrapped(g, notice.threatLevel(), tx, cy, maxW, bodyFont) + 8;
-    cy = drawWrapped(g, notice.body(), tx, cy, maxW, bodyFont) + 10;
-    cy = drawWrapped(g, notice.reward(), tx, cy, maxW, bodyFont) + 12;
+    g.setColor(new Color(195, 175, 135));
+    cy = drawWrapped(g, notice.threatLevel(), tx, cy, maxW, bodyFont) + 6;
+    cy = drawWrapped(g, notice.body(), tx, cy, maxW, bodyFont) + 8;
+    cy = drawWrapped(g, notice.reward(), tx, cy, maxW, bodyFont) + 10;
 
     g.setFont(sealFont);
-    g.setColor(new Color(110, 70, 35));
-    drawWrapped(g, notice.seal(), tx, y + h - pad - 16, maxW, sealFont);
+    g.setColor(new Color(165, 140, 95));
+    drawWrapped(g, notice.seal(), tx, y + h - pad - 14, maxW, sealFont);
     g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
   }
 

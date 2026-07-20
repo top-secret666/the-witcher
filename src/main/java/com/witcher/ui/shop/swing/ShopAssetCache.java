@@ -612,7 +612,28 @@ public final class ShopAssetCache implements ShopRuntimeAssets, ShopOverlayAsset
         return this.weaponIcon;
     }
 
-    public BufferedImage setsIcon() {
-        return this.setsIcon;
-    }
+  public BufferedImage setsIcon() {
+    return this.setsIcon;
+  }
+
+  /** Фон лавки для брифинга перед боссом. */
+  public BufferedImage merchantBackground() {
+    return merchantBgScaled;
+  }
+
+  public BufferedImage geraltPortrait() {
+    return geraltScaled;
+  }
+
+  public BufferedImage dukePortrait() {
+    return dukeScaled;
+  }
+
+  public BufferedImage hudBarImage() {
+    return hudBar;
+  }
+
+  public BufferedImage catalogPanel() {
+    return catalogPanelScaled;
+  }
 }

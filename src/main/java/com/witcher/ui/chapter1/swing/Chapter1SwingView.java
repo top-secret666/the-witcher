@@ -61,10 +61,10 @@ public final class Chapter1SwingView implements Chapter1View {
         }
       }
       case BOSS_QUEST_BRIEFING -> {
-        presenter.shopScreen().render(screen, mouseX, mouseY);
         Graphics2D g = screen.createGraphics();
         try {
-          BossQuestBriefingView.draw(g, sw, sh, presenter.questBriefing(), mouseX, mouseY);
+          var shopLayout = presenter.shopScreen().presenter().createLayout();
+          BossQuestBriefingView.draw(g, sw, sh, presenter.questBriefing(), shopLayout, mouseX, mouseY);
         } finally {
           g.dispose();
         }
