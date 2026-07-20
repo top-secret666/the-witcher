@@ -5,15 +5,9 @@ import main.java.com.witcher.chapter1.battle.briefing.BossQuestBriefingScript;
 import main.java.com.witcher.ui.chapter1.swing.battle.briefing.BossQuestBriefingBackdrop;
 import main.java.com.witcher.ui.chapter1.swing.battle.briefing.QuestNoticeAnimator;
 import main.java.com.witcher.ui.chapter1.swing.battle.briefing.QuestNoticeRenderer;
-import main.java.com.witcher.ui.graphics.DialogBoxRenderer;
-import main.java.com.witcher.ui.graphics.GameFonts;
 import main.java.com.witcher.ui.shop.view.ShopLayout;
 
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.FontMetrics;
 import java.awt.Graphics2D;
-import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 
 /** Брифинг в лавке: панель заказа + диалог + чёрный pixel-dissolve. */
@@ -69,36 +63,9 @@ public final class BossQuestBriefingView {
     if (line == null) {
       return;
     }
-    DialogBoxRenderer.Layout layout = DialogBoxRenderer.computeLayout(sw, sh);
-    Color speakerColor = line.speaker() == null
-        ? DialogBoxRenderer.NARRATOR_COLOR
-        : new Color((line.speakerColorRgb() >> 16) & 0xff,
-            (line.speakerColorRgb() >> 8) & 0xff,
-            line.speakerColorRgb() & 0xff);
-
-    String visibleText = ctrl.visibleText();
-    int lineY = DialogBoxRenderer.drawTypewriterText(
-        g, line.speaker(), visibleText, speakerColor, layout, 1f);
-
-    if (!ctrl.waitingForAdvance() && (ctrl.tickCount() / 8) % 2 == 0) {
-      g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-      Font textFont = GameFonts.get().plain(layout.fontSize);
-      g.setFont(textFont);
-      FontMetrics fm = g.getFontMetrics();
-      int cursorX = layout.textX + fm.stringWidth(
-          DialogBoxRenderer.getLastVisibleLine(visibleText, fm, layout.textMaxW));
-      g.setColor(speakerColor);
-      g.fillRect(cursorX + 2, lineY - fm.getAscent() + 2,
-          Math.max(2, layout.fontSize / 5), fm.getAscent());
-      g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
-    }
-
-    if (ctrl.waitingForAdvance() && !ctrl.autoMode()
-        && (ctrl.tickCount() / 15) % 2 == 0) {
-      DialogBoxRenderer.drawHint(g, "\u25B6 Enter", layout, layout.fontSize, 1f);
-    } else if (ctrl.waitingForAdvance() && ctrl.autoMode()
-        && (ctrl.tickCount() / 12) % 2 == 0) {
-      DialogBoxRenderer.drawHint(g, "Авто \u25B6", layout, layout.fontSize, 0.85f);
-    }
+    BossVnDialogBoxRenderer.draw(
+        g, sw, sh,
+        line.speaker(), line.speakerColorRgb(), ctrl.visibleText(),
+        ctrl.tickCount(), ctrl.waitingForAdvance(), ctrl.autoMode());
   }
 }
