@@ -31,9 +31,7 @@ public final class BossEncounterController {
   private boolean dialogFinished;
 
   private int currentEntry;
-  private int charIndex;
-  private int typeTickCounter;
-  private boolean waitingForAdvance;
+  private final BossVnTypingState typing = new BossVnTypingState();
   private boolean vnStarted;
 
   private boolean awaitingChoice;
@@ -42,7 +40,6 @@ public final class BossEncounterController {
   private boolean historyOpen;
   private boolean autoMode;
   private int historyScroll;
-  private int autoWaitTicks;
   private boolean historyCloseHovered;
 
   private final IntroVnUi.ButtonLayout buttons = new IntroVnUi.ButtonLayout();
@@ -113,7 +110,7 @@ public final class BossEncounterController {
       }
       if (buttons.autoButton.contains(mouseX, mouseY)) {
         autoMode = !autoMode;
-        autoWaitTicks = 0;
+        typing.clearAutoWait();
         return;
       }
       if (IntroVnUi.isVnButtonRowClick(buttons, mouseX, mouseY)) {
@@ -125,39 +122,11 @@ public final class BossEncounterController {
     BossEncounterScript.DialogEntry entry = entries.get(currentEntry);
     int totalChars = entry.text().length();
 
-    if (waitingForAdvance) {
-      if (advance) {
-        advanceDialogueEntry();
-      } else if (autoMode) {
-        autoWaitTicks++;
-        if (autoWaitTicks >= AUTO_DELAY_TICKS) {
-          advanceDialogueEntry();
-        }
-      }
-    } else if (autoMode) {
-      typeTickCounter++;
-      if (typeTickCounter >= AUTO_TICKS_PER_CHAR) {
-        typeTickCounter = 0;
-        charIndex++;
-        if (charIndex >= totalChars) {
-          charIndex = totalChars;
-          waitingForAdvance = true;
-          autoWaitTicks = 0;
-        }
-      }
-    } else if (advance && charIndex < totalChars) {
-      charIndex = totalChars;
-      waitingForAdvance = true;
-    } else {
-      typeTickCounter++;
-      if (typeTickCounter >= TICKS_PER_CHAR) {
-        typeTickCounter = 0;
-        charIndex++;
-        if (charIndex >= totalChars) {
-          charIndex = totalChars;
-          waitingForAdvance = true;
-        }
-      }
+    if (BossVnTypingEngine.tick(
+            typing, totalChars, advance, autoMode,
+            TICKS_PER_CHAR, AUTO_TICKS_PER_CHAR, AUTO_DELAY_TICKS)
+        == BossVnTypingEngine.TickResult.ADVANCE_LINE) {
+      advanceDialogueEntry();
     }
   }
 
@@ -228,12 +197,11 @@ public final class BossEncounterController {
     if (entry == null) {
       return "";
     }
-    int end = Math.min(charIndex, entry.text().length());
-    return entry.text().substring(0, end);
+    return typing.visibleText(entry.text());
   }
 
   public int charIndex() {
-    return charIndex;
+    return typing.charIndex();
   }
 
   public int tickCount() {
@@ -241,7 +209,7 @@ public final class BossEncounterController {
   }
 
   public boolean waitingForAdvance() {
-    return waitingForAdvance;
+    return typing.waitingForAdvance();
   }
 
   public boolean autoMode() {
@@ -314,7 +282,7 @@ public final class BossEncounterController {
         && memoryBranch == WolfBossEncounterScript.MemoryBranch.NONE) {
       awaitingChoice = true;
       choiceScene = WolfBossEncounterScript.memoryChoiceScene();
-      waitingForAdvance = false;
+      typing.clearWaitingForAdvance();
       return;
     }
     if (currentEntry >= entries.size() - 1) {
@@ -333,10 +301,7 @@ public final class BossEncounterController {
 
   private void resetEntry(int index) {
     currentEntry = Math.max(0, Math.min(index, entries.size() - 1));
-    charIndex = 0;
-    typeTickCounter = 0;
-    waitingForAdvance = false;
-    autoWaitTicks = 0;
+    typing.reset();
     historyOpen = false;
   }
 

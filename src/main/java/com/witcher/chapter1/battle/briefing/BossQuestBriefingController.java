@@ -2,6 +2,8 @@ package main.java.com.witcher.chapter1.battle.briefing;
 
 import main.java.com.witcher.chapter1.battle.BossCatalog;
 import main.java.com.witcher.chapter1.battle.BossEntry;
+import main.java.com.witcher.chapter1.battle.BossVnTypingEngine;
+import main.java.com.witcher.chapter1.battle.BossVnTypingState;
 import main.java.com.witcher.chapter1.Chapter1Session;
 import main.java.com.witcher.chapter1.vn.VnChoice;
 import main.java.com.witcher.chapter1.vn.VnSceneState;
@@ -43,9 +45,7 @@ public final class BossQuestBriefingController {
   private float rightActiveAnim;
 
   private int currentLine;
-  private int charIndex;
-  private int typeTickCounter;
-  private boolean waitingForAdvance;
+  private final BossVnTypingState typing = new BossVnTypingState();
   private boolean dialogFinished;
 
   private boolean awaitingChoice;
@@ -54,7 +54,6 @@ public final class BossQuestBriefingController {
   private boolean historyOpen;
   private boolean autoMode;
   private int historyScroll;
-  private int autoWaitTicks;
   private boolean historyCloseHovered;
 
   private final IntroVnUi.ButtonLayout buttons = new IntroVnUi.ButtonLayout();
@@ -133,7 +132,7 @@ public final class BossQuestBriefingController {
       }
       if (buttons.autoButton.contains(mouseX, mouseY)) {
         autoMode = !autoMode;
-        autoWaitTicks = 0;
+        typing.clearAutoWait();
         return;
       }
       if (IntroVnUi.isVnButtonRowClick(buttons, mouseX, mouseY)) {
@@ -145,39 +144,11 @@ public final class BossQuestBriefingController {
     BossQuestBriefingScript.DialogLine line = lines.get(currentLine);
     int totalChars = line.text().length();
 
-    if (waitingForAdvance) {
-      if (advance) {
-        advanceLine();
-      } else if (autoMode) {
-        autoWaitTicks++;
-        if (autoWaitTicks >= AUTO_DELAY_TICKS) {
-          advanceLine();
-        }
-      }
-    } else if (autoMode) {
-      typeTickCounter++;
-      if (typeTickCounter >= AUTO_TICKS_PER_CHAR) {
-        typeTickCounter = 0;
-        charIndex++;
-        if (charIndex >= totalChars) {
-          charIndex = totalChars;
-          waitingForAdvance = true;
-          autoWaitTicks = 0;
-        }
-      }
-    } else if (advance && charIndex < totalChars) {
-      charIndex = totalChars;
-      waitingForAdvance = true;
-    } else {
-      typeTickCounter++;
-      if (typeTickCounter >= TICKS_PER_CHAR) {
-        typeTickCounter = 0;
-        charIndex++;
-        if (charIndex >= totalChars) {
-          charIndex = totalChars;
-          waitingForAdvance = true;
-        }
-      }
+    if (BossVnTypingEngine.tick(
+            typing, totalChars, advance, autoMode,
+            TICKS_PER_CHAR, AUTO_TICKS_PER_CHAR, AUTO_DELAY_TICKS)
+        == BossVnTypingEngine.TickResult.ADVANCE_LINE) {
+      advanceLine();
     }
   }
 
@@ -193,8 +164,7 @@ public final class BossQuestBriefingController {
     if (line == null) {
       return "";
     }
-    int end = Math.min(charIndex, line.text().length());
-    return line.text().substring(0, end);
+    return typing.visibleText(line.text());
   }
 
   public boolean showDialog() {
@@ -282,7 +252,7 @@ public final class BossQuestBriefingController {
   }
 
   public boolean waitingForAdvance() {
-    return waitingForAdvance;
+    return typing.waitingForAdvance();
   }
 
   public boolean autoMode() {
@@ -341,7 +311,7 @@ public final class BossQuestBriefingController {
     if (currentLine == BossQuestBriefingScript.CHOICE_GATE_INDEX && !awaitingChoice) {
       awaitingChoice = true;
       choiceScene = BossQuestBriefingScript.entryChoiceScene();
-      waitingForAdvance = false;
+      typing.clearWaitingForAdvance();
       return;
     }
     if (currentLine >= lines.size() - 1) {
@@ -363,15 +333,12 @@ public final class BossQuestBriefingController {
     dialogFinished = true;
     transitionTicks = 0;
     historyOpen = false;
-    waitingForAdvance = false;
+    typing.clearWaitingForAdvance();
   }
 
   private void resetLine(int index) {
     currentLine = Math.max(0, Math.min(index, lines.size() - 1));
-    charIndex = 0;
-    typeTickCounter = 0;
-    waitingForAdvance = false;
-    autoWaitTicks = 0;
+    typing.reset();
     historyOpen = false;
   }
 

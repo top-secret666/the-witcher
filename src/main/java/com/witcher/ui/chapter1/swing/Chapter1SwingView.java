@@ -7,7 +7,7 @@ import main.java.com.witcher.ui.chapter1.swing.battle.BossEncounterView;
 import main.java.com.witcher.ui.chapter1.swing.battle.glitch.BossGlitchRevealView;
 import main.java.com.witcher.ui.chapter1.swing.battle.BossMapView;
 import main.java.com.witcher.ui.chapter1.swing.battle.BossQuestBriefingView;
-import main.java.com.witcher.ui.chapter1.swing.battle.WolfEndingView;
+import main.java.com.witcher.ui.chapter1.swing.battle.wolf.WolfEndingView;
 import main.java.com.witcher.ui.chapter1.swing.glitch.GlitchOverlayRenderer;
 import main.java.com.witcher.ui.chapter1.view.Chapter1View;
 
