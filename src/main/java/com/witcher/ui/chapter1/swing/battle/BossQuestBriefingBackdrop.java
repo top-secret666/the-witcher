@@ -28,13 +28,6 @@ public final class BossQuestBriefingBackdrop {
 
     drawPortrait(g, sw, layout.dialogTop, assets.geraltPortrait(), true);
     drawPortrait(g, sw, layout.dialogTop, assets.dukePortrait(), false);
-
-    if (assets.hudBarImage() != null) {
-      Composite prev = g.getComposite();
-      g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.95f));
-      g.drawImage(assets.hudBarImage(), layout.hudX, layout.hudY, layout.hudW, layout.hudH, null);
-      g.setComposite(prev);
-    }
   }
 
   private static void drawScaledCenter(Graphics2D g, BufferedImage img, int sw, int sh, float alpha) {
