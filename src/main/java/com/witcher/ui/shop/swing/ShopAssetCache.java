@@ -629,6 +629,10 @@ public final class ShopAssetCache implements ShopRuntimeAssets, ShopOverlayAsset
     return dukeScaled;
   }
 
+  public BufferedImage dukeLaughPortrait() {
+    return dukeLaughScaled;
+  }
+
   public BufferedImage hudBarImage() {
     return hudBar;
   }
