@@ -1,5 +1,6 @@
 package main.java.com.witcher.chapter1.battle.wolf;
 
+import main.java.com.witcher.chapter1.assets.Chapter1AssetPaths;
 import main.java.com.witcher.chapter1.battle.encounter.BossEncounterScript;
 import main.java.com.witcher.chapter1.Chapter1Session;
 import main.java.com.witcher.chapter1.vn.VnChoice;
@@ -24,8 +25,8 @@ public final class WolfBossEncounterScript {
     ACKNOWLEDGE
   }
 
-  /** После этой реплики — выбор №2. */
-  public static final int CHOICE_GATE_INDEX = 2;
+  /** После этой реплики — выбор №2 (последняя строка блока воспоминаний). */
+  public static final int CHOICE_GATE_INDEX = 7;
 
   private WolfBossEncounterScript() {
   }
@@ -39,7 +40,7 @@ public final class WolfBossEncounterScript {
         IntroTheme.narratorRgb(),
         BossEncounterScript.Expression.MAP));
     lines.add(openingLine(session));
-    lines.add(memoryBlock());
+    lines.addAll(memoryLines());
     return lines;
   }
 
@@ -56,20 +57,58 @@ public final class WolfBossEncounterScript {
         "Волк", text, WOLF_RGB, BossEncounterScript.Expression.INTERESTED);
   }
 
-  private static BossEncounterScript.DialogEntry memoryBlock() {
-    return new BossEncounterScript.DialogEntry(
-        "Волк",
-        "Помнишь ту дорогу — снег по колено, Плотва\n"
-            + "оскальзывается на льду и смотрит так, будто это ты\n"
-            + "придумал зиму. А ты ей отвечаешь вслух. Может, и понимала.\n"
-            + "Больше, чем иные люди.\n\n"
-            + "А потом Каэр Морхен. Весемир ругает за ледяную воду\n"
-            + "для лошади — а ты стоишь и улыбаешься, потому что\n"
-            + "после стольких лет чьё-то ворчание всё ещё звучит как дом.\n\n"
-            + "Здесь такого не бывает. Здесь всё слишком гладко,\n"
-            + "чтобы быть правдой — а ты как будто и не замечаешь.",
-        WOLF_RGB,
-        BossEncounterScript.Expression.INTERESTED);
+  /** Шесть кликов воспоминания — фон меняется по backgroundImage на реплике. */
+  private static List<BossEncounterScript.DialogEntry> memoryLines() {
+    return List.of(
+        new BossEncounterScript.DialogEntry(
+            "Волк",
+            "Ладно, к делу, пока меня не заела ностальгия.\n"
+                + "Помнишь дорогу на Ард Каррайг...",
+            WOLF_RGB,
+            BossEncounterScript.Expression.INTERESTED,
+            Chapter1AssetPaths.WOLF_PORTRAIT,
+            false),
+        new BossEncounterScript.DialogEntry(
+            "Волк",
+            "...снег по колено, Плотва скользит и материт тебя всем,\n"
+                + "чем умеет материть лошадь...",
+            WOLF_RGB,
+            BossEncounterScript.Expression.INTERESTED,
+            Chapter1AssetPaths.MEMORY_ARD_CARRAIG,
+            false),
+        new BossEncounterScript.DialogEntry(
+            "Волк",
+            "...а ты ей отвечаешь вслух. Взрослый мужик, разговаривающий\n"
+                + "с лошадью о смысле жизни...",
+            WOLF_RGB,
+            BossEncounterScript.Expression.INTERESTED,
+            Chapter1AssetPaths.MEMORY_ARD_CARRAIG,
+            true),
+        new BossEncounterScript.DialogEntry(
+            "Волк",
+            "А потом Каэр Морхен, Весемир орёт на тебя за ледяную воду\n"
+                + "для лошади...",
+            WOLF_RGB,
+            BossEncounterScript.Expression.INTERESTED,
+            Chapter1AssetPaths.MEMORY_KAER_MORHEN,
+            false),
+        new BossEncounterScript.DialogEntry(
+            "Волк",
+            "...и ты стоишь и лыбишься, как идиот, потому что после\n"
+                + "стольких лет чужое ворчание всё ещё звучит как дом.",
+            WOLF_RGB,
+            BossEncounterScript.Expression.INTERESTED,
+            null,
+            false),
+        new BossEncounterScript.DialogEntry(
+            "Волк",
+            "Здесь так не бывает. Здесь никто на тебя не орёт по-настоящему...\n"
+                + "а ты как будто и не замечаешь.",
+            WOLF_RGB,
+            BossEncounterScript.Expression.INTERESTED,
+            Chapter1AssetPaths.WOLF_PORTRAIT,
+            false)
+    );
   }
 
   public static VnSceneState memoryChoiceScene() {
@@ -105,7 +144,9 @@ public final class WolfBossEncounterScript {
                 + "Последний вопрос, прежде чем начнём: ты ещё помнишь,\n"
                 + "каково это — держать что-то настоящее в руках?",
             WOLF_RGB,
-            BossEncounterScript.Expression.LUNGE)
+            BossEncounterScript.Expression.LUNGE,
+            Chapter1AssetPaths.WOLF_PORTRAIT,
+            false)
     );
   }
 
@@ -118,7 +159,9 @@ public final class WolfBossEncounterScript {
                 + "каково это — держать что-то настоящее в руках,\n"
                 + "или он уже выел это из тебя без остатка?",
             WOLF_RGB,
-            BossEncounterScript.Expression.ATTACK)
+            BossEncounterScript.Expression.ATTACK,
+            Chapter1AssetPaths.WOLF_PORTRAIT,
+            false)
     );
   }
 }
