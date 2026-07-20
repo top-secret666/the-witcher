@@ -352,33 +352,35 @@ public final class DialogBoxRenderer {
      */
     public static void drawShardEpilogueBar(Graphics2D g, int sw, int sh,
                                             String speaker, String text, float alpha) {
-        enableTextSmoothing(g);
+        GameFonts.applyGothicHints(g);
+        g.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
         Composite prev = g.getComposite();
         g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
 
-        int fontSize = Math.max(11, Math.round(sh * 0.034f));
+        int fontSize = Math.max(12, Math.round(sh * 0.036f));
         int padX = Math.round(sw * 0.06f);
         int barH = Math.round(sh * 0.30f);
         int barY = sh - barH;
 
-        g.setColor(new Color(0, 0, 0, 175));
+        g.setColor(new Color(0, 0, 0, 185));
         g.fillRect(0, barY, sw, barH);
 
         Font textFont = GameFonts.get().plain(fontSize);
         g.setFont(textFont);
         FontMetrics fm = g.getFontMetrics();
-        int lineH = fm.getHeight() + 3;
+        int lineH = fm.getHeight() + 4;
         int textMaxW = sw - padX * 2;
-        Color bodyColor = new Color(168, 162, 152);
-        Color nameColor = new Color(190, 185, 175);
+        Color bodyColor = new Color(178, 172, 164);
+        Color nameColor = new Color(198, 192, 184);
 
-        int y = barY + Math.round(barH * 0.28f);
+        int y = barY + Math.round(barH * 0.26f);
         if (speaker != null && !speaker.isBlank()) {
             g.setFont(GameFonts.get().bold(fontSize));
             g.setColor(nameColor);
             g.drawString(speaker, padX, y);
             y += lineH;
             g.setFont(textFont);
+            fm = g.getFontMetrics();
         }
 
         g.setColor(bodyColor);
@@ -393,7 +395,6 @@ public final class DialogBoxRenderer {
         }
 
         g.setComposite(prev);
-        disableTextSmoothing(g);
     }
 
     public static String getLastVisibleLine(String text, FontMetrics fm, int maxW) {
