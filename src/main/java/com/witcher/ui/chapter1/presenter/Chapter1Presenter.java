@@ -238,7 +238,7 @@ public final class Chapter1Presenter {
       case LOOP_SEQUENCE -> updateLoopSequence();
       case LOOP_HOLD -> { }
       case BOSS_ENCOUNTER -> updateBossEncounter(mouseX, mouseY, clicked, wheelNotches);
-      case BOSS_GLITCH_REVEAL -> updateBossGlitchReveal(clicked);
+      case BOSS_GLITCH_REVEAL -> updateBossGlitchReveal();
       case BOSS_FINALE -> updateBossFinale(mouseX, mouseY, clicked);
       case WOLF_ENDING -> updateWolfEnding(clicked);
       case BATTLE_RESULT -> updateBattleResult(clicked);
@@ -269,7 +269,7 @@ public final class Chapter1Presenter {
       return;
     }
     if (director.phase() == Chapter1Phase.BOSS_GLITCH_REVEAL) {
-      if (code == KeyEvent.VK_SPACE || code == KeyEvent.VK_ENTER) {
+      if (code == KeyEvent.VK_SPACE) {
         skipBossGlitchReveal();
       }
       return;
@@ -573,11 +573,7 @@ public final class Chapter1Presenter {
     choiceRects = List.of();
   }
 
-  private void updateBossGlitchReveal(boolean clicked) {
-    if (clicked) {
-      skipBossGlitchReveal();
-      return;
-    }
+  private void updateBossGlitchReveal() {
     bossGlitchReveal.tick();
     if (bossGlitchReveal.isComplete()) {
       finishBossGlitchReveal();

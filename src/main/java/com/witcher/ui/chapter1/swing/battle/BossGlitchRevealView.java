@@ -58,16 +58,6 @@ public final class BossGlitchRevealView {
         g.fillRect(0, 0, sw, sh);
       }
     }
-
-    if (!ctrl.isComplete()) {
-      g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-      g.setFont(GameFonts.get().uiPlain(9));
-      g.setColor(new Color(140, 130, 110, 200));
-      String hint = "Пробел — пропустить";
-      int hw = g.getFontMetrics().stringWidth(hint);
-      g.drawString(hint, (sw - hw) / 2, sh - Math.round(sh * 0.06f));
-      g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
-    }
   }
 
   private static void drawStaticFill(Graphics2D g, int sw, int sh, int localMs, long seed) {
