@@ -17,8 +17,8 @@ public final class BossQuestBriefingController {
   private static final int TICKS_PER_CHAR = 2;
   private static final int AUTO_DELAY_TICKS = 50;
   private static final int AUTO_TICKS_PER_CHAR = 1;
-  private static final int DISSOLVE_RAMP_MS = 2800;
-  private static final int TRANSITION_TOTAL_MS = 3200;
+  private static final int DISSOLVE_RAMP_MS = 2400;
+  private static final int TRANSITION_TOTAL_MS = 2750;
 
   private final BossEntry boss;
   private final BossQuestBriefingScript.NoticeContent notice;
