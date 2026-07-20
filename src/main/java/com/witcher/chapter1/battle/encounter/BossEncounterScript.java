@@ -1,4 +1,4 @@
-package main.java.com.witcher.chapter1.battle;
+package main.java.com.witcher.chapter1.battle.encounter;
 
 import main.java.com.witcher.chapter1.assets.Chapter1AssetPaths;
 import main.java.com.witcher.ui.intro.IntroTheme;

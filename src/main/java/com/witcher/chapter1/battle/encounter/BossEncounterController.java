@@ -1,5 +1,9 @@
-package main.java.com.witcher.chapter1.battle;
+package main.java.com.witcher.chapter1.battle.encounter;
 
+import main.java.com.witcher.chapter1.battle.BossCatalog;
+import main.java.com.witcher.chapter1.battle.BossEntry;
+import main.java.com.witcher.chapter1.battle.BossVnTypingEngine;
+import main.java.com.witcher.chapter1.battle.BossVnTypingState;
 import main.java.com.witcher.chapter1.battle.wolf.WolfBossEncounterScript;
 import main.java.com.witcher.chapter1.Chapter1Session;
 import main.java.com.witcher.chapter1.vn.VnChoice;

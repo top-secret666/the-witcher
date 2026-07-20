@@ -1,4 +1,4 @@
-package main.java.com.witcher.chapter1.battle;
+package main.java.com.witcher.chapter1.battle.encounter;
 
 /** Тайминги лесного VN-энкаунтера — без логики. */
 public final class BossEncounterConstants {
