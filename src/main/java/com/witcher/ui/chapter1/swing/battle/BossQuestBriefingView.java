@@ -2,8 +2,8 @@ package main.java.com.witcher.ui.chapter1.swing.battle;
 
 import main.java.com.witcher.chapter1.battle.BossQuestBriefingController;
 import main.java.com.witcher.chapter1.battle.BossQuestBriefingScript;
+import main.java.com.witcher.ui.chapter1.swing.WakeVisionRenderer;
 import main.java.com.witcher.ui.chapter1.swing.glitch.CutsceneNoiseOverlay;
-import main.java.com.witcher.ui.chapter1.swing.glitch.PixelBugOverlay;
 import main.java.com.witcher.ui.graphics.DialogBoxRenderer;
 import main.java.com.witcher.ui.graphics.GameFonts;
 import main.java.com.witcher.ui.graphics.UiChrome;
@@ -11,6 +11,7 @@ import main.java.com.witcher.ui.intro.IntroHistoryText;
 import main.java.com.witcher.ui.intro.IntroVnUi;
 import main.java.com.witcher.ui.intro.view.IntroHistoryLayout;
 import main.java.com.witcher.ui.intro.view.IntroHistoryTheme;
+import main.java.com.witcher.ui.shop.view.ShopLayout;
 
 import java.awt.Color;
 import java.awt.Font;
@@ -19,44 +20,76 @@ import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.Shape;
+import java.awt.image.BufferedImage;
 import java.util.List;
 
-/** Брифинг в лавке: лист заказа + диалог Герцога + глитч-переход. */
+/** Брифинг в лавке: панель заказа + диалог + чёрный pixel-dissolve. */
 public final class BossQuestBriefingView {
 
   private BossQuestBriefingView() {
   }
 
   public static void draw(Graphics2D g, int sw, int sh, BossQuestBriefingController ctrl,
-                          int mouseX, int mouseY) {
-    if (ctrl == null) {
+                          ShopLayout layout, int mouseX, int mouseY) {
+    if (ctrl == null || layout == null) {
       return;
     }
 
-    if (ctrl.showNotice()) {
-      QuestNoticeRenderer.draw(g, sw, sh, ctrl.notice(), ctrl.noticeFade());
-    }
-
-    if (ctrl.showDialog()) {
-      drawDialogBox(g, sw, sh, ctrl);
-      drawVnButtons(g, ctrl, mouseX, mouseY);
-    }
-
     if (ctrl.inTransition()) {
-      float noise = ctrl.noiseIntensity();
-      if (noise > 0.02f) {
-        PixelBugOverlay.drawTvStatic(g, sw, sh, noise, ctrl.tickCount() * 16L, true);
-        CutsceneNoiseOverlay.draw(g, sw, sh, noise * 0.65f);
+      BufferedImage snap = new BufferedImage(sw, sh, BufferedImage.TYPE_INT_ARGB);
+      Graphics2D cg = snap.createGraphics();
+      try {
+        drawScene(cg, sw, sh, ctrl, layout, mouseX, mouseY, false);
+      } finally {
+        cg.dispose();
       }
-      float black = ctrl.blackoutAlpha();
-      if (black > 0.01f) {
-        g.setColor(new Color(0, 0, 0, Math.round(255 * black)));
-        g.fillRect(0, 0, sw, sh);
-      }
+      drawDissolve(g, sw, sh, snap, ctrl.dissolveT());
+    } else {
+      drawScene(g, sw, sh, ctrl, layout, mouseX, mouseY, true);
     }
 
     if (ctrl.historyOpen()) {
       drawHistoryOverlay(g, sw, sh, ctrl);
+    }
+  }
+
+  private static void drawScene(Graphics2D g, int sw, int sh, BossQuestBriefingController ctrl,
+                                ShopLayout layout, int mouseX, int mouseY, boolean withDialog) {
+    BossQuestBriefingBackdrop.draw(g, sw, sh, layout);
+
+    if (ctrl.showNotice()) {
+      QuestNoticeRenderer.draw(g, layout, ctrl.notice(), 1f);
+    }
+
+    if (withDialog && ctrl.showDialog()) {
+      drawDialogBox(g, sw, sh, ctrl);
+      drawVnButtons(g, ctrl, mouseX, mouseY);
+    }
+  }
+
+  /** Обратный wolf_shard_reveal: резкость → пиксельный шум → чёрный. */
+  private static void drawDissolve(Graphics2D g, int sw, int sh, BufferedImage snap, float dissolveT) {
+    float clarity = Math.max(0f, 1f - dissolveT);
+    WakeVisionRenderer.drawFrame(g, snap, 0, 0, clarity);
+
+    float noise = dissolveT <= 0.03f ? 0f : (1f - clarity) * 0.92f + 0.06f;
+    if (noise > 0.02f) {
+      CutsceneNoiseOverlay.draw(g, sw, sh, Math.min(1f, noise));
+    }
+
+    if (clarity < 0.55f) {
+      float fog = (0.55f - clarity) * 0.55f;
+      var prev = g.getComposite();
+      g.setComposite(java.awt.AlphaComposite.getInstance(java.awt.AlphaComposite.SRC_OVER, fog));
+      g.setColor(new Color(0, 0, 0));
+      g.fillRect(0, 0, sw, sh);
+      g.setComposite(prev);
+    }
+
+    if (dissolveT > 0.78f) {
+      float extra = (dissolveT - 0.78f) / 0.22f;
+      g.setColor(new Color(0, 0, 0, Math.round(255 * Math.min(1f, extra))));
+      g.fillRect(0, 0, sw, sh);
     }
   }
 

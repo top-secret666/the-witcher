@@ -17,10 +17,8 @@ public final class BossQuestBriefingController {
   private static final int TICKS_PER_CHAR = 2;
   private static final int AUTO_DELAY_TICKS = 50;
   private static final int AUTO_TICKS_PER_CHAR = 1;
-  private static final int NOISE_RAMP_MS = 1800;
-  private static final int BLACKOUT_START_MS = 1200;
-  private static final int BLACKOUT_END_MS = 2400;
-  private static final int TRANSITION_TOTAL_MS = 3000;
+  private static final int DISSOLVE_RAMP_MS = 2800;
+  private static final int TRANSITION_TOTAL_MS = 3200;
 
   private final BossEntry boss;
   private final BossQuestBriefingScript.NoticeContent notice;
@@ -183,32 +181,16 @@ public final class BossQuestBriefingController {
   }
 
   public float noticeFade() {
-    if (phase != Phase.TRANSITION) {
-      return 1f;
-    }
-    float blackout = blackoutAlpha();
-    return Math.max(0f, 1f - blackout * 1.4f);
+    return 1f;
   }
 
-  public float noiseIntensity() {
+  /** 0..1 — нарастающий dissolve (обратный shard_reveal). */
+  public float dissolveT() {
     if (phase != Phase.TRANSITION) {
       return 0f;
     }
     int ms = transitionTicks * MS_PER_TICK;
-    float t = Math.min(1f, ms / (float) NOISE_RAMP_MS);
-    return easeIn(t);
-  }
-
-  public float blackoutAlpha() {
-    if (phase != Phase.TRANSITION) {
-      return 0f;
-    }
-    int ms = transitionTicks * MS_PER_TICK;
-    if (ms <= BLACKOUT_START_MS) {
-      return 0f;
-    }
-    float t = (ms - BLACKOUT_START_MS) / (float) (BLACKOUT_END_MS - BLACKOUT_START_MS);
-    return Math.max(0f, Math.min(1f, t));
+    return easeIn(Math.min(1f, ms / (float) DISSOLVE_RAMP_MS));
   }
 
   public boolean isComplete() {
