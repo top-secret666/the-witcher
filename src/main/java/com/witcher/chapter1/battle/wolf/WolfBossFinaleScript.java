@@ -1,4 +1,4 @@
-package main.java.com.witcher.chapter1.battle;
+package main.java.com.witcher.chapter1.battle.wolf;
 
 import main.java.com.witcher.chapter1.vn.VnChoice;
 import main.java.com.witcher.chapter1.vn.VnSceneState;
