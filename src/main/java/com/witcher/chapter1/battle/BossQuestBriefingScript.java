@@ -1,10 +1,12 @@
 package main.java.com.witcher.chapter1.battle;
 
+import main.java.com.witcher.chapter1.vn.VnChoice;
+import main.java.com.witcher.chapter1.vn.VnSceneState;
 import main.java.com.witcher.ui.intro.IntroTheme;
 
 import java.util.List;
 
-/** Ложный контракт с доски и реплики Герцога перед уходом в лес. */
+/** Ложный контракт и реплики Герцога перед уходом в лес — только здесь, до пробуждения. */
 public final class BossQuestBriefingScript {
 
   public record DialogLine(String speaker, String text, int speakerColorRgb) {
@@ -19,6 +21,9 @@ public final class BossQuestBriefingScript {
       String seal
   ) {
   }
+
+  /** После этой реплики — выбор №1. */
+  public static final int CHOICE_GATE_INDEX = 2;
 
   private BossQuestBriefingScript() {
   }
@@ -42,18 +47,13 @@ public final class BossQuestBriefingScript {
     return List.of(
         new DialogLine(
             "Герцог",
-            "Вот, свежий лист с доски. Всё по форме — как в Темерии любят:\n"
-                + "печать, сумма, срок. Красиво же?",
+            "Вот свежий лист с доски. «" + name + "» — бывший ученик,\n"
+                + "бывшая школа. Формальность, не более.",
             IntroTheme.dukeRgb()),
         new DialogLine(
             "Герцог",
-            "«" + name + "». Зверь, что терроризирует лес у деревни.\n"
-                + "Местные уже на взводе — им нужен герой, а нам — тишина.",
-            IntroTheme.dukeRgb()),
-        new DialogLine(
-            "Герцог",
-            "Не слушайте их баек. Они видят в каждом шорохе чудовище,\n"
-                + "а в каждом чужаке — ведьмака. Вы же профессионал.",
+            "Хотите — подожду. Вы взглянете на лес и вернётесь.\n"
+                + "Лес никуда не денется. Я — тоже.",
             IntroTheme.dukeRgb()),
         new DialogLine(
             null,
@@ -62,14 +62,18 @@ public final class BossQuestBriefingScript {
             IntroTheme.narratorRgb()),
         new DialogLine(
             "Герцог",
-            "Прочтите ещё раз, если сомневаетесь. Там всё честно написано:\n"
-                + "кто плохой, кто хороший, и сколько вам заплатят.",
-            IntroTheme.dukeRgb()),
-        new DialogLine(
-            "Герцог",
-            "Ну что ж… Думаю, вы готовы, Белый Волк.\n"
-                + "Пора в путь. Лес не будет ждать.",
+            "Как скажете. Я никуда не тороплюсь.",
             IntroTheme.dukeRgb())
     );
+  }
+
+  public static VnSceneState entryChoiceScene() {
+    return new VnSceneState(
+        "Геральт",
+        "Герцог ждёт ответа.",
+        List.of(
+            new VnChoice("quick", "«Хорошо, я быстро.»", 0, 1),
+            new VnChoice("curious", "«Посмотрим, что он скажет.»", 1, 0)
+        ));
   }
 }
