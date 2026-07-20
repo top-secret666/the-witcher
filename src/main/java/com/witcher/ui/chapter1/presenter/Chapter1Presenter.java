@@ -238,7 +238,7 @@ public final class Chapter1Presenter {
       case LOOP_SEQUENCE -> updateLoopSequence();
       case LOOP_HOLD -> { }
       case BOSS_ENCOUNTER -> updateBossEncounter(mouseX, mouseY, clicked, wheelNotches);
-      case BOSS_GLITCH_REVEAL -> updateBossGlitchReveal();
+      case BOSS_GLITCH_REVEAL -> updateBossGlitchReveal(clicked);
       case BOSS_FINALE -> updateBossFinale(mouseX, mouseY, clicked);
       case WOLF_ENDING -> updateWolfEnding(clicked);
       case BATTLE_RESULT -> updateBattleResult(clicked);
@@ -265,6 +265,12 @@ public final class Chapter1Presenter {
     if (director.phase() == Chapter1Phase.LOOP_SEQUENCE) {
       if (code == KeyEvent.VK_SPACE || code == KeyEvent.VK_ENTER) {
         skipLoopAwakening();
+      }
+      return;
+    }
+    if (director.phase() == Chapter1Phase.BOSS_GLITCH_REVEAL) {
+      if (code == KeyEvent.VK_SPACE || code == KeyEvent.VK_ENTER) {
+        skipBossGlitchReveal();
       }
       return;
     }
@@ -554,11 +560,7 @@ public final class Chapter1Presenter {
     }
 
     if (encounter.isDialogComplete()) {
-      if (director.session().suspicionDominates()) {
-        director.enterBossGlitchReveal();
-      } else {
-        director.enterBossFinale();
-      }
+      director.enterBossFinale();
       onPhaseEntered();
     }
   }
@@ -571,12 +573,28 @@ public final class Chapter1Presenter {
     choiceRects = List.of();
   }
 
-  private void updateBossGlitchReveal() {
+  private void updateBossGlitchReveal(boolean clicked) {
+    if (clicked) {
+      skipBossGlitchReveal();
+      return;
+    }
     bossGlitchReveal.tick();
     if (bossGlitchReveal.isComplete()) {
-      director.enterBossFinale();
-      onPhaseEntered();
+      finishBossGlitchReveal();
     }
+  }
+
+  private void skipBossGlitchReveal() {
+    bossGlitchReveal.skip();
+    finishBossGlitchReveal();
+  }
+
+  private void finishBossGlitchReveal() {
+    if (director.phase() != Chapter1Phase.BOSS_GLITCH_REVEAL) {
+      return;
+    }
+    director.enterWolfEnding();
+    onPhaseEntered();
   }
 
   private void updateBossFinale(int mouseX, int mouseY, boolean clicked) {
@@ -635,7 +653,11 @@ public final class Chapter1Presenter {
     }
     wolfFinale = null;
     choiceRects = List.of();
-    director.enterWolfEnding();
+    if (wolfEndingType == WolfEndingType.TRUE_SHARD) {
+      director.enterBossGlitchReveal();
+    } else {
+      director.enterWolfEnding();
+    }
     onPhaseEntered();
   }
 
