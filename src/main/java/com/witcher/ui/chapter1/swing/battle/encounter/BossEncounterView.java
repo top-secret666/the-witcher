@@ -1,8 +1,10 @@
-package main.java.com.witcher.ui.chapter1.swing.battle;
+package main.java.com.witcher.ui.chapter1.swing.battle.encounter;
 
 import main.java.com.witcher.chapter1.battle.encounter.BossEncounterController;
 import main.java.com.witcher.chapter1.battle.encounter.BossEncounterScript;
 import main.java.com.witcher.ui.chapter1.swing.Chapter1UiAssets;
+import main.java.com.witcher.ui.chapter1.swing.battle.BossVnDialogBoxRenderer;
+import main.java.com.witcher.ui.chapter1.swing.battle.BossVnViewChrome;
 import main.java.com.witcher.ui.chapter1.swing.EyelidOverlay;
 import main.java.com.witcher.ui.chapter1.swing.ScaledImageCache;
 
