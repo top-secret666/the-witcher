@@ -1,5 +1,6 @@
 package main.java.com.witcher.ui.graphics;
 
+import main.java.com.witcher.ui.intro.view.IntroDialogTheme;
 import main.java.com.witcher.ui.intro.view.IntroSpeakerPlateLayout;
 
 import java.awt.*;
@@ -11,13 +12,21 @@ import java.util.List;
  */
 public final class DialogBoxRenderer {
 
-    public static final Color NARRATOR_COLOR = new Color(160, 145, 120);
-    public static final Color GERALT_COLOR = new Color(160, 205, 235);
-    public static final Color DUKE_COLOR = new Color(218, 165, 32);
-    public static final Color BOX_BG = new Color(10, 8, 4, 220);
-    public static final Color BOX_BORDER = new Color(140, 100, 35);
-    public static final Color HINT_COLOR = new Color(180, 160, 120, 180);
-    public static final Color SPEECH_COLOR = new Color(220, 190, 100);
+    public static final Color NARRATOR_COLOR = rgb(IntroDialogTheme.NARRATOR_R, IntroDialogTheme.NARRATOR_G, IntroDialogTheme.NARRATOR_B);
+    public static final Color GERALT_COLOR = rgb(IntroDialogTheme.GERALT_R, IntroDialogTheme.GERALT_G, IntroDialogTheme.GERALT_B);
+    public static final Color DUKE_COLOR = rgb(IntroDialogTheme.DUKE_R, IntroDialogTheme.DUKE_G, IntroDialogTheme.DUKE_B);
+    public static final Color BOX_BG = new Color(IntroDialogTheme.BOX_BG_R, IntroDialogTheme.BOX_BG_G, IntroDialogTheme.BOX_BG_B, IntroDialogTheme.BOX_BG_A);
+    public static final Color BOX_BORDER = rgb(IntroDialogTheme.BOX_BORDER_R, IntroDialogTheme.BOX_BORDER_G, IntroDialogTheme.BOX_BORDER_B);
+    public static final Color HINT_COLOR = new Color(IntroDialogTheme.HINT_R, IntroDialogTheme.HINT_G, IntroDialogTheme.HINT_B, IntroDialogTheme.HINT_A);
+    public static final Color SPEECH_COLOR = rgb(IntroDialogTheme.SPEECH_R, IntroDialogTheme.SPEECH_G, IntroDialogTheme.SPEECH_B);
+
+    private static Color rgb(int r, int g, int b) {
+        return new Color(r, g, b);
+    }
+
+    private static int alpha255(float alpha) {
+        return Math.max(0, Math.min(255, Math.round(alpha * 255f)));
+    }
 
     private DialogBoxRenderer() {
     }
@@ -40,22 +49,17 @@ public final class DialogBoxRenderer {
         }
 
         Layout(int sw, int sh, float heightRatio, float widthRatio) {
-            int boxMargin = (int) (sw * 0.03f);
-            boxH = Math.max(52, (int) (sh * heightRatio));
-            boxW = Math.max(200, (int) (sw * widthRatio));
-            boxX = (sw - boxW) / 2;
-            boxY = sh - boxH - (int) (sh * 0.02f);
-            toolbarReserve = heightRatio <= 0.11f ? 0 : Math.max(24, (int) (sh * 0.058f));
-            if (heightRatio <= 0.11f) {
-                fontSize = Math.max(13, (int) (sh * 0.040f));
-                pad = Math.max(6, (int) (sw * 0.018f));
-            } else {
-                fontSize = Math.max(11, (int) (sh * 0.034f));
-                pad = (int) (sw * 0.02f);
-            }
-            textX = boxX + pad;
-            textY = boxY + pad + (heightRatio <= 0.11f ? 0 : Math.round(sh * 0.008f));
-            textMaxW = boxW - pad * 2;
+            DialogBoxLayout.Metrics m = DialogBoxLayout.compute(sw, sh, heightRatio, widthRatio, DialogBoxLayout.SWING);
+            boxX = m.boxX();
+            boxY = m.boxY();
+            boxW = m.boxW();
+            boxH = m.boxH();
+            pad = m.pad();
+            textX = m.textX();
+            textY = m.textY();
+            textMaxW = m.textMaxW();
+            fontSize = m.fontSize();
+            toolbarReserve = m.toolbarReserve();
         }
 
         /** Y-координата строки VN-кнопок внутри нижней полосы окна. */
@@ -86,15 +90,15 @@ public final class DialogBoxRenderer {
         g.fillRect(boxX, boxY, boxW, boxH / 3);
         g.setComposite(prev);
 
-        int alpha255 = Math.max(0, Math.min(255, (int) (alpha * 255)));
+        int a255 = alpha255(alpha);
 
-        g.setColor(new Color(235, 200, 110, alpha255));
+        g.setColor(new Color(235, 200, 110, a255));
         g.fillRect(boxX - 2, boxY - 2, boxW + 4, 4);
         g.fillRect(boxX - 2, boxY + boxH - 2, boxW + 4, 4);
         g.fillRect(boxX - 2, boxY - 2, 4, boxH + 4);
         g.fillRect(boxX + boxW - 2, boxY - 2, 4, boxH + 4);
 
-        g.setColor(new Color(218, 165, 32, alpha255));
+        g.setColor(new Color(218, 165, 32, a255));
         g.fillRect(boxX, boxY, boxW, 2);
         g.fillRect(boxX, boxY + boxH - 2, boxW, 2);
         g.fillRect(boxX, boxY, 2, boxH);
@@ -255,10 +259,10 @@ public final class DialogBoxRenderer {
         int boxX = boxMarginX;
         int boxY = sh - boxMarginBottom - boxH;
 
-        int alpha255 = Math.max(0, Math.min(255, (int) (alpha * 255)));
-        g.setColor(new Color(10, 8, 4, Math.min(230, alpha255)));
+        int a255 = alpha255(alpha);
+        g.setColor(new Color(10, 8, 4, Math.min(230, a255)));
         g.fillRoundRect(boxX, boxY, boxW, boxH, 5, 5);
-        g.setColor(new Color(140, 100, 35, alpha255));
+        g.setColor(new Color(140, 100, 35, a255));
         g.drawRoundRect(boxX, boxY, boxW, boxH, 5, 5);
         g.setColor(new Color(218, 165, 32, Math.max(0, Math.min(255, (int) (alpha * 160)))));
         g.drawRoundRect(boxX + 1, boxY + 1, boxW - 2, boxH - 2, 4, 4);
