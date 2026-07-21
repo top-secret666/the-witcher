@@ -2,6 +2,7 @@ package main.java.com.witcher.ui.intro;
 
 import main.java.com.witcher.ui.graphics.DialogBoxRenderer;
 import main.java.com.witcher.ui.intro.view.IntroDialogLayout;
+import main.java.com.witcher.ui.intro.view.IntroDialogTheme;
 import main.java.com.witcher.ui.intro.view.IntroLayout;
 
 import java.util.ArrayList;
@@ -10,15 +11,15 @@ import java.util.List;
 /** Перенос строк диалога интро — общий для Swing и LibGDX. */
 public final class IntroDialogText {
 
-    public static final int SPEECH_R = 220;
-    public static final int SPEECH_G = 190;
-    public static final int SPEECH_B = 100;
+    public static final int SPEECH_R = IntroDialogTheme.SPEECH_R;
+    public static final int SPEECH_G = IntroDialogTheme.SPEECH_G;
+    public static final int SPEECH_B = IntroDialogTheme.SPEECH_B;
 
     private IntroDialogText() {
     }
 
     public static int speechRgb() {
-        return IntroTheme.packRgb(SPEECH_R, SPEECH_G, SPEECH_B);
+        return IntroDialogTheme.speechRgb();
     }
 
     public static int textColorRgb(String speaker, int speakerColorRgb) {
