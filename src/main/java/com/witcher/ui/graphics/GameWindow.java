@@ -55,7 +55,8 @@ public class GameWindow {
 
     public GameWindow() {
         frame = new JFrame("Witcher - Pixel Prototype");
-        // Загрузочное/прототип-окно: убираем системную рамку/заголовок (никакого fullscreen/maximize)
+        // Загрузочное/прототип-окно: убираем системную рамку/заголовок (никакого
+        // fullscreen/maximize)
         frame.setUndecorated(true);
         renderer = new Renderer(480, 360, 2);
 
@@ -157,7 +158,8 @@ public class GameWindow {
                     return;
                 }
 
-                if (!menuActive) return;
+                if (!menuActive)
+                    return;
 
                 int code = e.getKeyCode();
                 if (code == KeyEvent.VK_UP || code == KeyEvent.VK_W) {
@@ -204,8 +206,8 @@ public class GameWindow {
         frame.revalidate();
 
         GraphicsDevice device = GraphicsEnvironment
-            .getLocalGraphicsEnvironment()
-            .getDefaultScreenDevice();
+                .getLocalGraphicsEnvironment()
+                .getDefaultScreenDevice();
         device.setFullScreenWindow(frame);
         frame.validate();
 
@@ -227,7 +229,7 @@ public class GameWindow {
         Sprite cursorSprite = Sprite.loadOptional("/assets/sprites/menu/menu_cursor.png");
         if (cursorSprite != null && cursorSprite.getImage() != null) {
             cursor = Toolkit.getDefaultToolkit().createCustomCursor(
-                cursorSprite.getImage(), new Point(4, 4), "witcher_game_cursor");
+                    cursorSprite.getImage(), new Point(4, 4), "witcher_game_cursor");
         }
         renderer.setCursor(cursor);
         frame.setCursor(cursor);
@@ -264,7 +266,8 @@ public class GameWindow {
 
                 @Override
                 public void mouseDragged(MouseEvent e) {
-                    if (dragOffset[0] == null) return;
+                    if (dragOffset[0] == null)
+                        return;
                     Point p = e.getLocationOnScreen();
                     frame.setLocation(p.x - dragOffset[0].x, p.y - dragOffset[0].y);
                 }
@@ -367,7 +370,8 @@ public class GameWindow {
                     boolean wasPressed = pressed;
                     pressed = false;
                     repaint();
-                    if (wasPressed && contains(e.getPoint()) && action != null) action.run();
+                    if (wasPressed && contains(e.getPoint()) && action != null)
+                        action.run();
                 }
             };
             addMouseListener(m);
@@ -388,7 +392,8 @@ public class GameWindow {
 
             // фон: hover/pressed делаем на контрасте существующих цветов
             Color fill = hover ? TITLE_HOVER : TITLE_BG;
-            if (pressed) fill = TITLE_FG;
+            if (pressed)
+                fill = TITLE_FG;
 
             g2.setColor(fill);
             g2.fillRect(0, 0, w, h);
@@ -405,7 +410,8 @@ public class GameWindow {
             g2.fillRect(1, 1, 1, h - 2);
             g2.fillRect(w - 2, 1, 1, h - 2);
 
-            // Символ: рисуем пиксельный крест для кнопки "X", пиксельную полоску для "-", иначе текст
+            // Символ: рисуем пиксельный крест для кнопки "X", пиксельную полоску для "-",
+            // иначе текст
             if ("X".equals(label)) {
                 g2.setColor(pressed ? TITLE_BG : TITLE_FG);
                 int pad = Math.max(2, w / 6);
@@ -430,7 +436,8 @@ public class GameWindow {
                 g2.fillRect(bx, by, barW, barH);
                 // лёгкий внутренний тон (чтобы не было плоской поверхности)
                 g2.setColor(TITLE_BG);
-                if (barH > 2) g2.fillRect(bx + 1, by + 1, barW - 2, barH - 2);
+                if (barH > 2)
+                    g2.fillRect(bx + 1, by + 1, barW - 2, barH - 2);
             } else {
                 g2.setFont(GameFonts.get().bold(12));
                 g2.setColor(pressed ? TITLE_BG : TITLE_FG);
@@ -445,7 +452,8 @@ public class GameWindow {
     }
 
     private static BufferedImage toNearestIcon16(Image iconImg) {
-        if (iconImg == null) return null;
+        if (iconImg == null)
+            return null;
         BufferedImage src;
         if (iconImg instanceof BufferedImage) {
             src = (BufferedImage) iconImg;
@@ -502,17 +510,17 @@ public class GameWindow {
 
             // Внешняя рамка (пиксельные полосы)
             g2.setColor(outer);
-            g2.fillRect(x, y, w, t);                 // top
-            g2.fillRect(x, y + h - t, w, t);         // bottom
-            g2.fillRect(x, y, t, h);                 // left
-            g2.fillRect(x + w - t, y, t, h);         // right
+            g2.fillRect(x, y, w, t); // top
+            g2.fillRect(x, y + h - t, w, t); // bottom
+            g2.fillRect(x, y, t, h); // left
+            g2.fillRect(x + w - t, y, t, h); // right
 
             // Внутренняя рамка (второй контур)
             g2.setColor(inner);
-            g2.fillRect(x + 1, y + 1, w - 2, 1);                 // top
-            g2.fillRect(x + 1, y + h - 2, w - 2, 1);             // bottom
-            g2.fillRect(x + 1, y + 1, 1, h - 2);                 // left
-            g2.fillRect(x + w - 2, y + 1, 1, h - 2);             // right
+            g2.fillRect(x + 1, y + 1, w - 2, 1); // top
+            g2.fillRect(x + 1, y + h - 2, w - 2, 1); // bottom
+            g2.fillRect(x + 1, y + 1, 1, h - 2); // left
+            g2.fillRect(x + w - 2, y + 1, 1, h - 2); // right
 
             // "Ступеньки" в углах (пиксельная фаска), масштабируется с толщиной
             g2.setColor(bg);
@@ -569,7 +577,7 @@ public class GameWindow {
                 }
             } else if (menuActive) {
                 mainMenu.update(renderer.getVirtualW(), renderer.getVirtualH(),
-                    mouseVX, mouseVY, mouseClickPending, menuNavDir, menuActivate);
+                        mouseVX, mouseVY, mouseClickPending, menuNavDir, menuActivate);
                 mainMenu.render(renderer.screen, mouseVX, mouseVY);
                 renderer.present();
 

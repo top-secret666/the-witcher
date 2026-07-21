@@ -17,20 +17,22 @@ public final class DukeShopDialog {
   public static VnSceneState loopReturnGreeting(Chapter1Session session) {
     return new VnSceneState(
         "Герцог",
-        "Снова здесь? Отличный выбор брони ждёт тебя, друг.",
+        "Снова здесь?\nКак приятно видеть постоянного клиента.\n"
+            + "Хотя, признаюсь, обычно они помнят, что уже заходили.",
         List.of(
-            new VnChoice("polite", "Спасибо. Покажите каталог.", 0, 1),
-            new VnChoice("doubt", "Мы уже это проходили…", 1, 0)
+            new VnChoice("polite", "«Покажите каталог.»", 0, 1),
+            new VnChoice("doubt", "«Мы уже это проходили.»", 1, 0)
         ));
   }
 
   public static VnSceneState prisonPressure(Chapter1Session session) {
     return new VnSceneState(
         "Герцог",
-        "Ты слишком долго копаешься в вещах. Может, хватит вопросов?",
+        "Вы слишком долго смотрите не на те вещи.\n"
+            + "Поверьте, в лавке это считается дурным тоном.",
         List.of(
-            new VnChoice("push", "Где выход?", 2, 0),
-            new VnChoice("comply", "Ладно. Я куплю ещё.", 0, 1)
+            new VnChoice("push", "«Где выход?»", 2, 0),
+            new VnChoice("comply", "«Ладно. Я куплю ещё.»", 0, 1)
         ));
   }
 

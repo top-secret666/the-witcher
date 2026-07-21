@@ -32,8 +32,16 @@ public final class WolfBossEncounterScript {
     List<BossEncounterScript.DialogEntry> lines = new ArrayList<>();
     lines.add(new BossEncounterScript.DialogEntry(
         null,
-        "*Сквозь туман проступает силуэт в потёртой шкурянке.\n"
+        "*Туман висит между деревьями, как мокрая ткань.\n"
+            + "Где-то далеко скрипит ветка.\n"
             + "Медальон на груди холодит кожу — ты не помнишь, когда надел его.*",
+        IntroTheme.narratorRgb(),
+        BossEncounterScript.Expression.MAP));
+    lines.add(new BossEncounterScript.DialogEntry(
+        null,
+        "*Из белой мглы выходит человек в потёртой шкурянке.\n"
+            + "Лицо знакомое не чертами, а усталостью.\n"
+            + "Так узнают старый шрам под перчаткой.*",
         IntroTheme.narratorRgb(),
         BossEncounterScript.Expression.MAP));
     lines.add(openingLine(session));
@@ -45,11 +53,10 @@ public final class WolfBossEncounterScript {
     boolean curious = session != null
         && session.wolfEntryMood() == Chapter1Session.WolfEntryMood.CURIOUS;
     String text = curious
-        ? "Решил посмотреть, значит. Надо же — впервые за долгое время\n"
-            + "не отмахнулся сразу."
-        : "Быстро, значит. Ты всегда умел называть бегство делом —\n"
-            + "«нет времени», «не сейчас». Другого раза не будет.\n"
-            + "Их не бывает у таких, как мы.";
+        ? "Остановился.\nНадо же.\nОбычно на этом месте ты уже ищешь,\n"
+            + "кому бы поверить вместо себя."
+        : "Быстро, значит.\nТы всегда умел уходить от важных разговоров\n"
+            + "с видом человека, который просто занят.";
     return new BossEncounterScript.DialogEntry(
         "Волк", text, WOLF_RGB, BossEncounterScript.Expression.INTERESTED);
   }
@@ -59,38 +66,44 @@ public final class WolfBossEncounterScript {
     return List.of(
         new BossEncounterScript.DialogEntry(
             "Волк",
-            "Ладно, к делу, пока меня не заела ностальгия.\n"
-                + "Помнишь дорогу на Ард Каррайг...",
+            "Помнишь дорогу на Ард Каррайг?\n"
+                + "Снег по колено.\nПлотва скользит на льду\n"
+                + "и смотрит так, будто это ты лично придумал зиму.",
+            WOLF_RGB,
+            BossEncounterScript.Expression.INTERESTED),
+        new BossEncounterScript.DialogEntry(
+            "Геральт",
+            "Плотва часто так смотрела.",
             WOLF_RGB,
             BossEncounterScript.Expression.INTERESTED),
         new BossEncounterScript.DialogEntry(
             "Волк",
-            "...снег по колено, Плотва скользит и материт тебя всем,\n"
-                + "чем умеет материть лошадь...",
+            "Вот.\nПомнишь.\nЭто не доказательство.\n"
+                + "Это хуже.\nЭто больно узнавать.",
             WOLF_RGB,
             BossEncounterScript.Expression.INTERESTED),
         new BossEncounterScript.DialogEntry(
             "Волк",
-            "...а ты ей отвечаешь вслух. Взрослый мужик, разговаривающий\n"
-                + "с лошадью о смысле жизни...",
+            "Ты говорил с ней вслух.\nС лошадью.\n"
+                + "О дороге, о погоде, о людях, которых стоило бы убить,\n"
+                + "но за которых никто не заплатил.",
+            WOLF_RGB,
+            BossEncounterScript.Expression.INTERESTED),
+        new BossEncounterScript.DialogEntry(
+            "Геральт",
+            "Она слушала лучше людей.",
             WOLF_RGB,
             BossEncounterScript.Expression.INTERESTED),
         new BossEncounterScript.DialogEntry(
             "Волк",
-            "А потом Каэр Морхен, Весемир орёт на тебя за ледяную воду\n"
-                + "для лошади...",
-            WOLF_RGB,
-            BossEncounterScript.Expression.INTERESTED),
-        new BossEncounterScript.DialogEntry(
-            "Волк",
-            "...и ты стоишь и лыбишься, как идиот, потому что после\n"
-                + "стольких лет чужое ворчание всё ещё звучит как дом.",
-            WOLF_RGB,
-            BossEncounterScript.Expression.INTERESTED),
-        new BossEncounterScript.DialogEntry(
-            "Волк",
-            "Здесь так не бывает. Здесь никто на тебя не орёт по-настоящему...\n"
-                + "а ты как будто и не замечаешь.",
+            "И осуждала честнее.\n\n"
+                + "А потом Каэр Морхен.\nВесемир орёт, что ты опять напоил\n"
+                + "Плотву ледяной водой.\nТы стоишь, мокрый, злой, голодный,\n"
+                + "и улыбаешься как последний идиот.\n\n"
+                + "Здесь такого нет.\nЗдесь всё слишком аккуратное.\n"
+                + "Торговец улыбается ровно тогда, когда надо.\n"
+                + "Карта появляется, когда надо.\n"
+                + "А настоящее обычно неудобное.",
             WOLF_RGB,
             BossEncounterScript.Expression.INTERESTED)
     );
@@ -103,11 +116,11 @@ public final class WolfBossEncounterScript {
         List.of(
             new VnChoice(
                 "dismiss",
-                "«Это просто старые истории. Здесь и сейчас важнее.»",
+                "«Это старые истории. Они ничего не меняют.»",
                 0, 1),
             new VnChoice(
                 "acknowledge",
-                "«Это было. По-настоящему, не здесь.»",
+                "«Это было. Я помню.»",
                 1, 0)
         ));
   }
@@ -124,10 +137,12 @@ public final class WolfBossEncounterScript {
     return List.of(
         new BossEncounterScript.DialogEntry(
             "Волк",
-            "Ладно. Раз ты здесь — не там — придётся напомнить руками,\n"
-                + "раз слова не доходят.\n\n"
-                + "Последний вопрос, прежде чем начнём: ты ещё помнишь,\n"
-                + "каково это — держать что-то настоящее в руках?",
+            "Конечно.\nСтарые истории.\nОчень удобно.\n"
+                + "Так можно похоронить кого угодно.\n"
+                + "Даже себя, если подобрать достаточно сухие слова.\n\n"
+                + "Последний вопрос.\nТы ещё помнишь, каково это —\n"
+                + "держать в руках что-то настоящее?\n"
+                + "Не купленное. Не выданное. Не подсунутое.",
             WOLF_RGB,
             BossEncounterScript.Expression.LUNGE)
     );
@@ -137,10 +152,12 @@ public final class WolfBossEncounterScript {
     return List.of(
         new BossEncounterScript.DialogEntry(
             "Волк",
-            "Хорошо. Тогда вспомним по-старому.\n\n"
-                + "Последний вопрос, прежде чем начнём: ты ещё помнишь,\n"
-                + "каково это — держать что-то настоящее в руках,\n"
-                + "или он уже выел это из тебя без остатка?",
+            "Тише.\nНе говори это так быстро.\n"
+                + "Память не собака. Её нельзя позвать и сразу погладить.\n"
+                + "Она сначала кусает.\n\n"
+                + "Последний вопрос.\nТы ещё помнишь, каково это —\n"
+                + "держать в руках что-то настоящее?\n"
+                + "Не купленное. Не выданное. Не подсунутое. Своё.",
             WOLF_RGB,
             BossEncounterScript.Expression.ATTACK)
     );
