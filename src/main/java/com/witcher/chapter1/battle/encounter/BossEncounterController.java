@@ -8,8 +8,11 @@ import main.java.com.witcher.chapter1.battle.wolf.WolfBossEncounterScript;
 import main.java.com.witcher.chapter1.Chapter1Session;
 import main.java.com.witcher.chapter1.vn.VnChoice;
 import main.java.com.witcher.chapter1.vn.VnSceneState;
+import main.java.com.witcher.chapter1.vn.VnChoiceEffects;
 import main.java.com.witcher.ui.graphics.DialogBoxRenderer;
 import main.java.com.witcher.ui.intro.IntroVnUi;
+import main.java.com.witcher.ui.intro.view.IntroHistoryLayout;
+import main.java.com.witcher.ui.intro.view.IntroHistoryLayout;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -94,7 +97,7 @@ public final class BossEncounterController {
         }
       }
       if (wheelNotches != 0) {
-        historyScroll = Math.max(0, historyScroll - wheelNotches * 18);
+        historyScroll = Math.max(0, historyScroll - wheelNotches * IntroHistoryLayout.SCROLL_STEP_PX);
       }
       historyCloseHovered = buttons.historyClose.contains(mouseX, mouseY);
       return;
@@ -142,12 +145,7 @@ public final class BossEncounterController {
     choiceScene.select(index);
     VnChoice choice = choiceScene.selectedChoice();
     if (choice != null && session != null) {
-      if (choice.suspicionDelta() > 0) {
-        session.addSuspicion(choice.suspicionDelta());
-      }
-      if (choice.trustDelta() > 0) {
-        session.addTrust(choice.trustDelta());
-      }
+      VnChoiceEffects.apply(session, choice);
     }
     memoryBranch = index == 0
         ? WolfBossEncounterScript.MemoryBranch.DISMISS
@@ -308,17 +306,7 @@ public final class BossEncounterController {
   }
 
   private void refreshButtonLayout() {
-    IntroVnUi.ButtonLayout layout = IntroVnUi.layoutVnButtons(layoutSw, layoutSh, 0);
-    buttons.backButton.set(layout.backButton.x, layout.backButton.y,
-        layout.backButton.width, layout.backButton.height);
-    buttons.historyButton.set(layout.historyButton.x, layout.historyButton.y,
-        layout.historyButton.width, layout.historyButton.height);
-    buttons.autoButton.set(layout.autoButton.x, layout.autoButton.y,
-        layout.autoButton.width, layout.autoButton.height);
-    buttons.historyPanel.set(layout.historyPanel.x, layout.historyPanel.y,
-        layout.historyPanel.width, layout.historyPanel.height);
-    buttons.historyClose.set(layout.historyClose.x, layout.historyClose.y,
-        layout.historyClose.width, layout.historyClose.height);
+    IntroVnUi.copyButtonLayout(IntroVnUi.layoutVnButtons(layoutSw, layoutSh, 0), buttons);
   }
 
   public void setLayoutSize(int sw, int sh) {
