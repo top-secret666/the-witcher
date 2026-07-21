@@ -6,9 +6,13 @@ import main.java.com.witcher.chapter1.battle.BossVnTypingEngine;
 import main.java.com.witcher.chapter1.battle.BossVnTypingState;
 import main.java.com.witcher.chapter1.Chapter1Session;
 import main.java.com.witcher.chapter1.vn.VnChoice;
+import main.java.com.witcher.chapter1.vn.VnChoiceEffects;
 import main.java.com.witcher.chapter1.vn.VnSceneState;
+import main.java.com.witcher.ui.chapter1.swing.battle.briefing.QuestNoticeAnimator;
+import main.java.com.witcher.ui.chapter1.swing.battle.briefing.QuestNoticeRenderer;
 import main.java.com.witcher.ui.graphics.DialogBoxRenderer;
 import main.java.com.witcher.ui.intro.IntroVnUi;
+import main.java.com.witcher.ui.intro.view.IntroHistoryLayout;
 import main.java.com.witcher.ui.shop.view.ShopViewConstants;
 
 import java.util.ArrayList;
@@ -20,6 +24,9 @@ public final class BossQuestBriefingController {
   public enum Phase {
     DIALOG,
     TRANSITION
+  }
+
+  public record NoticeFrame(QuestNoticeRenderer.Layout layout, QuestNoticeAnimator anim) {
   }
 
   private static final int MS_PER_TICK = BossQuestBriefingConstants.MS_PER_TICK;
@@ -112,7 +119,7 @@ public final class BossQuestBriefingController {
         }
       }
       if (wheelNotches != 0) {
-        historyScroll = Math.max(0, historyScroll - wheelNotches * 18);
+        historyScroll = Math.max(0, historyScroll - wheelNotches * IntroHistoryLayout.SCROLL_STEP_PX);
       }
       historyCloseHovered = buttons.historyClose.contains(mouseX, mouseY);
       return;
@@ -189,12 +196,7 @@ public final class BossQuestBriefingController {
     choiceScene.select(index);
     VnChoice choice = choiceScene.selectedChoice();
     if (choice != null && session != null) {
-      if (choice.suspicionDelta() > 0) {
-        session.addSuspicion(choice.suspicionDelta());
-      }
-      if (choice.trustDelta() > 0) {
-        session.addTrust(choice.trustDelta());
-      }
+      VnChoiceEffects.apply(session, choice);
       session.setWolfEntryMood(index == 0
           ? Chapter1Session.WolfEntryMood.RELUCTANT
           : Chapter1Session.WolfEntryMood.CURIOUS);
@@ -206,6 +208,11 @@ public final class BossQuestBriefingController {
 
   public boolean showNotice() {
     return phase == Phase.DIALOG || phase == Phase.TRANSITION;
+  }
+
+  public NoticeFrame noticeFrame() {
+    QuestNoticeRenderer.Layout layout = QuestNoticeRenderer.layout(layoutSw, layoutSh);
+    return new NoticeFrame(layout, QuestNoticeAnimator.opening(noticeAnimProgress(), layout));
   }
 
   public float noticeAnimProgress() {
@@ -341,17 +348,7 @@ public final class BossQuestBriefingController {
   }
 
   private void refreshButtonLayout() {
-    IntroVnUi.ButtonLayout layout = IntroVnUi.layoutVnButtons(layoutSw, layoutSh, 0);
-    buttons.backButton.set(layout.backButton.x, layout.backButton.y,
-        layout.backButton.width, layout.backButton.height);
-    buttons.historyButton.set(layout.historyButton.x, layout.historyButton.y,
-        layout.historyButton.width, layout.historyButton.height);
-    buttons.autoButton.set(layout.autoButton.x, layout.autoButton.y,
-        layout.autoButton.width, layout.autoButton.height);
-    buttons.historyPanel.set(layout.historyPanel.x, layout.historyPanel.y,
-        layout.historyPanel.width, layout.historyPanel.height);
-    buttons.historyClose.set(layout.historyClose.x, layout.historyClose.y,
-        layout.historyClose.width, layout.historyClose.height);
+    IntroVnUi.copyButtonLayout(IntroVnUi.layoutVnButtons(layoutSw, layoutSh, 0), buttons);
   }
 
   private void updateCharacterAnimation() {
