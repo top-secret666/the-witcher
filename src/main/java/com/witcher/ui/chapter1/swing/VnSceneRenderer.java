@@ -23,7 +23,7 @@ public final class VnSceneRenderer {
       return;
     }
     DialogBoxRenderer.drawCompactFramedSpeakerText(
-        g, sw, sh, scene.speaker(), scene.body(), new Color(218, 165, 32), 1f);
+        g, sw, sh, scene.speaker(), scene.body(), DialogBoxRenderer.DUKE_COLOR, 1f);
   }
 
   /** Эпилог с осколком: воспоминания на весь экран + минимальная полоска диалога. */
@@ -42,7 +42,7 @@ public final class VnSceneRenderer {
       return;
     }
     DialogBoxRenderer.drawCompactFramedSpeakerText(
-        g, sw, sh, scene.speaker(), scene.body(), new Color(218, 165, 32), 1f);
+        g, sw, sh, scene.speaker(), scene.body(), DialogBoxRenderer.DUKE_COLOR, 1f);
   }
 
   public static void drawChoices(
