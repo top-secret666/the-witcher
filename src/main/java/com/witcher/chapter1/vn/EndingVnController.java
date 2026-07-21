@@ -3,6 +3,9 @@ package main.java.com.witcher.chapter1.vn;
 import main.java.com.witcher.chapter1.Chapter1Session;
 import main.java.com.witcher.chapter1.ending.EscapeEnding;
 import main.java.com.witcher.chapter1.ending.EscapeResolver;
+import main.java.com.witcher.chapter1.vn.VnChoice;
+import main.java.com.witcher.chapter1.vn.VnChoiceEffects;
+import main.java.com.witcher.chapter1.vn.VnSceneState;
 
 /**
  * Финальная VN после успешного взлома: диалог → выбор → исход.
@@ -55,12 +58,7 @@ public final class EndingVnController {
     scene.select(index);
     VnChoice choice = scene.selectedChoice();
     if (choice != null) {
-      if (choice.suspicionDelta() > 0) {
-        session.addSuspicion(choice.suspicionDelta());
-      }
-      if (choice.trustDelta() > 0) {
-        session.addTrust(choice.trustDelta());
-      }
+      VnChoiceEffects.apply(session, choice);
     }
     resolvedEnding = EscapeResolver.resolve(session);
     step = Step.RESOLVE;
