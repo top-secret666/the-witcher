@@ -32,13 +32,46 @@ Focus   : OOP (encapsulation, inheritance, polymorphism)
 - Modular logic for interactions
 - Rule-driven flow for game state
 
-##  How to run
+## How to run
 
-1) Install JDK (recommended: Java 17)
+**Requirements:** JDK 17
 
-2) Open in IntelliJ IDEA
+### Windows
 
-3) Run the main class from `src/main` (add exact class name here once confirmed)
+```bat
+run.bat
+```
+
+При первом запуске скрипт сам скачает LibGDX в `lib/gdx/` и соберёт проект в `out/swing-run/`.
+
+Отдельно, если нужно только скачать библиотеки или собрать без запуска:
+
+```bat
+setup-gdx-libs.ps1
+compile-swing-hybrid.bat
+```
+
+### macOS / Linux
+
+```bash
+chmod +x run.sh setup-gdx-libs.sh
+./setup-gdx-libs.sh   # первый раз — скачает LibGDX + natives под вашу ОС
+./run.sh              # собрать и запустить
+```
+
+На Apple Silicon подтянутся `natives-macos-arm64`, на Intel Mac — `natives-macos`.
+
+### Main class
+
+`main.java.com.witcher.ui.graphics.GameWindow`
+
+### Troubleshooting
+
+| Проблема | Что сделать |
+|----------|-------------|
+| `JDK 17 not found` | Установите JDK 17 и задайте `JAVA_HOME` |
+| `lib/gdx is empty` | Запустите `setup-gdx-libs.ps1` (Windows) или `./setup-gdx-libs.sh` (Mac/Linux) |
+| На Mac не работает `run.bat` | Используйте `./run.sh` — `.bat` только для Windows |
 
 ##  Repo quality checklist (recommended)
 
