@@ -26,9 +26,12 @@ public final class BossQuestBriefingBackdrop {
 
     drawScaledCenter(g, assets.merchantBackground(), sw, sh, 0.72f);
 
-    QuestNoticeRenderer.Layout paperLayout = QuestNoticeRenderer.layout(sw, sh);
-    float noticeT = ctrl != null ? ctrl.noticeAnimProgress() : 1f;
-    QuestNoticeAnimator paperAnim = QuestNoticeAnimator.opening(noticeT, paperLayout);
+    BossQuestBriefingController.NoticeFrame frame = ctrl != null
+        ? ctrl.noticeFrame()
+        : new BossQuestBriefingController.NoticeFrame(
+            QuestNoticeRenderer.layout(sw, sh),
+            QuestNoticeAnimator.opening(1f, QuestNoticeRenderer.layout(sw, sh)));
+    QuestNoticeAnimator paperAnim = frame.anim();
     drawFocusVignette(g, sw, sh, layout, paperAnim);
 
     if (ctrl != null && ctrl.showDialog()) {

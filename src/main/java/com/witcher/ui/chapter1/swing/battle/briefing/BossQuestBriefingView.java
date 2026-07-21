@@ -46,9 +46,8 @@ public final class BossQuestBriefingView {
     BossQuestBriefingBackdrop.draw(g, sw, sh, layout, ctrl);
 
     if (ctrl.showNotice()) {
-      QuestNoticeRenderer.Layout target = QuestNoticeRenderer.layout(sw, sh);
-      QuestNoticeAnimator anim = QuestNoticeAnimator.opening(ctrl.noticeAnimProgress(), target);
-      QuestNoticeRenderer.drawPaper(g, sw, sh, anim);
+      BossQuestBriefingController.NoticeFrame frame = ctrl.noticeFrame();
+      QuestNoticeRenderer.drawPaper(g, sw, sh, frame.anim());
     }
 
     // Диалог и текст заказа — в renderTextOverlay (поверх CRT).
@@ -61,9 +60,8 @@ public final class BossQuestBriefingView {
       return;
     }
     if (ctrl.showNotice()) {
-      QuestNoticeRenderer.Layout target = QuestNoticeRenderer.layout(sw, sh);
-      QuestNoticeAnimator anim = QuestNoticeAnimator.opening(ctrl.noticeAnimProgress(), target);
-      QuestNoticeRenderer.drawTextOverlay(g, sw, sh, ctrl.notice(), anim);
+      BossQuestBriefingController.NoticeFrame frame = ctrl.noticeFrame();
+      QuestNoticeRenderer.drawTextOverlay(g, sw, sh, ctrl.notice(), frame.anim());
     }
     if (ctrl.showDialog()) {
       drawDialogBox(g, sw, sh, ctrl);
