@@ -3,6 +3,8 @@ package main.java.com.witcher.ui.intro.view;
 /** Раскладка окна истории — общая геометрия Swing / LibGDX. */
 public final class IntroHistoryLayout {
 
+    public static final int SCROLL_STEP_PX = 18;
+
     public static final class Metrics {
         public final int fontSize;
         public final int titleSize;
