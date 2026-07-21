@@ -1,9 +1,6 @@
 package main.java.com.witcher.ui.chapter1.swing.battle.briefing;
 
-import main.java.com.witcher.ui.graphics.GameFonts;
-
 import java.awt.Font;
-import java.awt.Graphics2D;
 import java.awt.GraphicsEnvironment;
 import java.io.InputStream;
 import java.util.HashMap;
@@ -35,14 +32,6 @@ public final class QuestNoticeFonts {
 
   public static Font body(int size) {
     return sized(REGULAR, size);
-  }
-
-  public static Font seal(int size) {
-    return sized(REGULAR, size);
-  }
-
-  public static void applyInkHints(Graphics2D g) {
-    GameFonts.applyGothicHints(g);
   }
 
   private static Font sized(Font base, int size) {
