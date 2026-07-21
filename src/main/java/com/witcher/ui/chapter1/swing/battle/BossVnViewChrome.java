@@ -3,6 +3,8 @@ package main.java.com.witcher.ui.chapter1.swing.battle;
 import main.java.com.witcher.ui.graphics.DialogBoxRenderer;
 import main.java.com.witcher.ui.graphics.GameFonts;
 import main.java.com.witcher.ui.graphics.UiChrome;
+import main.java.com.witcher.ui.graphics.UiRect;
+import main.java.com.witcher.ui.intro.VnButtonLabels;
 import main.java.com.witcher.ui.intro.IntroHistoryText;
 import main.java.com.witcher.ui.intro.IntroVnUi;
 import main.java.com.witcher.ui.intro.view.IntroHistoryLayout;
@@ -31,11 +33,17 @@ public final class BossVnViewChrome {
       boolean autoMode,
       int mouseX,
       int mouseY) {
-    drawTextButton(g, toRect(buttons.backButton), "Назад", backEnabled, false,
+    drawTextButton(g, UiRect.toAwt(buttons.backButton.x, buttons.backButton.y,
+        buttons.backButton.width, buttons.backButton.height),
+        VnButtonLabels.BACK, backEnabled, false,
         backEnabled && buttons.backButton.contains(mouseX, mouseY));
-    drawTextButton(g, toRect(buttons.historyButton), "История", true, false,
+    drawTextButton(g, UiRect.toAwt(buttons.historyButton.x, buttons.historyButton.y,
+        buttons.historyButton.width, buttons.historyButton.height),
+        VnButtonLabels.HISTORY, true, false,
         buttons.historyButton.contains(mouseX, mouseY));
-    drawTextButton(g, toRect(buttons.autoButton), "Авто", true, autoMode,
+    drawTextButton(g, UiRect.toAwt(buttons.autoButton.x, buttons.autoButton.y,
+        buttons.autoButton.width, buttons.autoButton.height),
+        VnButtonLabels.AUTO, true, autoMode,
         buttons.autoButton.contains(mouseX, mouseY));
   }
 
@@ -76,7 +84,7 @@ public final class BossVnViewChrome {
 
     g.setFont(titleFont);
     g.setColor(new Color(IntroHistoryTheme.TITLE_R, IntroHistoryTheme.TITLE_G, IntroHistoryTheme.TITLE_B));
-    g.drawString("История", Math.round(m.textX), m.titleBaseline);
+    g.drawString(VnButtonLabels.HISTORY, Math.round(m.textX), m.titleBaseline);
 
     g.setColor(new Color(IntroHistoryTheme.DIVIDER_R, IntroHistoryTheme.DIVIDER_G,
         IntroHistoryTheme.DIVIDER_B, IntroHistoryTheme.DIVIDER_A));
@@ -147,6 +155,6 @@ public final class BossVnViewChrome {
   }
 
   public static Rectangle toRect(IntroVnUi.Rect r) {
-    return new Rectangle(Math.round(r.x), Math.round(r.y), Math.round(r.width), Math.round(r.height));
+    return UiRect.toAwt(r.x, r.y, r.width, r.height);
   }
 }
