@@ -68,11 +68,6 @@ public final class DialogBoxRenderer {
         return new Layout(sw, sh);
     }
 
-    /** Компактное окно для лавки — низкая полоска, крупный текст. */
-    public static Layout computeCompactLayout(int sw, int sh) {
-        return new Layout(sw, sh, 0.10f, 0.78f);
-    }
-
     public static Layout computeLayout(int sw, int sh, float heightRatio, float widthRatio) {
         return new Layout(sw, sh, heightRatio, widthRatio);
     }
@@ -154,17 +149,6 @@ public final class DialogBoxRenderer {
         g.drawRect(plate.boxX, plate.boxY, plate.boxW, plate.boxH);
         g.setColor(speakerColor);
         GameFonts.drawOutlined(g, speaker, plate.textX, plate.textBaselineY, speakerColor);
-    }
-
-    public static int drawSpeakerText(Graphics2D g, String speaker, String text, Color speakerColor,
-                                      Layout layout, float alpha) {
-        enableTextSmoothing(g);
-        drawBox(g, layout.boxX, layout.boxY, layout.boxW, layout.boxH, alpha);
-        drawSpeakerName(g, speaker, speakerColor, layout.boxX, layout.boxY, layout.pad, layout.fontSize, alpha);
-        int lineY = drawCompactBodyLines(
-            g, text, layout, speaker == null ? speakerColor : SPEECH_COLOR);
-        disableTextSmoothing(g);
-        return lineY;
     }
 
     public static int drawTypewriterText(Graphics2D g, String speaker, String visibleText,
@@ -301,69 +285,6 @@ public final class DialogBoxRenderer {
         }
 
         g.setComposite(prev);
-    }
-
-    public static void drawPlainSpeakerText(Graphics2D g, int sw, int sh, String speaker, String text,
-                                            Color speakerColor, float alpha) {
-        enableTextSmoothing(g);
-        Composite prev = g.getComposite();
-        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
-
-        int fontSize = Math.max(13, (int) (sh * 0.040f));
-        int marginX = 14;
-        int textMaxW = sw - marginX * 2;
-        int lineH = fontSize + 4;
-        int maxLines = 2;
-        int bottomPad = 10;
-
-        Font textFont = GameFonts.get().plain(fontSize);
-        g.setFont(textFont);
-        FontMetrics fm = g.getFontMetrics();
-
-        List<String> lines = new ArrayList<>();
-        for (String rawLine : text.split("\n", -1)) {
-            lines.addAll(wrapLine(rawLine, fm, textMaxW));
-        }
-        if (lines.size() > maxLines) {
-            lines = lines.subList(0, maxLines);
-        }
-
-        int blockH = lineH * lines.size();
-        int startY = sh - bottomPad - blockH + fm.getAscent();
-
-        if (speaker != null && !speaker.isEmpty()) {
-            g.setFont(GameFonts.get().bold(fontSize));
-            g.setColor(speakerColor);
-            String label = speaker + ": ";
-            g.drawString(label, marginX, startY);
-            int labelW = g.getFontMetrics().stringWidth(label);
-            if (!lines.isEmpty()) {
-                String first = lines.get(0);
-                g.setFont(textFont);
-                g.setColor(new Color(0, 0, 0, 140));
-                g.drawString(first, marginX + labelW + 1, startY + 1);
-                g.setColor(SPEECH_COLOR);
-                g.drawString(first, marginX + labelW, startY);
-                for (int i = 1; i < lines.size(); i++) {
-                    int y = startY + lineH * i;
-                    g.setColor(new Color(0, 0, 0, 140));
-                    g.drawString(lines.get(i), marginX + 1, y + 1);
-                    g.setColor(SPEECH_COLOR);
-                    g.drawString(lines.get(i), marginX, y);
-                }
-            }
-        } else {
-            for (int i = 0; i < lines.size(); i++) {
-                int y = startY + lineH * i;
-                g.setColor(new Color(0, 0, 0, 140));
-                g.drawString(lines.get(i), marginX + 1, y + 1);
-                g.setColor(SPEECH_COLOR);
-                g.drawString(lines.get(i), marginX, y);
-            }
-        }
-
-        g.setComposite(prev);
-        disableTextSmoothing(g);
     }
 
     public static void drawHint(Graphics2D g, String hint, Layout layout, int fontSize, float alpha) {
