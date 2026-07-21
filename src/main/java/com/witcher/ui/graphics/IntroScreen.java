@@ -210,11 +210,10 @@ public class IntroScreen {
                         ? dukeLaughShopSprite : dukeLaughSprite;
                     BufferedImage rightSpriteToShow = ("right".equals(activeSide) && dukeEmotionBase != null)
                         ? dukeEmotionBase : dukeBase;
-                    boolean liftDuke = controller.shouldLiftDukeForShop();
-                    boolean raiseDuke = controller.shouldRaiseDukeForShop();
+                    boolean shopPose = controller.shouldLiftDukeForShop();
                     drawCharacterEnhanced(g, sw, sh, rightSpriteToShow, controller.getDukeSlide(), false,
                         "right".equals(activeSide) && "duke".equals(controller.getRightCharacter()),
-                        controller.getRightActiveAnim(), rightForceOpaque, liftDuke, raiseDuke, 1f);
+                        controller.getRightActiveAnim(), rightForceOpaque, shopPose, shopPose, 1f);
                 }
             }
 

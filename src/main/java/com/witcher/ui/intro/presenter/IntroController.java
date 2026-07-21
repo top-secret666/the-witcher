@@ -533,10 +533,6 @@ public final class IntroController {
         return isUsingShopSprites() && isRightEmotionSpeaker() && assets.hasDukeLaughShop;
     }
 
-    public boolean shouldRaiseDukeForShop() {
-        return shouldLiftDukeForShop();
-    }
-
     public boolean isHistoryOpen() {
         return historyOpen;
     }
