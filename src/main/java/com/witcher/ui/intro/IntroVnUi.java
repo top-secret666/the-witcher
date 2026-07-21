@@ -1,6 +1,6 @@
 package main.java.com.witcher.ui.intro;
 
-import main.java.com.witcher.ui.intro.view.IntroDialogLayout;
+import main.java.com.witcher.ui.graphics.DialogBoxRenderer;
 
 /**
  * Раскладка кнопок VN-интерфейса (Назад, История, Авто).
@@ -49,7 +49,7 @@ public final class IntroVnUi {
     }
 
     public static ButtonLayout layoutVnButtons(int sw, int sh, int currentEntry) {
-        IntroDialogLayout.Layout layout = IntroDialogLayout.computeLayout(sw, sh);
+        DialogBoxRenderer.Layout layout = DialogBoxRenderer.computeLayout(sw, sh);
         int fontSize = Math.max(10, (int) (sh * 0.031f));
         int btnH = fontSize + 8;
         int gap = Math.max(28, (int) (sw * 0.09f));
@@ -64,10 +64,7 @@ public final class IntroVnUi {
         if (currentEntry == IntroScript.SHOP_ANIMATION_ENTRY_INDEX) {
             rowY = sh - btnH - 6;
         } else {
-            rowY = layout.boxY + layout.boxH + 4;
-            if (rowY + btnH > sh - 4) {
-                rowY = sh - btnH - 4;
-            }
+            rowY = layout.toolbarRowY(btnH);
         }
 
         ButtonLayout result = new ButtonLayout();

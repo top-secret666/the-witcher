@@ -32,6 +32,8 @@ public final class DialogBoxRenderer {
         public final int textY;
         public final int textMaxW;
         public final int fontSize;
+        /** Нижняя полоса под кнопки Назад / История / Авто. */
+        public final int toolbarReserve;
 
         Layout(int sw, int sh) {
             this(sw, sh, 0.30f, 1.0f);
@@ -43,16 +45,22 @@ public final class DialogBoxRenderer {
             boxW = Math.max(200, (int) (sw * widthRatio));
             boxX = (sw - boxW) / 2;
             boxY = sh - boxH - (int) (sh * 0.02f);
+            toolbarReserve = heightRatio <= 0.11f ? 0 : Math.max(24, (int) (sh * 0.058f));
             if (heightRatio <= 0.11f) {
                 fontSize = Math.max(13, (int) (sh * 0.040f));
                 pad = Math.max(6, (int) (sw * 0.018f));
             } else {
-                fontSize = Math.max(12, (int) (sh * 0.040f));
+                fontSize = Math.max(11, (int) (sh * 0.034f));
                 pad = (int) (sw * 0.02f);
             }
             textX = boxX + pad;
-            textY = boxY + pad;
+            textY = boxY + pad + (heightRatio <= 0.11f ? 0 : Math.round(sh * 0.008f));
             textMaxW = boxW - pad * 2;
+        }
+
+        /** Y-координата строки VN-кнопок внутри нижней полосы окна. */
+        public int toolbarRowY(int buttonHeight) {
+            return boxY + boxH - toolbarReserve + Math.max(0, (toolbarReserve - buttonHeight) / 2);
         }
     }
 
@@ -153,7 +161,7 @@ public final class DialogBoxRenderer {
         enableTextSmoothing(g);
         drawBox(g, layout.boxX, layout.boxY, layout.boxW, layout.boxH, alpha);
         drawSpeakerName(g, speaker, speakerColor, layout.boxX, layout.boxY, layout.pad, layout.fontSize, alpha);
-        int lineY = drawCompactCenteredLines(
+        int lineY = drawCompactBodyLines(
             g, text, layout, speaker == null ? speakerColor : SPEECH_COLOR);
         disableTextSmoothing(g);
         return lineY;
@@ -164,23 +172,23 @@ public final class DialogBoxRenderer {
         enableTextSmoothing(g);
         drawBox(g, layout.boxX, layout.boxY, layout.boxW, layout.boxH, alpha);
         drawSpeakerName(g, speaker, speakerColor, layout.boxX, layout.boxY, layout.pad, layout.fontSize, alpha);
-        int lineY = drawCompactCenteredLines(
+        int lineY = drawCompactBodyLines(
             g, visibleText, layout, speaker == null ? speakerColor : SPEECH_COLOR);
         disableTextSmoothing(g);
         return lineY;
     }
 
-    /** Плотнее межстрочный интервал и центрирование — для коротких VN-реплик. */
-    private static int drawCompactCenteredLines(Graphics2D g, String text, Layout layout, Color textColor) {
+    /** Плотный межстрочный интервал, выравнивание влево, зона над кнопками VN. */
+    private static int drawCompactBodyLines(Graphics2D g, String text, Layout layout, Color textColor) {
         Font textFont = GameFonts.get().plain(layout.fontSize);
         g.setFont(textFont);
         FontMetrics fm = g.getFontMetrics();
         int lineStep = compactLineStep(fm, layout.fontSize);
-        int bottomLimit = layout.boxY + layout.boxH - layout.pad;
+        int bottomLimit = layout.boxY + layout.boxH - layout.pad - layout.toolbarReserve;
         int lineY = layout.textY + fm.getAscent();
 
         Shape prevClip = g.getClip();
-        g.clipRect(layout.textX, layout.textY, layout.textMaxW, bottomLimit - layout.textY);
+        g.clipRect(layout.textX, layout.textY, layout.textMaxW, Math.max(0, bottomLimit - layout.textY));
 
         for (String rawLine : text.split("\n", -1)) {
             if (rawLine.isBlank()) {
@@ -191,8 +199,7 @@ public final class DialogBoxRenderer {
                 if (lineY > bottomLimit) {
                     break;
                 }
-                int x = layout.textX + Math.max(0, (layout.textMaxW - fm.stringWidth(wl)) / 2);
-                GameFonts.drawShadowed(g, wl, x, lineY, textColor);
+                GameFonts.drawShadowed(g, wl, layout.textX, lineY, textColor);
                 lineY += lineStep;
             }
         }
@@ -347,7 +354,10 @@ public final class DialogBoxRenderer {
         g.setFont(GameFonts.get().bold(Math.max(10, fontSize - 2)));
         g.setColor(HINT_COLOR);
         int hw = g.getFontMetrics().stringWidth(hint);
-        g.drawString(hint, layout.boxX + layout.boxW - layout.pad - hw, layout.boxY + layout.boxH - layout.pad + 2);
+        int hintY = layout.toolbarReserve > 0
+            ? layout.boxY + layout.boxH - layout.toolbarReserve - 4
+            : layout.boxY + layout.boxH - layout.pad + 2;
+        g.drawString(hint, layout.boxX + layout.boxW - layout.pad - hw, hintY);
         disableTextSmoothing(g);
     }
 
