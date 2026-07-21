@@ -20,6 +20,16 @@ public final class IntroEasing {
         return 1f + c3 * (float) Math.pow(t - 1, 3) + c1 * (float) Math.pow(t - 1, 2);
     }
 
+    public static float easeOutCubic(float t) {
+        if (t >= 1f) {
+            return 1f;
+        }
+        if (t <= 0f) {
+            return 0f;
+        }
+        return 1f - (float) Math.pow(1f - t, 3);
+    }
+
     public static float easeInOutCubic(float t) {
         if (t >= 1f) {
             return 1f;
