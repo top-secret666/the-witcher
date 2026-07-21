@@ -48,10 +48,24 @@ public final class BossQuestBriefingView {
     if (ctrl.showNotice()) {
       QuestNoticeRenderer.Layout target = QuestNoticeRenderer.layout(sw, sh);
       QuestNoticeAnimator anim = QuestNoticeAnimator.opening(ctrl.noticeAnimProgress(), target);
-      QuestNoticeRenderer.draw(g, sw, sh, ctrl.notice(), anim);
+      QuestNoticeRenderer.drawPaper(g, sw, sh, anim);
     }
 
-    if (withDialog && ctrl.showDialog()) {
+    // Диалог и текст заказа — в renderTextOverlay (поверх CRT).
+  }
+
+  /** Диалог брифинга — чёткий UI поверх пост-обработки. */
+  public static void drawTextOverlay(Graphics2D g, int sw, int sh, BossQuestBriefingController ctrl,
+                                     int mouseX, int mouseY) {
+    if (ctrl == null) {
+      return;
+    }
+    if (ctrl.showNotice()) {
+      QuestNoticeRenderer.Layout target = QuestNoticeRenderer.layout(sw, sh);
+      QuestNoticeAnimator anim = QuestNoticeAnimator.opening(ctrl.noticeAnimProgress(), target);
+      QuestNoticeRenderer.drawTextOverlay(g, sw, sh, ctrl.notice(), anim);
+    }
+    if (ctrl.showDialog()) {
       drawDialogBox(g, sw, sh, ctrl);
       BossVnViewChrome.drawToolbar(g, ctrl.buttons(), ctrl.backEnabled(), ctrl.autoMode(), mouseX, mouseY);
     }

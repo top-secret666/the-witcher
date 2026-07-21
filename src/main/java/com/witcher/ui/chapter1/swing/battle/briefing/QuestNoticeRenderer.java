@@ -4,6 +4,7 @@ import main.java.com.witcher.chapter1.battle.briefing.BossQuestBriefingScript;
 import main.java.com.witcher.ui.chapter1.swing.Chapter1UiAssets;
 import main.java.com.witcher.ui.chapter1.swing.ScaledImageCache;
 import main.java.com.witcher.ui.graphics.DialogBoxRenderer;
+import main.java.com.witcher.ui.graphics.GameFonts;
 
 import java.awt.AlphaComposite;
 import java.awt.Color;
@@ -83,14 +84,17 @@ public final class QuestNoticeRenderer {
       int sh,
       BossQuestBriefingScript.NoticeContent notice,
       QuestNoticeAnimator anim) {
-    if (notice == null || anim == null || anim.paperAlpha <= 0.01f) {
+    drawPaper(g, sw, sh, anim);
+    drawTextOverlay(g, sw, sh, notice, anim);
+  }
+
+  /** Пергамент в кадре сцены (под CRT-постобработкой). */
+  public static void drawPaper(Graphics2D g, int sw, int sh, QuestNoticeAnimator anim) {
+    if (anim == null || anim.paperAlpha <= 0.01f) {
       return;
     }
 
-    Layout target = layout(sw, sh);
-    Layout textLayout = layoutForAnim(anim, target);
     Composite prev = g.getComposite();
-
     AffineTransform saved = g.getTransform();
     int cx = anim.x + anim.w / 2;
     int cy = anim.y + anim.h / 2;
@@ -114,12 +118,25 @@ public final class QuestNoticeRenderer {
       }
     }
     g.setTransform(saved);
+    g.setComposite(prev);
+  }
 
-    if (anim.textAlpha > 0.02f) {
-      g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, Math.min(1f, anim.textAlpha)));
-      drawNoticeText(g, textLayout, notice);
+  /** Чёткий текст поверх пост-обработки (как речь в лавке). */
+  public static void drawTextOverlay(
+      Graphics2D g,
+      int sw,
+      int sh,
+      BossQuestBriefingScript.NoticeContent notice,
+      QuestNoticeAnimator anim) {
+    if (notice == null || anim == null || anim.textAlpha <= 0.02f) {
+      return;
     }
 
+    Layout textLayout = layoutForAnim(anim, layout(sw, sh));
+    Composite prev = g.getComposite();
+    g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, Math.min(1f, anim.textAlpha)));
+    GameFonts.applyUiOverlayHints(g);
+    paintNoticeText(g, textLayout, notice);
     g.setComposite(prev);
   }
 
@@ -139,12 +156,10 @@ public final class QuestNoticeRenderer {
         Math.round(target.textMaxH() * sy));
   }
 
-  private static void drawNoticeText(
+  private static void paintNoticeText(
       Graphics2D g,
       Layout layout,
       BossQuestBriefingScript.NoticeContent notice) {
-    QuestNoticeFonts.applyInkHints(g);
-
     Color inkDark = new Color(28, 14, 4);
     Color inkBody = new Color(32, 18, 6);
     int maxW = layout.textMaxW;
@@ -158,11 +173,11 @@ public final class QuestNoticeRenderer {
       blocks = buildBlocks(notice, layout, scale, inkDark, inkBody);
       lines = flattenBlocks(blocks, maxW, g);
       totalHeight = measureLines(lines, g);
-      if (totalHeight <= layout.textMaxH || scale <= 0.68f) {
+      if (totalHeight <= layout.textMaxH || scale <= 0.72f) {
         break;
       }
       scale -= 0.05f;
-    } while (scale > 0.68f);
+    } while (scale > 0.72f);
 
     int startY = layout.textY + Math.max(0, (layout.textMaxH - totalHeight) / 3);
     int lineY = startY;
@@ -183,7 +198,7 @@ public final class QuestNoticeRenderer {
       int x = line.align() == Align.CENTER
           ? layout.centerX() - fm.stringWidth(line.text()) / 2
           : layout.textX;
-      drawInkString(g, line.text(), x, baseline, line.color());
+      drawCrispInk(g, line.text(), x, baseline, line.color());
       lineY += lineStep(fm);
     }
 
@@ -197,9 +212,9 @@ public final class QuestNoticeRenderer {
       Color inkDark,
       Color inkBody) {
     int scaleRef = Math.max(1, Math.round(Math.max(layout.h, layout.w / 3) * scale));
-    Font headerFont = QuestNoticeFonts.header(Math.max(9, Math.round(scaleRef * 0.078f)));
-    Font titleFont = QuestNoticeFonts.title(Math.max(11, Math.round(scaleRef * 0.092f)));
-    Font bodyFont = QuestNoticeFonts.body(Math.max(7, Math.round(scaleRef * 0.060f)));
+    Font headerFont = QuestNoticeFonts.header(Math.max(11, Math.round(scaleRef * 0.084f)));
+    Font titleFont = QuestNoticeFonts.title(Math.max(13, Math.round(scaleRef * 0.098f)));
+    Font bodyFont = QuestNoticeFonts.body(Math.max(10, Math.round(scaleRef * 0.070f)));
 
     return List.of(
         new TextBlock(notice.header(), headerFont, inkDark, Align.CENTER, 1),
@@ -248,14 +263,15 @@ public final class QuestNoticeRenderer {
     return fm.getAscent() + Math.max(1, fm.getDescent() / 2);
   }
 
-  private static void drawInkString(Graphics2D g, String text, int x, int y, Color ink) {
-    g.setColor(new Color(255, 248, 235, 90));
-    g.drawString(text, x - 1, y);
-    g.drawString(text, x + 1, y);
-    g.setColor(new Color(0, 0, 0, 30));
-    g.drawString(text, x + 1, y + 1);
+  private static void drawCrispInk(Graphics2D g, String text, int x, int y, Color ink) {
+    int tx = (x + 1) & ~1;
+    int ty = (y + 1) & ~1;
+    g.setColor(new Color(255, 248, 235, 70));
+    g.drawString(text, tx, ty - 1);
+    g.setColor(new Color(0, 0, 0, 45));
+    g.drawString(text, tx + 1, ty + 1);
     g.setColor(ink);
-    g.drawString(text, x, y);
+    g.drawString(text, tx, ty);
   }
 
   private static List<String> wrap(String text, FontMetrics fm, int maxW) {

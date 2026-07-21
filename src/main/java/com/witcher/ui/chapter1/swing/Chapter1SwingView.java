@@ -7,6 +7,7 @@ import main.java.com.witcher.chapter1.battle.wolf.WolfBossFinaleController;
 import main.java.com.witcher.ui.chapter1.swing.battle.encounter.EncounterSceneRenderer;
 import main.java.com.witcher.ui.chapter1.swing.battle.map.BossMapView;
 import main.java.com.witcher.ui.chapter1.swing.battle.briefing.BossQuestBriefingView;
+import main.java.com.witcher.ui.shop.view.ShopViewConstants;
 import main.java.com.witcher.ui.chapter1.swing.battle.encounter.BossEncounterView;
 import main.java.com.witcher.ui.chapter1.swing.battle.glitch.BossGlitchRevealView;
 import main.java.com.witcher.ui.chapter1.swing.battle.wolf.WolfEndingView;
@@ -167,12 +168,15 @@ public final class Chapter1SwingView implements Chapter1View {
   @Override
   public void renderTextOverlay(Graphics2D g, int mouseX, int mouseY, Chapter1Presenter presenter) {
     Chapter1Phase phase = presenter.director().phase();
-    int sw = g.getClipBounds() != null ? g.getClipBounds().width : 480;
-    int sh = g.getClipBounds() != null ? g.getClipBounds().height : 360;
+    int sw = ShopViewConstants.VIRTUAL_W;
+    int sh = ShopViewConstants.VIRTUAL_H;
     // Не рисуем речь лавки поверх VN — отсюда «живой.осов?» при зависании покупки.
     if ((phase == Chapter1Phase.SHOP || phase == Chapter1Phase.HACK)
         && !presenter.isDukeDialogActive()) {
       presenter.shopScreen().renderTextOverlay(g, mouseX, mouseY);
+    }
+    if (phase == Chapter1Phase.BOSS_QUEST_BRIEFING && !presenter.questBriefing().inTransition()) {
+      BossQuestBriefingView.drawTextOverlay(g, sw, sh, presenter.questBriefing(), mouseX, mouseY);
     }
     if (presenter.hasActiveChoices()) {
       if (phase == Chapter1Phase.BOSS_QUEST_BRIEFING || phase == Chapter1Phase.BOSS_ENCOUNTER) {
