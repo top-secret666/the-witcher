@@ -5,8 +5,9 @@ import main.java.com.witcher.ui.intro.IntroMorphAnimation;
 import main.java.com.witcher.ui.intro.IntroScript;
 import main.java.com.witcher.ui.intro.IntroShopAnimation;
 import main.java.com.witcher.ui.intro.IntroSwitchAnimation;
-import main.java.com.witcher.ui.graphics.DialogBoxRenderer;
 import main.java.com.witcher.ui.intro.IntroVnUi;
+import main.java.com.witcher.ui.graphics.DialogBoxRenderer;
+import main.java.com.witcher.ui.intro.view.IntroHistoryLayout;
 import main.java.com.witcher.ui.intro.view.IntroCharacterLayout;
 
 import java.util.ArrayList;
@@ -111,7 +112,7 @@ public final class IntroController {
             } else {
                 historyCloseHovered = historyCloseBounds.contains(mouseX, mouseY);
                 if (wheelNotches != 0) {
-                    historyScroll = Math.max(0, historyScroll + wheelNotches * 18);
+                    historyScroll = Math.max(0, historyScroll + wheelNotches * IntroHistoryLayout.SCROLL_STEP_PX);
                 }
                 if (mouseClicked) {
                     if (historyCloseBounds.contains(mouseX, mouseY)) {
