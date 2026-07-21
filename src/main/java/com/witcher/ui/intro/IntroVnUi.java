@@ -1,6 +1,7 @@
 package main.java.com.witcher.ui.intro;
 
 import main.java.com.witcher.ui.graphics.DialogBoxRenderer;
+import main.java.com.witcher.ui.intro.view.IntroLayout;
 
 /**
  * Раскладка кнопок VN-интерфейса (Назад, История, Авто).
@@ -41,28 +42,37 @@ public final class IntroVnUi {
         }
     }
 
-    private static final String LABEL_BACK = "Назад";
-    private static final String LABEL_HISTORY = "История";
-    private static final String LABEL_AUTO = "Авто";
-
     private IntroVnUi() {
+    }
+
+    public static void copyButtonLayout(ButtonLayout src, ButtonLayout dst) {
+        dst.backButton.set(src.backButton.x, src.backButton.y, src.backButton.width, src.backButton.height);
+        dst.historyButton.set(src.historyButton.x, src.historyButton.y,
+            src.historyButton.width, src.historyButton.height);
+        dst.autoButton.set(src.autoButton.x, src.autoButton.y, src.autoButton.width, src.autoButton.height);
+        dst.historyPanel.set(src.historyPanel.x, src.historyPanel.y,
+            src.historyPanel.width, src.historyPanel.height);
+        dst.historyClose.set(src.historyClose.x, src.historyClose.y,
+            src.historyClose.width, src.historyClose.height);
     }
 
     public static ButtonLayout layoutVnButtons(int sw, int sh, int currentEntry) {
         DialogBoxRenderer.Layout layout = DialogBoxRenderer.computeLayout(sw, sh);
-        int fontSize = Math.max(10, (int) (sh * 0.031f));
-        int btnH = fontSize + 8;
-        int gap = Math.max(28, (int) (sw * 0.09f));
+        int fontSize = Math.max(Math.round(IntroLayout.VN_FONT_MIN),
+            Math.round(sh * IntroLayout.VN_FONT_SIZE_RATIO));
+        int btnH = fontSize + Math.round(IntroLayout.VN_BUTTON_PAD_V);
+        int gap = Math.max(Math.round(IntroLayout.VN_BUTTON_GAP_MIN),
+            Math.round(sw * IntroLayout.VN_BUTTON_GAP_RATIO));
 
-        int backW = estimateTextWidth(LABEL_BACK, fontSize) + 10;
-        int histW = estimateTextWidth(LABEL_HISTORY, fontSize) + 10;
-        int autoW = estimateTextWidth(LABEL_AUTO, fontSize) + 10;
+        int backW = estimateTextWidth(VnButtonLabels.BACK, fontSize) + 10;
+        int histW = estimateTextWidth(VnButtonLabels.HISTORY, fontSize) + 10;
+        int autoW = estimateTextWidth(VnButtonLabels.AUTO, fontSize) + 10;
         int totalW = backW + histW + autoW + gap * 2;
         int startX = (sw - totalW) / 2;
 
         int rowY;
         if (currentEntry == IntroScript.SHOP_ANIMATION_ENTRY_INDEX) {
-            rowY = sh - btnH - 6;
+            rowY = sh - btnH - Math.round(IntroLayout.VN_ROW_BOTTOM_MARGIN);
         } else {
             rowY = layout.toolbarRowY(btnH);
         }
@@ -72,8 +82,10 @@ public final class IntroVnUi {
         result.historyButton.set(startX + backW + gap, rowY, histW, btnH);
         result.autoButton.set(startX + backW + gap + histW + gap, rowY, autoW, btnH);
 
-        int panelW = Math.max(280, (int) (sw * 0.82f));
-        int panelH = Math.max(200, (int) (sh * 0.72f));
+        int panelW = Math.max(Math.round(IntroLayout.VN_HISTORY_PANEL_MIN_W),
+            Math.round(sw * IntroLayout.VN_HISTORY_PANEL_W_RATIO));
+        int panelH = Math.max(Math.round(IntroLayout.VN_HISTORY_PANEL_MIN_H),
+            Math.round(sh * IntroLayout.VN_HISTORY_PANEL_H_RATIO));
         result.historyPanel.set((sw - panelW) / 2f, (sh - panelH) / 2f, panelW, panelH);
 
         layoutHistoryClose(result.historyPanel, result.historyClose);
@@ -94,6 +106,6 @@ public final class IntroVnUi {
 
     /** Приблизительная ширина кириллического текста без FontMetrics. */
     private static int estimateTextWidth(String text, int fontSize) {
-        return Math.round(text.length() * fontSize * 0.55f);
+        return Math.round(text.length() * fontSize * IntroLayout.VN_TEXT_WIDTH_FACTOR);
     }
 }
