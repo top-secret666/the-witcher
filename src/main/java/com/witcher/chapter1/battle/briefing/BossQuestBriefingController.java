@@ -205,7 +205,7 @@ public final class BossQuestBriefingController {
   }
 
   public boolean showNotice() {
-    return phase == Phase.DIALOG || (phase == Phase.TRANSITION && noticeFade() > 0.05f);
+    return phase == Phase.DIALOG || phase == Phase.TRANSITION;
   }
 
   public float noticeAnimProgress() {
@@ -213,10 +213,6 @@ public final class BossQuestBriefingController {
       return 1f;
     }
     return Math.min(1f, noticeOpenTicks / (float) ShopViewConstants.CATEGORY_OPEN_DURATION_TICKS);
-  }
-
-  public float noticeFade() {
-    return 1f;
   }
 
   public float geraltSlide() {
