@@ -205,10 +205,6 @@ public final class BossEncounterController {
     return typing.visibleText(entry.text());
   }
 
-  public int charIndex() {
-    return typing.charIndex();
-  }
-
   public int tickCount() {
     return ticks;
   }
