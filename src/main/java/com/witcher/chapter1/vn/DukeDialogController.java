@@ -1,6 +1,7 @@
 package main.java.com.witcher.chapter1.vn;
 
 import main.java.com.witcher.chapter1.Chapter1Session;
+import main.java.com.witcher.chapter1.vn.VnChoiceEffects;
 
 /**
  * Одноразовые VN-реплики герцога в лавке.
@@ -55,12 +56,7 @@ public final class DukeDialogController {
     scene.select(index);
     VnChoice choice = scene.selectedChoice();
     if (choice != null) {
-      if (choice.suspicionDelta() > 0) {
-        session.addSuspicion(choice.suspicionDelta());
-      }
-      if (choice.trustDelta() > 0) {
-        session.addTrust(choice.trustDelta());
-      }
+      VnChoiceEffects.apply(session, choice);
     }
     active = false;
     scene = null;
