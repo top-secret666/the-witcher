@@ -1,5 +1,7 @@
 package main.java.com.witcher.ui.chapter1.swing.battle.briefing;
 
+import main.java.com.witcher.ui.intro.IntroEasing;
+
 /**
  * Появление листа заказа — как открытие категории в лавке: рост, сдвиг и лёгкий flip.
  */
@@ -28,7 +30,7 @@ public final class QuestNoticeAnimator {
 
   public static QuestNoticeAnimator opening(float t, QuestNoticeRenderer.Layout target) {
     float p = clamp01(t);
-    float move = easeInOutCubic(p);
+    float move = IntroEasing.easeInOutCubic(p);
 
     int fromW = Math.round(target.w() * 0.55f);
     int fromH = Math.round(target.h() * 0.55f);
@@ -45,8 +47,8 @@ public final class QuestNoticeAnimator {
       flipScaleX = 0.04f;
     }
 
-    float paperAlpha = easeOutCubic(Math.min(p * 1.25f, 1f));
-    float textAlpha = easeOutCubic(segment(p, 0.42f, 0.92f));
+    float paperAlpha = IntroEasing.easeOutCubic(Math.min(p * 1.25f, 1f));
+    float textAlpha = IntroEasing.easeOutCubic(segment(p, 0.42f, 0.92f));
 
     return new QuestNoticeAnimator(p, x, y, w, h, paperAlpha, textAlpha, flipScaleX);
   }
@@ -67,18 +69,5 @@ public final class QuestNoticeAnimator {
 
   private static float lerp(float a, float b, float t) {
     return a + (b - a) * clamp01(t);
-  }
-
-  private static float easeOutCubic(float t) {
-    float x = clamp01(t);
-    return 1f - (float) Math.pow(1f - x, 3);
-  }
-
-  private static float easeInOutCubic(float t) {
-    float x = clamp01(t);
-    if (x < 0.5f) {
-      return 4f * x * x * x;
-    }
-    return 1f - (float) Math.pow(-2f * x + 2f, 3) / 2f;
   }
 }
