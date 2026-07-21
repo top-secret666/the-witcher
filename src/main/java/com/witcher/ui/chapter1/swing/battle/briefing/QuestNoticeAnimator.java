@@ -51,11 +51,6 @@ public final class QuestNoticeAnimator {
     return new QuestNoticeAnimator(p, x, y, w, h, paperAlpha, textAlpha, flipScaleX);
   }
 
-  public static QuestNoticeAnimator settled(QuestNoticeRenderer.Layout target) {
-    return new QuestNoticeAnimator(1f, target.x(), target.y(), target.w(), target.h(),
-        1f, 1f, 1f);
-  }
-
   private static float segment(float t, float start, float end) {
     if (t <= start) {
       return 0f;
