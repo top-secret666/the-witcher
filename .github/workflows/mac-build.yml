@@ -1,0 +1,55 @@
+name: Mac build check
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  mac-compile:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Script syntax check
+        run: |
+          chmod +x setup-gdx-libs.sh tools/gen-swing-gdx-bridge.sh compile-swing-hybrid.sh compile-swing.sh run.sh
+          bash -n setup-gdx-libs.sh
+          bash -n tools/gen-swing-gdx-bridge.sh
+          bash -n compile-swing-hybrid.sh
+          bash -n compile-swing.sh
+          bash -n run.sh
+
+      - name: Download LibGDX (macOS natives)
+        run: ./setup-gdx-libs.sh
+
+      - name: Hybrid compile
+        run: ./compile-swing-hybrid.sh
+
+      - name: Verify GameWindow.class
+        run: test -f out/swing-run/main/java/com/witcher/ui/graphics/GameWindow.class
+
+      - name: Verify classpath launch (headless smoke)
+        run: |
+          OUT="$PWD/out/swing-run"
+          ASSETS="$PWD/src/main/resources/assets"
+          LIB_CP=""
+          for jar in lib/gdx/*.jar; do
+            if [ -z "$LIB_CP" ]; then LIB_CP="$jar"; else LIB_CP="$LIB_CP:$jar"; fi
+          done
+          CP="$OUT:$LIB_CP"
+          java -Xms128m -Xmx768m \
+            -Djava.awt.headless=true \
+            -Dwitcher.assets="$ASSETS" \
+            -cp "$CP" \
+            -version
+          echo "Classpath OK, main class on path: main.java.com.witcher.ui.graphics.GameWindow"
