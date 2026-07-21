@@ -5,6 +5,7 @@ import main.java.com.witcher.ui.chapter1.swing.Chapter1UiAssets;
 import main.java.com.witcher.ui.chapter1.swing.ScaledImageCache;
 import main.java.com.witcher.ui.graphics.DialogBoxRenderer;
 import main.java.com.witcher.ui.graphics.GameFonts;
+import main.java.com.witcher.ui.graphics.GraphicsDrawHelpers;
 
 import java.awt.AlphaComposite;
 import java.awt.Color;
@@ -41,41 +42,7 @@ public final class QuestNoticeRenderer {
   }
 
   public static Layout layout(int sw, int sh) {
-    BufferedImage src = Chapter1UiAssets.bossQuestNotice();
-    float aspect = src != null && src.getHeight() > 0
-        ? src.getWidth() / (float) src.getHeight()
-        : 1.5f;
-
-    DialogBoxRenderer.Layout dialog = DialogBoxRenderer.computeLayout(sw, sh);
-    int reserveBottom = sh - dialog.boxY + Math.round(sh * 0.05f);
-
-    int maxW = Math.round(sw * 0.92f);
-    int maxH = sh - reserveBottom - Math.round(sh * 0.03f);
-    int preferredH = Math.round(sh * 0.42f);
-
-    int w = maxW;
-    int h = Math.round(w / aspect);
-    if (h > Math.min(maxH, preferredH)) {
-      h = Math.min(maxH, preferredH);
-      w = Math.round(h * aspect);
-    }
-
-    int x = (sw - w) / 2;
-    int y = Math.max(Math.round(sh * 0.05f), (sh - reserveBottom - h) / 2);
-    if (y + h > sh - reserveBottom) {
-      y = Math.max(Math.round(sh * 0.02f), sh - reserveBottom - h);
-    }
-
-    int padLeft = Math.round(w * 0.10f);
-    int padRightSeal = Math.round(w * 0.24f);
-    int padTop = Math.round(h * 0.13f);
-    int padBottom = Math.round(h * 0.14f);
-    int textX = x + padLeft;
-    int textY = y + padTop;
-    int textMaxW = w - padLeft - padRightSeal;
-    int textMaxH = h - padTop - padBottom;
-
-    return new Layout(x, y, w, h, textX, textY, textMaxW, textMaxH);
+    return QuestNoticeLayout.compute(sw, sh).toRendererLayout();
   }
 
   public static void draw(
@@ -109,12 +76,7 @@ public final class QuestNoticeRenderer {
     if (asset != null && anim.w > 0 && anim.h > 0) {
       BufferedImage scaled = ScaledImageCache.get(asset, anim.w, anim.h);
       if (scaled != null) {
-        Object interp = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
-        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
-        g.drawImage(scaled, anim.x, anim.y, null);
-        if (interp != null) {
-          g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, interp);
-        }
+        GraphicsDrawHelpers.drawBicubic(g, scaled, anim.x, anim.y, anim.w, anim.h);
       }
     }
     g.setTransform(saved);
@@ -160,8 +122,8 @@ public final class QuestNoticeRenderer {
       Graphics2D g,
       Layout layout,
       BossQuestBriefingScript.NoticeContent notice) {
-    Color inkDark = new Color(28, 14, 4);
-    Color inkBody = new Color(32, 18, 6);
+    Color inkDark = QuestNoticeInkColors.HEADER;
+    Color inkBody = QuestNoticeInkColors.BODY;
     int maxW = layout.textMaxW;
     int bottomLimit = layout.textY + layout.textMaxH;
 
@@ -221,7 +183,7 @@ public final class QuestNoticeRenderer {
         new TextBlock(notice.targetName(), titleFont, inkDark, Align.CENTER, 3),
         new TextBlock(notice.threatLevel(), bodyFont, inkBody, Align.CENTER, 2),
         new TextBlock(notice.body(), bodyFont, inkBody, Align.LEFT, 2),
-        new TextBlock(notice.reward(), bodyFont, new Color(40, 22, 8), Align.LEFT, 0));
+        new TextBlock(notice.reward(), bodyFont, QuestNoticeInkColors.REWARD, Align.LEFT, 0));
   }
 
   private static List<DrawLine> flattenBlocks(List<TextBlock> blocks, int maxW, Graphics2D g) {
@@ -232,7 +194,7 @@ public final class QuestNoticeRenderer {
       }
       g.setFont(block.font());
       FontMetrics fm = g.getFontMetrics();
-      for (String wrapped : wrap(block.text(), fm, maxW)) {
+      for (String wrapped : DialogBoxRenderer.wrapLine(block.text(), fm, maxW)) {
         out.add(new DrawLine(wrapped, block.font(), block.color(), block.align()));
       }
       for (int i = 0; i < block.gapAfter(); i++) {
@@ -272,27 +234,5 @@ public final class QuestNoticeRenderer {
     g.drawString(text, tx + 1, ty + 1);
     g.setColor(ink);
     g.drawString(text, tx, ty);
-  }
-
-  private static List<String> wrap(String text, FontMetrics fm, int maxW) {
-    List<String> out = new ArrayList<>();
-    if (text == null || text.isBlank()) {
-      return out;
-    }
-    String[] words = text.split("\\s+");
-    StringBuilder line = new StringBuilder();
-    for (String word : words) {
-      String trial = line.isEmpty() ? word : line + " " + word;
-      if (fm.stringWidth(trial) > maxW && !line.isEmpty()) {
-        out.add(line.toString());
-        line = new StringBuilder(word);
-      } else {
-        line = new StringBuilder(trial);
-      }
-    }
-    if (!line.isEmpty()) {
-      out.add(line.toString());
-    }
-    return out;
   }
 }
