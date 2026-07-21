@@ -27,6 +27,9 @@ public final class QuestNoticeRenderer {
     }
   }
 
+  private record TextBlock(String text, Font font, Color color, int gapAfter) {
+  }
+
   private QuestNoticeRenderer() {
   }
 
@@ -56,14 +59,12 @@ public final class QuestNoticeRenderer {
       y = Math.max(Math.round(sh * 0.02f), sh - reserveBottom - h);
     }
 
-    // Текстовая зона: слева/сверху, справа внизу — печать на ассете.
-    int padLeft = Math.round(w * 0.10f);
-    int padRightSeal = Math.round(w * 0.28f);
-    int padTop = Math.round(h * 0.15f);
-    int padBottom = Math.round(h * 0.13f);
-    int textX = x + padLeft;
+    int padX = Math.round(w * 0.12f);
+    int padTop = Math.round(h * 0.14f);
+    int padBottom = Math.round(h * 0.16f);
+    int textX = x + padX;
     int textY = y + padTop;
-    int textMaxW = w - padLeft - padRightSeal;
+    int textMaxW = w - padX * 2;
     int textMaxH = h - padTop - padBottom;
 
     return new Layout(x, y, w, h, textX, textY, textMaxW, textMaxH);
@@ -138,82 +139,115 @@ public final class QuestNoticeRenderer {
       BossQuestBriefingScript.NoticeContent notice) {
     QuestNoticeFonts.applyInkHints(g);
 
-    int maxW = layout.textMaxW;
-    int cy = layout.textY;
-    int bottomLimit = layout.textY + layout.textMaxH;
     int centerX = layout.centerX();
-
-    int scaleRef = Math.max(layout.h, layout.w / 3);
-    Font headerFont = QuestNoticeFonts.header(Math.max(11, Math.round(scaleRef * 0.095f)));
-    Font titleFont = QuestNoticeFonts.title(Math.max(13, Math.round(scaleRef * 0.115f)));
-    Font bodyFont = QuestNoticeFonts.body(Math.max(9, Math.round(scaleRef * 0.072f)));
-    Font rewardFont = QuestNoticeFonts.body(Math.max(8, Math.round(scaleRef * 0.065f)));
-
+    int maxW = layout.textMaxW;
     Color inkDark = new Color(28, 14, 4);
     Color inkBody = new Color(32, 18, 6);
 
-    g.setFont(headerFont);
-    g.setColor(inkDark);
-    cy = drawCenteredInk(g, notice.header(), centerX, cy, maxW + Math.round(layout.w * 0.12f),
-        headerFont, 2) + 2;
-    if (cy > bottomLimit) {
-      return;
-    }
+    float scale = 1f;
+    List<TextBlock> blocks;
+    int totalHeight;
+    do {
+      blocks = buildBlocks(notice, layout, scale, inkDark, inkBody);
+      totalHeight = measureBlocks(blocks, maxW, g);
+      if (totalHeight <= layout.textMaxH || scale <= 0.78f) {
+        break;
+      }
+      scale -= 0.06f;
+    } while (scale > 0.78f);
 
-    g.setFont(titleFont);
-    g.setColor(inkDark);
-    cy = drawCenteredInk(g, notice.targetName(), centerX, cy,
-        maxW + Math.round(layout.w * 0.12f), titleFont, 2) + 4;
-    if (cy > bottomLimit) {
-      return;
-    }
+    int startY = layout.textY + Math.max(0, (layout.textMaxH - totalHeight) / 2);
+    int cy = startY;
+    int bottomLimit = layout.textY + layout.textMaxH;
 
-    g.setFont(bodyFont);
-    g.setColor(inkBody);
-    cy = drawWrappedInk(g, notice.threatLevel(), layout.textX, cy, maxW, bodyFont, 1) + 3;
-    cy = drawWrappedInk(g, notice.body(), layout.textX, cy, maxW, bodyFont, 1) + 4;
-    if (cy > bottomLimit) {
-      return;
+    for (TextBlock block : blocks) {
+      if (cy > bottomLimit) {
+        break;
+      }
+      cy = drawCenteredInk(g, block.text(), centerX, cy, maxW, block.font(), block.color());
+      cy += block.gapAfter();
     }
+  }
 
-    g.setFont(rewardFont);
-    g.setColor(new Color(40, 22, 8));
-    drawWrappedInk(g, notice.reward(), layout.textX, cy, maxW, rewardFont, 1);
+  private static List<TextBlock> buildBlocks(
+      BossQuestBriefingScript.NoticeContent notice,
+      Layout layout,
+      float scale,
+      Color inkDark,
+      Color inkBody) {
+    int scaleRef = Math.max(1, Math.round(Math.max(layout.h, layout.w / 3) * scale));
+    Font headerFont = QuestNoticeFonts.header(Math.max(10, Math.round(scaleRef * 0.088f)));
+    Font titleFont = QuestNoticeFonts.title(Math.max(12, Math.round(scaleRef * 0.105f)));
+    Font bodyFont = QuestNoticeFonts.body(Math.max(8, Math.round(scaleRef * 0.068f)));
+
+    return List.of(
+        new TextBlock(notice.header(), headerFont, inkDark, 2),
+        new TextBlock(notice.targetName(), titleFont, inkDark, 4),
+        new TextBlock(notice.threatLevel(), bodyFont, inkBody, 2),
+        new TextBlock(notice.body(), bodyFont, inkBody, 3),
+        new TextBlock(notice.reward(), bodyFont, new Color(40, 22, 8), 0));
+  }
+
+  private static int measureBlocks(List<TextBlock> blocks, int maxW, Graphics2D g) {
+    int total = 0;
+    for (TextBlock block : blocks) {
+      if (block.text() == null || block.text().isBlank()) {
+        continue;
+      }
+      g.setFont(block.font());
+      FontMetrics fm = g.getFontMetrics();
+      int lineStep = compactLineStep(fm);
+      total += countLines(block.text(), fm, maxW) * lineStep;
+      total += block.gapAfter();
+    }
+    return total;
+  }
+
+  private static int countLines(String text, FontMetrics fm, int maxW) {
+    int lines = 0;
+    for (String paragraph : text.split("\n", -1)) {
+      if (paragraph.isBlank()) {
+        continue;
+      }
+      lines += wrap(paragraph, fm, maxW).size();
+    }
+    return Math.max(1, lines);
+  }
+
+  private static int drawCenteredInk(
+      Graphics2D g, String text, int centerX, int y, int maxW, Font font, Color ink) {
+    if (text == null || text.isBlank()) {
+      return y;
+    }
+    g.setFont(font);
+    FontMetrics fm = g.getFontMetrics();
+    int lineStep = compactLineStep(fm);
+    y += fm.getAscent();
+    for (String paragraph : text.split("\n", -1)) {
+      if (paragraph.isBlank()) {
+        continue;
+      }
+      for (String line : wrap(paragraph, fm, maxW)) {
+        int lw = fm.stringWidth(line);
+        drawInkString(g, line, centerX - lw / 2, y, ink);
+        y += lineStep;
+      }
+    }
+    return y - fm.getAscent() + lineStep;
+  }
+
+  private static int compactLineStep(FontMetrics fm) {
+    return fm.getAscent() + Math.max(1, fm.getDescent() / 2);
   }
 
   private static void drawInkString(Graphics2D g, String text, int x, int y, Color ink) {
-    g.setColor(new Color(255, 248, 235, 120));
+    g.setColor(new Color(255, 248, 235, 100));
     g.drawString(text, x - 1, y);
     g.drawString(text, x + 1, y);
-    g.drawString(text, x, y - 1);
-    g.drawString(text, x, y + 1);
-    g.setColor(new Color(0, 0, 0, 40));
+    g.setColor(new Color(0, 0, 0, 35));
     g.drawString(text, x + 1, y + 1);
     g.setColor(ink);
     g.drawString(text, x, y);
-  }
-
-  private static int drawCenteredInk(Graphics2D g, String text, int centerX, int y,
-                                       int maxW, Font font, int lineGap) {
-    g.setFont(font);
-    FontMetrics fm = g.getFontMetrics();
-    for (String line : wrap(text, fm, maxW)) {
-      int lw = fm.stringWidth(line);
-      drawInkString(g, line, centerX - lw / 2, y, g.getColor());
-      y += fm.getHeight() + lineGap;
-    }
-    return y;
-  }
-
-  private static int drawWrappedInk(Graphics2D g, String text, int x, int y, int maxW, Font font, int lineGap) {
-    g.setFont(font);
-    FontMetrics fm = g.getFontMetrics();
-    Color ink = g.getColor();
-    for (String line : wrap(text, fm, maxW)) {
-      drawInkString(g, line, x, y, ink);
-      y += fm.getHeight() + lineGap;
-    }
-    return y;
   }
 
   private static List<String> wrap(String text, FontMetrics fm, int maxW) {
@@ -221,25 +255,19 @@ public final class QuestNoticeRenderer {
     if (text == null || text.isBlank()) {
       return out;
     }
-    for (String paragraph : text.split("\n", -1)) {
-      if (paragraph.isBlank()) {
-        out.add("");
-        continue;
-      }
-      String[] words = paragraph.split("\\s+");
-      StringBuilder line = new StringBuilder();
-      for (String word : words) {
-        String trial = line.isEmpty() ? word : line + " " + word;
-        if (fm.stringWidth(trial) > maxW && !line.isEmpty()) {
-          out.add(line.toString());
-          line = new StringBuilder(word);
-        } else {
-          line = new StringBuilder(trial);
-        }
-      }
-      if (!line.isEmpty()) {
+    String[] words = text.split("\\s+");
+    StringBuilder line = new StringBuilder();
+    for (String word : words) {
+      String trial = line.isEmpty() ? word : line + " " + word;
+      if (fm.stringWidth(trial) > maxW && !line.isEmpty()) {
         out.add(line.toString());
+        line = new StringBuilder(word);
+      } else {
+        line = new StringBuilder(trial);
       }
+    }
+    if (!line.isEmpty()) {
+      out.add(line.toString());
     }
     return out;
   }

@@ -153,23 +153,8 @@ public final class DialogBoxRenderer {
         enableTextSmoothing(g);
         drawBox(g, layout.boxX, layout.boxY, layout.boxW, layout.boxH, alpha);
         drawSpeakerName(g, speaker, speakerColor, layout.boxX, layout.boxY, layout.pad, layout.fontSize, alpha);
-
-        Font textFont = GameFonts.get().plain(layout.fontSize);
-        g.setFont(textFont);
-        FontMetrics fm = g.getFontMetrics();
-        int lineH = fm.getHeight();
-        int lineY = layout.textY;
-        Color textColor = speaker == null ? speakerColor : SPEECH_COLOR;
-
-        String[] rawLines = text.split("\n", -1);
-        for (String rawLine : rawLines) {
-            for (String wl : wrapLine(rawLine, fm, layout.textMaxW)) {
-                lineY += lineH;
-                if (lineY > layout.boxY + layout.boxH - layout.pad) break;
-                GameFonts.drawShadowed(g, wl, layout.textX, lineY, textColor);
-            }
-        }
-
+        int lineY = drawCompactCenteredLines(
+            g, text, layout, speaker == null ? speakerColor : SPEECH_COLOR);
         disableTextSmoothing(g);
         return lineY;
     }
@@ -179,25 +164,45 @@ public final class DialogBoxRenderer {
         enableTextSmoothing(g);
         drawBox(g, layout.boxX, layout.boxY, layout.boxW, layout.boxH, alpha);
         drawSpeakerName(g, speaker, speakerColor, layout.boxX, layout.boxY, layout.pad, layout.fontSize, alpha);
+        int lineY = drawCompactCenteredLines(
+            g, visibleText, layout, speaker == null ? speakerColor : SPEECH_COLOR);
+        disableTextSmoothing(g);
+        return lineY;
+    }
 
+    /** Плотнее межстрочный интервал и центрирование — для коротких VN-реплик. */
+    private static int drawCompactCenteredLines(Graphics2D g, String text, Layout layout, Color textColor) {
         Font textFont = GameFonts.get().plain(layout.fontSize);
         g.setFont(textFont);
         FontMetrics fm = g.getFontMetrics();
-        int lineH = fm.getHeight();
-        int lineY = layout.textY;
-        Color textColor = speaker == null ? speakerColor : SPEECH_COLOR;
+        int lineStep = compactLineStep(fm, layout.fontSize);
+        int bottomLimit = layout.boxY + layout.boxH - layout.pad;
+        int lineY = layout.textY + fm.getAscent();
 
-        String[] rawLines = visibleText.split("\n", -1);
-        for (String rawLine : rawLines) {
+        Shape prevClip = g.getClip();
+        g.clipRect(layout.textX, layout.textY, layout.textMaxW, bottomLimit - layout.textY);
+
+        for (String rawLine : text.split("\n", -1)) {
+            if (rawLine.isBlank()) {
+                lineY += Math.max(2, lineStep / 3);
+                continue;
+            }
             for (String wl : wrapLine(rawLine, fm, layout.textMaxW)) {
-                lineY += lineH;
-                if (lineY > layout.boxY + layout.boxH - layout.pad) break;
-                GameFonts.drawShadowed(g, wl, layout.textX, lineY, textColor);
+                if (lineY > bottomLimit) {
+                    break;
+                }
+                int x = layout.textX + Math.max(0, (layout.textMaxW - fm.stringWidth(wl)) / 2);
+                GameFonts.drawShadowed(g, wl, x, lineY, textColor);
+                lineY += lineStep;
             }
         }
 
-        disableTextSmoothing(g);
+        g.setClip(prevClip);
         return lineY;
+    }
+
+    private static int compactLineStep(FontMetrics fm, int fontSize) {
+        return fm.getAscent() + Math.max(2, fontSize / 6);
     }
 
     /**
