@@ -1,5 +1,6 @@
 package main.java.com.witcher.ui.intro;
 
+import main.java.com.witcher.ui.graphics.DialogBoxRenderer;
 import main.java.com.witcher.ui.intro.view.IntroDialogLayout;
 import main.java.com.witcher.ui.intro.view.IntroLayout;
 
@@ -30,8 +31,11 @@ public final class IntroDialogText {
             lines.add("");
             return lines;
         }
-        for (String rawLine : visibleText.split("\n", -1)) {
-            lines.addAll(wrapLine(rawLine, maxWidthPx, fontSize));
+        for (String rawLine : DialogBoxRenderer.normalizeFlowText(visibleText).split("\n", -1)) {
+            if (rawLine.isBlank()) {
+                continue;
+            }
+            lines.addAll(wrapLine(rawLine.trim(), maxWidthPx, fontSize));
         }
         return lines;
     }

@@ -7,6 +7,7 @@ import main.java.com.witcher.chapter1.battle.BossVnTypingState;
 import main.java.com.witcher.chapter1.Chapter1Session;
 import main.java.com.witcher.chapter1.vn.VnChoice;
 import main.java.com.witcher.chapter1.vn.VnSceneState;
+import main.java.com.witcher.ui.graphics.DialogBoxRenderer;
 import main.java.com.witcher.ui.intro.IntroVnUi;
 import main.java.com.witcher.ui.shop.view.ShopViewConstants;
 
@@ -299,8 +300,9 @@ public final class BossQuestBriefingController {
       if (line.speaker() != null && !line.speaker().isBlank()) {
         out.add(line.speaker() + ":");
       }
-      for (String part : line.text().split("\n", -1)) {
-        out.add(part);
+      String body = DialogBoxRenderer.normalizeFlowText(line.text());
+      if (!body.isBlank()) {
+        out.add(body);
       }
       out.add("");
     }

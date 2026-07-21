@@ -5,6 +5,7 @@ import main.java.com.witcher.ui.intro.IntroMorphAnimation;
 import main.java.com.witcher.ui.intro.IntroScript;
 import main.java.com.witcher.ui.intro.IntroShopAnimation;
 import main.java.com.witcher.ui.intro.IntroSwitchAnimation;
+import main.java.com.witcher.ui.graphics.DialogBoxRenderer;
 import main.java.com.witcher.ui.intro.IntroVnUi;
 import main.java.com.witcher.ui.intro.view.IntroCharacterLayout;
 
@@ -366,11 +367,11 @@ public final class IntroController {
             IntroScript.DialogEntry e = entries.get(i);
             String speakerLabel = e.speaker() != null ? e.speaker() : "Повествование";
             lines.add("[" + speakerLabel + "]");
-            String text = i < currentEntry
+            String text = DialogBoxRenderer.normalizeFlowText(i < currentEntry
                 ? e.text()
-                : e.text().substring(0, Math.min(charIndex, e.text().length()));
-            for (String part : text.split("\n", -1)) {
-                lines.add(part);
+                : e.text().substring(0, Math.min(charIndex, e.text().length())));
+            if (!text.isBlank()) {
+                lines.add(text);
             }
             if (i < currentEntry) {
                 lines.add("");

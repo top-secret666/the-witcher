@@ -8,6 +8,7 @@ import main.java.com.witcher.chapter1.battle.wolf.WolfBossEncounterScript;
 import main.java.com.witcher.chapter1.Chapter1Session;
 import main.java.com.witcher.chapter1.vn.VnChoice;
 import main.java.com.witcher.chapter1.vn.VnSceneState;
+import main.java.com.witcher.ui.graphics.DialogBoxRenderer;
 import main.java.com.witcher.ui.intro.IntroVnUi;
 
 import java.util.ArrayList;
@@ -269,8 +270,9 @@ public final class BossEncounterController {
       if (e.speaker() != null && !e.speaker().isBlank()) {
         lines.add(e.speaker() + ":");
       }
-      for (String part : e.text().split("\n", -1)) {
-        lines.add(part);
+      String body = DialogBoxRenderer.normalizeFlowText(e.text());
+      if (!body.isBlank()) {
+        lines.add(body);
       }
       lines.add("");
     }

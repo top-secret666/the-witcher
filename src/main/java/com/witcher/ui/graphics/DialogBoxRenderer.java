@@ -190,12 +190,12 @@ public final class DialogBoxRenderer {
         Shape prevClip = g.getClip();
         g.clipRect(layout.textX, layout.textY, layout.textMaxW, Math.max(0, bottomLimit - layout.textY));
 
-        for (String rawLine : text.split("\n", -1)) {
+        for (String rawLine : normalizeFlowText(text).split("\n", -1)) {
             if (rawLine.isBlank()) {
                 lineY += Math.max(2, lineStep / 3);
                 continue;
             }
-            for (String wl : wrapLine(rawLine, fm, layout.textMaxW)) {
+            for (String wl : wrapLine(rawLine.trim(), fm, layout.textMaxW)) {
                 if (lineY > bottomLimit) {
                     break;
                 }
@@ -206,6 +206,23 @@ public final class DialogBoxRenderer {
 
         g.setClip(prevClip);
         return lineY;
+    }
+
+    /**
+     * Склеивает одиночные переносы в пробел — реплика течёт по ширине окна, а не столбиком.
+     * Двойной перенос оставляет абзац.
+     */
+    public static String normalizeFlowText(String text) {
+        if (text == null || text.isEmpty()) {
+            return "";
+        }
+        String s = text.replace("\r\n", "\n");
+        s = s.replace("\n\n", "\u0001");
+        s = s.replace('\n', ' ');
+        s = s.replace("\u0001", "\n");
+        s = s.replaceAll(" *\n *", "\n");
+        s = s.replaceAll(" {2,}", " ");
+        return s.trim();
     }
 
     private static int compactLineStep(FontMetrics fm, int fontSize) {
@@ -413,9 +430,13 @@ public final class DialogBoxRenderer {
     }
 
     public static String getLastVisibleLine(String text, FontMetrics fm, int maxW) {
-        String[] lines = text.split("\n", -1);
-        String last = lines[lines.length - 1];
-        List<String> wrapped = wrapLine(last, fm, maxW);
+        List<String> wrapped = new ArrayList<>();
+        for (String rawLine : normalizeFlowText(text).split("\n", -1)) {
+            if (rawLine.isBlank()) {
+                continue;
+            }
+            wrapped.addAll(wrapLine(rawLine.trim(), fm, maxW));
+        }
         return wrapped.isEmpty() ? "" : wrapped.get(wrapped.size() - 1);
     }
 
