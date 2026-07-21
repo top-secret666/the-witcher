@@ -3,6 +3,7 @@ package main.java.com.witcher.chapter1.battle.wolf;
 import main.java.com.witcher.chapter1.Chapter1Session;
 import main.java.com.witcher.chapter1.shop.BossMemoryFragments;
 import main.java.com.witcher.chapter1.vn.VnChoice;
+import main.java.com.witcher.chapter1.vn.VnChoiceEffects;
 import main.java.com.witcher.chapter1.vn.VnSceneState;
 
 /** Финальная VN: выбор №3 → «Тогда покажи» → исход. */
@@ -60,12 +61,7 @@ public final class WolfBossFinaleController {
     scene.select(index);
     VnChoice choice = scene.selectedChoice();
     if (choice != null) {
-      if (choice.suspicionDelta() > 0) {
-        session.addSuspicion(choice.suspicionDelta());
-      }
-      if (choice.trustDelta() > 0) {
-        session.addTrust(choice.trustDelta());
-      }
+      VnChoiceEffects.apply(session, choice);
     }
     trueEnding = session.suspicionDominates();
     step = Step.CLASH;
