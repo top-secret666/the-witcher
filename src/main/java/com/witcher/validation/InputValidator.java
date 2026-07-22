@@ -12,7 +12,8 @@ import java.util.Scanner;
 
 public class InputValidator {
     public static final int MIN_PRICE = 10;
-    private static final int MAX_PRICE = 1000000;
+    public static final int MAX_PRICE = 1000000;
+    public static final double MAX_WEIGHT = 100;
     private List<Armour> currentSet;
 
     public void validatePrice(int price) throws InvalidPriceException {
@@ -28,9 +29,9 @@ public class InputValidator {
     }
 
     public void validateWeight(double weight) {
-        if (weight <= 0 || weight > 100) {
+        if (weight <= 0 || weight > MAX_WEIGHT) {
             throw new IllegalArgumentException(
-                    String.format("Недопустимый вес: %.2f. Вес должен быть больше 0 и меньше 100.", weight)
+                    String.format("Недопустимый вес: %.2f. Вес должен быть больше 0 и меньше %.0f.", weight, MAX_WEIGHT)
             );
         }
     }
