@@ -7,16 +7,8 @@ public class ErrorHandler {
     public static <T> T handle(Supplier<T> action, String errorContext) {
         try {
             return action.get();
-        } catch (InvalidPriceException e) {
-            System.out.println("Герцог: " + e.getMessage());
-            return null;
-        } catch (InvalidPriceRangeException e) {
-            System.out.println("Герцог: " + e.getMessage());
-            return null;
-        } catch (NoArmourFoundException e) {
-            System.out.println("Герцог: " + e.getMessage());
-            return null;
-        } catch (InvalidInputException e) {
+        } catch (InvalidPriceException | InvalidPriceRangeException
+                 | NoArmourFoundException | InvalidInputException e) {
             System.out.println("Герцог: " + e.getMessage());
             return null;
         } catch (Exception e) {
