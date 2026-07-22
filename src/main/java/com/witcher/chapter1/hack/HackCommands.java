@@ -9,12 +9,14 @@ public enum HackCommands {
   BREAK_LOOP,
   EXIT;
 
+  private static final String BREAK_LOOP_PREFIX = "BREAK_LOOP";
+
   public static HackCommands parse(String raw) {
     if (raw == null || raw.isBlank()) {
       return null;
     }
     String upper = raw.trim().toUpperCase();
-    if (upper.startsWith("BREAK_LOOP")) {
+    if (upper.startsWith(BREAK_LOOP_PREFIX)) {
       return BREAK_LOOP;
     }
     int space = upper.indexOf(' ');
