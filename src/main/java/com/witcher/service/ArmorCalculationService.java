@@ -25,28 +25,6 @@ public class ArmorCalculationService {
                 .sum();
     }
 
-//    public double calculateArmorRating(Armour armor) {
-//        double baseRating = armor.calculateProtection();
-//        double bonusRating = 0;
-//
-//        // Добавляем рейтинг от бонусов в зависимости от типа брони
-//        if (armor instanceof Chestpiece) {
-//            Chestpiece chestpiece = (Chestpiece) armor;
-//            bonusRating += chestpiece.getChestProtection() * 0.5;
-//        } else if (armor instanceof Gloves) {
-//            Gloves gloves = (Gloves) armor;
-//            bonusRating += gloves.getDexterityBonus() * 0.3;
-//        } else if (armor instanceof Boots) {
-//            Boots boots = (Boots) armor;
-//            bonusRating += boots.getSpeedBonus() * 0.3;
-//        } else if (armor instanceof Trousers) {
-//            Trousers trousers = (Trousers) armor;
-//            bonusRating += trousers.getMovementBonus() * 0.4;
-//        }
-//
-//        return baseRating + bonusRating;
-//    }
-
     public double calculateTotalEffectiveness(List<Armour> armorSet) {
         return armorSet.stream()
                 .mapToDouble(armor -> {
