@@ -26,12 +26,12 @@ public class Armor extends Chestpiece {
 
     // Расчет общей эффективности брони
     public double calculateEffectiveness() {
-        return strengthRequirement * 1.2 + armorDurabilityBonus * 1.8;
+        return effectivenessScore(strengthRequirement, armorDurabilityBonus);
     }
 
     // Корректировка цены на основе общей эффективности
     private static int calculateAdjustedPrice(int basePrice, int strengthRequirement, int armorDurabilityBonus) {
-        double effectiveness = strengthRequirement * 1.2 + armorDurabilityBonus * 1.8;
+        double effectiveness = effectivenessScore(strengthRequirement, armorDurabilityBonus);
         double priceMultiplier = 1.0;
 
         if (effectiveness > 40) priceMultiplier = 3.0;
@@ -39,6 +39,10 @@ public class Armor extends Chestpiece {
         else if (effectiveness > 20) priceMultiplier = 2.0;
 
         return (int)(basePrice * priceMultiplier);
+    }
+
+    private static double effectivenessScore(int strengthRequirement, int armorDurabilityBonus) {
+        return strengthRequirement * 1.2 + armorDurabilityBonus * 1.8;
     }
 
     @Override
