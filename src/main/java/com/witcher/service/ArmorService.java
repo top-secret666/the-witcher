@@ -1,6 +1,5 @@
 package main.java.com.witcher.service;
-//РАЗДЕЛИТЬ НА КЛАССЫ!!!!!!
-//СОРТИРОВКА БИТВА!!!!
+
 import main.java.com.witcher.exception.ExcessBudgetException;
 import main.java.com.witcher.exception.InvalidPriceException;
 import main.java.com.witcher.exception.NoArmourFoundException;
@@ -15,7 +14,7 @@ public class ArmorService {
     private final ArmourRepository armorRepository;
     private final ArmorCalculationService armorCalculationService;
     private final InputValidator validator;
-    private static final int minArmorSetPrice = 1000;
+    private static final int MIN_ARMOR_SET_PRICE = 1000;
 
     public ArmorService(ArmourRepository armorRepository, ArmorCalculationService armorCalculationService, InputValidator validator) {
         this.armorCalculationService = armorCalculationService;
@@ -39,7 +38,7 @@ public class ArmorService {
         if (setPrice < targetPrice) {
             int remainingBudget = targetPrice - setPrice;
             try {
-                validator.validateRemainingBudget(remainingBudget, minArmorSetPrice);
+                validator.validateRemainingBudget(remainingBudget, MIN_ARMOR_SET_PRICE);
             } catch (ExcessBudgetException e) {
                 System.out.println(e.getMessage());
                 Scanner scanner = new Scanner(System.in);
