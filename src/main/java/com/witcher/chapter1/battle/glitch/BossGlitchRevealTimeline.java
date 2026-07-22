@@ -1,5 +1,7 @@
 package main.java.com.witcher.chapter1.battle.glitch;
 
+import main.java.com.witcher.ui.intro.IntroEasing;
+
 /** Таймлайн глитч-пробуждения Волка — строгий порядок слоёв. */
 public final class BossGlitchRevealTimeline {
 
@@ -126,7 +128,7 @@ public final class BossGlitchRevealTimeline {
   }
 
   public static float fall01(int localMs, int duration) {
-    return 1f - easeOutCubic(clamp(localMs / (float) Math.max(1, duration), 0f, 1f));
+    return 1f - IntroEasing.easeOutCubic(clamp(localMs / (float) Math.max(1, duration), 0f, 1f));
   }
 
   /**
@@ -184,7 +186,7 @@ public final class BossGlitchRevealTimeline {
         (t - EXIT_SCATTER_AT) / Math.max(0.001f, EXIT_NOISE_AT - EXIT_SCATTER_AT),
         0f, 1f);
     // Линейно/мягко — видно, как экран постепенно забивается словами.
-    return easeOutCubic(u);
+    return IntroEasing.easeOutCubic(u);
   }
 
   /** 0..1 плотность шумового занавеса: старт резкий (быстро закрывает экран). */
@@ -197,7 +199,7 @@ public final class BossGlitchRevealTimeline {
         (t - EXIT_NOISE_AT) / Math.max(0.001f, 1f - EXIT_NOISE_AT),
         0f, 1f);
     // Быстрый набор в начале занавеса.
-    return easeOutCubic(Math.min(1f, u * 1.55f));
+    return IntroEasing.easeOutCubic(Math.min(1f, u * 1.55f));
   }
 
   public static int sheetFrameIndex(int localMs) {
@@ -218,7 +220,7 @@ public final class BossGlitchRevealTimeline {
   }
 
   public static float sharpenT(int localMs) {
-    return easeOutCubic(clamp(localMs / (float) SHARD_EMERGE_MS, 0f, 1f));
+    return IntroEasing.easeOutCubic(clamp(localMs / (float) SHARD_EMERGE_MS, 0f, 1f));
   }
 
   public static float shardOutAlpha(int localMs) {
@@ -231,10 +233,6 @@ public final class BossGlitchRevealTimeline {
 
   private static float easeInCubic(float t) {
     return t * t * t;
-  }
-
-  private static float easeOutCubic(float t) {
-    return 1f - (float) Math.pow(1f - t, 3);
   }
 
   private static float clamp(float v, float min, float max) {
