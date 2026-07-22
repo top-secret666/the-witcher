@@ -94,37 +94,31 @@ public final class HackConsoleModel {
         yield HackResult.none();
       }
       case DECRYPT -> {
-        String arg = line.length() > 7 ? line.substring(7).trim() : "";
+        String arg = line.length() > "DECRYPT".length()
+            ? line.substring("DECRYPT".length()).trim()
+            : "";
         appendLine(arg.isEmpty() ? "MISSING FRAGMENT" : "STORED: " + arg);
         yield HackResult.none();
       }
-      case UNLOCK -> {
-        boolean ok = HackUnlockChecker.matches(line, session);
-        if (ok) {
-          appendLine("LOOP SIGNATURE ACCEPTED");
-          closed = true;
-          yield HackResult.success();
-        }
-        failedAttempts++;
-        appendLine("SIGNATURE REJECTED");
-        yield HackResult.none();
-      }
-      case BREAK_LOOP -> {
-        boolean ok = HackUnlockChecker.matches(line, session);
-        if (ok) {
-          appendLine("LOOP SIGNATURE ACCEPTED");
-          closed = true;
-          yield HackResult.success();
-        }
-        failedAttempts++;
-        appendLine("SIGNATURE REJECTED");
-        yield HackResult.none();
-      }
+      case UNLOCK -> tryUnlock(line);
+      case BREAK_LOOP -> tryUnlock(line);
       case EXIT -> {
         closed = true;
         yield HackResult.exit();
       }
     };
+  }
+
+  private HackResult tryUnlock(String line) {
+    boolean ok = HackUnlockChecker.matches(line, session);
+    if (ok) {
+      appendLine("LOOP SIGNATURE ACCEPTED");
+      closed = true;
+      return HackResult.success();
+    }
+    failedAttempts++;
+    appendLine("SIGNATURE REJECTED");
+    return HackResult.none();
   }
 
   private void appendLine(String line) {
