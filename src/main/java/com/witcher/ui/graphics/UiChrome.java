@@ -10,13 +10,14 @@ import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 
 import main.java.com.witcher.ui.shop.swing.ShopImageBounds;
+import main.java.com.witcher.ui.shop.view.LavkaAssetPaths;
 
 /** Маленькие UI-элементы: стрелка «назад», крестик закрытия. */
 public final class UiChrome {
 
   public static final int BTN_SIZE = 18;
 
-  private static final String BASE = "/assets/sprites/lavka/";
+  private static final String BASE = LavkaAssetPaths.SWING_ROOT;
   private static final String BAKED_UI = BASE + "1x/ui/";
 
   private static BufferedImage closeNormal;
