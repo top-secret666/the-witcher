@@ -13,6 +13,11 @@ public enum EquipmentFilter {
     SETS("Комплекты", -2),
     WEAPON("Оружие", -3);
 
+    /** Спец. коды иконок (не слот экипировки). */
+    public static final int ICON_ALL = -1;
+    public static final int ICON_SETS = -2;
+    public static final int ICON_WEAPON = -3;
+
     public final String sectionLabel;
     /** {@link ShopAssetCache#equipSlotPlaceholder(int)} или спец. код &lt; 0. */
     public final int iconIndex;
