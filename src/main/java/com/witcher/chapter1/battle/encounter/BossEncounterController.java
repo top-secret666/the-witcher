@@ -12,7 +12,7 @@ import main.java.com.witcher.chapter1.vn.VnChoiceEffects;
 import main.java.com.witcher.ui.graphics.DialogBoxRenderer;
 import main.java.com.witcher.ui.intro.IntroVnUi;
 import main.java.com.witcher.ui.intro.view.IntroHistoryLayout;
-import main.java.com.witcher.ui.intro.view.IntroHistoryLayout;
+import main.java.com.witcher.ui.intro.IntroEasing;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -173,7 +173,7 @@ public final class BossEncounterController {
       return 1f;
     }
     float t = (ms - CLOSED_HOLD_MS) / (float) OPEN_MS;
-    return easeOutCubic(t);
+    return IntroEasing.easeOutCubic(t);
   }
 
   public boolean eyesFullyOpen() {
@@ -314,10 +314,5 @@ public final class BossEncounterController {
       layoutSw = sw;
       layoutSh = sh;
     }
-  }
-
-  private static float easeOutCubic(float t) {
-    float c = Math.max(0f, Math.min(1f, t));
-    return 1f - (float) Math.pow(1f - c, 3);
   }
 }
