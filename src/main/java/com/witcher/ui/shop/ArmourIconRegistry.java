@@ -3,6 +3,7 @@ package main.java.com.witcher.ui.shop;
 import main.java.com.witcher.model.armour.Armour;
 import main.java.com.witcher.ui.graphics.PixelScaler;
 import main.java.com.witcher.ui.shop.swing.ShopImageBounds;
+import main.java.com.witcher.ui.shop.view.LavkaAssetPaths;
 import main.java.com.witcher.ui.graphics.Sprite;
 
 import java.awt.Rectangle;
@@ -16,7 +17,7 @@ import java.util.Set;
 /** Иконки доспехов по ключевым словам в названии (чистый Swing). */
 public final class ArmourIconRegistry implements ShopEntryIcons {
 
-    private static final String SRC = "/assets/sprites/lavka/icons/items/";
+    private static final String SRC = LavkaAssetPaths.SWING_ICONS_SRC + "items/";
 
     private static ArmourIconRegistry instance;
 
