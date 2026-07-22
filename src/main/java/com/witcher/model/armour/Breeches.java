@@ -25,11 +25,11 @@ public class Breeches extends Trousers {
 
     // Расчет общей эффективности
     public double calculateEffectiveness() {
-        return getMovementBonus() * 1.5 + agilityBonus * 2.0;
+        return effectivenessScore(getMovementBonus(), agilityBonus);
     }
 
     private static int calculateAdjustedPrice(int basePrice, int movementBonus, int agilityBonus) {
-        double effectiveness = movementBonus * 1.5 + agilityBonus * 2.0;
+        double effectiveness = effectivenessScore(movementBonus, agilityBonus);
         double priceMultiplier = 1.0;
 
         if (effectiveness > 25) priceMultiplier = 2.5;
@@ -37,6 +37,10 @@ public class Breeches extends Trousers {
         else if (effectiveness > 8) priceMultiplier = 1.5;
 
         return (int)(basePrice * priceMultiplier);
+    }
+
+    private static double effectivenessScore(int movementBonus, int agilityBonus) {
+        return movementBonus * 1.5 + agilityBonus * 2.0;
     }
 
     @Override
