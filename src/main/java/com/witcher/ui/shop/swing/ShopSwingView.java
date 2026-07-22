@@ -2,6 +2,7 @@ package main.java.com.witcher.ui.shop.swing;
 
 import main.java.com.witcher.ui.graphics.DialogBoxRenderer;
 import main.java.com.witcher.ui.graphics.GameFonts;
+import main.java.com.witcher.ui.graphics.MenuCursorPaths;
 import main.java.com.witcher.ui.graphics.Sprite;
 import main.java.com.witcher.ui.graphics.UiChrome;
 import main.java.com.witcher.model.armour.Armour;
@@ -44,7 +45,7 @@ public final class ShopSwingView implements ShopView {
     }
 
     private static BufferedImage loadMenuCursor() {
-        Sprite s = Sprite.loadOptional("/assets/sprites/menu/menu_cursor.png");
+        Sprite s = Sprite.loadOptional(MenuCursorPaths.MENU_CURSOR);
         return s != null ? s.getImage() : null;
     }
 
