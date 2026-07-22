@@ -42,9 +42,4 @@ public class SetRepository {
         }
         return schoolSets;
     }
-
-    public void addSet(ArmourSet set) {
-        sets.add(set);
-    }
-
 }
