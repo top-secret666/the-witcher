@@ -828,7 +828,7 @@ public class IntroScreen {
     }
 
     private static BufferedImage loadMenuCursor() {
-        Sprite s = Sprite.loadOptional("/assets/sprites/menu/menu_cursor.png");
+        Sprite s = Sprite.loadOptional(MenuCursorPaths.MENU_CURSOR);
         return s != null ? s.getImage() : null;
     }
 
