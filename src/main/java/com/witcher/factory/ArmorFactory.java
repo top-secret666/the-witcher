@@ -20,6 +20,8 @@ public class ArmorFactory {
     private static final Random random = new Random();
     private static final Set<String> usedNames = new HashSet<>();
     private static final Properties armorNames = new Properties();
+    private static final int MAX_NAME_VARIANTS = 20;
+    private static final String RARE_PREFIX = "Редкий ";
 
     static {
         try (InputStream in = openArmorNamesStream()) {
@@ -99,14 +101,14 @@ public class ArmorFactory {
             }
         }
         for (String part : nameArray) {
-            for (int n = 2; n < 20; n++) {
+            for (int n = 2; n < MAX_NAME_VARIANTS; n++) {
                 String variant = suffix ? part + " " + n + affix : affix + part + " " + n;
                 if (usedNames.add(variant)) {
                     return variant;
                 }
             }
         }
-        String fallback = (suffix ? "Редкий " : "Редкий ") + (usedNames.size() + 1)
+        String fallback = RARE_PREFIX + (usedNames.size() + 1)
             + (suffix ? affix : "");
         usedNames.add(fallback);
         return fallback;
