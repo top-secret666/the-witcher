@@ -11,7 +11,7 @@ public final class LoopRules {
 
   /** После поражения в бою: новый виток, мета-прогресс частично сохраняется. */
   public static void onBattleDefeat(Chapter1Session session) {
-    if (session == null) {
+    if (!saveIfPresent(session)) {
       return;
     }
     session.advanceLoopAfterDefeat();
@@ -20,7 +20,7 @@ public final class LoopRules {
 
   /** Ложный побег: петля продолжается, иллюзия «подкручивается». */
   public static void onFalseEscape(Chapter1Session session) {
-    if (session == null) {
+    if (!saveIfPresent(session)) {
       return;
     }
     session.applyFalseEscape();
@@ -29,7 +29,7 @@ public final class LoopRules {
 
   /** Петля сомкнулась после плохой развилки Волка. */
   public static void onWolfBadLoop(Chapter1Session session) {
-    if (session == null) {
+    if (!saveIfPresent(session)) {
       return;
     }
     session.markWolfBossResolved(false);
@@ -39,7 +39,7 @@ public final class LoopRules {
 
   /** После истинного осколка Волка — сохранить прогресс без сброса петли. */
   public static void onWolfTrueShard(Chapter1Session session) {
-    if (session == null) {
+    if (!saveIfPresent(session)) {
       return;
     }
     Chapter1Save.save(session);
@@ -47,5 +47,9 @@ public final class LoopRules {
 
   public static void persist(Chapter1Session session) {
     Chapter1Save.save(session);
+  }
+
+  private static boolean saveIfPresent(Chapter1Session session) {
+    return session != null;
   }
 }
