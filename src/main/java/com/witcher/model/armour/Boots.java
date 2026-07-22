@@ -24,7 +24,7 @@ public class Boots extends Armour {
     }
 
     private static int calculateAdjustedPrice(int basePrice, int speedBonus, int balanceBonus, boolean reinforcedSoles) {
-        double effectiveness = speedBonus * 1.5 + balanceBonus * 1.2;
+        double effectiveness = baseEffectiveness(speedBonus, balanceBonus);
         double priceMultiplier = 1.0;
 
         if (effectiveness > 25) priceMultiplier = 2.2;
@@ -37,8 +37,12 @@ public class Boots extends Armour {
     }
 
     public double calculateEffectiveness() {
-        double baseEffectiveness = speedBonus * 1.5 + balanceBonus * 1.2;
-        return reinforcedSoles ? baseEffectiveness * 1.25 : baseEffectiveness;
+        double base = baseEffectiveness(speedBonus, balanceBonus);
+        return reinforcedSoles ? base * 1.25 : base;
+    }
+
+    private static double baseEffectiveness(int speedBonus, int balanceBonus) {
+        return speedBonus * 1.5 + balanceBonus * 1.2;
     }
 
     @Override
