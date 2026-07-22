@@ -43,7 +43,7 @@ public class MainMenuScreen {
         dustFrames = loadFrames("/assets/sprites/menu/menu_dust_sheet.png", 8, 1, true);
         transitionFrames = loadFramesRaw("/assets/sprites/menu/menu_transition_sheet.png", 4, 3);
 
-        cursor = loadTrimmed("/assets/sprites/menu/menu_cursor.png");
+        cursor = loadTrimmed(MenuCursorPaths.MENU_CURSOR);
     }
 
     public void update(int viewW, int viewH, int mouseX, int mouseY, boolean mouseClicked, int navDir, boolean activate) {
