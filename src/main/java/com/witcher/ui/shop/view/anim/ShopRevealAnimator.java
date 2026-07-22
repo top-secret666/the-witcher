@@ -1,5 +1,7 @@
 package main.java.com.witcher.ui.shop.view.anim;
 
+import main.java.com.witcher.ui.intro.IntroEasing;
+
 /**
  * Появление UI лавки — без GIF. HUD → панель снизу → карточки по очереди → кнопка.
  */
@@ -53,17 +55,17 @@ public final class ShopRevealAnimator {
         float panelT = segment(t, 0.10f, 0.50f);
         float btnT = segment(t, 0.72f, 0.96f);
 
-        float sceneBrighten = lerp(0.42f, 1f, easeOutCubic(Math.min(t * 1.35f, 1f)));
+        float sceneBrighten = lerp(0.42f, 1f, IntroEasing.easeOutCubic(Math.min(t * 1.35f, 1f)));
 
-        float hudAlpha = easeOutCubic(hudT);
-        float hudSlideY = (1f - easeOutCubic(hudT)) * -36f;
+        float hudAlpha = IntroEasing.easeOutCubic(hudT);
+        float hudSlideY = (1f - IntroEasing.easeOutCubic(hudT)) * -36f;
 
-        float panelAlpha = easeOutCubic(panelT);
+        float panelAlpha = IntroEasing.easeOutCubic(panelT);
         float panelScale = lerp(0.62f, 1f, easeOutBack(panelT));
-        float panelSlideY = (1f - easeOutCubic(panelT)) * 48f;
+        float panelSlideY = (1f - IntroEasing.easeOutCubic(panelT)) * 48f;
 
-        float btnAlpha = easeOutCubic(btnT);
-        float btnSlideY = (1f - easeOutCubic(btnT)) * 20f;
+        float btnAlpha = IntroEasing.easeOutCubic(btnT);
+        float btnSlideY = (1f - IntroEasing.easeOutCubic(btnT)) * 20f;
 
         float[] cardAlpha = new float[cardCount];
         float[] cardScale = new float[cardCount];
@@ -72,9 +74,9 @@ public final class ShopRevealAnimator {
             float start = 0.26f + i * 0.07f;
             float end = Math.min(0.94f, start + 0.26f);
             float cardT = segment(t, start, end);
-            cardAlpha[i] = easeOutCubic(cardT);
+            cardAlpha[i] = IntroEasing.easeOutCubic(cardT);
             cardScale[i] = lerp(0.35f, 1f, easeOutBack(cardT));
-            cardSlideY[i] = (1f - easeOutCubic(cardT)) * 28f;
+            cardSlideY[i] = (1f - IntroEasing.easeOutCubic(cardT)) * 28f;
         }
 
         boolean uiInteractive = interactiveWhenDone && done;
@@ -99,11 +101,6 @@ public final class ShopRevealAnimator {
 
     private static float lerp(float a, float b, float t) {
         return a + (b - a) * clamp01(t);
-    }
-
-    private static float easeOutCubic(float t) {
-        float x = clamp01(t);
-        return 1f - (float) Math.pow(1f - x, 3);
     }
 
     private static float easeOutBack(float t) {
