@@ -1,5 +1,7 @@
 package main.java.com.witcher.ui.shop.view.anim;
 
+import main.java.com.witcher.ui.intro.IntroEasing;
+
 /**
  * Анимация открытия категории: карточка уезжает влево и растёт, справа выезжает список.
  */
@@ -35,19 +37,19 @@ public final class ShopCategoryAnimator {
     public static ShopCategoryAnimator opening(float t, int fromX, int fromY, int fromW, int fromH,
                                                int toX, int toY, int toW, int toH) {
         float p = clamp01(t);
-        float move = easeInOutCubic(p);
+        float move = IntroEasing.easeInOutCubic(p);
         int cardX = Math.round(lerp(fromX, toX, move));
         int cardY = Math.round(lerp(fromY, toY, move));
-        float scaleT = easeInOutCubic(p);
+        float scaleT = IntroEasing.easeInOutCubic(p);
         int cardW = Math.round(lerp(fromW, toW, scaleT));
         int cardH = Math.round(lerp(fromH, toH, scaleT));
 
-        float gridFade = 1f - easeOutCubic(Math.min(p * 1.35f, 1f));
+        float gridFade = 1f - IntroEasing.easeOutCubic(Math.min(p * 1.35f, 1f));
         float counterT = segment(p, 0.06f, 0.72f);
-        float counterAlpha = easeOutCubic(counterT);
+        float counterAlpha = IntroEasing.easeOutCubic(counterT);
         float detailT = segment(p, 0.18f, 0.88f);
-        float detailAlpha = easeOutCubic(detailT);
-        float detailSlide = (1f - easeOutCubic(detailT)) * 36f;
+        float detailAlpha = IntroEasing.easeOutCubic(detailT);
+        float detailSlide = (1f - IntroEasing.easeOutCubic(detailT)) * 36f;
 
         return new ShopCategoryAnimator(p, cardX, cardY, cardW, cardH,
             gridFade, counterAlpha, detailAlpha, detailSlide, p >= 1f);
@@ -74,18 +76,5 @@ public final class ShopCategoryAnimator {
 
     private static float lerp(float a, float b, float t) {
         return a + (b - a) * clamp01(t);
-    }
-
-    private static float easeOutCubic(float t) {
-        float x = clamp01(t);
-        return 1f - (float) Math.pow(1f - x, 3);
-    }
-
-    private static float easeInOutCubic(float t) {
-        float x = clamp01(t);
-        if (x < 0.5f) {
-            return 4f * x * x * x;
-        }
-        return 1f - (float) Math.pow(-2f * x + 2f, 3) / 2f;
     }
 }
