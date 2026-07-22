@@ -1,5 +1,7 @@
 package main.java.com.witcher.chapter1.loop;
 
+import main.java.com.witcher.ui.intro.IntroEasing;
+
 /**
  * Таймлайн пробуждения (общий для Swing и будущего движка):
  * чёрный экран → peek → открытие → моргание → закрытие.
@@ -30,7 +32,7 @@ public final class WakeAwakeningTimeline {
     }
     if (ms < T_QUICK_OPEN) {
       float t = (ms - T_BLACK) / (float) (T_QUICK_OPEN - T_BLACK);
-      return easeOutCubic(t) * 0.32f;
+      return IntroEasing.easeOutCubic(t) * 0.32f;
     }
     if (ms < T_QUICK_CLOSE) {
       float t = (ms - T_QUICK_OPEN) / (float) (T_QUICK_CLOSE - T_QUICK_OPEN);
@@ -38,7 +40,7 @@ public final class WakeAwakeningTimeline {
     }
     if (ms < T_SLOW_OPEN) {
       float t = (ms - T_QUICK_CLOSE) / (float) (T_SLOW_OPEN - T_QUICK_CLOSE);
-      return easeOutCubic(t);
+      return IntroEasing.easeOutCubic(t);
     }
     if (ms < T_BLINK) {
       return blinkPulse(ms - T_SLOW_OPEN, T_BLINK - T_SLOW_OPEN);
@@ -58,9 +60,9 @@ public final class WakeAwakeningTimeline {
     }
     float clarity;
     if (ms < T_SLOW_OPEN) {
-      clarity = easeOutCubic((ms - T_QUICK_CLOSE) / (float) (T_SLOW_OPEN - T_QUICK_CLOSE));
+      clarity = IntroEasing.easeOutCubic((ms - T_QUICK_CLOSE) / (float) (T_SLOW_OPEN - T_QUICK_CLOSE));
     } else if (ms < T_BLINK) {
-      clarity = 0.78f + 0.22f * easeOutCubic((ms - T_SLOW_OPEN) / (float) (T_BLINK - T_SLOW_OPEN));
+      clarity = 0.78f + 0.22f * IntroEasing.easeOutCubic((ms - T_SLOW_OPEN) / (float) (T_BLINK - T_SLOW_OPEN));
     } else if (ms < T_SLOW_CLOSE) {
       clarity = 1f - easeInCubic((ms - T_BLINK) / (float) (T_SLOW_CLOSE - T_BLINK)) * 0.5f;
     } else {
@@ -87,12 +89,7 @@ public final class WakeAwakeningTimeline {
     if (t < 0.45f) {
       return 1f - easeInCubic(t / 0.45f) * 0.68f;
     }
-    return easeOutCubic((t - 0.45f) / 0.55f);
-  }
-
-  private static float easeOutCubic(float t) {
-    float c = Math.max(0f, Math.min(1f, t));
-    return 1f - (float) Math.pow(1f - c, 3);
+    return IntroEasing.easeOutCubic((t - 0.45f) / 0.55f);
   }
 
   private static float easeInCubic(float t) {
