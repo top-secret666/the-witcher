@@ -14,6 +14,9 @@ import main.java.com.witcher.model.sets.SchoolSet;
  */
 public final class ShopPricing {
 
+    public static final int MIN_SHOP_PRICE = 48;
+    public static final int MAX_SHOP_PRICE = 198;
+
     private ShopPricing() {
     }
 
@@ -29,9 +32,9 @@ public final class ShopPricing {
             tier -= 1;
         }
         double norm = Math.log1p(raw) / Math.log1p(2000);
-        int scaled = 48 + (int) (norm * 118) + tier * 7 + (int) (weight * 1.2);
+        int scaled = MIN_SHOP_PRICE + (int) (norm * 118) + tier * 7 + (int) (weight * 1.2);
         int jitter = Math.floorMod(armour.getName().hashCode(), 13) - 6;
-        return clamp(scaled + jitter, 48, 198);
+        return clamp(scaled + jitter, MIN_SHOP_PRICE, MAX_SHOP_PRICE);
     }
 
     /** Витринная цена, уникальная внутри одной категории каталога. */
@@ -41,14 +44,14 @@ public final class ShopPricing {
             return base;
         }
         for (int delta = 1; delta <= 75; delta++) {
-            if (base + delta <= 198 && usedPrices.add(base + delta)) {
+            if (base + delta <= MAX_SHOP_PRICE && usedPrices.add(base + delta)) {
                 return base + delta;
             }
-            if (base - delta >= 48 && usedPrices.add(base - delta)) {
+            if (base - delta >= MIN_SHOP_PRICE && usedPrices.add(base - delta)) {
                 return base - delta;
             }
         }
-        for (int p = 48; p <= 198; p++) {
+        for (int p = MIN_SHOP_PRICE; p <= MAX_SHOP_PRICE; p++) {
             if (usedPrices.add(p)) {
                 return p;
             }
