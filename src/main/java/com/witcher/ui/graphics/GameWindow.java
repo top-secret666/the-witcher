@@ -62,9 +62,6 @@ public class GameWindow {
 
         // Иконка окна/приложения
         Sprite appIcon = Sprite.load("/assets/sprites/app_icon.png");
-        if (appIcon == null) {
-            appIcon = Sprite.load("/assets/sprites/app_icon.png");
-        }
         Image iconImg = null;
         if (appIcon != null) {
             iconImg = appIcon.getImage();
@@ -226,7 +223,7 @@ public class GameWindow {
     /** Лавка и игровые экраны: обычный курсор для наведения на UI. */
     private void useVisibleCursor() {
         Cursor cursor = Cursor.getDefaultCursor();
-        Sprite cursorSprite = Sprite.loadOptional("/assets/sprites/menu/menu_cursor.png");
+        Sprite cursorSprite = Sprite.loadOptional(MenuCursorPaths.MENU_CURSOR);
         if (cursorSprite != null && cursorSprite.getImage() != null) {
             cursor = Toolkit.getDefaultToolkit().createCustomCursor(
                     cursorSprite.getImage(), new Point(4, 4), "witcher_game_cursor");
