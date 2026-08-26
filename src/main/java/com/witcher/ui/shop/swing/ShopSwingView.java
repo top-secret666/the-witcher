@@ -206,12 +206,6 @@ public final class ShopSwingView implements ShopView {
                 drawCards(g, layout, reveal);
             }
 
-            if (!presenter.model().needsWalletReveal() && !ui.equipmentOpen && !ui.inventoryOpen) {
-                int bagX = INVENTORY_BAG_MARGIN;
-                int bagY = sh - INVENTORY_BAG_MARGIN - INVENTORY_BAG_SIZE;
-                drawBagWalletAmount(g, bagX, bagY, INVENTORY_BAG_SIZE, 1f);
-            }
-
             if (ui.equipmentOpen) {
                 drawEquipmentOverlay(g, sw, sh);
             } else if (ui.inventoryOpen) {
@@ -637,11 +631,6 @@ public final class ShopSwingView implements ShopView {
             WALLET_CLOSE_TICKS);
         float alpha = Math.min(1f, (ui.walletRevealTicks - (appearEnd - 4)) / 8f);
         drawInventoryBagSprite(g, bagX, bagY, bagSize, openT, false, alpha);
-
-        int countStart = closeEnd;
-        if (ui.walletRevealTicks >= countStart) {
-            drawBagWalletAmount(g, bagX, bagY, bagSize, alpha);
-        }
     }
 
     private void drawInventoryBag(Graphics2D g, float alpha) {
@@ -1147,29 +1136,32 @@ public final class ShopSwingView implements ShopView {
             drawHudDukeSeals(g, layout, hudY, assets.dukeSealIconScaled);
         }
 
-        String wallet = presenter.walletHudAmountText();
-        String suffix = presenter.model().walletSuffix();
-        int crownW = ShopViewConstants.HUD_CROWN_W;
-        int crownH = ShopViewConstants.HUD_CROWN_H;
-        int crownGap = 4;
-        drawCrispText(g);
-        g.setFont(GameFonts.get().uiBold( 13));
-        FontMetrics fm = g.getFontMetrics();
-        int blockW = fm.stringWidth(wallet) + fm.stringWidth(suffix);
-        if (assets.crownIconScaled != null) {
-            blockW += crownW + crownGap;
+        // На общей заставке лавки сумму не показываем — только после клика по категории (reveal).
+        if (!presenter.model().needsWalletReveal()) {
+            String wallet = presenter.walletHudAmountText();
+            String suffix = presenter.model().walletSuffix();
+            int crownW = ShopViewConstants.HUD_CROWN_W;
+            int crownH = ShopViewConstants.HUD_CROWN_H;
+            int crownGap = 4;
+            drawCrispText(g);
+            g.setFont(GameFonts.get().uiBold( 13));
+            FontMetrics fm = g.getFontMetrics();
+            int blockW = fm.stringWidth(wallet) + fm.stringWidth(suffix);
+            if (assets.crownIconScaled != null) {
+                blockW += crownW + crownGap;
+            }
+            int blockX = layout.hudX + (layout.hudW - blockW) / 2;
+            int textX = blockX;
+            if (assets.crownIconScaled != null) {
+                int crownY = (hudY + (layout.hudH - crownH) / 2) & ~1;
+                int crownX = blockX & ~1;
+                drawHudPlaqueIcon(g, assets.crownIconScaled, crownX, crownY, crownW, crownH);
+                textX = blockX + crownW + crownGap;
+            }
+            int walletY = hudY + (layout.hudH + fm.getAscent()) / 2 - 2;
+            ShopUiDraw.drawOutlinedText(g, wallet, textX, walletY, new Color(255, 230, 150));
+            ShopUiDraw.drawOutlinedText(g, suffix, textX + fm.stringWidth(wallet), walletY, new Color(200, 180, 120));
         }
-        int blockX = layout.hudX + (layout.hudW - blockW) / 2;
-        int textX = blockX;
-        if (assets.crownIconScaled != null) {
-            int crownY = (hudY + (layout.hudH - crownH) / 2) & ~1;
-            int crownX = blockX & ~1;
-            drawHudPlaqueIcon(g, assets.crownIconScaled, crownX, crownY, crownW, crownH);
-            textX = blockX + crownW + crownGap;
-        }
-        int walletY = hudY + (layout.hudH + fm.getAscent()) / 2 - 2;
-        ShopUiDraw.drawOutlinedText(g, wallet, textX, walletY, new Color(255, 230, 150));
-        ShopUiDraw.drawOutlinedText(g, suffix, textX + fm.stringWidth(wallet), walletY, new Color(200, 180, 120));
 
         if (assets.dukeSealIconScaled != null) {
             drawHudDukeSealRight(g, layout, hudY, assets.dukeSealIconScaled);

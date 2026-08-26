@@ -137,15 +137,20 @@ public final class Chapter1SwingView implements Chapter1View {
     }
     Graphics2D overlay = screen.createGraphics();
     try {
-      GlitchOverlayRenderer.draw(overlay, sw, sh, presenter.director().session());
-      if (presenter.director().phase() == Chapter1Phase.HACK) {
+      Chapter1Phase phase = presenter.director().phase();
+      // На лавке не рисуем glitch и отладочные счётчики — только чистый UI магазина.
+      if (phase != Chapter1Phase.SHOP) {
+        GlitchOverlayRenderer.draw(overlay, sw, sh, presenter.director().session());
+      }
+      if (phase == Chapter1Phase.HACK) {
         presenter.doorLoopPlayer().render(overlay, sw, sh);
         HackTerminalView.draw(overlay, sw, sh, presenter.hack(), presenter.hackShakeTick());
-      }
-      if (presenter.director().phase() == Chapter1Phase.SHOP
-          || presenter.director().phase() == Chapter1Phase.HACK) {
         boolean adminHovered = Chapter1SessionHud.hitAdminMapButton(mouseX, mouseY, sw);
         Chapter1SessionHud.draw(overlay, sw, presenter.director().session(), adminHovered);
+      } else if (phase == Chapter1Phase.SHOP) {
+        // Админ-кнопка карты боссов без боковых счётчиков.
+        boolean adminHovered = Chapter1SessionHud.hitAdminMapButton(mouseX, mouseY, sw);
+        Chapter1SessionHud.drawAdminButtonOnly(overlay, sw, adminHovered);
       }
     } finally {
       overlay.dispose();

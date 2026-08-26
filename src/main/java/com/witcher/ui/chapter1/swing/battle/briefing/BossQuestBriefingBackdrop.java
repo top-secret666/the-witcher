@@ -58,11 +58,6 @@ public final class BossQuestBriefingBackdrop {
     g.setColor(Color.BLACK);
     g.fillRect(0, 0, sw, sh);
 
-    g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.32f));
-    int pad = 10;
-    g.fillRoundRect(paper.x - pad, paper.y - pad,
-        paper.w + pad * 2, paper.h + pad * 2, 8, 8);
-
     g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.26f));
     GradientPaint left = new GradientPaint(0, 0, new Color(0, 0, 0, 210),
         paper.x - 12, 0, new Color(0, 0, 0, 0));

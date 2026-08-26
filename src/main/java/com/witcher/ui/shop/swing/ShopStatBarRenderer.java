@@ -118,7 +118,7 @@ public final class ShopStatBarRenderer {
         }
     }
 
-    /** Узкая колонка колбочек справа на экране экипировки. */
+    /** Узкая колонка колбочек справа на экране экипировки — три горизонтальные с наложением цветов. */
     public static void drawEquipmentCompact(Graphics2D g, int x, int y, int w, int h,
                                             ShopModel.StatPreview preview,
                                             BufferedImage vialEmpty, BufferedImage vialOverlay,
@@ -134,10 +134,10 @@ public final class ShopStatBarRenderer {
         g.setColor(new Color(200, 185, 150));
         g.drawString(header, headerX, headerY);
 
-        int labelW = Math.max(18, fm.stringWidth("Зщ") + 4);
-        int barW = Math.max(40, w - labelW - 6);
-        int rowH = Math.max(28, (h - 12) / 3);
-        int startY = headerY + 4;
+        int labelW = Math.max(16, fm.stringWidth("Зщ") + 3);
+        int barW = Math.max(34, Math.round((w - labelW - 8) * 0.88f));
+        int rowH = Math.max(22, (h - 14) / 3);
+        int startY = headerY + 3;
         String[] labels = {"Зщ", "Вн", "Зн"};
         Color[] colors = {
             new Color(210, 52, 58),
@@ -146,10 +146,9 @@ public final class ShopStatBarRenderer {
         };
 
         boolean useVials = vialEmpty != null;
-        // Раньше 6–8px — вода была тонкой ниткой; нужно заметно толще.
-        int vialH = Math.max(16, Math.min(22, rowH - fm.getHeight() - 2));
+        int vialH = Math.max(11, Math.min(15, rowH - fm.getHeight() - 3));
         if (useVials) {
-            vialH = Math.max(vialH, Math.min(22, vialHeight(barW, vialEmpty, h)));
+            vialH = Math.max(vialH, Math.min(15, vialHeight(barW, vialEmpty, h)));
         }
 
         for (int i = 0; i < preview.rows().length; i++) {
@@ -176,12 +175,12 @@ public final class ShopStatBarRenderer {
     private static int vialHeight(int barW, BufferedImage vialEmpty, int cardH) {
         Rectangle crop = cropOf(vialEmpty, true);
         if (crop.width <= 0 || crop.height <= 0) {
-            return Math.max(16, Math.min(22, Math.round(barW * 0.12f)));
+            return Math.max(11, Math.min(15, Math.round(barW * 0.09f)));
         }
         float aspect = crop.width / (float) crop.height;
         int fromAspect = Math.round(barW / aspect);
-        int cap = cardH > 200 ? 22 : 20;
-        return Math.max(14, Math.min(cap, Math.max(fromAspect, 16)));
+        int cap = 15;
+        return Math.max(11, Math.min(cap, Math.max(fromAspect, 12)));
     }
 
     private static Rectangle cropOf(BufferedImage img, boolean empty) {
@@ -542,27 +541,37 @@ public final class ShopStatBarRenderer {
         }
     }
 
-    /** Пузырьки внутри колбы — поднимаются вверх. */
+    /** Пузырьки внутри колбы — поднимаются вверх, эффект воды. */
     private static void drawLiquidBubbles(Graphics2D g, int x, int y, int w, int h, Color tint,
                                           int animTick, int rowIndex) {
-        if (w < 8 || h < 6) {
+        if (w < 6 || h < 4) {
             return;
         }
-        for (int b = 0; b < 2; b++) {
-            int period = 42 + b * 19 + rowIndex * 13;
-            int phaseTick = Math.floorMod(animTick + b * 24 + rowIndex * 17, period);
+        int count = Math.max(4, Math.min(8, w / 5));
+        for (int b = 0; b < count; b++) {
+            int period = 28 + b * 11 + rowIndex * 7;
+            int phaseTick = Math.floorMod(animTick * 2 + b * 17 + rowIndex * 13, period);
             float phase = phaseTick / (float) period;
-            if (phase > 0.92f) {
+            if (phase > 0.95f) {
                 continue;
             }
-            int bx = x + 3 + Math.floorMod(animTick * 2 + b * 11 + rowIndex * 9, Math.max(1, w - 6));
-            int by = y + h - 2 - Math.round(phase * (h - 3));
-            int alpha = 90 + Math.round((1f - phase) * 100);
-            int size = phase < 0.15f ? 2 : 1;
-            g.setColor(new Color(255, 255, 255, alpha));
+            int lane = 2 + Math.floorMod(b * 5 + rowIndex * 3, Math.max(1, w - 5));
+            int bx = x + lane;
+            int by = y + h - 2 - Math.round(phase * (h - 2));
+            float fade = 1f - phase;
+            int alpha = 100 + Math.round(fade * 120);
+            int size = phase < 0.2f ? 2 : (h >= 10 && b % 3 == 0 ? 2 : 1);
+            g.setColor(new Color(255, 255, 255, Math.min(230, alpha)));
             g.fillOval(bx, by, size, size);
-            g.setColor(new Color(tint.getRed(), tint.getGreen(), tint.getBlue(), alpha / 2));
-            g.fillOval(bx, by + 1, size, size);
+            if (size > 1) {
+                g.setColor(new Color(tint.getRed(), tint.getGreen(), tint.getBlue(), alpha / 2));
+                g.fillOval(bx, by + 1, size - 1, size - 1);
+            }
+            // Блик «блистер» у поверхности
+            if (phase > 0.75f && phase < 0.9f) {
+                g.setColor(new Color(255, 255, 255, 70));
+                g.fillOval(bx - 1, y + 1, size + 1, 1);
+            }
         }
     }
 

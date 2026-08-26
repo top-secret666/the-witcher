@@ -310,10 +310,15 @@ public final class Chapter1Presenter implements WolfBossPhaseHandler.Host {
       return;
     }
     if (director.phase() == Chapter1Phase.SHOP) {
-      if (isDukeDialogActive() && dukeDialog.scene().waitingForChoice()) {
-        int choice = keyToChoiceIndex(code);
-        if (choice >= 0) {
-          applyDukeChoice(choice);
+      if (isDukeDialogActive()) {
+        if (dukeDialog.scene() != null && dukeDialog.scene().waitingForChoice()) {
+          int choice = keyToChoiceIndex(code);
+          if (choice >= 0) {
+            applyDukeChoice(choice);
+          }
+        } else if (code == KeyEvent.VK_ENTER || code == KeyEvent.VK_SPACE) {
+          dukeDialog.dismiss();
+          choiceRects = List.of();
         }
         return;
       }
@@ -592,12 +597,15 @@ public final class Chapter1Presenter implements WolfBossPhaseHandler.Host {
     if (!dukeDialog.isActive() || !clicked) {
       return;
     }
-    if (dukeDialog.scene().waitingForChoice()) {
+    if (dukeDialog.scene() != null && dukeDialog.scene().waitingForChoice()) {
       int index = VnChoiceLayout.hitIndex(choiceRects, mouseX, mouseY);
       if (index >= 0) {
         applyDukeChoice(index);
       }
+      return;
     }
+    dukeDialog.dismiss();
+    choiceRects = List.of();
   }
 
   private void updateEnding(int mouseX, int mouseY, boolean clicked) {

@@ -176,8 +176,6 @@ public final class ShopEquipmentOverlay {
                 new Color(170, 140, 90));
         }
 
-        drawWeaponSlot(g, ctx, layout);
-
         if (tooltipArmour == null && tooltipSet == null && ctx.ui().equipmentHoveredSlot >= 0) {
             EquipSlot slot = EquipSlot.values()[ctx.ui().equipmentHoveredSlot];
             tooltipArmour = ctx.presenter().model().getEquipped(slot);
@@ -284,13 +282,13 @@ public final class ShopEquipmentOverlay {
 
     private static void drawFilterButtons(Graphics2D g, ShopOverlayContext ctx,
                                           EquipmentOverlayLayout layout) {
-        EquipmentFilter[] filters = EquipmentFilter.values();
+        EquipmentFilter[] filters = EquipmentFilter.armourFilters();
         int iconY = layout.filterY + 2;
 
         for (int i = 0; i < filters.length; i++) {
             EquipmentFilter filter = filters[i];
-            Rectangle bounds = layout.filterButton(i, layout.listX, layout.filterY, layout.listW);
-            int fx = layout.filterIconX(i, layout.listX, layout.listW);
+            Rectangle bounds = layout.filterButton(i, layout.listX, layout.filterY, layout.listW, filters.length);
+            int fx = layout.filterIconX(i, layout.listX, layout.listW, filters.length);
             ctx.ui().equipmentFilterBounds[i] = bounds;
 
             boolean active = ctx.ui().equipmentFilter == filter;

@@ -51,7 +51,14 @@ public final class Chapter1SessionHud {
       g.drawString("~ терминал", 6, y);
     }
 
-    // Админ-кнопка: тот же уголок, что у hack_hidden_hint.
+    drawAdminButtonOnly(g, sw, adminHovered);
+  }
+
+  /** Только кнопка перехода на карту боссов — без боковых счётчиков (для лавки). */
+  public static void drawAdminButtonOnly(Graphics2D g, int sw, boolean adminHovered) {
+    if (g == null) {
+      return;
+    }
     BufferedImage hint = Chapter1UiAssets.hiddenHint();
     Rectangle r = adminMapButtonBounds(sw);
     if (hint != null) {

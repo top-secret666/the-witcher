@@ -192,12 +192,17 @@ public final class ShopPresenter {
             ui.selectedIndex = ui.hoveredIndex;
             ShopShowcaseItem item = ui.showcaseItems.get(ui.hoveredIndex);
             ui.currentDialog = item.dukeLine;
-            ui.state = ShopScreenState.CATEGORY_OPENING;
             ui.categoryClosing = false;
             ui.categoryTicks = 0;
             Point slot = layout.cardSlot(ui.hoveredIndex);
             ui.categoryFromRect.setBounds(slot.x, slot.y, layout.cardW, layout.cardH);
             buildCatalogRows(item);
+            // Деньги/кошелёк появляются после клика по карточке категории, не на общей заставке.
+            if (model.needsWalletReveal()) {
+                beginWalletReveal(true);
+            } else {
+                ui.state = ShopScreenState.CATEGORY_OPENING;
+            }
         }
 
         if (ui.state == ShopScreenState.CATEGORY && input.clicked()) {
@@ -635,8 +640,7 @@ public final class ShopPresenter {
                 openEquipmentFromInventory();
             }
             case WEAPON -> {
-                model.equipWeapon(focused);
-                openEquipmentFromInventory();
+                // Оружие остаётся в инвентаре («особые»), в экипировку не уходит.
             }
             default -> openEquipmentFromInventory();
         }
@@ -655,9 +659,10 @@ public final class ShopPresenter {
         ui.equipmentHoveredRow = -1;
         ui.equipmentHoveredSlot = -1;
         ui.equipmentHoveredFilter = -1;
-        ui.equipmentWeaponHovered = ui.equipmentWeaponSlotBounds.contains(mouseX, mouseY);
+        ui.equipmentWeaponHovered = false;
+        ui.equipmentWeaponSlotBounds.setBounds(0, 0, 0, 0);
         ui.equipmentBackHovered = ui.equipmentBackButtonBounds.contains(mouseX, mouseY);
-        EquipmentFilter[] filters = EquipmentFilter.values();
+        EquipmentFilter[] filters = EquipmentFilter.armourFilters();
         for (int i = 0; i < filters.length; i++) {
             Rectangle bounds = ui.equipmentFilterBounds[i];
             if (bounds != null && bounds.contains(mouseX, mouseY)) {
@@ -729,10 +734,6 @@ public final class ShopPresenter {
             }
             return;
         }
-        if (ui.equipmentWeaponHovered && model.getEquippedWeapon() != null) {
-            model.unequipWeapon();
-            return;
-        }
         if (ui.equipmentHoveredSlot >= 0) {
             EquipSlot slot = EquipSlot.values()[ui.equipmentHoveredSlot];
             if (model.getEquipped(slot) != null) {
@@ -742,7 +743,11 @@ public final class ShopPresenter {
     }
 
     private void beginWalletReveal() {
-        ui.walletRevealFromCategory = ui.state == ShopScreenState.CATEGORY;
+        beginWalletReveal(ui.state == ShopScreenState.CATEGORY || ui.state == ShopScreenState.CATEGORY_OPENING);
+    }
+
+    private void beginWalletReveal(boolean fromCategory) {
+        ui.walletRevealFromCategory = fromCategory;
         ui.state = ShopScreenState.WALLET_REVEAL;
         ui.walletRevealTicks = 0;
         ui.inventoryOpen = false;
@@ -753,8 +758,15 @@ public final class ShopPresenter {
     private void finishWalletReveal() {
         model.revealWallet();
         ui.walletRevealTicks = 0;
-        ui.state = ui.walletRevealFromCategory ? ShopScreenState.CATEGORY : ShopScreenState.IDLE;
+        // После заставки кошелька снова витрина с карточками категорий.
+        ui.categoryClosing = false;
+        ui.categoryTicks = 0;
+        ui.selectedIndex = -1;
+        ui.selectedRowIndex = -1;
+        ui.catalogEntries.clear();
+        ui.catalogScrollOffset = 0;
         ui.walletRevealFromCategory = false;
+        ui.state = ShopScreenState.IDLE;
         ui.currentDialog = DukeLines.walletRevealAfter();
     }
 

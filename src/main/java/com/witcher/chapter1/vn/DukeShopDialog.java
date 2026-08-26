@@ -2,8 +2,6 @@ package main.java.com.witcher.chapter1.vn;
 
 import main.java.com.witcher.chapter1.Chapter1Session;
 
-import java.util.List;
-
 /** Диалоги герцога в лавке (подозрение / доверие). */
 public final class DukeShopDialog {
 
@@ -15,30 +13,19 @@ public final class DukeShopDialog {
   }
 
   public static VnSceneState loopReturnGreeting(Chapter1Session session) {
+    // До выбора босса на карте — только реплика, без вариантов ответа.
     return new VnSceneState(
         "Герцог",
         "Снова здесь?\nКак приятно видеть постоянного клиента.\n"
-            + "Хотя, признаюсь, обычно они помнят, что уже заходили.",
-        List.of(
-            new VnChoice("polite", "«Покажите каталог.»", 0, 1),
-            new VnChoice("doubt", "«Мы уже это проходили.»", 1, 0)
-        ));
+            + "Хотя, признаюсь, обычно они помнят, что уже заходили.");
   }
 
   public static VnSceneState prisonPressure(Chapter1Session session) {
-    return new VnSceneState(
-        "Герцог",
-        "Вы слишком долго смотрите не на те вещи.\n"
-            + "Поверьте, в лавке это считается дурным тоном.",
-        List.of(
-            new VnChoice("push", "«Где выход?»", 2, 0),
-            new VnChoice("comply", "«Ладно. Я куплю ещё.»", 0, 1)
-        ));
+    return null;
   }
 
   public static boolean shouldShowPrisonPressure(Chapter1Session session) {
-    return session != null
-        && session.prison() >= 3
-        && session.prison() < Chapter1Session.PRISON_COUNTER_THRESHOLD;
+    // Реплика «смотрите не на те вещи» отключена.
+    return false;
   }
 }

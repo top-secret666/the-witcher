@@ -44,4 +44,9 @@ public enum EquipmentFilter {
         EquipSlot slot = EquipSlot.forArmour(armour);
         return slot != null && slot.iconIndex == iconIndex;
     }
+
+    /** Фильтры экрана экипировки без оружия (оружие только в инвентаре «особые»). */
+    public static EquipmentFilter[] armourFilters() {
+        return new EquipmentFilter[]{ALL, CHEST, LEGS, GLOVES, BOOTS, SETS};
+    }
 }
