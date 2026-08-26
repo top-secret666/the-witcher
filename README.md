@@ -1,6 +1,3 @@
-![The-Witcher-3-The-Witcher-gif-Pixel-Gif-6434293](https://github.com/user-attachments/assets/e81d2ffd-a08c-44b2-ab65-f323ce33c989)
-
-
 # The Witcher — Core Logic Engine ⚔️ (Java)
 
 ```text
