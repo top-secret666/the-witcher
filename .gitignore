@@ -44,3 +44,18 @@ saves/
 *.MP4
 /*.mp4
 /*.MP4
+
+### Word / Office temp locks ###
+~$*
+**/~$*
+
+### Practice report drafts (keep only canonical names in docs/) ###
+# Canonical:
+#   docs/Отчет_технологическая_практика.docx
+#   docs/Отчет_технологическая_практика_Codedot.docx
+docs/*_fixed.docx
+docs/*_rewritten.docx
+docs/*_student.docx
+docs/*_v2.docx
+docs/*_v3.docx
+docs/*_Traffic.docx
