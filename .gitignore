@@ -1,5 +1,8 @@
-### Playable Windows build (tracked) ###
-# app/, runtime/, The Witcher.exe live at repo root — do not ignore.
+### Packaged Windows build (ship via GitHub Releases only) ###
+/The Witcher.exe
+/app/
+/runtime/
+*.zip
 
 ### Build / runtime (local only) ###
 out/
