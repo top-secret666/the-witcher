@@ -1,7 +1,3 @@
-<p align="center">
-  <img src="docs/media/readme-cover.jpg" alt="The Witcher — Duke's shop" width="420" />
-</p>
-
 <h1 align="center">THE WITCHER</h1>
 <h3 align="center">Chapter 1 — Pixel Prototype</h3>
 
@@ -20,7 +16,9 @@
 
 ## Download & play
 
-### [Download Windows build (.ZIP)](https://github.com/top-secret666/the-witcher/releases/download/v1.0.0/The-Witcher-v1.0.0-Windows.zip)
+### [Download Windows build (.ZIP)](https://github.com/top-secret666/the-witcher/releases/latest/download/The-Witcher-v1.0.0-Windows.zip)
+
+> If the link returns 404, open [**Releases**](https://github.com/top-secret666/the-witcher/releases) and download `The-Witcher-v1.0.0-Windows.zip` manually.
 
 | Step | What to do |
 |:----:|:-----------|
@@ -89,6 +87,7 @@ Binaries are **not** stored in git — ship builds via [**GitHub Releases**](htt
 ```powershell
 powershell -ExecutionPolicy Bypass -File dev\tools\package-windows.ps1
 python dev\tools\make_release_zip.py --version 1.0.0
+python dev\tools\publish_release.py --version 1.0.0
 ```
 
 Upload `dist/The-Witcher-v1.0.0-Windows.zip` to [Releases](https://github.com/top-secret666/the-witcher/releases/new).  
