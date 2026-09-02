@@ -54,7 +54,7 @@ public final class ShopInventoryOverlay {
       int sw,
       int sh) {
     Composite prev = g.getComposite();
-    g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.55f));
+    g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.88f));
     g.setColor(Color.BLACK);
     g.fillRect(0, 0, sw, sh);
 
@@ -63,8 +63,8 @@ public final class ShopInventoryOverlay {
     ShopSessionState ui = ctx.ui();
     ui.inventoryPanelBounds.setBounds(px, py, INVENTORY_PANEL_W, INVENTORY_PANEL_H);
 
-    g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.96f));
-    g.setColor(new Color(18, 12, 8, 245));
+    g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
+    g.setColor(new Color(18, 12, 8, 255));
     g.fillRoundRect(px, py, INVENTORY_PANEL_W, INVENTORY_PANEL_H, 8, 8);
     g.setColor(new Color(150, 110, 50));
     g.drawRoundRect(px, py, INVENTORY_PANEL_W, INVENTORY_PANEL_H, 8, 8);
@@ -149,25 +149,33 @@ public final class ShopInventoryOverlay {
     int actionY = contentBottom - actionH;
     int detailMaxH = actionY - contentTop - 8;
     int detailBottom = contentTop;
-    String actionLabel = "Экипировка";
+    boolean showActionButton = false;
+    String actionLabel = "";
     if (!slots.isEmpty() && focusedIndex >= 0 && focusedIndex < slots.size()) {
       ShopInventorySlot focused = slots.get(focusedIndex);
-      actionLabel = focused.actionLabel();
+      if (focused.kind().hasActionButton()) {
+        showActionButton = true;
+        actionLabel = focused.actionLabel();
+      }
       detailBottom = callbacks.drawDetail(g, focused, detailX, contentTop, detailW, detailMaxH);
     }
 
-    int equipBtnW = Math.min(detailW, 120);
-    int equipBtnX = detailX + (detailW - equipBtnW) / 2;
-    int equipBtnY = Math.max(actionY, Math.min(contentBottom - actionH, detailBottom + 6));
-    ui.inventoryEquipButtonBounds.setBounds(equipBtnX, equipBtnY, equipBtnW, actionH);
-    g.setFont(GameFonts.get().uiBold(10));
-    g.setColor(new Color(28, 18, 8, 220));
-    g.fillRoundRect(equipBtnX, equipBtnY, equipBtnW, actionH, 5, 5);
-    g.setColor(new Color(170, 125, 55));
-    g.drawRoundRect(equipBtnX, equipBtnY, equipBtnW, actionH, 5, 5);
-    g.setColor(new Color(255, 225, 150));
-    FontMetrics efm = g.getFontMetrics();
-    g.drawString(actionLabel, equipBtnX + (equipBtnW - efm.stringWidth(actionLabel)) / 2, equipBtnY + 16);
+    if (showActionButton) {
+      int equipBtnW = Math.min(detailW, 120);
+      int equipBtnX = detailX + (detailW - equipBtnW) / 2;
+      int equipBtnY = Math.max(actionY, Math.min(contentBottom - actionH, detailBottom + 6));
+      ui.inventoryEquipButtonBounds.setBounds(equipBtnX, equipBtnY, equipBtnW, actionH);
+      g.setFont(GameFonts.get().uiBold(10));
+      g.setColor(new Color(28, 18, 8, 220));
+      g.fillRoundRect(equipBtnX, equipBtnY, equipBtnW, actionH, 5, 5);
+      g.setColor(new Color(170, 125, 55));
+      g.drawRoundRect(equipBtnX, equipBtnY, equipBtnW, actionH, 5, 5);
+      g.setColor(new Color(255, 225, 150));
+      FontMetrics efm = g.getFontMetrics();
+      g.drawString(actionLabel, equipBtnX + (equipBtnW - efm.stringWidth(actionLabel)) / 2, equipBtnY + 16);
+    } else {
+      ui.inventoryEquipButtonBounds.setBounds(0, 0, 0, 0);
+    }
 
     g.setComposite(prev);
   }

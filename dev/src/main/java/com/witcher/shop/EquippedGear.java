@@ -6,4 +6,14 @@ import main.java.com.witcher.model.armour.Armour;
 public interface EquippedGear {
 
   Armour getEquipped(EquipSlot slot);
+
+  /** Надета хотя бы одна часть брони или оружие. */
+  default boolean hasAnyEquippedItem() {
+    for (EquipSlot slot : EquipSlot.values()) {
+      if (getEquipped(slot) != null) {
+        return true;
+      }
+    }
+    return false;
+  }
 }

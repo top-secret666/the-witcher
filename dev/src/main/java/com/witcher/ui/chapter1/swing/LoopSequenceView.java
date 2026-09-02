@@ -36,6 +36,8 @@ public final class LoopSequenceView {
       if (loopSequence.showEyes()) {
         eyesEffect.render(g, sw, sh);
       }
+
+      CutsceneSkipHint.draw(g, sw, sh, eyesEffect.canSkip());
     } finally {
       g.dispose();
     }

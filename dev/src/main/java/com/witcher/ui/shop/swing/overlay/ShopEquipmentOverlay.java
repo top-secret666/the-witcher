@@ -92,7 +92,9 @@ public final class ShopEquipmentOverlay {
             boolean hovered = i == ctx.ui().equipmentHoveredRow;
             boolean equipped = entry.isKit()
                 ? ctx.presenter().model().isSetEquipped(entry.armourSet())
-                : ctx.presenter().model().isEquipped(entry.armour());
+                : entry.isWeapon()
+                    ? isWeaponEquipped(ctx.presenter().model(), entry.weapon())
+                    : ctx.presenter().model().isEquipped(entry.armour());
 
             if (hovered || equipped) {
                 g.setColor(equipped ? new Color(48, 62, 82, 220) : new Color(36, 48, 68, 190));
@@ -110,6 +112,9 @@ public final class ShopEquipmentOverlay {
             if (entry.isKit()) {
                 itemIcon = ctx.armourIcons().iconForName(
                     entry.armourSet().getName(), ShopCategory.SETS, EQUIP_GRID_ICON);
+            } else if (entry.isWeapon()) {
+                itemIcon = ctx.armourIcons().iconForName(
+                    entry.title(), ShopCategory.WEAPON, EQUIP_GRID_ICON);
             } else {
                 ShopCategory cat = EquipmentArmourList.categoryFor(entry.armour());
                 itemIcon = ctx.armourIcons().iconForArmour(entry.armour(), cat, EQUIP_GRID_ICON);
@@ -120,7 +125,7 @@ public final class ShopEquipmentOverlay {
             if (hovered) {
                 if (entry.isKit()) {
                     tooltipSet = entry.armourSet();
-                } else {
+                } else if (!entry.isWeapon()) {
                     tooltipArmour = entry.armour();
                 }
                 tooltipAnchorY = cell.y;
@@ -133,6 +138,8 @@ public final class ShopEquipmentOverlay {
 
         drawEquipmentStats(g, ctx, layout.statsX, layout.statsY, layout.statsW, layout.statsH,
             ctx.presenter().model().equippedStatPreview());
+
+        drawWeaponSlot(g, ctx, layout);
 
         drawPortraitFit(g, sprites, ctx.assets().geraltPortraitShop(),
             layout.portraitX, layout.portraitY, layout.portraitW, layout.portraitH);
@@ -201,6 +208,11 @@ public final class ShopEquipmentOverlay {
         }
 
         g.setComposite(prev);
+    }
+
+    private static boolean isWeaponEquipped(ShopModel model, ShopInventorySlot weapon) {
+        ShopInventorySlot equipped = model.getEquippedWeapon();
+        return weapon != null && equipped != null && weapon.title().equals(equipped.title());
     }
 
     private static void drawWeaponSlot(Graphics2D g, ShopOverlayContext ctx, EquipmentOverlayLayout layout) {

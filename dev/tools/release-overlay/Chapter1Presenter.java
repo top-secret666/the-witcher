@@ -153,25 +153,13 @@ public final class Chapter1Presenter implements WolfBossPhaseHandler.Host {
 
   @Override
   public void beginFinaleSwordClash() {
-    swordGlint.reset();
     battleVictory = BattleResolver.meetsSwordCutsceneVictory(loadoutStats());
-    finaleSwordPlaying = true;
+    finaleSwordPlaying = false;
   }
 
   @Override
   public boolean tickFinaleSwordClash() {
-    if (!finaleSwordPlaying) {
-      return true;
-    }
-    swordGlint.update(
-        WakeAwakeningTimeline.MS_PER_TICK,
-        Chapter1Layout.VIRTUAL_W,
-        Chapter1Layout.VIRTUAL_H);
-    if (swordGlint.elapsedMs() >= SwordCutsceneTiming.TOTAL_MS) {
-      finaleSwordPlaying = false;
-      return true;
-    }
-    return false;
+    return true;
   }
 
   @Override
@@ -285,8 +273,8 @@ public final class Chapter1Presenter implements WolfBossPhaseHandler.Host {
       }
       case ENDING -> updateEnding(mouseX, mouseY, clicked);
     }
-    if (escPressed && director.phase() == Chapter1Phase.SHOP) {
-      exitRequested = shopScreen.isExitRequested();
+    if (escPressed) {
+      exitRequested = true;
     }
   }
 
@@ -474,16 +462,8 @@ public final class Chapter1Presenter implements WolfBossPhaseHandler.Host {
     Chapter1AssetPrewarm.warmCutscenesAsync();
   }
 
-  /** Админ-кнопка hack_hidden_hint → сразу открытая карта боссов. */
   private boolean tryAdminOpenBossMap(int mouseX, int mouseY, boolean clicked) {
-    if (!clicked) {
-      return false;
-    }
-    if (!Chapter1SessionHud.hitAdminMapButton(mouseX, mouseY, Chapter1Layout.VIRTUAL_W)) {
-      return false;
-    }
-    openBossMap();
-    return true;
+    return false;
   }
 
   private void tryGrantBattleCard() {

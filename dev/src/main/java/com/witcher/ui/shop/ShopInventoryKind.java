@@ -14,8 +14,14 @@ public enum ShopInventoryKind {
         return switch (this) {
             case POTION -> "Выпить";
             case BATTLE_CARD -> "Открыть";
+            case WALLET -> "";
             default -> "Экипировка";
         };
+    }
+
+    /** Показывать ли кнопку действия в панели инвентаря. */
+    public boolean hasActionButton() {
+        return this != WALLET;
     }
 
     public boolean isArmourGrid() {

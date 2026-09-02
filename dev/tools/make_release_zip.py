@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Pack the local Windows build into a release ZIP for GitHub Releases."""
+"""Pack Windows release ZIP (jpackage .exe bundle)."""
 from __future__ import annotations
 
 import argparse
@@ -8,7 +8,6 @@ import sys
 import tempfile
 import zipfile
 from pathlib import Path
-
 
 REQUIRED = ("The Witcher.exe", "app", "runtime")
 
@@ -21,17 +20,8 @@ def parse_args() -> argparse.Namespace:
         default=Path(__file__).resolve().parents[2],
         help="Repository root with The Witcher.exe, app/, runtime/",
     )
-    parser.add_argument(
-        "--version",
-        default="1.0.0",
-        help="Release version label, e.g. 1.0.0",
-    )
-    parser.add_argument(
-        "--out-dir",
-        type=Path,
-        default=None,
-        help="Output directory (default: <root>/dist)",
-    )
+    parser.add_argument("--version", default="1.0.0")
+    parser.add_argument("--out-dir", type=Path, default=None)
     return parser.parse_args()
 
 
@@ -39,10 +29,17 @@ def ensure_build(root: Path) -> None:
     missing = [name for name in REQUIRED if not (root / name).exists()]
     if missing:
         raise SystemExit(
-            "Missing build artifacts: "
+            "Missing: "
             + ", ".join(missing)
-            + "\nRun dev/tools/package-windows.ps1 first, then retry."
+            + "\nRun dev/tools/package-exe.ps1 first."
         )
+    jar = root / "app" / "witcher-prototype.jar"
+    if not jar.is_file():
+        raise SystemExit(f"Missing {jar}")
+    gif = root / "app" / "assets" / "sprites" / "lavka" / "shop_materialize.gif"
+    if not gif.is_file():
+        # fat jar: gif is inside jar; optional external copy
+        pass
 
 
 def make_zip(root: Path, version: str, out_dir: Path) -> Path:
@@ -55,7 +52,6 @@ def make_zip(root: Path, version: str, out_dir: Path) -> Path:
     try:
         bundle = staging / "The-Witcher"
         bundle.mkdir(parents=True)
-
         for name in REQUIRED:
             src = root / name
             dst = bundle / name
@@ -63,15 +59,13 @@ def make_zip(root: Path, version: str, out_dir: Path) -> Path:
                 shutil.copytree(src, dst)
             else:
                 shutil.copy2(src, dst)
-
         with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=6) as zf:
             for path in bundle.rglob("*"):
                 if path.is_file():
                     zf.write(path, path.relative_to(staging).as_posix())
     finally:
         shutil.rmtree(staging, ignore_errors=True)
-    size_mb = archive.stat().st_size / (1024 * 1024)
-    print(f"Created {archive} ({size_mb:.1f} MB)")
+    print(f"Created {archive} ({archive.stat().st_size / (1024 * 1024):.1f} MB)")
     return archive
 
 

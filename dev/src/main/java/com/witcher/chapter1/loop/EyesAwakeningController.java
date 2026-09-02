@@ -1,5 +1,7 @@
 package main.java.com.witcher.chapter1.loop;
 
+import main.java.com.witcher.chapter1.cutscene.CutsceneSkipPolicy;
+
 /** Состояние пробуждения век (без отрисовки) — общее для Swing и движка. */
 public final class EyesAwakeningController {
 
@@ -49,10 +51,15 @@ public final class EyesAwakeningController {
     }
   }
 
+  public boolean canSkip() {
+    return mode == Mode.AWAKENING && CutsceneSkipPolicy.canSkip(elapsedMs());
+  }
+
   /** Пропуск заставки пробуждения (пробел). */
   public void skip() {
-    if (mode == Mode.AWAKENING || mode == Mode.IDLE) {
-      mode = Mode.DONE;
+    if (!canSkip()) {
+      return;
     }
+    mode = Mode.DONE;
   }
 }

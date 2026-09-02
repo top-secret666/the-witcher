@@ -30,12 +30,19 @@ public final class BattleCardController {
     if (session == null || session.battleCardGranted() || session.battleCardIconVisible()) {
       return false;
     }
-    if (!BattleCardRules.canGrantAfterEquip(gear)) {
+    if (!qualifiesForBattleCard(gear)) {
       return false;
     }
     session.grantBattleCard();
     session.markBattleCardRevealPending();
     return true;
+  }
+
+  private static boolean qualifiesForBattleCard(EquippedGear gear) {
+    if (gear instanceof main.java.com.witcher.ui.shop.ShopModel shop) {
+      return shop.hasAnyEquippedItem() || shop.hasDrunkAnyPotion();
+    }
+    return BattleCardRules.canGrantAfterEquip(gear);
   }
 
   public void tickReveal() {

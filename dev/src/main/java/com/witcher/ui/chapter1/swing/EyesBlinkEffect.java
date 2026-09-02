@@ -62,6 +62,10 @@ public final class EyesBlinkEffect {
   }
 
   /** Пропуск анимации пробуждения. */
+  public boolean canSkip() {
+    return controller.canSkip();
+  }
+
   public void skip() {
     controller.skip();
   }

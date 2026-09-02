@@ -22,6 +22,7 @@ public final class Chapter1ShopBridge {
   private Runnable onEquipHook;
   private Runnable onBossMapOpen;
   private Runnable onEquipmentBack;
+  private Runnable onInventoryBack;
   private boolean battlePending;
 
   public Chapter1ShopBridge(Chapter1Session session, Chapter1Director director) {
@@ -57,6 +58,10 @@ public final class Chapter1ShopBridge {
     this.onBossMapOpen = onBossMapOpen;
   }
 
+  public void setOnInventoryBack(Runnable onInventoryBack) {
+    this.onInventoryBack = onInventoryBack;
+  }
+
   public void setOnEquipmentBack(Runnable onEquipmentBack) {
     this.onEquipmentBack = onEquipmentBack;
   }
@@ -79,6 +84,19 @@ public final class Chapter1ShopBridge {
   public void onEquipmentBack() {
     if (onEquipmentBack != null) {
       onEquipmentBack.run();
+    }
+  }
+
+  /** Закрытие инвентаря — та же выдача карты, что после экипировки. */
+  public void onInventoryBack() {
+    if (onInventoryBack != null) {
+      onInventoryBack.run();
+    }
+  }
+
+  public void onPotionDrunk() {
+    if (onEquipHook != null) {
+      onEquipHook.run();
     }
   }
 

@@ -32,7 +32,7 @@ import java.util.Set;
 public final class ShopModel implements EquippedGear {
 
     /** Временно для теста: покупки без списания крон. */
-    private static final boolean FREE_PURCHASES_FOR_TEST = true;
+    private static final boolean FREE_PURCHASES_FOR_TEST = false;
 
     public record PurchaseResult(boolean success, String dukeLine) {
         public static PurchaseResult ok(String line) {
@@ -220,10 +220,6 @@ public final class ShopModel implements EquippedGear {
         return true;
     }
 
-  public boolean hasDrunkAnyPotion() {
-        return !drunkPotions.isEmpty();
-    }
-
     public List<String> inventoryItemNames() {
         return List.copyOf(purchasedLabels);
     }
@@ -293,6 +289,10 @@ public final class ShopModel implements EquippedGear {
 
     public List<Armour> ownedArmour() {
         return List.copyOf(playerInventory);
+    }
+
+    public boolean hasDrunkAnyPotion() {
+        return !drunkPotions.isEmpty();
     }
 
     @Override

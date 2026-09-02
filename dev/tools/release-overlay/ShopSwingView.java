@@ -224,16 +224,7 @@ public final class ShopSwingView implements ShopView {
     }
 
     private static void drawCursor(Graphics2D g, int mouseX, int mouseY) {
-        if (MENU_CURSOR != null) {
-            int cw = 28;
-            int ch = Math.max(1, cw * MENU_CURSOR.getHeight() / MENU_CURSOR.getWidth());
-            Object prevInterp = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
-            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
-            g.drawImage(MENU_CURSOR, mouseX - 4, mouseY - 4, cw, ch, null);
-            if (prevInterp != null) {
-                g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, prevInterp);
-            }
-        }
+        main.java.com.witcher.ui.graphics.MenuCursorDraw.drawLarge(g, mouseX, mouseY);
     }
 
     public boolean isExitRequested() {

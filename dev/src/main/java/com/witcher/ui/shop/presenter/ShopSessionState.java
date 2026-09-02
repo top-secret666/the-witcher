@@ -78,4 +78,5 @@ public final class ShopSessionState {
     public boolean categoryBackHovered;
     public int catalogScrollOffset;
     public boolean exitRequested;
+
 }

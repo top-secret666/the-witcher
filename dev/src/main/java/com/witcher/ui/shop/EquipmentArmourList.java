@@ -3,6 +3,8 @@ package main.java.com.witcher.ui.shop;
 import main.java.com.witcher.model.armour.Armour;
 import main.java.com.witcher.model.sets.ArmourSet;
 import main.java.com.witcher.shop.EquipSlot;
+import main.java.com.witcher.ui.shop.ShopInventoryKind;
+import main.java.com.witcher.ui.shop.ShopInventorySlot;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -49,6 +51,17 @@ public final class EquipmentArmourList {
             return out;
         }
         if (f == EquipmentFilter.WEAPON) {
+            java.util.Set<String> seen = new java.util.HashSet<>();
+            ShopInventorySlot equipped = model.getEquippedWeapon();
+            if (equipped != null) {
+                out.add(EquipmentGridEntry.weapon(equipped));
+                seen.add(equipped.title());
+            }
+            for (ShopInventorySlot pouch : model.pouchConsumables()) {
+                if (pouch.kind() == ShopInventoryKind.WEAPON && !seen.contains(pouch.title())) {
+                    out.add(EquipmentGridEntry.weapon(pouch));
+                }
+            }
             return out;
         }
         for (Armour armour : model.ownedArmour()) {

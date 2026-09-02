@@ -1,5 +1,7 @@
 package main.java.com.witcher.chapter1.battle.glitch;
 
+import main.java.com.witcher.chapter1.cutscene.CutsceneSkipPolicy;
+
 import java.util.List;
 
 /** Логика глитч-пробуждения после диалога энкоунтера. */
@@ -34,7 +36,14 @@ public final class BossGlitchRevealController {
     }
   }
 
+  public boolean canSkip() {
+    return !skipped && CutsceneSkipPolicy.canSkip(elapsedMs());
+  }
+
   public void skip() {
+    if (!canSkip()) {
+      return;
+    }
     skipped = true;
   }
 

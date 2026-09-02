@@ -3,6 +3,7 @@ package main.java.com.witcher.ui.chapter1.swing.battle.glitch;
 import main.java.com.witcher.chapter1.battle.glitch.BossGlitchRevealController;
 import main.java.com.witcher.chapter1.battle.glitch.BossGlitchRevealTimeline;
 import main.java.com.witcher.chapter1.battle.glitch.BossGlitchRevealTimeline.Stage;
+import main.java.com.witcher.ui.chapter1.swing.CutsceneSkipHint;
 import main.java.com.witcher.ui.chapter1.swing.Chapter1UiAssets;
 import main.java.com.witcher.ui.chapter1.swing.ScaledImageCache;
 import main.java.com.witcher.ui.chapter1.swing.WakeVisionRenderer;
@@ -58,6 +59,7 @@ public final class BossGlitchRevealView {
         g.fillRect(0, 0, sw, sh);
       }
     }
+    CutsceneSkipHint.draw(g, sw, sh, ctrl.canSkip());
   }
 
   private static void drawStaticFill(Graphics2D g, int sw, int sh, int localMs, long seed) {

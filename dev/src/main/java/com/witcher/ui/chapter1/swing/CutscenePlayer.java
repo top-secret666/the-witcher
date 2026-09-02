@@ -2,6 +2,7 @@ package main.java.com.witcher.ui.chapter1.swing;
 
 import main.java.com.witcher.chapter1.cutscene.CutsceneCatalog;
 import main.java.com.witcher.chapter1.cutscene.CutsceneId;
+import main.java.com.witcher.chapter1.cutscene.CutsceneSkipPolicy;
 import main.java.com.witcher.ui.chapter1.view.Chapter1ViewConstants;
 
 import java.awt.Graphics2D;
@@ -14,6 +15,7 @@ public final class CutscenePlayer {
   private boolean loop;
   private int frameIndex;
   private int frameTick;
+  private int ticksSinceStart;
   private boolean finished = true;
 
   public void start(CutsceneId id) {
@@ -31,6 +33,7 @@ public final class CutscenePlayer {
     if (scaled != null && scaled.frameCount() > 0) {
       frameIndex = 0;
       frameTick = 0;
+      ticksSinceStart = 0;
       finished = false;
       return;
     }
@@ -41,6 +44,7 @@ public final class CutscenePlayer {
       if (scaled != null && scaled.frameCount() > 0) {
         frameIndex = 0;
         frameTick = 0;
+        ticksSinceStart = 0;
         finished = false;
         return;
       }
@@ -51,16 +55,26 @@ public final class CutscenePlayer {
   public void stop() {
     scaled = null;
     finished = true;
+    ticksSinceStart = 0;
   }
 
   public boolean isFinished() {
     return finished;
   }
 
+  public int elapsedMs() {
+    return ticksSinceStart * 16;
+  }
+
+  public boolean canSkip() {
+    return !finished && CutsceneSkipPolicy.canSkip(elapsedMs());
+  }
+
   public void tick() {
     if (finished || scaled == null) {
       return;
     }
+    ticksSinceStart++;
     frameTick++;
     int delayTicks = currentDelayTicks();
     if (frameTick < delayTicks) {

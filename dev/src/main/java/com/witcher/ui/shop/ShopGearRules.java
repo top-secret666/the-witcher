@@ -9,7 +9,7 @@ import main.java.com.witcher.model.sets.ArmourSet;
 import main.java.com.witcher.model.sets.SchoolSet;
 
 /** Пересчёт доменной брони в три шкалы витрины. */
-final class ShopGearRules {
+public final class ShopGearRules {
 
     static final int STAT_BAR_MAX = 50;
 
@@ -49,7 +49,7 @@ final class ShopGearRules {
         return new ShopGearStats(9, -2, 3);
     }
 
-    static ShopGearStats placeholderBonus(String name) {
+    public static ShopGearStats placeholderBonus(String name) {
         String lower = name.toLowerCase();
         if (lower.contains("меч") || lower.contains("клеймор")) {
             return new ShopGearStats(0, -2, 0);
