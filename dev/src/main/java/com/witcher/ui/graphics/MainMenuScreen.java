@@ -78,13 +78,6 @@ public class MainMenuScreen {
 
         drawTransition(g, sw, sh);
 
-        // Small menu hint for keyboard navigation.
-        g.setFont(GameFonts.get().plain(10));
-        g.setColor(new Color(230, 195, 120));
-        String help = "W/S или стрелки — Enter";
-        int hw = g.getFontMetrics().stringWidth(help);
-        g.drawString(help, (sw - hw) / 2, sh - 8);
-
         drawCursor(g, mouseX, mouseY);
         g.dispose();
     }
