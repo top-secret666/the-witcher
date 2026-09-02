@@ -31,22 +31,29 @@ Focus   : OOP (encapsulation, inheritance, polymorphism)
 
 ## How to run
 
-**Requirements:** JDK 17
+**Requirements:** JDK 17 (only for building; the packaged `.exe` bundles a runtime)
 
-### Windows
+### Windows — portable exe (recommended)
 
-```bat
-run.bat
+```powershell
+powershell -ExecutionPolicy Bypass -File tools\package-windows.ps1
 ```
 
-При первом запуске скрипт сам скачает LibGDX в `lib/gdx/` и соберёт проект в `out/swing-run/`.
+Launch:
 
-Отдельно, если нужно только скачать библиотеки или собрать без запуска:
-
-```bat
-setup-gdx-libs.ps1
-compile-swing-hybrid.bat
+```text
+release\The Witcher\The Witcher.exe
 ```
+
+### Windows — from source (dev)
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools\compile-swing.ps1
+```
+
+Then run the main class `main.java.com.witcher.ui.graphics.GameWindow` with classpath `out\swing-run` + `lib\gdx\*.jar`.
+
+Local `.bat` scripts are kept on disk for convenience but are not tracked in git.
 
 ### macOS / Linux
 

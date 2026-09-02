@@ -1,6 +1,8 @@
 ### Build / runtime ###
 out/
 build/
+dist/
+release/
 .gradle/
 .gradle-user-home/
 .gdx-classpath.txt
@@ -8,6 +10,9 @@ lib/gdx/
 !gradle/wrapper/gradle-wrapper.jar
 saves/
 *.class
+
+### Windows batch launchers (local dev only, keep on disk) ###
+*.bat
 
 ### IDE ###
 .idea/
