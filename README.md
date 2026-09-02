@@ -22,7 +22,7 @@
 |:----:|:-----------|
 | **1** | Download the ZIP from the link above |
 | **2** | Extract the archive |
-| **3** | Open the `The-Witcher` folder and run **`The Witcher.exe`** (or `START GAME.bat`) |
+| **3** | Open the `The-Witcher` folder and run **`The Witcher.exe`** |
 
 No Java install required — the build bundles its own runtime.  
 Keep `The Witcher.exe`, `app/`, and `runtime/` in the same folder.

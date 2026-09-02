@@ -64,24 +64,6 @@ def make_zip(root: Path, version: str, out_dir: Path) -> Path:
             else:
                 shutil.copy2(src, dst)
 
-        start_bat = bundle / "START GAME.bat"
-        start_bat.write_text(
-            "@echo off\r\n"
-            "cd /d \"%~dp0\"\r\n"
-            "if not exist \"The Witcher.exe\" (\r\n"
-            "  echo Oshibka: net The Witcher.exe v etoj papke.\r\n"
-            "  pause\r\n"
-            "  exit /b 1\r\n"
-            ")\r\n"
-            "if not exist \"app\\assets\" (\r\n"
-            "  echo Oshibka: net papki app\\assets. Raspakujte arhiv polnostju.\r\n"
-            "  pause\r\n"
-            "  exit /b 1\r\n"
-            ")\r\n"
-            "start \"\" \"The Witcher.exe\"\r\n",
-            encoding="ascii",
-        )
-
         with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=6) as zf:
             for path in bundle.rglob("*"):
                 if path.is_file():

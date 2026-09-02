@@ -87,7 +87,7 @@ def main() -> int:
             "Windows portable build.\n\n"
             "1. Extract the ZIP\n"
             "2. Open the `The-Witcher` folder\n"
-            "3. Run `The Witcher.exe` or `START GAME.bat`\n\n"
+            "3. Run `The Witcher.exe`\n\n"
             "Java is not required."
         ),
         "draft": False,
