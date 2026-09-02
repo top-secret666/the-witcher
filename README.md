@@ -16,9 +16,7 @@
 
 ## Download & play
 
-### [Download Windows build (.ZIP)](https://github.com/top-secret666/the-witcher/releases/latest/download/The-Witcher-v1.0.0-Windows.zip)
-
-> If the link returns 404, open [**Releases**](https://github.com/top-secret666/the-witcher/releases) and download `The-Witcher-v1.0.0-Windows.zip` manually.
+### [Download Windows build (.ZIP)](https://github.com/top-secret666/the-witcher/releases/download/v1.0.0/The-Witcher-v1.0.0-Windows.zip)
 
 | Step | What to do |
 |:----:|:-----------|
