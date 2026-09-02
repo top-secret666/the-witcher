@@ -8,8 +8,7 @@ import main.java.com.witcher.chapter1.loop.LoopRules;
  * State machine главы 1: какая фаза активна и что делать после событий.
  * Отрисовка — в {@code ui.chapter1.swing}; здесь только переходы.
  *
- * <p>Канонический cinematic-путь:
- * SHOP → BOSS_MAP → BOSS_QUEST_BRIEFING → LOOP_SEQUENCE → BOSS_ENCOUNTER → ...
+ * <p>Канон: {@link Chapter1CanonicalJourney}.
  * Выдача карты — shop state {@code BATTLE_CARD_REVEAL}, не фаза директора.
  */
 public final class Chapter1Director {
@@ -188,14 +187,18 @@ public final class Chapter1Director {
     cutsceneFinished = false;
   }
 
-  /** Канон: победа/поражение → клик возвращает в лавку. */
+  /**
+   * Legacy-экран после старого sword-пайплайна / debug.
+   * Канон возвращает в лавку через {@link #enterWolfEnding()} → клик.
+   */
+  @Deprecated
   public void enterBattleResult() {
     phase = Chapter1Phase.BATTLE_RESULT;
     pendingCutscene = null;
     cutsceneFinished = false;
   }
 
-  /** Канон: loop_wake после выбора босса на карте. */
+  /** Канон: loop_wake после брифинга / выбора босса. */
   public void beginLoopSequence(boolean eyesPrelude) {
     phase = Chapter1Phase.LOOP_SEQUENCE;
     loopEyesPrelude = eyesPrelude;
@@ -207,6 +210,8 @@ public final class Chapter1Director {
     return loopEyesPrelude;
   }
 
+  /** Legacy: illusion_wrong hold; из канона не вызывается. */
+  @Deprecated
   public void enterLoopHold() {
     phase = Chapter1Phase.LOOP_HOLD;
     pendingCutscene = null;

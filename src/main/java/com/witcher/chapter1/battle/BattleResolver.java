@@ -60,6 +60,26 @@ public final class BattleResolver {
     return new RoundResult(playerScore, dukeScore, playerWins, key);
   }
 
+  /**
+   * Порог «уверенного» клинка для cinematic-намёка на экране итога:
+   * сумма defense + stamina + signs ≥ {@link #SWORD_VICTORY_STAT_SUM}.
+   */
+  public static final int SWORD_VICTORY_STAT_SUM = 6;
+
+  public static boolean meetsSwordCutsceneVictory(LoadoutStats stats) {
+    if (stats == null) {
+      return false;
+    }
+    return stats.defense() + stats.stamina() + stats.signs() >= SWORD_VICTORY_STAT_SUM;
+  }
+
+  public static int loadoutStatSum(LoadoutStats stats) {
+    if (stats == null) {
+      return 0;
+    }
+    return stats.defense() + stats.stamina() + stats.signs();
+  }
+
   public static BattleOutcome resolveFight(
       int roundsWon,
       BattleTier tier,

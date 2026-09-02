@@ -16,6 +16,11 @@ public final class Chapter1AssetPaths {
   public static final String CARD_ICON = BATTLE + "card_icon.png";
   public static final String CARD_CLOSED = BATTLE + "card_closed.png";
   public static final String CARD_MAP_OPEN = BATTLE + "card_map_open.png";
+  /** Rush 5×12 — основной лист проблесков мечей. */
+  public static final String SWORD_SLASH_SHEET_RUSH = BATTLE + "sword_slash_sheet_rush.png";
+  /** Fallback-листы (опционально; могут отсутствовать в resources). */
+  public static final String SWORD_SLASH_SHEET_A = BATTLE + "sword_slash_sheet_a.png";
+  public static final String SWORD_SLASH_SHEET_B = BATTLE + "sword_slash_sheet_b.png";
   public static final String BOSS_DUKE_MAP = BATTLE + "boss_duke_map.png";
   public static final String BOSS_DUKE_MAP_HOVER = BATTLE + "boss_duke_map_hover.png";
   public static final String BOSS_DUKE_PORTRAIT = BATTLE + "boss_duke_portrait.png";

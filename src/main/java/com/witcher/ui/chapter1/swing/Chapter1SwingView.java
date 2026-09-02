@@ -91,16 +91,29 @@ public final class Chapter1SwingView implements Chapter1View {
       case BOSS_FINALE -> {
         Graphics2D g = screen.createGraphics();
         try {
-          g.setColor(Color.BLACK);
-          g.fillRect(0, 0, sw, sh);
           WolfBossFinaleController finale = presenter.wolfFinale();
-          boolean shardEpilogue = finale != null && finale.trueEnding()
-              && finale.step() == WolfBossFinaleController.Step.RESOLVE;
-          if (shardEpilogue) {
-            EncounterSceneRenderer.drawFullBleedMontage(g, sw, sh);
-            VnSceneRenderer.drawShardEpilogueScene(g, sw, sh, presenter.activeScene());
+          boolean swordClash = finale != null
+              && finale.step() == WolfBossFinaleController.Step.CLASH
+              && presenter.isFinaleSwordClashPlaying();
+          if (swordClash) {
+            SwordCutsceneView.draw(
+                screen, sw, sh,
+                presenter.swordGlint(),
+                presenter.swordGlint().getShakeOffsetX(),
+                presenter.swordGlint().getShakeOffsetY(),
+                presenter.director().session(),
+                false);
           } else {
-            VnSceneRenderer.drawScene(g, sw, sh, presenter.activeScene());
+            g.setColor(Color.BLACK);
+            g.fillRect(0, 0, sw, sh);
+            boolean shardEpilogue = finale != null && finale.trueEnding()
+                && finale.step() == WolfBossFinaleController.Step.RESOLVE;
+            if (shardEpilogue) {
+              EncounterSceneRenderer.drawFullBleedMontage(g, sw, sh);
+              VnSceneRenderer.drawShardEpilogueScene(g, sw, sh, presenter.activeScene());
+            } else {
+              VnSceneRenderer.drawScene(g, sw, sh, presenter.activeScene());
+            }
           }
         } finally {
           g.dispose();
@@ -175,7 +188,6 @@ public final class Chapter1SwingView implements Chapter1View {
     Chapter1Phase phase = presenter.director().phase();
     int sw = ShopViewConstants.VIRTUAL_W;
     int sh = ShopViewConstants.VIRTUAL_H;
-    // Не рисуем речь лавки поверх VN — отсюда «живой.осов?» при зависании покупки.
     if ((phase == Chapter1Phase.SHOP || phase == Chapter1Phase.HACK)
         && !presenter.isDukeDialogActive()) {
       presenter.shopScreen().renderTextOverlay(g, mouseX, mouseY);

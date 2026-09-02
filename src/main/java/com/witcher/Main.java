@@ -11,7 +11,6 @@ import main.java.com.witcher.ui.util.AnimationUtils;
 import java.nio.charset.StandardCharsets;
 import java.util.Scanner;
 
-//ДОБАВИТЬ ДОПОЛНИТЕЛЬНЫЙ ЭНАМ ДЛЯ КОМПЛЕКТОВ ТИПО УЛУЧШЕННЫЙ МАСТЕРСКИЙ И Т.Д.
 public class Main {
     public static void main(String[] args) {
         AnimationUtils.showProgressBar();
@@ -70,8 +69,6 @@ public class Main {
         return repository;
     }
 
-//    ИЗБАВИТЬСЯ ОТ ДУБЛИРОВАНИЯ Эффекты: [BLEEDING_RESIST, BLEEDING_RESIST, MAGIC_RESISTANCE] КРАСИВЫЙ ВЫВОД?
-//    ПЕРЕПИСАТЬ БОНУСЫ И СООТВЕТСТВЕННО ПОКАЗАТЕЛИ РАНДОМА
 private static void generateInitialInventory(ArmorGenerationService generationService, ArmourRepository repository) {
     System.out.println("Начало генерации предметов...");
     generationService.generateRandomInventory();

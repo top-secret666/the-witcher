@@ -34,6 +34,17 @@ public final class WolfBossPhaseHandler {
     BossGlitchRevealController bossGlitchReveal();
 
     void setBattleVictory(boolean value);
+
+    /** Старт VFX мечей на шаге CLASH. */
+    void beginFinaleSwordClash();
+
+    /** Тик VFX; {@code true} если закончился (или пропущен). */
+    boolean tickFinaleSwordClash();
+
+    /** Пропуск VFX по клику/Space. */
+    void skipFinaleSwordClash();
+
+    boolean isFinaleSwordClashPlaying();
   }
 
   private final Host host;
@@ -203,6 +214,15 @@ public final class WolfBossPhaseHandler {
       host.refreshChoiceRects();
       return;
     }
+    if (wolfFinale.step() == WolfBossFinaleController.Step.CLASH) {
+      if (clicked) {
+        host.skipFinaleSwordClash();
+      }
+      if (host.tickFinaleSwordClash()) {
+        advanceFinale();
+      }
+      return;
+    }
     if (!clicked) {
       return;
     }
@@ -221,11 +241,16 @@ public final class WolfBossPhaseHandler {
       return;
     }
     wolfFinale.choose(index);
+    host.beginFinaleSwordClash();
     host.refreshChoiceRects();
   }
 
   public void advanceFinale() {
     if (wolfFinale == null) {
+      return;
+    }
+    if (wolfFinale.step() == WolfBossFinaleController.Step.CLASH
+        && host.isFinaleSwordClashPlaying()) {
       return;
     }
     if (wolfFinale.isDone()) {
@@ -246,11 +271,7 @@ public final class WolfBossPhaseHandler {
     wolfEndingType = wolfFinale.trueEnding()
         ? WolfEndingType.TRUE_SHARD
         : WolfEndingType.BAD_LOOP;
-    if (wolfFinale.trueEnding()) {
-      LoopRules.onWolfTrueShard(host.director().session());
-    } else {
-      LoopRules.onWolfBadLoop(host.director().session());
-    }
+    LoopRules.onWolfOutcome(host.director().session(), wolfFinale.trueEnding());
     wolfFinale = null;
     host.setChoiceRects(List.of());
     if (wolfEndingType == WolfEndingType.TRUE_SHARD) {

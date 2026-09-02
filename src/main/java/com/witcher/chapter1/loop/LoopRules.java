@@ -3,13 +3,17 @@ package main.java.com.witcher.chapter1.loop;
 import main.java.com.witcher.chapter1.Chapter1Save;
 import main.java.com.witcher.chapter1.Chapter1Session;
 
-/** Правила сброса и сохранения витка петли. */
+/**
+ * Правила сброса и сохранения витка петли.
+ * Канонический исход Волка: {@link #onWolfOutcome}.
+ * Legacy VN-бой: {@link #onBattleDefeat}.
+ */
 public final class LoopRules {
 
   private LoopRules() {
   }
 
-  /** После поражения в бою: новый виток, мета-прогресс частично сохраняется. */
+  /** После поражения в legacy VN-бое: новый виток, мета частично сохраняется. */
   public static void onBattleDefeat(Chapter1Session session) {
     if (!saveIfPresent(session)) {
       return;
@@ -25,6 +29,19 @@ public final class LoopRules {
     }
     session.applyFalseEscape();
     Chapter1Save.save(session);
+  }
+
+  /**
+   * Канон: исход финала Волка → session + save.
+   *
+   * @param trueShard {@code true} — осколок без сброса петли; {@code false} — плохая петля
+   */
+  public static void onWolfOutcome(Chapter1Session session, boolean trueShard) {
+    if (trueShard) {
+      onWolfTrueShard(session);
+    } else {
+      onWolfBadLoop(session);
+    }
   }
 
   /** Петля сомкнулась после плохой развилки Волка. */

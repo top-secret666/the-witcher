@@ -31,8 +31,11 @@ import main.java.com.witcher.ui.chapter1.swing.Chapter1AssetPrewarm;
 import main.java.com.witcher.ui.chapter1.swing.Chapter1SessionHud;
 import main.java.com.witcher.ui.chapter1.swing.CutscenePlayer;
 import main.java.com.witcher.ui.chapter1.swing.EyesBlinkEffect;
+import main.java.com.witcher.ui.chapter1.swing.SwordGlintOverlay;
 import main.java.com.witcher.ui.shop.ShopModel;
 import main.java.com.witcher.ui.shop.swing.ShopScreen;
+import main.java.com.witcher.chapter1.battle.SwordCutsceneTiming;
+import main.java.com.witcher.chapter1.loop.WakeAwakeningTimeline;
 
 import java.awt.event.KeyEvent;
 import java.util.List;
@@ -56,6 +59,7 @@ public final class Chapter1Presenter implements WolfBossPhaseHandler.Host {
   private final LoopSequenceController loopSequence = new LoopSequenceController();
   private final EyesBlinkEffect eyesEffect = new EyesBlinkEffect();
   private final BossGlitchRevealController bossGlitchReveal = new BossGlitchRevealController();
+  private final SwordGlintOverlay swordGlint = new SwordGlintOverlay();
 
   private final WolfBossPhaseHandler wolfBoss;
 
@@ -69,6 +73,7 @@ public final class Chapter1Presenter implements WolfBossPhaseHandler.Host {
   private BossEntry selectedBoss;
   private boolean bossMapBackHovered;
   private boolean battleVictory;
+  private boolean finaleSwordPlaying;
   private int hackShakeTick;
   private boolean exitRequested;
   /** Не стартовать VN «тюрьмы» посреди fly-in покупки. */
@@ -136,6 +141,42 @@ public final class Chapter1Presenter implements WolfBossPhaseHandler.Host {
 
   public boolean battleVictory() {
     return battleVictory;
+  }
+
+  public SwordGlintOverlay swordGlint() {
+    return swordGlint;
+  }
+
+  public boolean isFinaleSwordClashPlaying() {
+    return finaleSwordPlaying;
+  }
+
+  @Override
+  public void beginFinaleSwordClash() {
+    swordGlint.reset();
+    battleVictory = BattleResolver.meetsSwordCutsceneVictory(loadoutStats());
+    finaleSwordPlaying = true;
+  }
+
+  @Override
+  public boolean tickFinaleSwordClash() {
+    if (!finaleSwordPlaying) {
+      return true;
+    }
+    swordGlint.update(
+        WakeAwakeningTimeline.MS_PER_TICK,
+        Chapter1Layout.VIRTUAL_W,
+        Chapter1Layout.VIRTUAL_H);
+    if (swordGlint.elapsedMs() >= SwordCutsceneTiming.TOTAL_MS) {
+      finaleSwordPlaying = false;
+      return true;
+    }
+    return false;
+  }
+
+  @Override
+  public void skipFinaleSwordClash() {
+    finaleSwordPlaying = false;
   }
 
   public WolfBossFinaleController wolfFinale() {
@@ -299,6 +340,13 @@ public final class Chapter1Presenter implements WolfBossPhaseHandler.Host {
     }
     if (director.phase() == Chapter1Phase.BOSS_FINALE && wolfBoss.wolfFinale() != null) {
       var finale = wolfBoss.wolfFinale();
+      if (finale.step() == WolfBossFinaleController.Step.CLASH) {
+        if (code == KeyEvent.VK_ENTER || code == KeyEvent.VK_SPACE) {
+          skipFinaleSwordClash();
+          wolfBoss.advanceFinale();
+        }
+        return;
+      }
       if (finale.scene().waitingForChoice()) {
         int choice = keyToChoiceIndex(code);
         if (choice >= 0) {
@@ -324,9 +372,6 @@ public final class Chapter1Presenter implements WolfBossPhaseHandler.Host {
       }
       if (code == KeyEvent.VK_BACK_QUOTE || code == KeyEvent.VK_DEAD_GRAVE) {
         shopBridge.tryOpenTerminal();
-      } else if (code == KeyEvent.VK_B && e.isControlDown()) {
-        director.requestBattle();
-        startCutsceneIfNeeded();
       }
       return;
     }

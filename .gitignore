@@ -1,9 +1,59 @@
-### IntelliJ IDEA ###
+### Build / runtime ###
 out/
-!**/src/main/**/out/
-!**/src/test/**/out/
+build/
+.gradle/
+.gradle-user-home/
+.gdx-classpath.txt
+lib/gdx/
+!gradle/wrapper/gradle-wrapper.jar
+saves/
+*.class
 
-### Eclipse ###
+### IDE ###
+.idea/
+*.iml
+.vscode/
+
+### OS ###
+.DS_Store
+Thumbs.db
+
+### Local scratch & one-off tools ###
+.tmp/
+DebugButtons.java
+DebugButtons.class
+
+### JVM crash dumps ###
+hs_err_pid*.log
+replay_pid*.log
+gdx-build.log
+
+### LWJGL natives cache (downloaded locally) ###
+.lwjgl/
+
+### Large / local-only media ###
+*.mp4
+*.MP4
+/*.mp4
+/*.MP4
+12474791_*.mp4
+
+### Word / Office temp locks ###
+~$*
+**/~$*
+
+### Practice / internal docs (keep locally, not in public prototype) ###
+docs/Отчет_*.docx
+docs/*_fixed.docx
+docs/*_rewritten.docx
+docs/*_student.docx
+docs/*_v2.docx
+docs/*_v3.docx
+docs/*_Traffic.docx
+docs/HANDOFF_CONTEXT.md
+docs/zashchita_praktika_podgotovka.md
+
+### Eclipse / NetBeans (legacy) ###
 .apt_generated
 .classpath
 .factorypath
@@ -14,48 +64,8 @@ out/
 bin/
 !**/src/main/**/bin/
 !**/src/test/**/bin/
-
-### NetBeans ###
 /nbproject/private/
 /nbbuild/
 /dist/
 /nbdist/
 /.nb-gradle/
-
-### VS Code ###
-.vscode/
-
-### Gradle ###
-.gradle/
-.gradle-user-home/
-.tmp/
-.gdx-classpath.txt
-hs_err_pid*.log
-lib/gdx/
-build/
-!gradle/wrapper/gradle-wrapper.jar
-
-### Mac OS ###
-.DS_Store
-
-### Local runtime / large media ###
-saves/
-*.mp4
-*.MP4
-/*.mp4
-/*.MP4
-
-### Word / Office temp locks ###
-~$*
-**/~$*
-
-### Practice report drafts (keep only canonical names in docs/) ###
-# Canonical:
-#   docs/Отчет_технологическая_практика.docx
-#   docs/Отчет_технологическая_практика_Codedot.docx
-docs/*_fixed.docx
-docs/*_rewritten.docx
-docs/*_student.docx
-docs/*_v2.docx
-docs/*_v3.docx
-docs/*_Traffic.docx

@@ -59,6 +59,11 @@ public final class Chapter1UiAssets {
   private static BufferedImage cardClosed;
   private static BufferedImage cardIcon;
 
+  private static boolean swordSlashTried;
+  private static main.java.com.witcher.ui.graphics.SpriteSheet swordSlashSheetRush;
+  private static main.java.com.witcher.ui.graphics.SpriteSheet swordSlashSheetA;
+  private static main.java.com.witcher.ui.graphics.SpriteSheet swordSlashSheetB;
+
   public static BufferedImage cardClosed() {
     if (cardClosed == null) {
       cardClosed = loadCapped(Chapter1AssetPaths.CARD_CLOSED, MAX_MAP_EDGE);
@@ -71,6 +76,43 @@ public final class Chapter1UiAssets {
       cardIcon = loadCapped(Chapter1AssetPaths.CARD_ICON, MAX_ICON_EDGE);
     }
     return cardIcon;
+  }
+
+  public static boolean swordSlashSheetsReady() {
+    ensureSwordSlashSheets();
+    return swordSlashSheetRush != null || swordSlashSheetA != null || swordSlashSheetB != null;
+  }
+
+  public static BufferedImage swordSlashFrame(
+      main.java.com.witcher.chapter1.battle.SwordSlashShowTimeline.SheetId sheet, int index) {
+    ensureSwordSlashSheets();
+    main.java.com.witcher.ui.graphics.SpriteSheet ss = switch (sheet) {
+      case RUSH -> swordSlashSheetRush;
+      case A -> swordSlashSheetA;
+      case B -> swordSlashSheetB;
+    };
+    if (ss == null) {
+      return null;
+    }
+    return ss.getFrame(index);
+  }
+
+  private static void ensureSwordSlashSheets() {
+    if (swordSlashTried) {
+      return;
+    }
+    swordSlashTried = true;
+    swordSlashSheetRush = main.java.com.witcher.ui.graphics.SpriteSheet.loadOptional(
+        Chapter1AssetPaths.SWORD_SLASH_SHEET_RUSH,
+        main.java.com.witcher.chapter1.battle.SwordSlashShowTimeline.RUSH_COLS,
+        main.java.com.witcher.chapter1.battle.SwordSlashShowTimeline.RUSH_ROWS,
+        1, true);
+    swordSlashSheetA = main.java.com.witcher.ui.graphics.SpriteSheet.loadOptional(
+        Chapter1AssetPaths.SWORD_SLASH_SHEET_A, 6, 4, 1, true);
+    swordSlashSheetB = main.java.com.witcher.ui.graphics.SpriteSheet.loadOptional(
+        Chapter1AssetPaths.SWORD_SLASH_SHEET_B, 2, 4, 1, true);
+    main.java.com.witcher.chapter1.battle.SwordSlashShowTimeline.setPreferRush(
+        swordSlashSheetRush != null);
   }
 
   private static BufferedImage bossMapOpen;

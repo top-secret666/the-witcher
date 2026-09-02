@@ -4,8 +4,6 @@ import main.java.com.witcher.exception.InvalidPriceException;
 import main.java.com.witcher.exception.InvalidPriceRangeException;
 import main.java.com.witcher.exception.NoArmourFoundException;
 import main.java.com.witcher.model.armour.Armour;
-//import main.java.com.witcher.model.sets.ArmourSet;
-//import main.java.com.witcher.model.sets.SchoolSet;
 import main.java.com.witcher.model.sets.ArmourSet;
 import main.java.com.witcher.repository.ArmourRepository;
 import main.java.com.witcher.service.ArmorCalculationService;
