@@ -21,6 +21,16 @@ $Out = Join-Path $Root "out\swing-run"
 $InputDir = Join-Path $Root "dist\jpackage-input"
 $ReleaseDir = Join-Path $Root "release"
 $AppJar = Join-Path $InputDir "witcher-prototype.jar"
+$IconPng = Join-Path $Root "src\main\resources\assets\sprites\app_icon.png"
+$IconIco = Join-Path $Root "dist\app-icon.ico"
+
+if (-not (Test-Path $IconPng)) {
+    throw "App icon not found: $IconPng"
+}
+
+Write-Host "=== Preparing app icon (.ico) ==="
+python (Join-Path $PSScriptRoot "png-to-ico.py") $IconPng $IconIco
+if ($LASTEXITCODE -ne 0) { throw "Icon conversion failed." }
 
 if (Test-Path $InputDir) { Remove-Item $InputDir -Recurse -Force }
 New-Item -ItemType Directory -Force -Path $InputDir, $ReleaseDir | Out-Null
@@ -46,6 +56,7 @@ if (Test-Path (Join-Path $ReleaseDir $AppName)) {
     --input $InputDir `
     --main-jar witcher-prototype.jar `
     --main-class main.java.com.witcher.ui.graphics.GameWindow `
+    --icon $IconIco `
     --dest $ReleaseDir `
     --java-options "-Xms128m" `
     --java-options "-Xmx768m"
