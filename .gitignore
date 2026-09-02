@@ -1,4 +1,7 @@
-### Build / runtime ###
+### Playable Windows build (tracked) ###
+# app/, runtime/, The Witcher.exe live at repo root — do not ignore.
+
+### Build / runtime (local only) ###
 out/
 build/
 dist/
@@ -6,13 +9,31 @@ release/
 .gradle/
 .gradle-user-home/
 .gdx-classpath.txt
-lib/gdx/
-!gradle/wrapper/gradle-wrapper.jar
+lib/
+dev/lib/
+dev/out/
+dev/dist/
+dev/.gradle/
 saves/
 *.class
 
-### Windows batch launchers (local dev only, keep on disk) ###
+### Scripts (local dev, keep on disk) ###
 *.bat
+*.sh
+*.ps1
+
+### macOS / Linux dev leftovers ###
+.DS_Store
+**/.DS_Store
+._*
+.Spotlight-V100
+.Trashes
+*.dylib
+*-macos*
+*-macos-arm64*
+
+### CI ###
+.github/
 
 ### IDE ###
 .idea/
@@ -20,11 +41,11 @@ saves/
 .vscode/
 
 ### OS ###
-.DS_Store
 Thumbs.db
 
-### Local scratch & one-off tools ###
+### Local scratch ###
 .tmp/
+dev/.tmp/
 DebugButtons.java
 DebugButtons.class
 
@@ -33,7 +54,7 @@ hs_err_pid*.log
 replay_pid*.log
 gdx-build.log
 
-### LWJGL natives cache (downloaded locally) ###
+### LWJGL natives cache ###
 .lwjgl/
 
 ### Large / local-only media ###
@@ -47,7 +68,7 @@ gdx-build.log
 ~$*
 **/~$*
 
-### Practice / internal docs (keep locally, not in public prototype) ###
+### Practice / internal docs ###
 docs/Отчет_*.docx
 docs/*_fixed.docx
 docs/*_rewritten.docx
@@ -58,7 +79,7 @@ docs/*_Traffic.docx
 docs/HANDOFF_CONTEXT.md
 docs/zashchita_praktika_podgotovka.md
 
-### Eclipse / NetBeans (legacy) ###
+### Eclipse / NetBeans ###
 .apt_generated
 .classpath
 .factorypath
@@ -71,6 +92,5 @@ bin/
 !**/src/test/**/bin/
 /nbproject/private/
 /nbbuild/
-/dist/
 /nbdist/
 /.nb-gradle/
