@@ -18,18 +18,20 @@
 
 ## Скачать и играть
 
-### [⬇ Download Windows (.ZIP) — v1.1.0](https://github.com/top-secret666/the-witcher/releases/download/v1.1.0/The-Witcher-v1.1.0-Windows.zip)
+### [⬇ Скачать Windows-сборку (Releases → v1.1.0)](https://github.com/top-secret666/the-witcher/releases/tag/v1.1.0)
+
+На странице релиза скачай файл **`The-Witcher-v1.1.0-Windows.zip`**.
 
 | Шаг | Что сделать |
 |:---:|:------------|
-| **1** | Скачай ZIP по ссылке выше |
-| **2** | Распакуй архив |
-| **3** | Открой папку `The-Witcher` и запусти **`The Witcher.exe`** |
+| **1** | Открой ссылку выше |
+| **2** | Скачай **`The-Witcher-v1.1.0-Windows.zip`** |
+| **3** | Распакуй → папка `The-Witcher` → запусти **`The Witcher.exe`** |
 
 Java отдельно ставить **не нужно** — рантайм внутри сборки.  
 Держи рядом: `The Witcher.exe`, `app/`, `runtime/`.
 
-Если прямая ссылка не открывается — файл лежит в [**Releases**](https://github.com/top-secret666/the-witcher/releases).
+Все версии: [**Releases**](https://github.com/top-secret666/the-witcher/releases).
 
 ---
 
