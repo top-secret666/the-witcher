@@ -23,6 +23,14 @@ saves/
 dev/tools/__pycache__/
 **/__pycache__/
 
+### Game media (local + Releases only — not in git) ###
+dev/src/main/resources/assets/
+dev/tools/release-assets/
+docs/media/
+
+### Packaging overlay copies (local build only) ###
+dev/tools/release-overlay/
+
 ### Scripts (local dev, keep on disk) ###
 *.bat
 *.sh
@@ -30,6 +38,15 @@ dev/tools/__pycache__/
 !dev/tools/*.ps1
 !dev/tools/*.py
 !setup-gdx-libs.ps1
+# One-off / scratch tools stay local:
+dev/tools/_*.py
+dev/tools/make_readme_drink_gif.py
+dev/tools/upload_release_zip.ps1
+dev/tools/replace_shop_assets.py
+dev/tools/check-swing-build.ps1
+dev/tools/gen-swing-gdx-bridge.ps1
+dev/tools/package-portable.ps1
+dev/tools/publish_release.ps1
 
 ### macOS / Linux leftovers ###
 .DS_Store
@@ -62,6 +79,7 @@ dev/.tmp/
 /178912*.png
 DebugButtons.java
 DebugButtons.class
+setup-gdx-libs.ps1
 
 ### JVM crash dumps ###
 hs_err_pid*.log
@@ -83,7 +101,11 @@ kling_*.mp4
 ~$*
 **/~$*
 
-### Practice / internal docs ###
+### Practice / internal / draft docs (not public) ###
+docs/dialogues.md
+docs/HOW_TO_UPLOAD_RELEASE.md
+docs/chapter1_battle_assets_prompts.md
+docs/design/*.pdf
 docs/Отчет_*.docx
 docs/*_fixed.docx
 docs/*_rewritten.docx

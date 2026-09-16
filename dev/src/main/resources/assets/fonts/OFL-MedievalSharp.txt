@@ -1,5 +1,0 @@
-Copyright (c) 2011, Wojciech Kalinowski (w.kalinowski@gmail.com),
-with Reserved Font Name "MedievalSharp".
-
-This Font Software is licensed under the SIL Open Font License, Version 1.1.
-https://openfontlicense.org/

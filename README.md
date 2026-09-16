@@ -59,25 +59,23 @@ Canonical playthrough: [`docs/chapter1_journey_checklist.md`](docs/chapter1_jour
 ```
 the-witcher/
 ├── README.md
-├── docs/                 design, dialogues, checklist
-│   └── media/            images for the README
-└── dev/                  source + tools (exe packaging)
-    ├── src/              game
-    └── tools/            package-exe, release zip/upload
+├── docs/                 design + chapter canon (presentable only)
+└── dev/                  source + packaging tools
+    └── src/              game code
 ```
 
-Binaries are **not** in git — only via [**GitHub Releases**](https://github.com/top-secret666/the-witcher/releases).
+Game media, build overlay, and Windows binaries are **not** in git.  
+Playable build: [**GitHub Releases**](https://github.com/top-secret666/the-witcher/releases).
 
 ---
 
 ## For developers
 
-**Requires:** JDK 17, Windows
+**Requires:** JDK 17, Windows. Game assets and `dev/tools/release-overlay/` stay on your machine (gitignored).
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File dev\tools\package-exe.ps1
 python dev\tools\make_release_zip.py --version 1.1.0
-python dev\tools\publish_release_api.py 1.1.0
 ```
 ---
 
@@ -87,7 +85,7 @@ python dev\tools\publish_release_api.py 1.1.0
 |:-----|:---------|
 | [`chapter1_journey_checklist.md`](docs/chapter1_journey_checklist.md) | Chapter 1 canon |
 | [`glava1_scenariy_volk.md`](docs/glava1_scenariy_volk.md) | Wolf scenario |
-| [`dialogues.md`](docs/dialogues.md) | Dialogue draft |
+| [`glava1_lor.md`](docs/glava1_lor.md) | Lore notes |
 | [`design/`](docs/design/) | Loop design |
 
 ---
