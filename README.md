@@ -2,7 +2,7 @@
 <h3 align="center">Chapter 1 — Pixel Prototype</h3>
 
 <p align="center">
-  <strong>Лавка герцога · петля времени · первый босс — Волк</strong><br>
+  <strong>Визуальная новелла · хоррор </strong><br>
   Java · Swing · pixel-art · MVP
 </p>
 
@@ -13,16 +13,8 @@
 </p>
 
 <p align="center">
-  <img src="docs/media/readme-preview.gif" alt="Shop materialize preview" width="480" />
+<img width="1024" height="1024" alt="image (2)" src="https://github.com/user-attachments/assets/365cae5f-282a-4b30-8ad3-1ddf1f9756cc" />
 </p>
-
-<p align="center">
-  <img src="docs/media/readme-shop.png" alt="Duke's shop" width="420" />
-  &nbsp;
-  <img src="docs/media/readme-wolf.png" alt="Wolf forest" width="420" />
-</p>
-
----
 
 ## Скачать и играть
 
@@ -43,19 +35,7 @@ Java отдельно ставить **не нужно** — рантайм вн
 
 ## О проекте
 
-> *«Снова лавка. Снова герцог. Снова ты — без памяти и без выхода… пока не встретишь Волка.»*
-
-Первый серьёзный pet-project: **визуальная новелла** (не полноценный хоррор) — глава 1 с лавкой брони, VN-диалогами и боссом-Волком.
-
-**В прототипе:**
-
-- **Лавка** — покупки, экипировка, инвентарь, кошелёк, музыка
-- **Петля** — пробуждение, карта, брифинг
-- **Волк** — лес → вспышка с Весемиром → глитч-финал → титры
-- **Пауза / настройки** — громкость, скорость текста
-- **Терминал** — скрытый путь к карте боссов
-
----
+Первый серьёзный pet-project и попытка написать свой движок.
 
 ## Архитектура
 
@@ -88,8 +68,6 @@ the-witcher/
 
 Бинарники **не** в git — только через [**GitHub Releases**](https://github.com/top-secret666/the-witcher/releases).
 
-Локальный мусор (`out/`, `app/`, `runtime/`, корневые `.png`/`.mp4`, crash-логи) в `.gitignore`.
-
 ---
 
 ## Для разработчиков
@@ -101,9 +79,6 @@ powershell -ExecutionPolicy Bypass -File dev\tools\package-exe.ps1
 python dev\tools\make_release_zip.py --version 1.1.0
 python dev\tools\publish_release_api.py 1.1.0
 ```
-
-Не коммить `The Witcher.exe`, `app/`, `runtime/`.
-
 ---
 
 ## Документы
