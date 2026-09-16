@@ -1,15 +1,15 @@
-package main.java.com.witcher.ui.intro.presenter;
+package com.witcher.ui.intro.presenter;
 
-import main.java.com.witcher.ui.intro.IntroAssetsInfo;
-import main.java.com.witcher.ui.intro.IntroMorphAnimation;
-import main.java.com.witcher.ui.intro.IntroScript;
-import main.java.com.witcher.ui.intro.IntroShopAnimation;
-import main.java.com.witcher.ui.intro.IntroSwitchAnimation;
-import main.java.com.witcher.ui.intro.IntroVnUi;
-import main.java.com.witcher.ui.graphics.DialogBoxRenderer;
-import main.java.com.witcher.ui.intro.view.IntroHistoryLayout;
-import main.java.com.witcher.ui.intro.view.IntroCharacterLayout;
-import main.java.com.witcher.ui.settings.GameSettings;
+import com.witcher.ui.intro.IntroAssetsInfo;
+import com.witcher.ui.intro.IntroMorphAnimation;
+import com.witcher.ui.intro.IntroScript;
+import com.witcher.ui.intro.IntroShopAnimation;
+import com.witcher.ui.intro.IntroSwitchAnimation;
+import com.witcher.ui.intro.IntroVnUi;
+import com.witcher.ui.graphics.DialogBoxRenderer;
+import com.witcher.ui.intro.view.IntroHistoryLayout;
+import com.witcher.ui.intro.view.IntroCharacterLayout;
+import com.witcher.ui.settings.GameSettings;
 
 import java.util.ArrayList;
 import java.util.List;

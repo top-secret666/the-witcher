@@ -1,30 +1,30 @@
-package main.java.com.witcher.ui.shop.presenter;
+package com.witcher.ui.shop.presenter;
 
-import main.java.com.witcher.model.armour.Armour;
-import main.java.com.witcher.model.sets.ArmourSet;
-import main.java.com.witcher.chapter1.shop.Chapter1ShopBridge;
-import main.java.com.witcher.ui.shop.EquipmentArmourList;
-import main.java.com.witcher.ui.shop.EquipmentFilter;
-import main.java.com.witcher.ui.shop.EquipmentGridEntry;
-import main.java.com.witcher.ui.shop.DukeLines;
-import main.java.com.witcher.ui.shop.ShopCatalogEntry;
-import main.java.com.witcher.ui.shop.ShopCategory;
-import main.java.com.witcher.ui.shop.ShopEntryIcons;
-import main.java.com.witcher.shop.EquipSlot;
-import main.java.com.witcher.ui.shop.ShopInventoryKind;
-import main.java.com.witcher.ui.shop.ShopInventorySlot;
-import main.java.com.witcher.ui.shop.ShopGearRules;
-import main.java.com.witcher.ui.shop.ShopGearStats;
-import main.java.com.witcher.ui.shop.ShopModel;
-import main.java.com.witcher.ui.shop.ShopRuntimeAssets;
-import main.java.com.witcher.ui.shop.view.ShopLayout;
-import main.java.com.witcher.ui.shop.view.ShopUiMetrics;
-import main.java.com.witcher.ui.shop.view.ShopViewConstants;
-import main.java.com.witcher.ui.shop.view.ShopShowcaseItem;
-import main.java.com.witcher.ui.shop.view.anim.ShopCategoryAnimator;
-import main.java.com.witcher.ui.shop.view.anim.ShopRevealAnimator;
+import com.witcher.model.armour.Armour;
+import com.witcher.model.sets.ArmourSet;
+import com.witcher.chapter1.shop.Chapter1ShopBridge;
+import com.witcher.ui.shop.EquipmentArmourList;
+import com.witcher.ui.shop.EquipmentFilter;
+import com.witcher.ui.shop.EquipmentGridEntry;
+import com.witcher.ui.shop.DukeLines;
+import com.witcher.ui.shop.ShopCatalogEntry;
+import com.witcher.ui.shop.ShopCategory;
+import com.witcher.ui.shop.ShopEntryIcons;
+import com.witcher.shop.EquipSlot;
+import com.witcher.ui.shop.ShopInventoryKind;
+import com.witcher.ui.shop.ShopInventorySlot;
+import com.witcher.ui.shop.ShopGearRules;
+import com.witcher.ui.shop.ShopGearStats;
+import com.witcher.ui.shop.ShopModel;
+import com.witcher.ui.shop.ShopRuntimeAssets;
+import com.witcher.ui.shop.view.ShopLayout;
+import com.witcher.ui.shop.view.ShopUiMetrics;
+import com.witcher.ui.shop.view.ShopViewConstants;
+import com.witcher.ui.shop.view.ShopShowcaseItem;
+import com.witcher.ui.shop.view.anim.ShopCategoryAnimator;
+import com.witcher.ui.shop.view.anim.ShopRevealAnimator;
 
-import static main.java.com.witcher.ui.shop.view.ShopViewConstants.*;
+import static com.witcher.ui.shop.view.ShopViewConstants.*;
 
 import java.awt.Point;
 import java.awt.Rectangle;
@@ -618,7 +618,7 @@ public final class ShopPresenter {
 
     private void updateBattleConfirmInput(int mx, int my, boolean clicked) {
         layoutYesNoChoices();
-        ui.armorHelpHovered = main.java.com.witcher.ui.chapter1.view.VnChoiceLayout.hitIndex(
+        ui.armorHelpHovered = com.witcher.ui.chapter1.view.VnChoiceLayout.hitIndex(
             ui.armorHelpChoiceBounds, mx, my);
         if (!clicked || ui.armorHelpHovered < 0) {
             return;
@@ -1350,7 +1350,7 @@ public final class ShopPresenter {
 
     private void updateArmorHelpInput(int mx, int my, boolean clicked) {
         layoutYesNoChoices();
-        ui.armorHelpHovered = main.java.com.witcher.ui.chapter1.view.VnChoiceLayout.hitIndex(
+        ui.armorHelpHovered = com.witcher.ui.chapter1.view.VnChoiceLayout.hitIndex(
             ui.armorHelpChoiceBounds, mx, my);
         if (!clicked || ui.armorHelpHovered < 0) {
             return;
@@ -1373,14 +1373,14 @@ public final class ShopPresenter {
             int x0 = (VIRTUAL_W - totalW) / 2;
             int y0 = VIRTUAL_H / 2 + 16;
             ui.armorHelpChoiceBounds.add(
-                new main.java.com.witcher.ui.chapter1.view.VnChoiceLayout.ChoiceRect(0, x0, y0, btnW, rowH));
+                new com.witcher.ui.chapter1.view.VnChoiceLayout.ChoiceRect(0, x0, y0, btnW, rowH));
             ui.armorHelpChoiceBounds.add(
-                new main.java.com.witcher.ui.chapter1.view.VnChoiceLayout.ChoiceRect(1, x0 + btnW + gap, y0, btnW, rowH));
+                new com.witcher.ui.chapter1.view.VnChoiceLayout.ChoiceRect(1, x0 + btnW + gap, y0, btnW, rowH));
             return;
         }
         boolean equipmentScreen = ui.equipmentOpen || ui.outfitConfirmActive;
         if (equipmentScreen) {
-            var equip = main.java.com.witcher.ui.shop.view.EquipmentOverlayLayout.compute(VIRTUAL_W, VIRTUAL_H);
+            var equip = com.witcher.ui.shop.view.EquipmentOverlayLayout.compute(VIRTUAL_W, VIRTUAL_H);
             btnW = 88;
             gap = 8;
             rowH = 24;
@@ -1391,9 +1391,9 @@ public final class ShopPresenter {
             }
             int y0 = VIRTUAL_H - DIALOG_TEXT_ZONE - rowH + 6;
             ui.armorHelpChoiceBounds.add(
-                new main.java.com.witcher.ui.chapter1.view.VnChoiceLayout.ChoiceRect(0, x0, y0, btnW, rowH));
+                new com.witcher.ui.chapter1.view.VnChoiceLayout.ChoiceRect(0, x0, y0, btnW, rowH));
             ui.armorHelpChoiceBounds.add(
-                new main.java.com.witcher.ui.chapter1.view.VnChoiceLayout.ChoiceRect(
+                new com.witcher.ui.chapter1.view.VnChoiceLayout.ChoiceRect(
                     1, x0 + btnW + gap, y0, btnW, rowH));
             return;
         }
@@ -1401,15 +1401,15 @@ public final class ShopPresenter {
         int x0 = (VIRTUAL_W - totalW) / 2;
         int y0 = VIRTUAL_H - DIALOG_TEXT_ZONE - rowH + 6;
         ui.armorHelpChoiceBounds.add(
-            new main.java.com.witcher.ui.chapter1.view.VnChoiceLayout.ChoiceRect(0, x0, y0, btnW, rowH));
+            new com.witcher.ui.chapter1.view.VnChoiceLayout.ChoiceRect(0, x0, y0, btnW, rowH));
         ui.armorHelpChoiceBounds.add(
-            new main.java.com.witcher.ui.chapter1.view.VnChoiceLayout.ChoiceRect(1, x0 + btnW + gap, y0, btnW, rowH));
+            new com.witcher.ui.chapter1.view.VnChoiceLayout.ChoiceRect(1, x0 + btnW + gap, y0, btnW, rowH));
     }
 
-    private static java.util.List<main.java.com.witcher.chapter1.vn.VnChoice> armorHelpChoices() {
+    private static java.util.List<com.witcher.chapter1.vn.VnChoice> armorHelpChoices() {
         return java.util.List.of(
-            new main.java.com.witcher.chapter1.vn.VnChoice("yes", "Да", 0, 0),
-            new main.java.com.witcher.chapter1.vn.VnChoice("no", "Нет", 0, 0)
+            new com.witcher.chapter1.vn.VnChoice("yes", "Да", 0, 0),
+            new com.witcher.chapter1.vn.VnChoice("no", "Нет", 0, 0)
         );
     }
 
@@ -1440,7 +1440,7 @@ public final class ShopPresenter {
 
     private void updateOutfitConfirmInput(int mx, int my, boolean clicked) {
         layoutYesNoChoices();
-        ui.armorHelpHovered = main.java.com.witcher.ui.chapter1.view.VnChoiceLayout.hitIndex(
+        ui.armorHelpHovered = com.witcher.ui.chapter1.view.VnChoiceLayout.hitIndex(
             ui.armorHelpChoiceBounds, mx, my);
         if (!clicked || ui.armorHelpHovered < 0) {
             return;

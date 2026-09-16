@@ -1,10 +1,10 @@
-package main.java.com.witcher.ui.chapter1.swing;
+package com.witcher.ui.chapter1.swing;
 
-import main.java.com.witcher.chapter1.assets.Chapter1AssetPaths;
-import main.java.com.witcher.chapter1.battle.BossCatalog;
-import main.java.com.witcher.chapter1.cutscene.CutsceneId;
-import main.java.com.witcher.ui.chapter1.view.BossMapLayout;
-import main.java.com.witcher.ui.chapter1.view.Chapter1ViewConstants;
+import com.witcher.chapter1.assets.Chapter1AssetPaths;
+import com.witcher.chapter1.battle.BossCatalog;
+import com.witcher.chapter1.cutscene.CutsceneId;
+import com.witcher.ui.chapter1.view.BossMapLayout;
+import com.witcher.ui.chapter1.view.Chapter1ViewConstants;
 
 import java.awt.image.BufferedImage;
 

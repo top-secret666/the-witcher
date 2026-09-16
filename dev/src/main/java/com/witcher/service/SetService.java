@@ -1,10 +1,10 @@
-package main.java.com.witcher.service;
+package com.witcher.service;
 
-import main.java.com.witcher.model.armour.Armour;
-import main.java.com.witcher.model.sets.ArmourSet;
-import main.java.com.witcher.model.sets.NonSchoolSet;
-import main.java.com.witcher.model.sets.SchoolSet;
-import main.java.com.witcher.repository.SetRepository;
+import com.witcher.model.armour.Armour;
+import com.witcher.model.sets.ArmourSet;
+import com.witcher.model.sets.NonSchoolSet;
+import com.witcher.model.sets.SchoolSet;
+import com.witcher.repository.SetRepository;
 
 import java.util.*;
 

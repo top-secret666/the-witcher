@@ -1,21 +1,21 @@
-package main.java.com.witcher.ui.shop;
+package com.witcher.ui.shop;
 
-import main.java.com.witcher.model.armour.*;
-import main.java.com.witcher.model.sets.ArmourSet;
-import main.java.com.witcher.model.sets.BeauclaireGuardSet;
-import main.java.com.witcher.model.sets.NonSchoolSet;
-import main.java.com.witcher.model.sets.TemerianKitSet;
-import main.java.com.witcher.model.sets.TouissantSet;
-import main.java.com.witcher.model.sets.WhiteTigerSet;
-import main.java.com.witcher.shop.EquipSlot;
-import main.java.com.witcher.shop.EquippedGear;
-import main.java.com.witcher.repository.ArmourRepository;
-import main.java.com.witcher.repository.SetRepository;
-import main.java.com.witcher.service.ArmorCalculationService;
-import main.java.com.witcher.service.ArmorGenerationService;
-import main.java.com.witcher.service.ArmorManagementService;
-import main.java.com.witcher.service.SetService;
-import main.java.com.witcher.validation.InputValidator;
+import com.witcher.model.armour.*;
+import com.witcher.model.sets.ArmourSet;
+import com.witcher.model.sets.BeauclaireGuardSet;
+import com.witcher.model.sets.NonSchoolSet;
+import com.witcher.model.sets.TemerianKitSet;
+import com.witcher.model.sets.TouissantSet;
+import com.witcher.model.sets.WhiteTigerSet;
+import com.witcher.shop.EquipSlot;
+import com.witcher.shop.EquippedGear;
+import com.witcher.repository.ArmourRepository;
+import com.witcher.repository.SetRepository;
+import com.witcher.service.ArmorCalculationService;
+import com.witcher.service.ArmorGenerationService;
+import com.witcher.service.ArmorManagementService;
+import com.witcher.service.SetService;
+import com.witcher.validation.InputValidator;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -75,7 +75,7 @@ public final class ShopModel implements EquippedGear {
         this.hideWalletAmount = hideWalletAmount;
     }
 
-    /** Новая сессия лавки: генерирует товары как в {@link main.java.com.witcher.Main}. */
+    /** Новая сессия лавки: генерирует товары как в {@link com.witcher.Main}. */
     public static ShopModel createNewSession() {
         return createNewSession(420, true);
     }

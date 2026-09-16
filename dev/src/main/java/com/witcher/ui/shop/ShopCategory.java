@@ -1,4 +1,4 @@
-package main.java.com.witcher.ui.shop;
+package com.witcher.ui.shop;
 
 /** Категории витрины лавки (карточки на главном экране). */
 public enum ShopCategory {
@@ -19,7 +19,7 @@ public enum ShopCategory {
         this.iconIndex = iconIndex;
     }
 
-    public static ShopCategory forEquipSlot(main.java.com.witcher.shop.EquipSlot slot) {
+    public static ShopCategory forEquipSlot(com.witcher.shop.EquipSlot slot) {
         if (slot == null) {
             return CHEST;
         }

@@ -185,7 +185,7 @@ def emit_java() -> str:
         anchors_y = [anchors_y] * len(r["textAnchorX"])
     anchors_y_str = ", ".join(f"{a}f" for a in anchors_y)
     return (
-        "package main.java.com.witcher.ui.menu.view;\n\n"
+        "package com.witcher.ui.menu.view;\n\n"
         "/**\n"
         " * Раскладка главного меню — сгенерировано tools/swing_to_gdx_layout.py.\n"
         " * Координаты в пространстве Swing: 480×360, Y сверху вниз.\n"

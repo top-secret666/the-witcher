@@ -1,6 +1,6 @@
-package main.java.com.witcher.chapter1.battle;
+package com.witcher.chapter1.battle;
 
-import main.java.com.witcher.chapter1.assets.Chapter1AssetPaths;
+import com.witcher.chapter1.assets.Chapter1AssetPaths;
 
 import java.util.List;
 

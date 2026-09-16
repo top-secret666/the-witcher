@@ -1,6 +1,6 @@
-package main.java.com.witcher.chapter1.loop;
+package com.witcher.chapter1.loop;
 
-import main.java.com.witcher.ui.intro.IntroEasing;
+import com.witcher.ui.intro.IntroEasing;
 
 /**
  * Таймлайн пробуждения (общий для Swing и будущего движка):

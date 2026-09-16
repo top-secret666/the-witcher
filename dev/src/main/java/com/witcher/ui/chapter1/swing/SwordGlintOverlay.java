@@ -1,6 +1,6 @@
-package main.java.com.witcher.ui.chapter1.swing;
+package com.witcher.ui.chapter1.swing;
 
-import main.java.com.witcher.chapter1.battle.SwordClashTimeline;
+import com.witcher.chapter1.battle.SwordClashTimeline;
 
 import java.awt.Graphics2D;
 

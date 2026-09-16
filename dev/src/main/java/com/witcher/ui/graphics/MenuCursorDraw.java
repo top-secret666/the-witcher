@@ -1,4 +1,4 @@
-package main.java.com.witcher.ui.graphics;
+package com.witcher.ui.graphics;
 
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
@@ -9,7 +9,7 @@ public final class MenuCursorDraw {
 
   public static final int LARGE_W = 12;
   public static final int SMALL_W = 7;
-  /** Как {@link main.java.com.witcher.ui.graphics.IntroScreen#drawCursor}. */
+  /** Как {@link com.witcher.ui.graphics.IntroScreen#drawCursor}. */
   public static final int INTRO_W = 16;
   private static final int HOTSPOT_X = 1;
   private static final int HOTSPOT_Y = 1;

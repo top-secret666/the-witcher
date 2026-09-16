@@ -1,4 +1,4 @@
-package main.java.com.witcher.ui.intro;
+package com.witcher.ui.intro;
 
 import java.awt.Color;
 import java.awt.image.BufferedImage;

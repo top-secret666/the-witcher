@@ -1,9 +1,9 @@
-package main.java.com.witcher.ui.chapter1.swing;
+package com.witcher.ui.chapter1.swing;
 
-import main.java.com.witcher.chapter1.assets.Chapter1AssetPaths;
-import main.java.com.witcher.ui.graphics.PixelScaler;
-import main.java.com.witcher.ui.graphics.Sprite;
-import main.java.com.witcher.ui.chapter1.swing.glitch.WitcherGlitchPalette;
+import com.witcher.chapter1.assets.Chapter1AssetPaths;
+import com.witcher.ui.graphics.PixelScaler;
+import com.witcher.ui.graphics.Sprite;
+import com.witcher.ui.chapter1.swing.glitch.WitcherGlitchPalette;
 
 import java.awt.image.BufferedImage;
 import java.util.HashMap;
@@ -62,9 +62,9 @@ public final class Chapter1UiAssets {
   private static BufferedImage cardIcon;
 
   private static boolean swordSlashTried;
-  private static main.java.com.witcher.ui.graphics.SpriteSheet swordSlashSheetRush;
-  private static main.java.com.witcher.ui.graphics.SpriteSheet swordSlashSheetA;
-  private static main.java.com.witcher.ui.graphics.SpriteSheet swordSlashSheetB;
+  private static com.witcher.ui.graphics.SpriteSheet swordSlashSheetRush;
+  private static com.witcher.ui.graphics.SpriteSheet swordSlashSheetA;
+  private static com.witcher.ui.graphics.SpriteSheet swordSlashSheetB;
 
   public static BufferedImage cardClosed() {
     if (cardClosed == null) {
@@ -86,9 +86,9 @@ public final class Chapter1UiAssets {
   }
 
   public static BufferedImage swordSlashFrame(
-      main.java.com.witcher.chapter1.battle.SwordSlashShowTimeline.SheetId sheet, int index) {
+      com.witcher.chapter1.battle.SwordSlashShowTimeline.SheetId sheet, int index) {
     ensureSwordSlashSheets();
-    main.java.com.witcher.ui.graphics.SpriteSheet ss = switch (sheet) {
+    com.witcher.ui.graphics.SpriteSheet ss = switch (sheet) {
       case RUSH -> swordSlashSheetRush;
       case A -> swordSlashSheetA;
       case B -> swordSlashSheetB;
@@ -104,16 +104,16 @@ public final class Chapter1UiAssets {
       return;
     }
     swordSlashTried = true;
-    swordSlashSheetRush = main.java.com.witcher.ui.graphics.SpriteSheet.loadOptional(
+    swordSlashSheetRush = com.witcher.ui.graphics.SpriteSheet.loadOptional(
         Chapter1AssetPaths.SWORD_SLASH_SHEET_RUSH,
-        main.java.com.witcher.chapter1.battle.SwordSlashShowTimeline.RUSH_COLS,
-        main.java.com.witcher.chapter1.battle.SwordSlashShowTimeline.RUSH_ROWS,
+        com.witcher.chapter1.battle.SwordSlashShowTimeline.RUSH_COLS,
+        com.witcher.chapter1.battle.SwordSlashShowTimeline.RUSH_ROWS,
         1, true);
-    swordSlashSheetA = main.java.com.witcher.ui.graphics.SpriteSheet.loadOptional(
+    swordSlashSheetA = com.witcher.ui.graphics.SpriteSheet.loadOptional(
         Chapter1AssetPaths.SWORD_SLASH_SHEET_A, 6, 4, 1, true);
-    swordSlashSheetB = main.java.com.witcher.ui.graphics.SpriteSheet.loadOptional(
+    swordSlashSheetB = com.witcher.ui.graphics.SpriteSheet.loadOptional(
         Chapter1AssetPaths.SWORD_SLASH_SHEET_B, 2, 4, 1, true);
-    main.java.com.witcher.chapter1.battle.SwordSlashShowTimeline.setPreferRush(
+    com.witcher.chapter1.battle.SwordSlashShowTimeline.setPreferRush(
         swordSlashSheetRush != null);
   }
 

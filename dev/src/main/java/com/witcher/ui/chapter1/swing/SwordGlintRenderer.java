@@ -1,8 +1,8 @@
-package main.java.com.witcher.ui.chapter1.swing;
+package com.witcher.ui.chapter1.swing;
 
-import main.java.com.witcher.chapter1.battle.SwordClashTimeline;
-import main.java.com.witcher.chapter1.battle.SwordClashTimeline.ClashMoment;
-import main.java.com.witcher.chapter1.battle.SwordClashTimeline.Spark;
+import com.witcher.chapter1.battle.SwordClashTimeline;
+import com.witcher.chapter1.battle.SwordClashTimeline.ClashMoment;
+import com.witcher.chapter1.battle.SwordClashTimeline.Spark;
 
 import java.awt.Color;
 import java.awt.Graphics2D;

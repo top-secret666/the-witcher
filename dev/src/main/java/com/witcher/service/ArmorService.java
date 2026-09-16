@@ -1,11 +1,11 @@
-package main.java.com.witcher.service;
+package com.witcher.service;
 
-import main.java.com.witcher.exception.ExcessBudgetException;
-import main.java.com.witcher.exception.InvalidPriceException;
-import main.java.com.witcher.exception.NoArmourFoundException;
-import main.java.com.witcher.model.armour.*;
-import main.java.com.witcher.repository.ArmourRepository;
-import main.java.com.witcher.validation.InputValidator;
+import com.witcher.exception.ExcessBudgetException;
+import com.witcher.exception.InvalidPriceException;
+import com.witcher.exception.NoArmourFoundException;
+import com.witcher.model.armour.*;
+import com.witcher.repository.ArmourRepository;
+import com.witcher.validation.InputValidator;
 
 import java.util.*;
 import java.util.stream.Collectors;

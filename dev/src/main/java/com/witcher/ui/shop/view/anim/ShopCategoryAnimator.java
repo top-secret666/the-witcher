@@ -1,6 +1,6 @@
-package main.java.com.witcher.ui.shop.view.anim;
+package com.witcher.ui.shop.view.anim;
 
-import main.java.com.witcher.ui.intro.IntroEasing;
+import com.witcher.ui.intro.IntroEasing;
 
 /**
  * Анимация открытия категории: карточка уезжает влево и растёт, справа выезжает список.

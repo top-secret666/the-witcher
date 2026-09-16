@@ -1,8 +1,8 @@
-package main.java.com.witcher.ui.chapter1.swing;
+package com.witcher.ui.chapter1.swing;
 
-import main.java.com.witcher.chapter1.battle.SwordSlashShowTimeline;
-import main.java.com.witcher.chapter1.battle.SwordSlashShowTimeline.ActiveFrame;
-import main.java.com.witcher.chapter1.battle.SwordSlashShowTimeline.SheetId;
+import com.witcher.chapter1.battle.SwordSlashShowTimeline;
+import com.witcher.chapter1.battle.SwordSlashShowTimeline.ActiveFrame;
+import com.witcher.chapter1.battle.SwordSlashShowTimeline.SheetId;
 
 import java.awt.Color;
 import java.awt.Graphics2D;

@@ -1,4 +1,4 @@
-package main.java.com.witcher.ui.menu.view;
+package com.witcher.ui.menu.view;
 
 /**
  * Раскладка главного меню — сгенерировано tools/swing_to_gdx_layout.py.

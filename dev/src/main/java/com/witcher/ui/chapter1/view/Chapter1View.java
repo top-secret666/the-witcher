@@ -1,12 +1,12 @@
-package main.java.com.witcher.ui.chapter1.view;
+package com.witcher.ui.chapter1.view;
 
-import main.java.com.witcher.ui.chapter1.presenter.Chapter1Presenter;
+import com.witcher.ui.chapter1.presenter.Chapter1Presenter;
 
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 
 /**
- * Контракт отрисовки главы 1 — реализация Swing: {@link main.java.com.witcher.ui.chapter1.swing.Chapter1SwingView}.
+ * Контракт отрисовки главы 1 — реализация Swing: {@link com.witcher.ui.chapter1.swing.Chapter1SwingView}.
  */
 public interface Chapter1View {
 

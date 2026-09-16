@@ -1,19 +1,19 @@
-package main.java.com.witcher.chapter1.battle.briefing;
+package com.witcher.chapter1.battle.briefing;
 
-import main.java.com.witcher.chapter1.battle.BossCatalog;
-import main.java.com.witcher.chapter1.battle.BossEntry;
-import main.java.com.witcher.chapter1.battle.BossVnTypingEngine;
-import main.java.com.witcher.chapter1.battle.BossVnTypingState;
-import main.java.com.witcher.chapter1.Chapter1Session;
-import main.java.com.witcher.chapter1.vn.VnChoice;
-import main.java.com.witcher.chapter1.vn.VnChoiceEffects;
-import main.java.com.witcher.chapter1.vn.VnSceneState;
-import main.java.com.witcher.ui.chapter1.swing.battle.briefing.QuestNoticeAnimator;
-import main.java.com.witcher.ui.chapter1.swing.battle.briefing.QuestNoticeRenderer;
-import main.java.com.witcher.ui.graphics.DialogBoxRenderer;
-import main.java.com.witcher.ui.intro.IntroVnUi;
-import main.java.com.witcher.ui.intro.view.IntroHistoryLayout;
-import main.java.com.witcher.ui.shop.view.ShopViewConstants;
+import com.witcher.chapter1.battle.BossCatalog;
+import com.witcher.chapter1.battle.BossEntry;
+import com.witcher.chapter1.battle.BossVnTypingEngine;
+import com.witcher.chapter1.battle.BossVnTypingState;
+import com.witcher.chapter1.Chapter1Session;
+import com.witcher.chapter1.vn.VnChoice;
+import com.witcher.chapter1.vn.VnChoiceEffects;
+import com.witcher.chapter1.vn.VnSceneState;
+import com.witcher.ui.chapter1.swing.battle.briefing.QuestNoticeAnimator;
+import com.witcher.ui.chapter1.swing.battle.briefing.QuestNoticeRenderer;
+import com.witcher.ui.graphics.DialogBoxRenderer;
+import com.witcher.ui.intro.IntroVnUi;
+import com.witcher.ui.intro.view.IntroHistoryLayout;
+import com.witcher.ui.shop.view.ShopViewConstants;
 
 import java.util.ArrayList;
 import java.util.List;

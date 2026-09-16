@@ -1,6 +1,6 @@
-package main.java.com.witcher.model.sets;
+package com.witcher.model.sets;
 
-import main.java.com.witcher.model.armour.Armour;
+import com.witcher.model.armour.Armour;
 
 import java.util.ArrayList;
 import java.util.Collections;

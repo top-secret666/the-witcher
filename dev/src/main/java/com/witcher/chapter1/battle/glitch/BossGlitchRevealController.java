@@ -1,6 +1,6 @@
-package main.java.com.witcher.chapter1.battle.glitch;
+package com.witcher.chapter1.battle.glitch;
 
-import main.java.com.witcher.chapter1.cutscene.CutsceneSkipPolicy;
+import com.witcher.chapter1.cutscene.CutsceneSkipPolicy;
 
 import java.util.List;
 

@@ -1,4 +1,4 @@
-package main.java.com.witcher.ui.intro.view;
+package com.witcher.ui.intro.view;
 
 /** Раскладка окна истории — общая геометрия Swing / LibGDX. */
 public final class IntroHistoryLayout {

@@ -61,7 +61,7 @@ the-witcher/
 ├── README.md
 ├── docs/                 design + chapter canon (presentable only)
 └── dev/                  source + packaging tools
-    └── src/              game code
+    └── src/main/java/com/witcher/   game code (package com.witcher.*)
 ```
 
 Game media, build overlay, and Windows binaries are **not** in git.  

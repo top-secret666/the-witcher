@@ -1,6 +1,6 @@
-package main.java.com.witcher.ui.chapter1.swing.battle.briefing;
+package com.witcher.ui.chapter1.swing.battle.briefing;
 
-import main.java.com.witcher.ui.intro.IntroEasing;
+import com.witcher.ui.intro.IntroEasing;
 
 /**
  * Появление листа заказа — как открытие категории в лавке: рост, сдвиг и лёгкий flip.

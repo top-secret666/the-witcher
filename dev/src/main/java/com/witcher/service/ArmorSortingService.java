@@ -1,8 +1,8 @@
-package main.java.com.witcher.service;
+package com.witcher.service;
 
-import main.java.com.witcher.exception.InvalidPriceRangeException;
-import main.java.com.witcher.model.armour.Armour;
-import main.java.com.witcher.validation.InputValidator;
+import com.witcher.exception.InvalidPriceRangeException;
+import com.witcher.model.armour.Armour;
+import com.witcher.validation.InputValidator;
 
 import java.util.Comparator;
 import java.util.List;

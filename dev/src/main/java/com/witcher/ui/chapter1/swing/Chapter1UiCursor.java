@@ -1,8 +1,8 @@
-package main.java.com.witcher.ui.chapter1.swing;
+package com.witcher.ui.chapter1.swing;
 
-import main.java.com.witcher.ui.graphics.MenuCursorDraw;
-import main.java.com.witcher.ui.graphics.MenuCursorPaths;
-import main.java.com.witcher.ui.graphics.Sprite;
+import com.witcher.ui.graphics.MenuCursorDraw;
+import com.witcher.ui.graphics.MenuCursorPaths;
+import com.witcher.ui.graphics.Sprite;
 
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
@@ -45,4 +45,4 @@ public final class Chapter1UiCursor {
     return s != null ? s.getImage() : null;
   }
 }
-
+

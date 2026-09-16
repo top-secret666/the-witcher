@@ -1,15 +1,15 @@
-package main.java.com.witcher.ui.graphics;
+package com.witcher.ui.graphics;
 
 import java.awt.*;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 
 // Для поддержки спрайт-листа фона
-import main.java.com.witcher.ui.graphics.SpriteSheet;
-import main.java.com.witcher.ui.menu.MainMenuController;
-import main.java.com.witcher.ui.menu.MenuEmberAnimation;
-import main.java.com.witcher.ui.menu.view.MenuTextLayout;
-import main.java.com.witcher.ui.menu.view.MenuTheme;
+import com.witcher.ui.graphics.SpriteSheet;
+import com.witcher.ui.menu.MainMenuController;
+import com.witcher.ui.menu.MenuEmberAnimation;
+import com.witcher.ui.menu.view.MenuTextLayout;
+import com.witcher.ui.menu.view.MenuTheme;
 
 public class MainMenuScreen {
         // Табличка-борд для кнопок

@@ -1,6 +1,6 @@
-package main.java.com.witcher.ui.intro.view;
+package com.witcher.ui.intro.view;
 
-import main.java.com.witcher.ui.intro.IntroVnUi;
+import com.witcher.ui.intro.IntroVnUi;
 
 /** Baseline текста интро — общие формулы для Swing и LibGDX. */
 public final class IntroTextLayout {

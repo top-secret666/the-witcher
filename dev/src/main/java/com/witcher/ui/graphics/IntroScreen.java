@@ -1,4 +1,4 @@
-package main.java.com.witcher.ui.graphics;
+package com.witcher.ui.graphics;
 
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
@@ -9,16 +9,16 @@ import java.awt.image.RescaleOp;
 import java.io.File;
 import java.io.InputStream;
 import java.nio.file.Paths;
-import main.java.com.witcher.ui.intro.IntroEasing;
-import main.java.com.witcher.ui.intro.IntroMorphAnimation;
-import main.java.com.witcher.ui.intro.IntroScript;
-import main.java.com.witcher.ui.intro.IntroSwingBridge;
-import main.java.com.witcher.ui.intro.IntroTheme;
-import main.java.com.witcher.ui.intro.presenter.IntroController;
-import main.java.com.witcher.ui.intro.IntroHistoryText;
-import main.java.com.witcher.ui.intro.view.IntroCharacterLayout;
-import main.java.com.witcher.ui.intro.view.IntroHistoryLayout;
-import main.java.com.witcher.ui.intro.view.IntroHistoryTheme;
+import com.witcher.ui.intro.IntroEasing;
+import com.witcher.ui.intro.IntroMorphAnimation;
+import com.witcher.ui.intro.IntroScript;
+import com.witcher.ui.intro.IntroSwingBridge;
+import com.witcher.ui.intro.IntroTheme;
+import com.witcher.ui.intro.presenter.IntroController;
+import com.witcher.ui.intro.IntroHistoryText;
+import com.witcher.ui.intro.view.IntroCharacterLayout;
+import com.witcher.ui.intro.view.IntroHistoryLayout;
+import com.witcher.ui.intro.view.IntroHistoryTheme;
 
 import java.util.ArrayList;
 import java.util.Iterator;

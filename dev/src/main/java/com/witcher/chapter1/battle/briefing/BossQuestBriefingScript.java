@@ -1,9 +1,9 @@
-package main.java.com.witcher.chapter1.battle.briefing;
+package com.witcher.chapter1.battle.briefing;
 
-import main.java.com.witcher.chapter1.battle.BossEntry;
-import main.java.com.witcher.chapter1.vn.VnChoice;
-import main.java.com.witcher.chapter1.vn.VnSceneState;
-import main.java.com.witcher.ui.intro.IntroTheme;
+import com.witcher.chapter1.battle.BossEntry;
+import com.witcher.chapter1.vn.VnChoice;
+import com.witcher.chapter1.vn.VnSceneState;
+import com.witcher.ui.intro.IntroTheme;
 
 import java.util.List;
 

@@ -1,4 +1,4 @@
-package main.java.com.witcher.ui.intro.view;
+package com.witcher.ui.intro.view;
 
 /** Плашка имени говорящего над диалоговым окном — общая геометрия Swing / LibGDX. */
 public final class IntroSpeakerPlateLayout {

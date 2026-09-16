@@ -1,4 +1,4 @@
-package main.java.com.witcher.chapter1;
+package com.witcher.chapter1;
 
 /**
  * Фазы главы 1 — переключает {@link Chapter1Director}.

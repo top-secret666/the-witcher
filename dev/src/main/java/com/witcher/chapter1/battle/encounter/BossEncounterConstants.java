@@ -1,6 +1,6 @@
-package main.java.com.witcher.chapter1.battle.encounter;
+package com.witcher.chapter1.battle.encounter;
 
-import main.java.com.witcher.chapter1.battle.BossVnTypingConstants;
+import com.witcher.chapter1.battle.BossVnTypingConstants;
 /** Тайминги лесного VN-энкаунтера — без логики. */
 public final class BossEncounterConstants {
 

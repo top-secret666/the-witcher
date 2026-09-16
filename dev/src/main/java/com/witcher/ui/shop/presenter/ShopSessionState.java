@@ -1,10 +1,10 @@
-package main.java.com.witcher.ui.shop.presenter;
+package com.witcher.ui.shop.presenter;
 
-import main.java.com.witcher.ui.shop.EquipmentFilter;
-import main.java.com.witcher.ui.shop.ShopCatalogEntry;
-import main.java.com.witcher.ui.shop.ShopCategory;
-import main.java.com.witcher.shop.EquipSlot;
-import main.java.com.witcher.ui.shop.view.ShopShowcaseItem;
+import com.witcher.ui.shop.EquipmentFilter;
+import com.witcher.ui.shop.ShopCatalogEntry;
+import com.witcher.ui.shop.ShopCategory;
+import com.witcher.shop.EquipSlot;
+import com.witcher.ui.shop.view.ShopShowcaseItem;
 
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
@@ -51,7 +51,7 @@ public final class ShopSessionState {
     public boolean armorHelpActive;
     /** Сколько раз открыли категорию, пока инвентарь пуст (сбрасывается после оффера / покупки). */
     public int armorHelpEmptyCategoryCount;
-    public final java.util.List<main.java.com.witcher.ui.chapter1.view.VnChoiceLayout.ChoiceRect> armorHelpChoiceBounds =
+    public final java.util.List<com.witcher.ui.chapter1.view.VnChoiceLayout.ChoiceRect> armorHelpChoiceBounds =
         new java.util.ArrayList<>();
     public int armorHelpHovered = -1;
     /** После примерки: «приобрести всё / купите сами» с Да/Нет. */

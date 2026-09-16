@@ -1,7 +1,7 @@
-package main.java.com.witcher.ui.chapter1.swing.battle.encounter;
+package com.witcher.ui.chapter1.swing.battle.encounter;
 
-import main.java.com.witcher.chapter1.assets.Chapter1AssetPaths;
-import main.java.com.witcher.ui.chapter1.swing.Chapter1UiAssets;
+import com.witcher.chapter1.assets.Chapter1AssetPaths;
+import com.witcher.ui.chapter1.swing.Chapter1UiAssets;
 
 import java.awt.AlphaComposite;
 import java.awt.Color;

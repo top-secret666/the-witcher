@@ -1,4 +1,4 @@
-package main.java.com.witcher.ui.shop.view;
+package com.witcher.ui.shop.view;
 
 /** Геометрия и тайминги лавки — без логики и без отрисовки. */
 public final class ShopViewConstants {

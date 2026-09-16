@@ -1,4 +1,4 @@
-package main.java.com.witcher.ui.intro;
+package com.witcher.ui.intro;
 
 /** Подписи VN-кнопок (Назад, История, Авто). */
 public final class VnButtonLabels {

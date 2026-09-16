@@ -1,6 +1,6 @@
-package main.java.com.witcher.ui.graphics;
+package com.witcher.ui.graphics;
 
-import main.java.com.witcher.ui.intro.view.IntroLayout;
+import com.witcher.ui.intro.view.IntroLayout;
 
 /**
  * Общая геометрия диалогового окна VN — Swing и GDX используют разные профили шрифта.

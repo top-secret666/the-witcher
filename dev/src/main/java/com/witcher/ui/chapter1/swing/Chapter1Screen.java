@@ -1,12 +1,12 @@
-package main.java.com.witcher.ui.chapter1.swing;
+package com.witcher.ui.chapter1.swing;
 
-import main.java.com.witcher.chapter1.Chapter1Director;
-import main.java.com.witcher.ui.chapter1.presenter.Chapter1Input;
-import main.java.com.witcher.ui.chapter1.presenter.Chapter1Presenter;
-import main.java.com.witcher.ui.chapter1.view.Chapter1View;
-import main.java.com.witcher.ui.graphics.GameWindow;
-import main.java.com.witcher.ui.shop.ShopModel;
-import main.java.com.witcher.ui.shop.swing.ShopScreen;
+import com.witcher.chapter1.Chapter1Director;
+import com.witcher.ui.chapter1.presenter.Chapter1Input;
+import com.witcher.ui.chapter1.presenter.Chapter1Presenter;
+import com.witcher.ui.chapter1.view.Chapter1View;
+import com.witcher.ui.graphics.GameWindow;
+import com.witcher.ui.shop.ShopModel;
+import com.witcher.ui.shop.swing.ShopScreen;
 
 import java.awt.Graphics2D;
 import java.awt.event.KeyEvent;

@@ -1,7 +1,7 @@
-package main.java.com.witcher.ui.shop.swing;
+package com.witcher.ui.shop.swing;
 
-import main.java.com.witcher.ui.shop.bridge.ShopBakeKeys;
-import main.java.com.witcher.ui.shop.bridge.ShopGdxBridge;
+import com.witcher.ui.shop.bridge.ShopBakeKeys;
+import com.witcher.ui.shop.bridge.ShopGdxBridge;
 
 import java.awt.image.BufferedImage;
 

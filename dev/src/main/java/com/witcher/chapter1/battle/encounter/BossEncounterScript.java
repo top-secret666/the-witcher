@@ -1,7 +1,7 @@
-package main.java.com.witcher.chapter1.battle.encounter;
+package com.witcher.chapter1.battle.encounter;
 
-import main.java.com.witcher.chapter1.assets.Chapter1AssetPaths;
-import main.java.com.witcher.ui.intro.IntroTheme;
+import com.witcher.chapter1.assets.Chapter1AssetPaths;
+import com.witcher.ui.intro.IntroTheme;
 
 import java.util.List;
 

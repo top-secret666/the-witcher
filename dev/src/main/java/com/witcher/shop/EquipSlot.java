@@ -1,10 +1,10 @@
-package main.java.com.witcher.shop;
+package com.witcher.shop;
 
-import main.java.com.witcher.model.armour.Armour;
-import main.java.com.witcher.model.armour.Boots;
-import main.java.com.witcher.model.armour.Chestpiece;
-import main.java.com.witcher.model.armour.Gloves;
-import main.java.com.witcher.model.armour.Trousers;
+import com.witcher.model.armour.Armour;
+import com.witcher.model.armour.Boots;
+import com.witcher.model.armour.Chestpiece;
+import com.witcher.model.armour.Gloves;
+import com.witcher.model.armour.Trousers;
 
 /** Слоты брони Геральта (лавка и прогресс главы 1). Оружие — отдельно в UI экипировки. */
 public enum EquipSlot {

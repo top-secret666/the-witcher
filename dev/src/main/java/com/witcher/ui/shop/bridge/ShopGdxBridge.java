@@ -1,7 +1,7 @@
-package main.java.com.witcher.ui.shop.bridge;
+package com.witcher.ui.shop.bridge;
 
-import main.java.com.witcher.ui.shop.ArmourIconRegistry;
-import main.java.com.witcher.ui.shop.ShopEntryIcons;
+import com.witcher.ui.shop.ArmourIconRegistry;
+import com.witcher.ui.shop.ShopEntryIcons;
 
 import java.awt.image.BufferedImage;
 
@@ -11,8 +11,8 @@ import java.awt.image.BufferedImage;
  */
 public final class ShopGdxBridge {
 
-    private static final String HYBRID_ICONS = "main.java.com.witcher.gdx.bridge.HybridShopIcons";
-    private static final String HYBRID_UI = "main.java.com.witcher.gdx.bridge.HybridShopUiAssets";
+    private static final String HYBRID_ICONS = "com.witcher.gdx.bridge.HybridShopIcons";
+    private static final String HYBRID_UI = "com.witcher.gdx.bridge.HybridShopUiAssets";
 
     private ShopGdxBridge() {
     }

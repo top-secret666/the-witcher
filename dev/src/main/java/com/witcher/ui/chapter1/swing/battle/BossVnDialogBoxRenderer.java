@@ -1,7 +1,7 @@
-package main.java.com.witcher.ui.chapter1.swing.battle;
+package com.witcher.ui.chapter1.swing.battle;
 
-import main.java.com.witcher.ui.graphics.DialogBoxRenderer;
-import main.java.com.witcher.ui.graphics.GameFonts;
+import com.witcher.ui.graphics.DialogBoxRenderer;
+import com.witcher.ui.graphics.GameFonts;
 
 import java.awt.Color;
 import java.awt.Font;

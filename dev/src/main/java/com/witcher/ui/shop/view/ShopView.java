@@ -1,10 +1,10 @@
-package main.java.com.witcher.ui.shop.view;
+package com.witcher.ui.shop.view;
 
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 
 /**
- * Контракт отрисовки экрана лавки — реализация Swing: {@link main.java.com.witcher.ui.shop.swing.ShopSwingView}.
+ * Контракт отрисовки экрана лавки — реализация Swing: {@link com.witcher.ui.shop.swing.ShopSwingView}.
  */
 public interface ShopView {
 

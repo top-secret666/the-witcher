@@ -173,6 +173,7 @@ def main() -> None:
         ("ui/shop_card_selected.png", CARD_W, CARD_H, {}),
         ("ui/shop_btn_buy_disabled.png", BTN_W, BTN_H, {}),
         ("ui/shop_btn_buy_normal.png", BTN_W, BTN_H, {}),
+        ("ui/shop_btn_buy_hover.png", BTN_W, BTN_H, {}),
         ("ui/inventory_bag_closed.png", 40, 40, {"crop": True, "icon": True}),
         ("ui/inventory_bag_open.png", 40, 40, {"crop": True, "icon": True}),
         ("ui/inventory_bag_hover.png", 40, 40, {"crop": True, "icon": True}),

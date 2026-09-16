@@ -1,17 +1,17 @@
-package main.java.com.witcher.ui;
+package com.witcher.ui;
 
-import main.java.com.witcher.exception.InvalidPriceException;
-import main.java.com.witcher.exception.InvalidPriceRangeException;
-import main.java.com.witcher.exception.NoArmourFoundException;
-import main.java.com.witcher.model.armour.Armour;
-import main.java.com.witcher.model.sets.ArmourSet;
-import main.java.com.witcher.repository.ArmourRepository;
-import main.java.com.witcher.service.ArmorCalculationService;
-import main.java.com.witcher.service.ArmorService;
-import main.java.com.witcher.service.ArmorSortingService;
-import main.java.com.witcher.service.SetService;
-import main.java.com.witcher.validation.ErrorHandler;
-import main.java.com.witcher.validation.InputValidator;
+import com.witcher.exception.InvalidPriceException;
+import com.witcher.exception.InvalidPriceRangeException;
+import com.witcher.exception.NoArmourFoundException;
+import com.witcher.model.armour.Armour;
+import com.witcher.model.sets.ArmourSet;
+import com.witcher.repository.ArmourRepository;
+import com.witcher.service.ArmorCalculationService;
+import com.witcher.service.ArmorService;
+import com.witcher.service.ArmorSortingService;
+import com.witcher.service.SetService;
+import com.witcher.validation.ErrorHandler;
+import com.witcher.validation.InputValidator;
 
 import java.util.*;
 

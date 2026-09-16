@@ -1,4 +1,4 @@
-package main.java.com.witcher.chapter1.battle;
+package com.witcher.chapter1.battle;
 
 /** Общие тайминги typewriter-VN (брифинг, лес, интро). */
 public final class BossVnTypingConstants {

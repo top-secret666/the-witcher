@@ -1,4 +1,4 @@
-package main.java.com.witcher.chapter1.vn;
+package com.witcher.chapter1.vn;
 
 import java.util.List;
 

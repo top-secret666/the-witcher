@@ -1,4 +1,4 @@
-package main.java.com.witcher.chapter1.battle;
+package com.witcher.chapter1.battle;
 
 /** Длительности катсцены мечей — общее для Swing и движка. */
 public final class SwordCutsceneTiming {

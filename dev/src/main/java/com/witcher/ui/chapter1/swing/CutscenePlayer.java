@@ -1,9 +1,9 @@
-package main.java.com.witcher.ui.chapter1.swing;
+package com.witcher.ui.chapter1.swing;
 
-import main.java.com.witcher.chapter1.cutscene.CutsceneCatalog;
-import main.java.com.witcher.chapter1.cutscene.CutsceneId;
-import main.java.com.witcher.chapter1.cutscene.CutsceneSkipPolicy;
-import main.java.com.witcher.ui.chapter1.view.Chapter1ViewConstants;
+import com.witcher.chapter1.cutscene.CutsceneCatalog;
+import com.witcher.chapter1.cutscene.CutsceneId;
+import com.witcher.chapter1.cutscene.CutsceneSkipPolicy;
+import com.witcher.ui.chapter1.view.Chapter1ViewConstants;
 
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;

@@ -1,0 +1,210 @@
+package com.witcher.gdx.shop;
+
+import com.witcher.model.armour.Armour;
+import com.witcher.gdx.graphics.PixelTextures;
+import com.witcher.ui.shop.ShopCatalogEntry;
+import com.witcher.ui.shop.ShopCategory;
+import com.witcher.ui.shop.ShopEntryIcons;
+
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+import java.awt.image.BufferedImage;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+
+/** LibGDX-иконки доспехов — аналог {@link com.witcher.ui.shop.ArmourIconRegistry}. */
+public final class GdxArmourIconRegistry implements ShopEntryIcons {
+
+    private static final String MAP_PATH = "/armor_icon_map.properties";
+
+    private static GdxArmourIconRegistry instance;
+
+    private static final BufferedImage MISSING_ICON = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
+
+    private final int iconSize;
+    private final List<Rule> rules;
+    private final Map<String, BufferedImage> cache = new HashMap<>();
+    private final Set<String> loggedMissing = new HashSet<>();
+
+    private record Rule(String keyword, String fileName) {
+    }
+
+    private GdxArmourIconRegistry(int iconSize) {
+        this.iconSize = iconSize;
+        this.rules = loadRules();
+        preloadDistinctIcons();
+    }
+
+    public static GdxArmourIconRegistry get(int iconSize) {
+        if (instance == null || instance.iconSize != iconSize) {
+            if (instance != null) {
+                instance.cache.clear();
+            }
+            instance = new GdxArmourIconRegistry(iconSize);
+        }
+        return instance;
+    }
+
+    @Override
+    public BufferedImage iconForEntry(ShopCatalogEntry entry, ShopCategory category) {
+        if (entry == null) {
+            return null;
+        }
+        if (entry.armourSet != null) {
+            return iconForName(entry.armourSet.getName(), category);
+        }
+        if (entry.armour != null) {
+            return iconForName(entry.armour.getName(), category);
+        }
+        if (entry.name != null && !entry.name.isBlank()) {
+            return iconForName(entry.name, category);
+        }
+        return null;
+    }
+
+    @Override
+    public BufferedImage iconForArmour(Armour armour, ShopCategory category, int size) {
+        if (armour == null) {
+            return null;
+        }
+        return iconForName(armour.getName(), category, size);
+    }
+
+    public BufferedImage iconForName(String armourName, ShopCategory category) {
+        return iconForName(armourName, category, iconSize);
+    }
+
+    @Override
+    public BufferedImage iconForName(String armourName, ShopCategory category, int size) {
+        if (armourName == null || armourName.isBlank()) {
+            return null;
+        }
+        String file = resolveFile(armourName);
+        if (file == null || !matchesCategory(file, category)) {
+            return null;
+        }
+        String cacheKey = size > 0 && size < iconSize ? file + "@" + size : file + "@full";
+        BufferedImage cached = cache.get(cacheKey);
+        if (cached != null) {
+            return cached == MISSING_ICON ? null : cached;
+        }
+        BufferedImage loaded = loadIcon(file, size);
+        cache.put(cacheKey, loaded != null ? loaded : MISSING_ICON);
+        return loaded;
+    }
+
+    private void preloadDistinctIcons() {
+        HashSet<String> files = new HashSet<>();
+        for (Rule rule : rules) {
+            files.add(rule.fileName);
+        }
+        int loaded = 0;
+        for (String file : files) {
+            if (loadIcon(file, iconSize) != null) {
+                loaded++;
+            }
+        }
+        System.out.println("GdxArmourIconRegistry: " + loaded + "/" + files.size() + " textures ready");
+    }
+
+    private static boolean matchesCategory(String fileName, ShopCategory category) {
+        return com.witcher.ui.shop.ArmourIconMap.matchesCategory(fileName, category);
+    }
+
+    private String resolveFile(String armourName) {
+        String lower = armourName.toLowerCase(Locale.ROOT);
+        for (Rule rule : rules) {
+            if (lower.contains(rule.keyword)) {
+                return rule.fileName;
+            }
+        }
+        return null;
+    }
+
+    private BufferedImage loadIcon(String fileName, int size) {
+        BufferedImage img = PixelTextures.loadLavkaItemIcon(fileName);
+        if (img == null) {
+            if (loggedMissing.add(fileName)) {
+                System.err.println("GdxArmourIconRegistry: missing file " + fileName);
+            }
+            return null;
+        }
+        int[] bounds = PixelTextures.computeOpaqueBounds("sprites/lavka/icons/items/" + fileName);
+        if (bounds != null
+            && bounds[0] >= 0 && bounds[1] >= 0
+            && bounds[0] + bounds[2] <= img.getWidth()
+            && bounds[1] + bounds[3] <= img.getHeight()) {
+            img = img.getSubimage(bounds[0], bounds[1], bounds[2], bounds[3]);
+        }
+        if (size > 0 && size < iconSize) {
+            return scaleUniform(img, size);
+        }
+        return img;
+    }
+
+    private static BufferedImage scaleUniform(BufferedImage src, int maxSize) {
+        int w = src.getWidth();
+        int h = src.getHeight();
+        if (w <= maxSize && h <= maxSize) {
+            return src;
+        }
+        float scale = Math.min((float) maxSize / w, (float) maxSize / h);
+        int dstW = Math.max(1, Math.round(w * scale));
+        int dstH = Math.max(1, Math.round(h * scale));
+        return scaleTo(src, dstW, dstH);
+    }
+
+    private static BufferedImage scaleTo(BufferedImage src, int dstW, int dstH) {
+        BufferedImage dst = new BufferedImage(dstW, dstH, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = dst.createGraphics();
+        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+        g.drawImage(src, 0, 0, dstW, dstH, null);
+        g.dispose();
+        return dst;
+    }
+
+    private static List<Rule> loadRules() {
+        List<Rule> out = new ArrayList<>();
+        try (InputStream in = GdxArmourIconRegistry.class.getResourceAsStream(MAP_PATH)) {
+            if (in == null) {
+                System.err.println("GdxArmourIconRegistry: map not found at " + MAP_PATH);
+                return out;
+            }
+            try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(in, StandardCharsets.UTF_8))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    line = line.strip();
+                    if (line.isEmpty() || line.startsWith("#")) {
+                        continue;
+                    }
+                    int sep = line.indexOf('=');
+                    if (sep <= 0) {
+                        continue;
+                    }
+                    String keyword = line.substring(0, sep).strip().toLowerCase(Locale.ROOT);
+                    String file = line.substring(sep + 1).strip();
+                    if (!keyword.isEmpty() && !file.isEmpty()) {
+                        out.add(new Rule(keyword, file));
+                    }
+                }
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to load armour icon map", e);
+        }
+        out.sort(Comparator.comparingInt((Rule rule) -> rule.keyword.length()).reversed());
+        System.out.println("GdxArmourIconRegistry: " + out.size() + " name rules loaded");
+        return out;
+    }
+}

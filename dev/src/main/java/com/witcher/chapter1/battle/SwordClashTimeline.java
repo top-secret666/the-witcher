@@ -1,4 +1,4 @@
-package main.java.com.witcher.chapter1.battle;
+package com.witcher.chapter1.battle;
 
 import java.util.ArrayList;
 import java.util.Collections;

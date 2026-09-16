@@ -1,9 +1,9 @@
-package main.java.com.witcher.ui.chapter1.swing;
+package com.witcher.ui.chapter1.swing;
 
-import main.java.com.witcher.chapter1.vn.VnSceneState;
-import main.java.com.witcher.ui.chapter1.view.VnChoiceLayout;
-import main.java.com.witcher.ui.graphics.DialogBoxRenderer;
-import main.java.com.witcher.ui.graphics.GameFonts;
+import com.witcher.chapter1.vn.VnSceneState;
+import com.witcher.ui.chapter1.view.VnChoiceLayout;
+import com.witcher.ui.graphics.DialogBoxRenderer;
+import com.witcher.ui.graphics.GameFonts;
 
 import java.awt.Color;
 import java.awt.FontMetrics;

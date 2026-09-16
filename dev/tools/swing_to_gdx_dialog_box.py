@@ -150,7 +150,7 @@ def rgba_const(name: str, rgba: list[int]) -> str:
 def emit_java() -> str:
     t = THEME
     return (
-        "package main.java.com.witcher.ui.intro.view;\n\n"
+        "package com.witcher.ui.intro.view;\n\n"
         "/**\n"
         " * Цвета и параметры диалогового окна — tools/swing_to_gdx_dialog_box.py\n"
         " * Источник: DialogBoxRenderer.java (Swing).\n"

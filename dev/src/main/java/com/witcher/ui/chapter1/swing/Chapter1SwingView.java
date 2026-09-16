@@ -1,26 +1,26 @@
-package main.java.com.witcher.ui.chapter1.swing;
+package com.witcher.ui.chapter1.swing;
 
-import main.java.com.witcher.chapter1.Chapter1Phase;
-import main.java.com.witcher.chapter1.battle.BossEntry;
-import main.java.com.witcher.ui.chapter1.presenter.Chapter1Presenter;
-import main.java.com.witcher.ui.chapter1.swing.battle.BattleResultView;
-import main.java.com.witcher.ui.chapter1.swing.battle.map.BossMapView;
-import main.java.com.witcher.ui.chapter1.swing.battle.briefing.BossBriefingDissolveRenderer;
-import main.java.com.witcher.ui.chapter1.swing.battle.briefing.BossQuestBriefingView;
-import main.java.com.witcher.ui.shop.view.ShopViewConstants;
-import main.java.com.witcher.ui.chapter1.swing.battle.encounter.BossEncounterView;
-import main.java.com.witcher.ui.chapter1.swing.battle.glitch.BossGlitchRevealView;
-import main.java.com.witcher.ui.chapter1.swing.ending.DemoEndingView;
-import main.java.com.witcher.ui.chapter1.swing.battle.wolf.WolfEndingView;
-import main.java.com.witcher.ui.chapter1.swing.glitch.GlitchOverlayRenderer;
-import main.java.com.witcher.ui.chapter1.view.Chapter1View;
-import main.java.com.witcher.ui.pause.PauseCornerButton;
+import com.witcher.chapter1.Chapter1Phase;
+import com.witcher.chapter1.battle.BossEntry;
+import com.witcher.ui.chapter1.presenter.Chapter1Presenter;
+import com.witcher.ui.chapter1.swing.battle.BattleResultView;
+import com.witcher.ui.chapter1.swing.battle.map.BossMapView;
+import com.witcher.ui.chapter1.swing.battle.briefing.BossBriefingDissolveRenderer;
+import com.witcher.ui.chapter1.swing.battle.briefing.BossQuestBriefingView;
+import com.witcher.ui.shop.view.ShopViewConstants;
+import com.witcher.ui.chapter1.swing.battle.encounter.BossEncounterView;
+import com.witcher.ui.chapter1.swing.battle.glitch.BossGlitchRevealView;
+import com.witcher.ui.chapter1.swing.ending.DemoEndingView;
+import com.witcher.ui.chapter1.swing.battle.wolf.WolfEndingView;
+import com.witcher.ui.chapter1.swing.glitch.GlitchOverlayRenderer;
+import com.witcher.ui.chapter1.view.Chapter1View;
+import com.witcher.ui.pause.PauseCornerButton;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 
-/** Отрисовка кадра главы 1 (аналог {@link main.java.com.witcher.ui.shop.swing.ShopSwingView}). */
+/** Отрисовка кадра главы 1 (аналог {@link com.witcher.ui.shop.swing.ShopSwingView}). */
 public final class Chapter1SwingView implements Chapter1View {
 
   @Override

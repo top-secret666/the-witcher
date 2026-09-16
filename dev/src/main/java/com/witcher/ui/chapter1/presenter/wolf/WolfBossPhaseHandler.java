@@ -1,18 +1,18 @@
-package main.java.com.witcher.ui.chapter1.presenter.wolf;
+package com.witcher.ui.chapter1.presenter.wolf;
 
-import main.java.com.witcher.chapter1.Chapter1Director;
-import main.java.com.witcher.chapter1.Chapter1Phase;
-import main.java.com.witcher.chapter1.battle.BossEntry;
-import main.java.com.witcher.chapter1.battle.briefing.BossQuestBriefingController;
-import main.java.com.witcher.chapter1.battle.encounter.BossEncounterController;
-import main.java.com.witcher.chapter1.battle.glitch.BossGlitchRevealController;
-import main.java.com.witcher.chapter1.battle.wolf.WolfBossFinaleController;
-import main.java.com.witcher.chapter1.ending.WolfEndingType;
-import main.java.com.witcher.chapter1.loop.LoopRules;
-import main.java.com.witcher.chapter1.shop.BossMemoryFragments;
-import main.java.com.witcher.chapter1.view.Chapter1Layout;
-import main.java.com.witcher.chapter1.vn.VnSceneState;
-import main.java.com.witcher.ui.chapter1.view.VnChoiceLayout;
+import com.witcher.chapter1.Chapter1Director;
+import com.witcher.chapter1.Chapter1Phase;
+import com.witcher.chapter1.battle.BossEntry;
+import com.witcher.chapter1.battle.briefing.BossQuestBriefingController;
+import com.witcher.chapter1.battle.encounter.BossEncounterController;
+import com.witcher.chapter1.battle.glitch.BossGlitchRevealController;
+import com.witcher.chapter1.battle.wolf.WolfBossFinaleController;
+import com.witcher.chapter1.ending.WolfEndingType;
+import com.witcher.chapter1.loop.LoopRules;
+import com.witcher.chapter1.shop.BossMemoryFragments;
+import com.witcher.chapter1.view.Chapter1Layout;
+import com.witcher.chapter1.vn.VnSceneState;
+import com.witcher.ui.chapter1.view.VnChoiceLayout;
 
 import java.util.List;
 

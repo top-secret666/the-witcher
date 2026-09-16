@@ -1,4 +1,4 @@
-package main.java.com.witcher.chapter1.battle;
+package com.witcher.chapter1.battle;
 
 /** Уровень сложности боя — растёт с номером витка. */
 public enum BattleTier {

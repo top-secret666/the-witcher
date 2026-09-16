@@ -5,7 +5,7 @@ java {
 
 sourceSets.main.java.srcDirs = ['src/main/java']
 
-project.ext.mainClassName = 'main.java.com.witcher.desktop.DesktopLauncher'
+project.ext.mainClassName = 'com.witcher.desktop.DesktopLauncher'
 project.ext.assetsDir = new File('../src/main/resources/assets')
 
 tasks.register('run', JavaExec) {
@@ -24,7 +24,7 @@ tasks.register('writeClasspath') {
     doLast {
         def out = rootProject.file('.gdx-classpath.txt')
         out.text = sourceSets.main.runtimeClasspath.asPath
-        println 'Classpath zapisан: ' + out.absolutePath
+        println 'Classpath written: ' + out.absolutePath
     }
 }
 

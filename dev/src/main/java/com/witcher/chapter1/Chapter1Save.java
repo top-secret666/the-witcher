@@ -1,6 +1,6 @@
-package main.java.com.witcher.chapter1;
+package com.witcher.chapter1;
 
-import main.java.com.witcher.shop.EquipSlot;
+import com.witcher.shop.EquipSlot;
 
 import java.io.IOException;
 import java.io.InputStream;

@@ -1,6 +1,6 @@
-package main.java.com.witcher.chapter1.battle.glitch;
+package com.witcher.chapter1.battle.glitch;
 
-import main.java.com.witcher.ui.intro.IntroEasing;
+import com.witcher.ui.intro.IntroEasing;
 
 /** Таймлайн глитч-пробуждения Волка — строгий порядок слоёв. */
 public final class BossGlitchRevealTimeline {

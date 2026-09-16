@@ -1,7 +1,7 @@
-package main.java.com.witcher.chapter1.loop;
+package com.witcher.chapter1.loop;
 
-import main.java.com.witcher.chapter1.Chapter1Save;
-import main.java.com.witcher.chapter1.Chapter1Session;
+import com.witcher.chapter1.Chapter1Save;
+import com.witcher.chapter1.Chapter1Session;
 
 /**
  * Правила сброса и сохранения витка петли.

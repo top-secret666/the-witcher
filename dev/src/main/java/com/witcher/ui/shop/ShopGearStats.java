@@ -1,4 +1,4 @@
-package main.java.com.witcher.ui.shop;
+package com.witcher.ui.shop;
 
 /** Три шкалы на обороте карточки (как в RPG-меню). */
 public record ShopGearStats(int protection, int stamina, int signs) {

@@ -1,33 +1,33 @@
-package main.java.com.witcher.ui.shop.swing;
+package com.witcher.ui.shop.swing;
 
-import main.java.com.witcher.ui.graphics.DialogBoxRenderer;
-import main.java.com.witcher.ui.graphics.GameFonts;
-import main.java.com.witcher.ui.graphics.MenuCursorPaths;
-import main.java.com.witcher.ui.graphics.Sprite;
-import main.java.com.witcher.ui.graphics.UiChrome;
-import main.java.com.witcher.model.armour.Armour;
-import main.java.com.witcher.ui.shop.ShopEntryIcons;
-import main.java.com.witcher.ui.shop.ShopCatalogEntry;
-import main.java.com.witcher.ui.shop.ShopCategory;
-import main.java.com.witcher.ui.shop.DukeLines;
-import main.java.com.witcher.ui.shop.ShopModel;
-import main.java.com.witcher.ui.shop.presenter.ShopPresenter;
-import main.java.com.witcher.ui.shop.presenter.ShopScreenState;
-import main.java.com.witcher.ui.shop.presenter.ShopSessionState;
-import main.java.com.witcher.ui.shop.swing.overlay.ShopEquipmentOverlay;
-import main.java.com.witcher.ui.shop.swing.overlay.ShopInventoryOverlay;
-import main.java.com.witcher.ui.shop.swing.overlay.ShopOverlayContext;
-import main.java.com.witcher.ui.shop.view.ShopLayout;
-import main.java.com.witcher.ui.shop.view.ShopShowcaseItem;
-import main.java.com.witcher.ui.shop.view.ShopView;
-import main.java.com.witcher.ui.shop.view.ShopViewConstants;
-import main.java.com.witcher.ui.shop.view.anim.ShopCategoryAnimator;
-import main.java.com.witcher.ui.shop.view.anim.ShopRevealAnimator;
-import main.java.com.witcher.ui.shop.ShopInventoryKind;
-import main.java.com.witcher.ui.shop.ShopInventorySlot;
-import main.java.com.witcher.ui.chapter1.swing.battle.BattleCardRevealView;
+import com.witcher.ui.graphics.DialogBoxRenderer;
+import com.witcher.ui.graphics.GameFonts;
+import com.witcher.ui.graphics.MenuCursorPaths;
+import com.witcher.ui.graphics.Sprite;
+import com.witcher.ui.graphics.UiChrome;
+import com.witcher.model.armour.Armour;
+import com.witcher.ui.shop.ShopEntryIcons;
+import com.witcher.ui.shop.ShopCatalogEntry;
+import com.witcher.ui.shop.ShopCategory;
+import com.witcher.ui.shop.DukeLines;
+import com.witcher.ui.shop.ShopModel;
+import com.witcher.ui.shop.presenter.ShopPresenter;
+import com.witcher.ui.shop.presenter.ShopScreenState;
+import com.witcher.ui.shop.presenter.ShopSessionState;
+import com.witcher.ui.shop.swing.overlay.ShopEquipmentOverlay;
+import com.witcher.ui.shop.swing.overlay.ShopInventoryOverlay;
+import com.witcher.ui.shop.swing.overlay.ShopOverlayContext;
+import com.witcher.ui.shop.view.ShopLayout;
+import com.witcher.ui.shop.view.ShopShowcaseItem;
+import com.witcher.ui.shop.view.ShopView;
+import com.witcher.ui.shop.view.ShopViewConstants;
+import com.witcher.ui.shop.view.anim.ShopCategoryAnimator;
+import com.witcher.ui.shop.view.anim.ShopRevealAnimator;
+import com.witcher.ui.shop.ShopInventoryKind;
+import com.witcher.ui.shop.ShopInventorySlot;
+import com.witcher.ui.chapter1.swing.battle.BattleCardRevealView;
 
-import static main.java.com.witcher.ui.shop.view.ShopViewConstants.*;
+import static com.witcher.ui.shop.view.ShopViewConstants.*;
 
 import java.awt.*;
 import java.awt.geom.AffineTransform;
@@ -302,8 +302,8 @@ public final class ShopSwingView implements ShopView {
 
     private void drawArmorHelpChoices(Graphics2D g, int sw, int sh) {
         var choices = java.util.List.of(
-            new main.java.com.witcher.chapter1.vn.VnChoice("yes", "Да", 0, 0),
-            new main.java.com.witcher.chapter1.vn.VnChoice("no", "Нет", 0, 0)
+            new com.witcher.chapter1.vn.VnChoice("yes", "Да", 0, 0),
+            new com.witcher.chapter1.vn.VnChoice("no", "Нет", 0, 0)
         );
         layoutYesNoChoiceBounds(sw, sh, ui.equipmentOpen || ui.outfitConfirmActive);
 
@@ -366,13 +366,13 @@ public final class ShopSwingView implements ShopView {
             int x0 = (sw - totalW) / 2;
             int y0 = sh / 2 + 16;
             ui.armorHelpChoiceBounds.add(
-                new main.java.com.witcher.ui.chapter1.view.VnChoiceLayout.ChoiceRect(0, x0, y0, btnW, rowH));
+                new com.witcher.ui.chapter1.view.VnChoiceLayout.ChoiceRect(0, x0, y0, btnW, rowH));
             ui.armorHelpChoiceBounds.add(
-                new main.java.com.witcher.ui.chapter1.view.VnChoiceLayout.ChoiceRect(1, x0 + btnW + gap, y0, btnW, rowH));
+                new com.witcher.ui.chapter1.view.VnChoiceLayout.ChoiceRect(1, x0 + btnW + gap, y0, btnW, rowH));
             return;
         }
         if (equipmentScreen) {
-            var equip = main.java.com.witcher.ui.shop.view.EquipmentOverlayLayout.compute(sw, sh);
+            var equip = com.witcher.ui.shop.view.EquipmentOverlayLayout.compute(sw, sh);
             btnW = 88;
             gap = 8;
             rowH = 24;
@@ -384,9 +384,9 @@ public final class ShopSwingView implements ShopView {
             }
             int y0 = sh - DIALOG_TEXT_ZONE - rowH + 6;
             ui.armorHelpChoiceBounds.add(
-                new main.java.com.witcher.ui.chapter1.view.VnChoiceLayout.ChoiceRect(0, x0, y0, btnW, rowH));
+                new com.witcher.ui.chapter1.view.VnChoiceLayout.ChoiceRect(0, x0, y0, btnW, rowH));
             ui.armorHelpChoiceBounds.add(
-                new main.java.com.witcher.ui.chapter1.view.VnChoiceLayout.ChoiceRect(
+                new com.witcher.ui.chapter1.view.VnChoiceLayout.ChoiceRect(
                     1, x0 + btnW + gap, y0, btnW, rowH));
             return;
         }
@@ -394,9 +394,9 @@ public final class ShopSwingView implements ShopView {
         int x0 = (sw - totalW) / 2;
         int y0 = sh - DIALOG_TEXT_ZONE - rowH + 6;
         ui.armorHelpChoiceBounds.add(
-            new main.java.com.witcher.ui.chapter1.view.VnChoiceLayout.ChoiceRect(0, x0, y0, btnW, rowH));
+            new com.witcher.ui.chapter1.view.VnChoiceLayout.ChoiceRect(0, x0, y0, btnW, rowH));
         ui.armorHelpChoiceBounds.add(
-            new main.java.com.witcher.ui.chapter1.view.VnChoiceLayout.ChoiceRect(1, x0 + btnW + gap, y0, btnW, rowH));
+            new com.witcher.ui.chapter1.view.VnChoiceLayout.ChoiceRect(1, x0 + btnW + gap, y0, btnW, rowH));
     }
 
     private void drawPurchaseSkipHint(Graphics2D g, ShopLayout layout) {
@@ -451,7 +451,7 @@ public final class ShopSwingView implements ShopView {
     }
 
     private void drawBattleCardFlying(Graphics2D g, int sw, int sh, ShopLayout layout) {
-        BufferedImage card = main.java.com.witcher.ui.chapter1.swing.Chapter1UiAssets.cardClosed();
+        BufferedImage card = com.witcher.ui.chapter1.swing.Chapter1UiAssets.cardClosed();
         if (card == null) {
             return;
         }

@@ -1,4 +1,4 @@
-package main.java.com.witcher.model.armour;
+package com.witcher.model.armour;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -1,6 +1,6 @@
-package main.java.com.witcher.chapter1.battle;
+package com.witcher.chapter1.battle;
 
-import main.java.com.witcher.chapter1.battle.briefing.BossQuestBriefingConstants;
+import com.witcher.chapter1.battle.briefing.BossQuestBriefingConstants;
 
 /**
  * Пиксельный dissolve / затемнение экрана (раньше в конце брифинга).

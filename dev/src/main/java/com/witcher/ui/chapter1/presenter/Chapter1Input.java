@@ -1,4 +1,4 @@
-package main.java.com.witcher.ui.chapter1.presenter;
+package com.witcher.ui.chapter1.presenter;
 
 /** Ввод кадра для {@link Chapter1Presenter}. */
 public record Chapter1Input(

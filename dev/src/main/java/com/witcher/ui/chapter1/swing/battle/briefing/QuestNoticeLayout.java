@@ -1,7 +1,7 @@
-package main.java.com.witcher.ui.chapter1.swing.battle.briefing;
+package com.witcher.ui.chapter1.swing.battle.briefing;
 
-import main.java.com.witcher.ui.chapter1.swing.Chapter1UiAssets;
-import main.java.com.witcher.ui.graphics.DialogBoxRenderer;
+import com.witcher.ui.chapter1.swing.Chapter1UiAssets;
+import com.witcher.ui.graphics.DialogBoxRenderer;
 
 import java.awt.image.BufferedImage;
 

@@ -1,4 +1,4 @@
-package main.java.com.witcher.ui.pause;
+package com.witcher.ui.pause;
 
 import java.awt.Color;
 import java.awt.Graphics2D;

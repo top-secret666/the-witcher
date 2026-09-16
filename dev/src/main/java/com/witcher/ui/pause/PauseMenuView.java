@@ -1,6 +1,6 @@
-package main.java.com.witcher.ui.pause;
+package com.witcher.ui.pause;
 
-import main.java.com.witcher.ui.graphics.GameFonts;
+import com.witcher.ui.graphics.GameFonts;
 
 import java.awt.Color;
 import java.awt.Font;

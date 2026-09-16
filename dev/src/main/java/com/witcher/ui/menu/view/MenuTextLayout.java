@@ -1,6 +1,6 @@
-package main.java.com.witcher.ui.menu.view;
+package com.witcher.ui.menu.view;
 
-import main.java.com.witcher.ui.menu.MainMenuController;
+import com.witcher.ui.menu.MainMenuController;
 
 /**
  * Позиция подписи на кнопке меню — якоря из {@link MenuLayout} (скрипт swing_to_gdx_layout.py).

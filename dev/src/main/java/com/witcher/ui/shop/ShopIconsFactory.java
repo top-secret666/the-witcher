@@ -1,6 +1,6 @@
-package main.java.com.witcher.ui.shop;
+package com.witcher.ui.shop;
 
-import main.java.com.witcher.ui.shop.bridge.ShopGdxBridge;
+import com.witcher.ui.shop.bridge.ShopGdxBridge;
 
 /**
  * Фабрика иконок товаров: при наличии GDX-bridge в classpath — GPU-запекание,

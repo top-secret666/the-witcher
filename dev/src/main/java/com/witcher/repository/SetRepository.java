@@ -1,6 +1,6 @@
-package main.java.com.witcher.repository;
+package com.witcher.repository;
 
-import main.java.com.witcher.model.sets.*;
+import com.witcher.model.sets.*;
 import java.util.List;
 import java.util.ArrayList;
 

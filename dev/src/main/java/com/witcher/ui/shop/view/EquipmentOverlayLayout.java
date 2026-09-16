@@ -1,20 +1,20 @@
-package main.java.com.witcher.ui.shop.view;
+package com.witcher.ui.shop.view;
 
-import main.java.com.witcher.ui.shop.EquipmentFilter;
-import main.java.com.witcher.shop.EquipSlot;
+import com.witcher.ui.shop.EquipmentFilter;
+import com.witcher.shop.EquipSlot;
 
 import java.awt.Rectangle;
 
-import static main.java.com.witcher.ui.shop.view.ShopViewConstants.EQUIP_FILTER_BAR_H;
-import static main.java.com.witcher.ui.shop.view.ShopViewConstants.EQUIP_FILTER_ICON;
-import static main.java.com.witcher.ui.shop.view.ShopViewConstants.EQUIP_GRID_CELL;
-import static main.java.com.witcher.ui.shop.view.ShopViewConstants.EQUIP_GRID_COLS;
-import static main.java.com.witcher.ui.shop.view.ShopViewConstants.EQUIP_LIST_W;
-import static main.java.com.witcher.ui.shop.view.ShopViewConstants.EQUIP_MARGIN;
-import static main.java.com.witcher.ui.shop.view.ShopViewConstants.EQUIP_RIGHT_COL_W;
-import static main.java.com.witcher.ui.shop.view.ShopViewConstants.EQUIP_STATS_H;
-import static main.java.com.witcher.ui.shop.view.ShopViewConstants.EQUIP_STATS_W;
-import static main.java.com.witcher.ui.shop.view.ShopViewConstants.EQUIP_WEAPON_SLOT_GAP;
+import static com.witcher.ui.shop.view.ShopViewConstants.EQUIP_FILTER_BAR_H;
+import static com.witcher.ui.shop.view.ShopViewConstants.EQUIP_FILTER_ICON;
+import static com.witcher.ui.shop.view.ShopViewConstants.EQUIP_GRID_CELL;
+import static com.witcher.ui.shop.view.ShopViewConstants.EQUIP_GRID_COLS;
+import static com.witcher.ui.shop.view.ShopViewConstants.EQUIP_LIST_W;
+import static com.witcher.ui.shop.view.ShopViewConstants.EQUIP_MARGIN;
+import static com.witcher.ui.shop.view.ShopViewConstants.EQUIP_RIGHT_COL_W;
+import static com.witcher.ui.shop.view.ShopViewConstants.EQUIP_STATS_H;
+import static com.witcher.ui.shop.view.ShopViewConstants.EQUIP_STATS_W;
+import static com.witcher.ui.shop.view.ShopViewConstants.EQUIP_WEAPON_SLOT_GAP;
 
 /** Геометрия оверлея экипировки — без отрисовки и без логики. */
 public final class EquipmentOverlayLayout {

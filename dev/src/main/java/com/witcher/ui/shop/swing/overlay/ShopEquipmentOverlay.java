@@ -1,20 +1,20 @@
-package main.java.com.witcher.ui.shop.swing.overlay;
+package com.witcher.ui.shop.swing.overlay;
 
-import main.java.com.witcher.model.armour.Armour;
-import main.java.com.witcher.model.sets.ArmourSet;
-import main.java.com.witcher.ui.graphics.GameFonts;
-import main.java.com.witcher.ui.shop.ShopOverlayAssets;
-import main.java.com.witcher.ui.shop.swing.ShopStatBarRenderer;
-import main.java.com.witcher.ui.graphics.UiChrome;
-import main.java.com.witcher.ui.shop.EquipmentArmourList;
-import main.java.com.witcher.ui.shop.EquipmentGridEntry;
-import main.java.com.witcher.ui.shop.ShopInventorySlot;
-import main.java.com.witcher.ui.shop.EquipmentFilter;
-import main.java.com.witcher.ui.shop.ShopCategory;
-import main.java.com.witcher.shop.EquipSlot;
-import main.java.com.witcher.ui.shop.ShopModel;
+import com.witcher.model.armour.Armour;
+import com.witcher.model.sets.ArmourSet;
+import com.witcher.ui.graphics.GameFonts;
+import com.witcher.ui.shop.ShopOverlayAssets;
+import com.witcher.ui.shop.swing.ShopStatBarRenderer;
+import com.witcher.ui.graphics.UiChrome;
+import com.witcher.ui.shop.EquipmentArmourList;
+import com.witcher.ui.shop.EquipmentGridEntry;
+import com.witcher.ui.shop.ShopInventorySlot;
+import com.witcher.ui.shop.EquipmentFilter;
+import com.witcher.ui.shop.ShopCategory;
+import com.witcher.shop.EquipSlot;
+import com.witcher.ui.shop.ShopModel;
 
-import main.java.com.witcher.ui.shop.view.EquipmentOverlayLayout;
+import com.witcher.ui.shop.view.EquipmentOverlayLayout;
 
 import java.awt.AlphaComposite;
 import java.awt.Color;
@@ -27,9 +27,9 @@ import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.util.List;
 
-import static main.java.com.witcher.ui.shop.view.ShopViewConstants.EQUIP_FILTER_ICON;
-import static main.java.com.witcher.ui.shop.view.ShopViewConstants.EQUIP_GRID_CELL;
-import static main.java.com.witcher.ui.shop.view.ShopViewConstants.EQUIP_GRID_ICON;
+import static com.witcher.ui.shop.view.ShopViewConstants.EQUIP_FILTER_ICON;
+import static com.witcher.ui.shop.view.ShopViewConstants.EQUIP_GRID_CELL;
+import static com.witcher.ui.shop.view.ShopViewConstants.EQUIP_GRID_ICON;
 
 /**
  * Слой экипировки поверх лавки — вынесен из {@code ShopSwingView}.

@@ -1,6 +1,6 @@
-package main.java.com.witcher.service;
+package com.witcher.service;
 
-import main.java.com.witcher.model.armour.*;
+import com.witcher.model.armour.*;
 
 
 import java.util.List;

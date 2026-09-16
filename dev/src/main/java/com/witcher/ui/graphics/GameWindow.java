@@ -1,4 +1,4 @@
-package main.java.com.witcher.ui.graphics;
+package com.witcher.ui.graphics;
 
 import javax.swing.*;
 import java.awt.*;
@@ -10,13 +10,13 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 
-import main.java.com.witcher.ui.audio.GameAudio;
-import main.java.com.witcher.ui.chapter1.swing.Chapter1Screen;
-import main.java.com.witcher.ui.menu.MainMenuController;
-import main.java.com.witcher.ui.pause.PauseMenuController;
-import main.java.com.witcher.ui.pause.PauseMenuView;
-import main.java.com.witcher.ui.pause.PauseCornerButton;
-import main.java.com.witcher.ui.settings.SettingsOverlay;
+import com.witcher.ui.audio.GameAudio;
+import com.witcher.ui.chapter1.swing.Chapter1Screen;
+import com.witcher.ui.menu.MainMenuController;
+import com.witcher.ui.pause.PauseMenuController;
+import com.witcher.ui.pause.PauseMenuView;
+import com.witcher.ui.pause.PauseCornerButton;
+import com.witcher.ui.settings.SettingsOverlay;
 
 public class GameWindow {
 
@@ -74,7 +74,7 @@ public class GameWindow {
     private static final Color TITLE_HOVER = new Color(230, 180, 60);
 
     public GameWindow() {
-        frame = new JFrame("Witcher - Pixel Prototype");
+        frame = new JFrame("The Witcher — Chapter 1");
         // Загрузочное/прототип-окно: убираем системную рамку/заголовок (никакого
         // fullscreen/maximize)
         frame.setUndecorated(true);

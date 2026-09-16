@@ -1,6 +1,6 @@
-package main.java.com.witcher.chapter1.vn;
+package com.witcher.chapter1.vn;
 
-import main.java.com.witcher.chapter1.battle.PlayerAction;
+import com.witcher.chapter1.battle.PlayerAction;
 
 /** Вариант ответа в VN-сцене. */
 public record VnChoice(

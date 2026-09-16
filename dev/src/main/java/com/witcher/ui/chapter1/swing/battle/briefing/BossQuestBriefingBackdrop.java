@@ -1,8 +1,8 @@
-package main.java.com.witcher.ui.chapter1.swing.battle.briefing;
+package com.witcher.ui.chapter1.swing.battle.briefing;
 
-import main.java.com.witcher.chapter1.battle.briefing.BossQuestBriefingController;
-import main.java.com.witcher.ui.shop.swing.ShopAssetCache;
-import main.java.com.witcher.ui.shop.view.ShopLayout;
+import com.witcher.chapter1.battle.briefing.BossQuestBriefingController;
+import com.witcher.ui.shop.swing.ShopAssetCache;
+import com.witcher.ui.shop.view.ShopLayout;
 
 import java.awt.AlphaComposite;
 import java.awt.Color;

@@ -1,7 +1,7 @@
-package main.java.com.witcher.chapter1.hack;
+package com.witcher.chapter1.hack;
 
-import main.java.com.witcher.chapter1.Chapter1Session;
-import main.java.com.witcher.chapter1.shop.CipherFragments;
+import com.witcher.chapter1.Chapter1Session;
+import com.witcher.chapter1.shop.CipherFragments;
 
 /** Проверка финальной команды шифра. */
 public final class HackUnlockChecker {

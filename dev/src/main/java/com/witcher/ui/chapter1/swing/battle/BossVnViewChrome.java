@@ -1,14 +1,14 @@
-package main.java.com.witcher.ui.chapter1.swing.battle;
+package com.witcher.ui.chapter1.swing.battle;
 
-import main.java.com.witcher.ui.graphics.DialogBoxRenderer;
-import main.java.com.witcher.ui.graphics.GameFonts;
-import main.java.com.witcher.ui.graphics.UiChrome;
-import main.java.com.witcher.ui.graphics.UiRect;
-import main.java.com.witcher.ui.intro.VnButtonLabels;
-import main.java.com.witcher.ui.intro.IntroHistoryText;
-import main.java.com.witcher.ui.intro.IntroVnUi;
-import main.java.com.witcher.ui.intro.view.IntroHistoryLayout;
-import main.java.com.witcher.ui.intro.view.IntroHistoryTheme;
+import com.witcher.ui.graphics.DialogBoxRenderer;
+import com.witcher.ui.graphics.GameFonts;
+import com.witcher.ui.graphics.UiChrome;
+import com.witcher.ui.graphics.UiRect;
+import com.witcher.ui.intro.VnButtonLabels;
+import com.witcher.ui.intro.IntroHistoryText;
+import com.witcher.ui.intro.IntroVnUi;
+import com.witcher.ui.intro.view.IntroHistoryLayout;
+import com.witcher.ui.intro.view.IntroHistoryTheme;
 
 import java.awt.Color;
 import java.awt.Font;

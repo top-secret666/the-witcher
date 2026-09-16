@@ -1,6 +1,6 @@
-package main.java.com.witcher.chapter1.battle.briefing;
+package com.witcher.chapter1.battle.briefing;
 
-import main.java.com.witcher.chapter1.battle.BossVnTypingConstants;
+import com.witcher.chapter1.battle.BossVnTypingConstants;
 /** Тайминги и скорости брифинга перед боссом — без логики. */
 public final class BossQuestBriefingConstants {
 

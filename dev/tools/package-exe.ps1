@@ -100,7 +100,7 @@ if (Test-Path $BundleDir) { Remove-Item $BundleDir -Recurse -Force }
     --app-version $AppVersion `
     --input $InputDir `
     --main-jar witcher-prototype.jar `
-    --main-class main.java.com.witcher.ui.graphics.GameWindow `
+    --main-class com.witcher.ui.graphics.GameWindow `
     --icon $IconIco `
     --dest $ReleaseDir `
     --java-options "-Xms128m" `

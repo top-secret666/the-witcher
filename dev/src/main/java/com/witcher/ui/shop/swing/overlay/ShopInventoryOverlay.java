@@ -1,11 +1,11 @@
-package main.java.com.witcher.ui.shop.swing.overlay;
+package com.witcher.ui.shop.swing.overlay;
 
-import main.java.com.witcher.ui.graphics.GameFonts;
-import main.java.com.witcher.ui.graphics.UiChrome;
-import main.java.com.witcher.ui.shop.ShopInventoryKind;
-import main.java.com.witcher.ui.shop.ShopInventorySlot;
-import main.java.com.witcher.ui.shop.presenter.ShopSessionState;
-import main.java.com.witcher.ui.shop.swing.ShopAttentionPulse;
+import com.witcher.ui.graphics.GameFonts;
+import com.witcher.ui.graphics.UiChrome;
+import com.witcher.ui.shop.ShopInventoryKind;
+import com.witcher.ui.shop.ShopInventorySlot;
+import com.witcher.ui.shop.presenter.ShopSessionState;
+import com.witcher.ui.shop.swing.ShopAttentionPulse;
 
 import java.awt.AlphaComposite;
 import java.awt.Color;
@@ -18,17 +18,17 @@ import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
 
-import static main.java.com.witcher.ui.shop.view.ShopViewConstants.INVENTORY_ACTION_BTN_H;
-import static main.java.com.witcher.ui.shop.view.ShopViewConstants.INVENTORY_ARMOUR_VISIBLE_ROWS;
-import static main.java.com.witcher.ui.shop.view.ShopViewConstants.INVENTORY_DETAIL_W;
-import static main.java.com.witcher.ui.shop.view.ShopViewConstants.INVENTORY_GRID_COLS;
-import static main.java.com.witcher.ui.shop.view.ShopViewConstants.INVENTORY_GRID_GAP;
-import static main.java.com.witcher.ui.shop.view.ShopViewConstants.INVENTORY_PANEL_H;
-import static main.java.com.witcher.ui.shop.view.ShopViewConstants.INVENTORY_PANEL_PAD;
-import static main.java.com.witcher.ui.shop.view.ShopViewConstants.INVENTORY_PANEL_W;
-import static main.java.com.witcher.ui.shop.view.ShopViewConstants.INVENTORY_POUCH_ICON;
-import static main.java.com.witcher.ui.shop.view.ShopViewConstants.INVENTORY_SCROLLBAR_W;
-import static main.java.com.witcher.ui.shop.view.ShopViewConstants.INVENTORY_SPECIAL_VISIBLE_ROWS;
+import static com.witcher.ui.shop.view.ShopViewConstants.INVENTORY_ACTION_BTN_H;
+import static com.witcher.ui.shop.view.ShopViewConstants.INVENTORY_ARMOUR_VISIBLE_ROWS;
+import static com.witcher.ui.shop.view.ShopViewConstants.INVENTORY_DETAIL_W;
+import static com.witcher.ui.shop.view.ShopViewConstants.INVENTORY_GRID_COLS;
+import static com.witcher.ui.shop.view.ShopViewConstants.INVENTORY_GRID_GAP;
+import static com.witcher.ui.shop.view.ShopViewConstants.INVENTORY_PANEL_H;
+import static com.witcher.ui.shop.view.ShopViewConstants.INVENTORY_PANEL_PAD;
+import static com.witcher.ui.shop.view.ShopViewConstants.INVENTORY_PANEL_W;
+import static com.witcher.ui.shop.view.ShopViewConstants.INVENTORY_POUCH_ICON;
+import static com.witcher.ui.shop.view.ShopViewConstants.INVENTORY_SCROLLBAR_W;
+import static com.witcher.ui.shop.view.ShopViewConstants.INVENTORY_SPECIAL_VISIBLE_ROWS;
 
 /**
  * Инвентарь: слева арт + описание + кнопка, справа две сетки

@@ -52,7 +52,7 @@ Get-ChildItem -Path $Out -Recurse -Filter "*.class" -File | ForEach-Object {
     Copy-Item $_.FullName $target -Force
 }
 & "$JavaHome\bin\jar.exe" --create --file $AppJar `
-    --main-class main.java.com.witcher.ui.graphics.GameWindow `
+    --main-class com.witcher.ui.graphics.GameWindow `
     -C $JarStage .
 if ($LASTEXITCODE -ne 0) { throw "jar failed." }
 
@@ -69,7 +69,7 @@ if (Test-Path $BundleDir) { Remove-Item $BundleDir -Recurse -Force }
     --app-version $AppVersion `
     --input $InputDir `
     --main-jar witcher-prototype.jar `
-    --main-class main.java.com.witcher.ui.graphics.GameWindow `
+    --main-class com.witcher.ui.graphics.GameWindow `
     --icon $IconIco `
     --dest $ReleaseDir `
     --java-options "-Xms128m" `

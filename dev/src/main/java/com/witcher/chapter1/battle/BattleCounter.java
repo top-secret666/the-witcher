@@ -1,4 +1,4 @@
-package main.java.com.witcher.chapter1.battle;
+package com.witcher.chapter1.battle;
 
 /** Зеркальный контрприём герцога по доминанте сборки. */
 public enum BattleCounter {

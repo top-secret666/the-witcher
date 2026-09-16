@@ -1,7 +1,7 @@
-package main.java.com.witcher.ui.chapter1.swing.battle.glitch;
+package com.witcher.ui.chapter1.swing.battle.glitch;
 
-import main.java.com.witcher.chapter1.battle.glitch.BossGlitchRevealTimeline;
-import main.java.com.witcher.ui.chapter1.swing.Chapter1UiAssets;
+import com.witcher.chapter1.battle.glitch.BossGlitchRevealTimeline;
+import com.witcher.ui.chapter1.swing.Chapter1UiAssets;
 
 import java.awt.AlphaComposite;
 import java.awt.Color;

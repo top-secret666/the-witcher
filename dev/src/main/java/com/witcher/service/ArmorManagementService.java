@@ -1,8 +1,8 @@
-package main.java.com.witcher.service;
+package com.witcher.service;
 
-import main.java.com.witcher.model.armour.Armour;
-import main.java.com.witcher.repository.ArmourRepository;
-import main.java.com.witcher.validation.InputValidator;
+import com.witcher.model.armour.Armour;
+import com.witcher.repository.ArmourRepository;
+import com.witcher.validation.InputValidator;
 
 public class ArmorManagementService extends ArmorService {
 

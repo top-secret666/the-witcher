@@ -1,6 +1,6 @@
-package main.java.com.witcher.validation;
+package com.witcher.validation;
 
-import main.java.com.witcher.exception.*;
+import com.witcher.exception.*;
 import java.util.function.Supplier;
 
 public class ErrorHandler {

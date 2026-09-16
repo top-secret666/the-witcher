@@ -1,4 +1,4 @@
-package main.java.com.witcher.ui.shop.swing;
+package com.witcher.ui.shop.swing;
 
 /**
  * Мигание подсказки: чередование обычного спрайта и hover (без отдельной рамки).

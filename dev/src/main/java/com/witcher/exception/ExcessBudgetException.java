@@ -1,6 +1,6 @@
-package main.java.com.witcher.exception;
+package com.witcher.exception;
 
-import main.java.com.witcher.model.armour.Armour;
+import com.witcher.model.armour.Armour;
 
 import java.util.List;
 

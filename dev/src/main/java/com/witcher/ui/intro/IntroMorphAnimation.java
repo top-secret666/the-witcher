@@ -1,6 +1,6 @@
-package main.java.com.witcher.ui.intro;
+package com.witcher.ui.intro;
 
-import main.java.com.witcher.ui.intro.view.IntroCharacterLayout;
+import com.witcher.ui.intro.view.IntroCharacterLayout;
 
 import java.util.ArrayList;
 import java.util.List;

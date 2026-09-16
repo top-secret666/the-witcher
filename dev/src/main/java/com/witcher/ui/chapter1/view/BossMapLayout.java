@@ -1,8 +1,8 @@
-package main.java.com.witcher.ui.chapter1.view;
+package com.witcher.ui.chapter1.view;
 
-import main.java.com.witcher.chapter1.battle.BossCatalog;
-import main.java.com.witcher.chapter1.battle.BossEntry;
-import main.java.com.witcher.ui.graphics.UiChrome;
+import com.witcher.chapter1.battle.BossCatalog;
+import com.witcher.chapter1.battle.BossEntry;
+import com.witcher.ui.graphics.UiChrome;
 
 import java.awt.Rectangle;
 import java.util.ArrayList;

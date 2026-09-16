@@ -1,11 +1,11 @@
-package main.java.com.witcher.ui;
+package com.witcher.ui;
 
-import main.java.com.witcher.service.ArmorCalculationService;
-import main.java.com.witcher.service.ArmorService;
-import main.java.com.witcher.service.ArmorSortingService;
-import main.java.com.witcher.service.SetService;
-import main.java.com.witcher.validation.InputValidator;
-import main.java.com.witcher.repository.ArmourRepository;
+import com.witcher.service.ArmorCalculationService;
+import com.witcher.service.ArmorService;
+import com.witcher.service.ArmorSortingService;
+import com.witcher.service.SetService;
+import com.witcher.validation.InputValidator;
+import com.witcher.repository.ArmourRepository;
 
 import java.util.Scanner;
 

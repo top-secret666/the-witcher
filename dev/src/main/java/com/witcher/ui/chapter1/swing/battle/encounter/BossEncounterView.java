@@ -1,14 +1,14 @@
-package main.java.com.witcher.ui.chapter1.swing.battle.encounter;
+package com.witcher.ui.chapter1.swing.battle.encounter;
 
-import main.java.com.witcher.chapter1.battle.encounter.BossEncounterController;
-import main.java.com.witcher.chapter1.battle.encounter.BossEncounterScript;
-import main.java.com.witcher.ui.chapter1.swing.Chapter1UiAssets;
-import main.java.com.witcher.ui.chapter1.swing.battle.BossVnDialogBoxRenderer;
-import main.java.com.witcher.ui.chapter1.swing.battle.BossVnViewChrome;
-import main.java.com.witcher.ui.chapter1.swing.EyelidOverlay;
-import main.java.com.witcher.ui.chapter1.swing.ScaledImageCache;
-import main.java.com.witcher.ui.graphics.DialogBoxRenderer;
-import main.java.com.witcher.ui.intro.view.IntroCharacterLayout;
+import com.witcher.chapter1.battle.encounter.BossEncounterController;
+import com.witcher.chapter1.battle.encounter.BossEncounterScript;
+import com.witcher.ui.chapter1.swing.Chapter1UiAssets;
+import com.witcher.ui.chapter1.swing.battle.BossVnDialogBoxRenderer;
+import com.witcher.ui.chapter1.swing.battle.BossVnViewChrome;
+import com.witcher.ui.chapter1.swing.EyelidOverlay;
+import com.witcher.ui.chapter1.swing.ScaledImageCache;
+import com.witcher.ui.graphics.DialogBoxRenderer;
+import com.witcher.ui.intro.view.IntroCharacterLayout;
 
 import java.awt.Color;
 import java.awt.Graphics2D;

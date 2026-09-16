@@ -1,4 +1,4 @@
-package main.java.com.witcher.ui.shop;
+package com.witcher.ui.shop;
 
 /** Тип предмета в панели инвентаря (не экипировка). */
 public enum ShopInventoryKind {

@@ -1,10 +1,10 @@
-package main.java.com.witcher.ui.chapter1.swing.battle.briefing;
+package com.witcher.ui.chapter1.swing.battle.briefing;
 
-import main.java.com.witcher.chapter1.battle.briefing.BossQuestBriefingScript;
-import main.java.com.witcher.ui.chapter1.swing.Chapter1UiAssets;
-import main.java.com.witcher.ui.graphics.DialogBoxRenderer;
-import main.java.com.witcher.ui.graphics.GameFonts;
-import main.java.com.witcher.ui.graphics.PixelScaler;
+import com.witcher.chapter1.battle.briefing.BossQuestBriefingScript;
+import com.witcher.ui.chapter1.swing.Chapter1UiAssets;
+import com.witcher.ui.graphics.DialogBoxRenderer;
+import com.witcher.ui.graphics.GameFonts;
+import com.witcher.ui.graphics.PixelScaler;
 
 import java.awt.AlphaComposite;
 import java.awt.Color;

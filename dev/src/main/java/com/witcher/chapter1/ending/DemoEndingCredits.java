@@ -1,4 +1,4 @@
-package main.java.com.witcher.chapter1.ending;
+package com.witcher.chapter1.ending;
 
 /** Строки быстрых титров демо — лесенка + контакты на финальном экране. */
 public final class DemoEndingCredits {

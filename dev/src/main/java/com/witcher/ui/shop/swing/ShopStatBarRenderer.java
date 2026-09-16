@@ -1,8 +1,8 @@
-package main.java.com.witcher.ui.shop.swing;
+package com.witcher.ui.shop.swing;
 
-import main.java.com.witcher.ui.graphics.GameFonts;
-import main.java.com.witcher.ui.shop.ShopModel;
-import main.java.com.witcher.ui.shop.view.ShopViewConstants;
+import com.witcher.ui.graphics.GameFonts;
+import com.witcher.ui.shop.ShopModel;
+import com.witcher.ui.shop.view.ShopViewConstants;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;

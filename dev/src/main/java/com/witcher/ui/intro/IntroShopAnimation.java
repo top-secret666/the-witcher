@@ -1,4 +1,4 @@
-package main.java.com.witcher.ui.intro;
+package com.witcher.ui.intro;
 
 /**
  * Анимация появления лавки: reveal-лерп и кадры GIF materialize.

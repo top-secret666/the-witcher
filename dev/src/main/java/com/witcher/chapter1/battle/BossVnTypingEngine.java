@@ -1,6 +1,6 @@
-package main.java.com.witcher.chapter1.battle;
+package com.witcher.chapter1.battle;
 
-import main.java.com.witcher.ui.settings.GameSettings;
+import com.witcher.ui.settings.GameSettings;
 
 /** Общий тик typewriter-логики для босс-VN (брифинг и лес). */
 public final class BossVnTypingEngine {

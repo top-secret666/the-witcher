@@ -1,16 +1,16 @@
-package main.java.com.witcher.chapter1.shop;
+package com.witcher.chapter1.shop;
 
-import main.java.com.witcher.chapter1.Chapter1Director;
-import main.java.com.witcher.chapter1.Chapter1Session;
-import main.java.com.witcher.model.armour.Armour;
-import main.java.com.witcher.ui.shop.DukeLines;
-import main.java.com.witcher.ui.shop.ShopCatalogEntry;
-import main.java.com.witcher.ui.shop.ShopCategory;
-import main.java.com.witcher.shop.EquipSlot;
+import com.witcher.chapter1.Chapter1Director;
+import com.witcher.chapter1.Chapter1Session;
+import com.witcher.model.armour.Armour;
+import com.witcher.ui.shop.DukeLines;
+import com.witcher.ui.shop.ShopCatalogEntry;
+import com.witcher.ui.shop.ShopCategory;
+import com.witcher.shop.EquipSlot;
 
 /**
  * Связка лавки с мета-прогрессом главы 1.
- * {@link main.java.com.witcher.ui.shop.presenter.ShopPresenter} вызывает хуки; экран — слушатели.
+ * {@link com.witcher.ui.shop.presenter.ShopPresenter} вызывает хуки; экран — слушатели.
  */
 public final class Chapter1ShopBridge {
 

@@ -1,4 +1,4 @@
-package main.java.com.witcher.ui.chapter1.bridge;
+package com.witcher.ui.chapter1.bridge;
 
 /** Ключи GPU-запекания вспышки Весемира (Swing ↔ LibGDX). */
 public final class Chapter1BakeKeys {

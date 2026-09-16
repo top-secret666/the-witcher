@@ -1,8 +1,8 @@
-package main.java.com.witcher.factory;
+package com.witcher.factory;
 
-import main.java.com.witcher.model.armour.*;
-import main.java.com.witcher.model.enums.ArmourCategory;
-import main.java.com.witcher.model.enums.ArmourType;
+import com.witcher.model.armour.*;
+import com.witcher.model.enums.ArmourCategory;
+import com.witcher.model.enums.ArmourType;
 
 import java.io.*;
 

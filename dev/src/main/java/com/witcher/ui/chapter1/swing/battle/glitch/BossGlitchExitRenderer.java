@@ -1,6 +1,6 @@
-package main.java.com.witcher.ui.chapter1.swing.battle.glitch;
+package com.witcher.ui.chapter1.swing.battle.glitch;
 
-import main.java.com.witcher.ui.graphics.GameFonts;
+import com.witcher.ui.graphics.GameFonts;
 
 import java.awt.Color;
 import java.awt.FontMetrics;

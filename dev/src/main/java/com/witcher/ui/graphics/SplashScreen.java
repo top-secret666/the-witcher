@@ -1,4 +1,4 @@
-package main.java.com.witcher.ui.graphics;
+package com.witcher.ui.graphics;
 
 import java.awt.*;
 import java.awt.geom.Point2D;

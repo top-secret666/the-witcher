@@ -1,8 +1,8 @@
-package main.java.com.witcher.ui;
+package com.witcher.ui;
 
-import main.java.com.witcher.model.armour.Armour;
-import main.java.com.witcher.service.ArmorCalculationService;
-import main.java.com.witcher.service.SetService;
+import com.witcher.model.armour.Armour;
+import com.witcher.service.ArmorCalculationService;
+import com.witcher.service.SetService;
 
 import java.util.List;
 

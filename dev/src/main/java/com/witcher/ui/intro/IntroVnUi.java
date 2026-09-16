@@ -1,7 +1,7 @@
-package main.java.com.witcher.ui.intro;
+package com.witcher.ui.intro;
 
-import main.java.com.witcher.ui.graphics.DialogBoxRenderer;
-import main.java.com.witcher.ui.intro.view.IntroLayout;
+import com.witcher.ui.graphics.DialogBoxRenderer;
+import com.witcher.ui.intro.view.IntroLayout;
 
 /**
  * Раскладка кнопок VN-интерфейса (Назад, История, Авто).

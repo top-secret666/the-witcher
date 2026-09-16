@@ -1,4 +1,4 @@
-package main.java.com.witcher.chapter1.ending;
+package com.witcher.chapter1.ending;
 
 public enum EscapeEnding {
   TRUE_ESCAPE,

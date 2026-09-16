@@ -1,6 +1,6 @@
-package main.java.com.witcher.ui.intro.view;
+package com.witcher.ui.intro.view;
 
-import main.java.com.witcher.ui.graphics.DialogBoxLayout;
+import com.witcher.ui.graphics.DialogBoxLayout;
 
 /**
  * Геометрия диалогового окна интро — без Graphics2D.

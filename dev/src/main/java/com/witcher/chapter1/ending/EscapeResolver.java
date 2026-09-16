@@ -1,6 +1,6 @@
-package main.java.com.witcher.chapter1.ending;
+package com.witcher.chapter1.ending;
 
-import main.java.com.witcher.chapter1.Chapter1Session;
+import com.witcher.chapter1.Chapter1Session;
 
 /** Итог: подозрение vs доверие после успешного взлома. */
 public final class EscapeResolver {

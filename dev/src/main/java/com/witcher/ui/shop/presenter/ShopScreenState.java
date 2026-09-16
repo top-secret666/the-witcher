@@ -1,6 +1,6 @@
-package main.java.com.witcher.ui.shop.presenter;
+package com.witcher.ui.shop.presenter;
 
-/** Состояния UI лавки (не путать с доменной моделью {@link main.java.com.witcher.ui.shop.ShopModel}). */
+/** Состояния UI лавки (не путать с доменной моделью {@link com.witcher.ui.shop.ShopModel}). */
 public enum ShopScreenState {
     REVEAL,
     IDLE,

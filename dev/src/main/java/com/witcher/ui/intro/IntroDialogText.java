@@ -1,9 +1,9 @@
-package main.java.com.witcher.ui.intro;
+package com.witcher.ui.intro;
 
-import main.java.com.witcher.ui.graphics.DialogBoxRenderer;
-import main.java.com.witcher.ui.intro.view.IntroDialogLayout;
-import main.java.com.witcher.ui.intro.view.IntroDialogTheme;
-import main.java.com.witcher.ui.intro.view.IntroLayout;
+import com.witcher.ui.graphics.DialogBoxRenderer;
+import com.witcher.ui.intro.view.IntroDialogLayout;
+import com.witcher.ui.intro.view.IntroDialogTheme;
+import com.witcher.ui.intro.view.IntroLayout;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -1,6 +1,6 @@
-package main.java.com.witcher.chapter1.loop;
+package com.witcher.chapter1.loop;
 
-import main.java.com.witcher.chapter1.cutscene.CutsceneSkipPolicy;
+import com.witcher.chapter1.cutscene.CutsceneSkipPolicy;
 
 /** Состояние пробуждения век (без отрисовки) — общее для Swing и движка. */
 public final class EyesAwakeningController {

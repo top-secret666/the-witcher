@@ -1,7 +1,7 @@
-package main.java.com.witcher.ui.graphics;
+package com.witcher.ui.graphics;
 
-import main.java.com.witcher.ui.intro.view.IntroDialogTheme;
-import main.java.com.witcher.ui.intro.view.IntroSpeakerPlateLayout;
+import com.witcher.ui.intro.view.IntroDialogTheme;
+import com.witcher.ui.intro.view.IntroSpeakerPlateLayout;
 
 import java.awt.*;
 import java.util.ArrayList;

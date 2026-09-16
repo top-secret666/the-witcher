@@ -1,4 +1,4 @@
-package main.java.com.witcher.chapter1.battle;
+package com.witcher.chapter1.battle;
 
 /**
  * Расписание спрайтовых проблесков мечей на чёрном фоне (общее для Swing/движка).

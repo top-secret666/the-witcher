@@ -1,6 +1,6 @@
-package main.java.com.witcher.ui.chapter1.swing;
+package com.witcher.ui.chapter1.swing;
 
-import main.java.com.witcher.ui.graphics.PixelScaler;
+import com.witcher.ui.graphics.PixelScaler;
 
 import java.awt.AlphaComposite;
 import java.awt.Color;

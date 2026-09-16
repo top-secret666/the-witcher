@@ -1,4 +1,4 @@
-package main.java.com.witcher.model.enums;
+package com.witcher.model.enums;
 
 public enum ArmourType {
     LIGHT("Легкая броня", 1.0, 1.3),    // легкая броня - низкая защита, высокая подвижность

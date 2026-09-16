@@ -1,6 +1,6 @@
-package main.java.com.witcher.ui.chapter1.view;
+package com.witcher.ui.chapter1.view;
 
-import main.java.com.witcher.chapter1.view.Chapter1Layout;
+import com.witcher.chapter1.view.Chapter1Layout;
 
 /**
  * Swing-фасад над {@link Chapter1Layout} — старые импорты UI не ломаются.

@@ -1,9 +1,9 @@
-package main.java.com.witcher.ui.shop.view;
+package com.witcher.ui.shop.view;
 
 import java.awt.Point;
 import java.awt.Rectangle;
 
-import static main.java.com.witcher.ui.shop.view.ShopViewConstants.*;
+import static com.witcher.ui.shop.view.ShopViewConstants.*;
 
 /** Раскладка витрины на виртуальном кадре 480×360. */
 public final class ShopLayout {

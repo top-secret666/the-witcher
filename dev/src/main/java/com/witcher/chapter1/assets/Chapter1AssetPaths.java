@@ -1,4 +1,4 @@
-package main.java.com.witcher.chapter1.assets;
+package com.witcher.chapter1.assets;
 
 /** Пути к ассетам главы 1 (строки) — общее для Swing и движка. */
 public final class Chapter1AssetPaths {

@@ -1,4 +1,4 @@
-package main.java.com.witcher.chapter1.ending;
+package com.witcher.chapter1.ending;
 
 /** Исход первого босса — осколок Волка. */
 public enum WolfEndingType {

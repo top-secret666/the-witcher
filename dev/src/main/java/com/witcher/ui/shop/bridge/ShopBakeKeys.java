@@ -1,4 +1,4 @@
-package main.java.com.witcher.ui.shop.bridge;
+package com.witcher.ui.shop.bridge;
 
 /**
  * Единые ключи GPU-запекания лавки (Swing ↔ LibGDX {@code GdxShopUiBaker}).

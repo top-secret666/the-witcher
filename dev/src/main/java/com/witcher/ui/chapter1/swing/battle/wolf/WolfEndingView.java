@@ -1,8 +1,8 @@
-package main.java.com.witcher.ui.chapter1.swing.battle.wolf;
+package com.witcher.ui.chapter1.swing.battle.wolf;
 
-import main.java.com.witcher.chapter1.ending.WolfEndingType;
-import main.java.com.witcher.chapter1.shop.BossMemoryFragments;
-import main.java.com.witcher.ui.graphics.GameFonts;
+import com.witcher.chapter1.ending.WolfEndingType;
+import com.witcher.chapter1.shop.BossMemoryFragments;
+import com.witcher.ui.graphics.GameFonts;
 
 import java.awt.Color;
 import java.awt.Graphics2D;

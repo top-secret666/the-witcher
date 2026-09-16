@@ -1,4 +1,4 @@
-package main.java.com.witcher.chapter1.view;
+package com.witcher.chapter1.view;
 
 /**
  * Виртуальный layout главы 1 — общее для Swing и будущего движка.

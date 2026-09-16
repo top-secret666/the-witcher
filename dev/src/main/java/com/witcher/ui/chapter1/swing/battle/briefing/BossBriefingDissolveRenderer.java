@@ -1,7 +1,7 @@
-package main.java.com.witcher.ui.chapter1.swing.battle.briefing;
+package com.witcher.ui.chapter1.swing.battle.briefing;
 
-import main.java.com.witcher.ui.chapter1.swing.WakeVisionRenderer;
-import main.java.com.witcher.ui.chapter1.swing.glitch.CutsceneNoiseOverlay;
+import com.witcher.ui.chapter1.swing.WakeVisionRenderer;
+import com.witcher.ui.chapter1.swing.glitch.CutsceneNoiseOverlay;
 
 import java.awt.Color;
 import java.awt.Composite;

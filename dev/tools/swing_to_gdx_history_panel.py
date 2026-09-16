@@ -114,7 +114,7 @@ def rgba(name: str, rgb: list[int], alpha: int | None = None) -> str:
 def emit_java() -> str:
     t = THEME
     return (
-        "package main.java.com.witcher.ui.intro.view;\n\n"
+        "package com.witcher.ui.intro.view;\n\n"
         "/**\n"
         " * Окно истории интро — tools/swing_to_gdx_history_panel.py\n"
         " * Источник: IntroScreen.drawHistoryOverlay (Swing).\n"

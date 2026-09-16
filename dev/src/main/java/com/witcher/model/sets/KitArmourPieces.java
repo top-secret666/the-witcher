@@ -1,14 +1,14 @@
-package main.java.com.witcher.model.sets;
+package com.witcher.model.sets;
 
-import main.java.com.witcher.model.armour.Armour;
-import main.java.com.witcher.model.armour.Boots;
-import main.java.com.witcher.model.armour.ChestpieceStats;
-import main.java.com.witcher.model.armour.Cuirass;
-import main.java.com.witcher.model.armour.Gloves;
-import main.java.com.witcher.model.armour.Pants;
-import main.java.com.witcher.model.armour.TrousersStats;
-import main.java.com.witcher.model.enums.ArmourCategory;
-import main.java.com.witcher.model.enums.ArmourType;
+import com.witcher.model.armour.Armour;
+import com.witcher.model.armour.Boots;
+import com.witcher.model.armour.ChestpieceStats;
+import com.witcher.model.armour.Cuirass;
+import com.witcher.model.armour.Gloves;
+import com.witcher.model.armour.Pants;
+import com.witcher.model.armour.TrousersStats;
+import com.witcher.model.enums.ArmourCategory;
+import com.witcher.model.enums.ArmourType;
 
 import java.util.List;
 

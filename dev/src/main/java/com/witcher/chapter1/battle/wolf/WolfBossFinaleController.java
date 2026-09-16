@@ -1,8 +1,8 @@
-package main.java.com.witcher.chapter1.battle.wolf;
+package com.witcher.chapter1.battle.wolf;
 
-import main.java.com.witcher.chapter1.Chapter1Session;
-import main.java.com.witcher.chapter1.shop.BossMemoryFragments;
-import main.java.com.witcher.chapter1.vn.VnSceneState;
+import com.witcher.chapter1.Chapter1Session;
+import com.witcher.chapter1.shop.BossMemoryFragments;
+import com.witcher.chapter1.vn.VnSceneState;
 
 /**
  * Финальная VN: сразу эпилог истинной ветки (без пустого экрана «доставай меч»).

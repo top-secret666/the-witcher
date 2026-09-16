@@ -1,4 +1,4 @@
-# Сборка Swing + GDX bridge (локальный dev-скрипт, не в git).
+# Build Swing sources + optional GDX bridge into out/swing-run.
 param(
     [string]$JavaHome = $env:JAVA_HOME
 )
@@ -41,9 +41,35 @@ if ($LASTEXITCODE -ne 0) { throw "Swing compile failed." }
 
 Write-Host "=== Compiling GDX bridge (icons) ==="
 $bridgeList = Join-Path $Tmp "swing-gdx-bridge.txt"
-& (Join-Path $PSScriptRoot "gen-swing-gdx-bridge.ps1") -CoreRoot $Core -OutFile $bridgeList
-& "$JavaHome\bin\javac.exe" -encoding UTF-8 -cp "$LibCp;$Out" -d $Out "@$bridgeList"
-if ($LASTEXITCODE -ne 0) { throw "GDX bridge compile failed." }
+$genBridge = Join-Path $PSScriptRoot "gen-swing-gdx-bridge.ps1"
+if (Test-Path $genBridge) {
+    & $genBridge -CoreRoot $Core -OutFile $bridgeList
+} else {
+    $bridgePaths = New-Object System.Collections.Generic.List[string]
+    $bridgeDir = Join-Path $Core "com\witcher\gdx\bridge"
+    if (Test-Path $bridgeDir) {
+        Get-ChildItem -Path $bridgeDir -Filter "*.java" -Recurse -File | ForEach-Object { [void]$bridgePaths.Add($_.FullName) }
+    }
+    foreach ($rel in @(
+        "com\witcher\gdx\graphics\GdxTextureBridge.java",
+        "com\witcher\gdx\graphics\PixelTextures.java",
+        "com\witcher\gdx\graphics\PixelSpriteSheet.java",
+        "com\witcher\gdx\graphics\RenderQuality.java"
+    )) {
+        $p = Join-Path $Core $rel
+        if (Test-Path $p) { [void]$bridgePaths.Add($p) }
+    }
+    if ($bridgePaths.Count -eq 0) {
+        Write-Host "No GDX bridge sources found - skipping."
+    } else {
+        [System.IO.File]::WriteAllLines($bridgeList, $bridgePaths.ToArray(), $utf8NoBom)
+    }
+}
+if ((Test-Path $bridgeList) -and ((Get-Item $bridgeList).Length -gt 0)) {
+    $bridgeArg = "@" + $bridgeList
+    & "$JavaHome\bin\javac.exe" -encoding UTF-8 -cp "$LibCp;$Out" -d $Out $bridgeArg
+    if ($LASTEXITCODE -ne 0) { throw "GDX bridge compile failed." }
+}
 
 Write-Host "=== Copying resources ==="
 if (Test-Path $Res) {

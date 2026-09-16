@@ -1,10 +1,10 @@
-package main.java.com.witcher.ui.shop;
+package com.witcher.ui.shop;
 
-import main.java.com.witcher.model.armour.Armour;
-import main.java.com.witcher.model.sets.ArmourSet;
-import main.java.com.witcher.shop.EquipSlot;
-import main.java.com.witcher.ui.shop.ShopInventoryKind;
-import main.java.com.witcher.ui.shop.ShopInventorySlot;
+import com.witcher.model.armour.Armour;
+import com.witcher.model.sets.ArmourSet;
+import com.witcher.shop.EquipSlot;
+import com.witcher.ui.shop.ShopInventoryKind;
+import com.witcher.ui.shop.ShopInventorySlot;
 
 import java.util.ArrayList;
 import java.util.List;

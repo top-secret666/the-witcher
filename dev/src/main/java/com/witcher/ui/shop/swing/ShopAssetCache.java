@@ -1,30 +1,30 @@
-package main.java.com.witcher.ui.shop.swing;
+package com.witcher.ui.shop.swing;
 
-import main.java.com.witcher.ui.graphics.PixelScaler;
-import main.java.com.witcher.ui.graphics.Sprite;
-import main.java.com.witcher.ui.shop.EquipmentFilter;
-import main.java.com.witcher.ui.shop.ShopCategory;
-import main.java.com.witcher.ui.shop.ShopOverlayAssets;
-import main.java.com.witcher.ui.shop.ShopRuntimeAssets;
-import main.java.com.witcher.ui.shop.view.LavkaAssetPaths;
-import main.java.com.witcher.ui.shop.view.ShopUiMetrics;
-import main.java.com.witcher.ui.shop.view.ShopViewConstants;
+import com.witcher.ui.graphics.PixelScaler;
+import com.witcher.ui.graphics.Sprite;
+import com.witcher.ui.shop.EquipmentFilter;
+import com.witcher.ui.shop.ShopCategory;
+import com.witcher.ui.shop.ShopOverlayAssets;
+import com.witcher.ui.shop.ShopRuntimeAssets;
+import com.witcher.ui.shop.view.LavkaAssetPaths;
+import com.witcher.ui.shop.view.ShopUiMetrics;
+import com.witcher.ui.shop.view.ShopViewConstants;
 
-import static main.java.com.witcher.ui.shop.view.ShopViewConstants.BOTTOM_ROW_COLS;
-import static main.java.com.witcher.ui.shop.view.ShopViewConstants.CATALOG_COIN_SIZE;
-import static main.java.com.witcher.ui.shop.view.ShopViewConstants.TOP_ROW_COLS;
-import static main.java.com.witcher.ui.shop.view.ShopViewConstants.CATALOG_DETAIL_PANEL_H;
-import static main.java.com.witcher.ui.shop.view.ShopViewConstants.CATALOG_DETAIL_PANEL_W;
-import static main.java.com.witcher.ui.shop.view.ShopViewConstants.CATEGORY_OPEN_CARD_H;
-import static main.java.com.witcher.ui.shop.view.ShopViewConstants.CATEGORY_OPEN_CARD_W;
-import static main.java.com.witcher.ui.shop.view.ShopViewConstants.catalogRowContentW;
-import static main.java.com.witcher.ui.shop.view.ShopViewConstants.HUD_CROWN_H;
-import static main.java.com.witcher.ui.shop.view.ShopViewConstants.HUD_CROWN_W;
-import static main.java.com.witcher.ui.shop.view.ShopViewConstants.HUD_DUKE_SEAL_H;
-import static main.java.com.witcher.ui.shop.view.ShopViewConstants.HUD_DUKE_SEAL_W;
-import static main.java.com.witcher.ui.shop.view.ShopViewConstants.catalogCoinBakePx;
-import static main.java.com.witcher.ui.shop.view.ShopViewConstants.hudIconBakePx;
-import static main.java.com.witcher.ui.shop.view.ShopViewConstants.statIconBakePx;
+import static com.witcher.ui.shop.view.ShopViewConstants.BOTTOM_ROW_COLS;
+import static com.witcher.ui.shop.view.ShopViewConstants.CATALOG_COIN_SIZE;
+import static com.witcher.ui.shop.view.ShopViewConstants.TOP_ROW_COLS;
+import static com.witcher.ui.shop.view.ShopViewConstants.CATALOG_DETAIL_PANEL_H;
+import static com.witcher.ui.shop.view.ShopViewConstants.CATALOG_DETAIL_PANEL_W;
+import static com.witcher.ui.shop.view.ShopViewConstants.CATEGORY_OPEN_CARD_H;
+import static com.witcher.ui.shop.view.ShopViewConstants.CATEGORY_OPEN_CARD_W;
+import static com.witcher.ui.shop.view.ShopViewConstants.catalogRowContentW;
+import static com.witcher.ui.shop.view.ShopViewConstants.HUD_CROWN_H;
+import static com.witcher.ui.shop.view.ShopViewConstants.HUD_CROWN_W;
+import static com.witcher.ui.shop.view.ShopViewConstants.HUD_DUKE_SEAL_H;
+import static com.witcher.ui.shop.view.ShopViewConstants.HUD_DUKE_SEAL_W;
+import static com.witcher.ui.shop.view.ShopViewConstants.catalogCoinBakePx;
+import static com.witcher.ui.shop.view.ShopViewConstants.hudIconBakePx;
+import static com.witcher.ui.shop.view.ShopViewConstants.statIconBakePx;
 
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
@@ -228,10 +228,10 @@ public final class ShopAssetCache implements ShopRuntimeAssets, ShopOverlayAsset
             statVialEndCap = loadFirst(BAKED + "ui/stat_vial_end_cap.png", BASE + "ui/stat_vial_end_cap.png");
         }
         walletPouch = loadFirst(BASE + "wallet_pouch_gold.png");
-        haloWallet = loadFirst(main.java.com.witcher.chapter1.assets.Chapter1AssetPaths.HALO_WALLET);
-        haloPotion = loadFirst(main.java.com.witcher.chapter1.assets.Chapter1AssetPaths.HALO_POTION);
-        haloMap = loadFirst(main.java.com.witcher.chapter1.assets.Chapter1AssetPaths.HALO_MAP);
-        haloWeapon = loadFirst(main.java.com.witcher.chapter1.assets.Chapter1AssetPaths.HALO_WEAPON);
+        haloWallet = loadFirst(com.witcher.chapter1.assets.Chapter1AssetPaths.HALO_WALLET);
+        haloPotion = loadFirst(com.witcher.chapter1.assets.Chapter1AssetPaths.HALO_POTION);
+        haloMap = loadFirst(com.witcher.chapter1.assets.Chapter1AssetPaths.HALO_MAP);
+        haloWeapon = loadFirst(com.witcher.chapter1.assets.Chapter1AssetPaths.HALO_WEAPON);
         for (int i = 0; i < statIcons.length; i++) {
             statIcons[i] = loadGdxUi(STAT_ICON_GDX_KEYS[i], loadStatIconFallback(STAT_ICON_FILES[i]));
         }

@@ -1,4 +1,4 @@
-package main.java.com.witcher.ui.chapter1.swing;
+package com.witcher.ui.chapter1.swing;
 
 import java.awt.Color;
 import java.awt.Graphics2D;

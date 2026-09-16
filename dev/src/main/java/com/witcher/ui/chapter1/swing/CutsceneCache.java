@@ -1,10 +1,10 @@
-package main.java.com.witcher.ui.chapter1.swing;
+package com.witcher.ui.chapter1.swing;
 
-import main.java.com.witcher.chapter1.cutscene.CutsceneCatalog;
-import main.java.com.witcher.chapter1.cutscene.CutsceneId;
-import main.java.com.witcher.ui.graphics.GifFrames;
-import main.java.com.witcher.ui.graphics.PixelScaler;
-import main.java.com.witcher.ui.graphics.Sprite;
+import com.witcher.chapter1.cutscene.CutsceneCatalog;
+import com.witcher.chapter1.cutscene.CutsceneId;
+import com.witcher.ui.graphics.GifFrames;
+import com.witcher.ui.graphics.PixelScaler;
+import com.witcher.ui.graphics.Sprite;
 
 import java.awt.image.BufferedImage;
 import java.util.EnumMap;

@@ -1,10 +1,10 @@
-package main.java.com.witcher.validation;
+package com.witcher.validation;
 
-import main.java.com.witcher.exception.ExcessBudgetException;
-import main.java.com.witcher.exception.InvalidPriceException;
-import main.java.com.witcher.exception.InvalidPriceRangeException;
-import main.java.com.witcher.model.armour.Armour;
-import main.java.com.witcher.model.sets.ArmourSet;
+import com.witcher.exception.ExcessBudgetException;
+import com.witcher.exception.InvalidPriceException;
+import com.witcher.exception.InvalidPriceRangeException;
+import com.witcher.model.armour.Armour;
+import com.witcher.model.sets.ArmourSet;
 
 import java.util.List;
 import java.util.Objects;

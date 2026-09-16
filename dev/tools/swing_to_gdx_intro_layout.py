@@ -108,7 +108,7 @@ def preview_layout(sw: int, sh: int) -> dict:
 def emit_java() -> str:
     r = RATIOS
     return (
-        "package main.java.com.witcher.ui.intro.view;\n\n"
+        "package com.witcher.ui.intro.view;\n\n"
         "/**\n"
         " * Раскладка интро — tools/swing_to_gdx_intro_layout.py\n"
         f" * Кадр Swing: {DESIGN_W}×{DESIGN_H}, Y сверху.\n"

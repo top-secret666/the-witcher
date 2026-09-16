@@ -1,8 +1,8 @@
-package main.java.com.witcher.chapter1.battle;
+package com.witcher.chapter1.battle;
 
-import main.java.com.witcher.chapter1.Chapter1Session;
-import main.java.com.witcher.chapter1.vn.VnChoice;
-import main.java.com.witcher.chapter1.vn.VnSceneState;
+import com.witcher.chapter1.Chapter1Session;
+import com.witcher.chapter1.vn.VnChoice;
+import com.witcher.chapter1.vn.VnSceneState;
 
 /**
  * Контроллер VN-боя: раунды, выборы, итог.

@@ -1,4 +1,4 @@
-package main.java.com.witcher.chapter1.battle.glitch;
+package com.witcher.chapter1.battle.glitch;
 
 import java.util.List;
 

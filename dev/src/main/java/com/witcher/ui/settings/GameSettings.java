@@ -1,4 +1,4 @@
-package main.java.com.witcher.ui.settings;
+package com.witcher.ui.settings;
 
 import java.util.prefs.Preferences;
 

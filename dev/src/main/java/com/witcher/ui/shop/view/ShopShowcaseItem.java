@@ -1,6 +1,6 @@
-package main.java.com.witcher.ui.shop.view;
+package com.witcher.ui.shop.view;
 
-import main.java.com.witcher.ui.shop.ShopCategory;
+import com.witcher.ui.shop.ShopCategory;
 
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;

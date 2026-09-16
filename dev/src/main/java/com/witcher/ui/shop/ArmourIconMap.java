@@ -1,4 +1,4 @@
-package main.java.com.witcher.ui.shop;
+package com.witcher.ui.shop;
 
 import java.io.BufferedReader;
 import java.io.IOException;

@@ -1,14 +1,14 @@
-package main.java.com.witcher.ui.shop.swing.overlay;
+package com.witcher.ui.shop.swing.overlay;
 
-import main.java.com.witcher.model.armour.Armour;
-import main.java.com.witcher.model.enums.ArmourType;
-import main.java.com.witcher.model.sets.ArmourSet;
-import main.java.com.witcher.ui.graphics.GameFonts;
-import main.java.com.witcher.ui.shop.EquipmentArmourList;
-import main.java.com.witcher.shop.EquipSlot;
-import main.java.com.witcher.ui.shop.ShopCategory;
-import main.java.com.witcher.ui.shop.ShopModel;
-import main.java.com.witcher.ui.shop.swing.ShopCategoryGlow;
+import com.witcher.model.armour.Armour;
+import com.witcher.model.enums.ArmourType;
+import com.witcher.model.sets.ArmourSet;
+import com.witcher.ui.graphics.GameFonts;
+import com.witcher.ui.shop.EquipmentArmourList;
+import com.witcher.shop.EquipSlot;
+import com.witcher.ui.shop.ShopCategory;
+import com.witcher.ui.shop.ShopModel;
+import com.witcher.ui.shop.swing.ShopCategoryGlow;
 
 import java.awt.AlphaComposite;
 import java.awt.Color;

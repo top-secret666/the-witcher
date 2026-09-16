@@ -1,7 +1,7 @@
-package main.java.com.witcher.model.armour;
+package com.witcher.model.armour;
 
-import main.java.com.witcher.model.enums.ArmourCategory;
-import main.java.com.witcher.model.enums.ArmourType;
+import com.witcher.model.enums.ArmourCategory;
+import com.witcher.model.enums.ArmourType;
 
 public abstract class Trousers extends Armour { // усиленные колени
     private final int movementBonus;

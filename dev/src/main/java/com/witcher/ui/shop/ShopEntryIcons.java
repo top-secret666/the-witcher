@@ -1,6 +1,6 @@
-package main.java.com.witcher.ui.shop;
+package com.witcher.ui.shop;
 
-import main.java.com.witcher.model.armour.Armour;
+import com.witcher.model.armour.Armour;
 
 import java.awt.image.BufferedImage;
 

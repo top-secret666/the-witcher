@@ -1,4 +1,4 @@
-package main.java.com.witcher.chapter1.ending;
+package com.witcher.chapter1.ending;
 
 /** Конец демо: Directed by → лесенка титров (авто) → «Спасибо за игру». */
 public final class DemoEndingController {

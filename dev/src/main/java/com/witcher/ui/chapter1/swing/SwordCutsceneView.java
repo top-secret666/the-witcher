@@ -1,7 +1,7 @@
-package main.java.com.witcher.ui.chapter1.swing;
+package com.witcher.ui.chapter1.swing;
 
-import main.java.com.witcher.chapter1.Chapter1Session;
-import main.java.com.witcher.ui.chapter1.swing.glitch.GlitchOverlayRenderer;
+import com.witcher.chapter1.Chapter1Session;
+import com.witcher.ui.chapter1.swing.glitch.GlitchOverlayRenderer;
 
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;

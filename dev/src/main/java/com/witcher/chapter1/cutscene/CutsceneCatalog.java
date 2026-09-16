@@ -1,11 +1,11 @@
-package main.java.com.witcher.chapter1.cutscene;
+package com.witcher.chapter1.cutscene;
 
 import java.util.EnumMap;
 import java.util.Map;
 
 /**
  * Пути к GIF/PNG-катсценам. Файлы — в {@code assets/cutscenes/chapter1/}.
- * Отсутствующий файл — {@link main.java.com.witcher.chapter1.Chapter1Director} пропускает катсцену.
+ * Отсутствующий файл — {@link com.witcher.chapter1.Chapter1Director} пропускает катсцену.
  */
 public final class CutsceneCatalog {
 

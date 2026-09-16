@@ -1,6 +1,6 @@
-package main.java.com.witcher.ui.chapter1.view;
+package com.witcher.ui.chapter1.view;
 
-import main.java.com.witcher.chapter1.vn.VnChoice;
+import com.witcher.chapter1.vn.VnChoice;
 
 import java.util.ArrayList;
 import java.util.List;

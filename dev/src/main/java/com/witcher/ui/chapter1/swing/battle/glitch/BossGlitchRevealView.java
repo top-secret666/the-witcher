@@ -1,16 +1,16 @@
-package main.java.com.witcher.ui.chapter1.swing.battle.glitch;
+package com.witcher.ui.chapter1.swing.battle.glitch;
 
-import main.java.com.witcher.chapter1.battle.glitch.BossGlitchRevealController;
-import main.java.com.witcher.chapter1.battle.glitch.BossGlitchRevealTimeline;
-import main.java.com.witcher.chapter1.battle.glitch.BossGlitchRevealTimeline.Stage;
-import main.java.com.witcher.ui.chapter1.swing.CutsceneSkipHint;
-import main.java.com.witcher.ui.chapter1.swing.Chapter1UiAssets;
-import main.java.com.witcher.ui.chapter1.swing.ScaledImageCache;
-import main.java.com.witcher.ui.chapter1.swing.WakeVisionRenderer;
-import main.java.com.witcher.ui.chapter1.swing.glitch.CutsceneNoiseOverlay;
-import main.java.com.witcher.ui.chapter1.swing.glitch.GlitchOverlayRenderer;
-import main.java.com.witcher.ui.chapter1.swing.glitch.PixelBugOverlay;
-import main.java.com.witcher.ui.graphics.GameFonts;
+import com.witcher.chapter1.battle.glitch.BossGlitchRevealController;
+import com.witcher.chapter1.battle.glitch.BossGlitchRevealTimeline;
+import com.witcher.chapter1.battle.glitch.BossGlitchRevealTimeline.Stage;
+import com.witcher.ui.chapter1.swing.CutsceneSkipHint;
+import com.witcher.ui.chapter1.swing.Chapter1UiAssets;
+import com.witcher.ui.chapter1.swing.ScaledImageCache;
+import com.witcher.ui.chapter1.swing.WakeVisionRenderer;
+import com.witcher.ui.chapter1.swing.glitch.CutsceneNoiseOverlay;
+import com.witcher.ui.chapter1.swing.glitch.GlitchOverlayRenderer;
+import com.witcher.ui.chapter1.swing.glitch.PixelBugOverlay;
+import com.witcher.ui.graphics.GameFonts;
 
 import java.awt.Color;
 import java.awt.FontMetrics;

@@ -1,4 +1,4 @@
-package main.java.com.witcher.ui.shop.swing;
+package com.witcher.ui.shop.swing;
 
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;

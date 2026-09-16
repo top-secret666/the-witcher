@@ -1,4 +1,4 @@
-package main.java.com.witcher.chapter1.cutscene;
+package com.witcher.chapter1.cutscene;
 
 /** Идентификаторы катсцен главы 1 — пути в {@link CutsceneCatalog}. */
 public enum CutsceneId {

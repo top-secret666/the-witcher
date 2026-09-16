@@ -1,4 +1,4 @@
-package main.java.com.witcher.chapter1.battle;
+package com.witcher.chapter1.battle;
 
 /** Действие игрока в VN-бою (Command). */
 public enum PlayerAction {

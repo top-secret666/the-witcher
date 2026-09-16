@@ -1,8 +1,8 @@
-package main.java.com.witcher.ui.chapter1.swing.ending;
+package com.witcher.ui.chapter1.swing.ending;
 
-import main.java.com.witcher.chapter1.ending.DemoEndingController;
-import main.java.com.witcher.chapter1.ending.DemoEndingCredits;
-import main.java.com.witcher.ui.graphics.GameFonts;
+import com.witcher.chapter1.ending.DemoEndingController;
+import com.witcher.chapter1.ending.DemoEndingCredits;
+import com.witcher.ui.graphics.GameFonts;
 
 import java.awt.Color;
 import java.awt.Font;

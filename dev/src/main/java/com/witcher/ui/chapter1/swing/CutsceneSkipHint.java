@@ -1,7 +1,7 @@
-package main.java.com.witcher.ui.chapter1.swing;
+package com.witcher.ui.chapter1.swing;
 
-import main.java.com.witcher.chapter1.cutscene.CutsceneSkipPolicy;
-import main.java.com.witcher.ui.graphics.GameFonts;
+import com.witcher.chapter1.cutscene.CutsceneSkipPolicy;
+import com.witcher.ui.graphics.GameFonts;
 
 import java.awt.AlphaComposite;
 import java.awt.Color;

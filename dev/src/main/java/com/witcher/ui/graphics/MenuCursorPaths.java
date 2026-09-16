@@ -1,4 +1,4 @@
-package main.java.com.witcher.ui.graphics;
+package com.witcher.ui.graphics;
 
 /** EXE overlay: baked 1x menu cursor for nearest-neighbor scaling. */
 public final class MenuCursorPaths {

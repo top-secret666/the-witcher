@@ -1,4 +1,4 @@
-package main.java.com.witcher.chapter1.hack;
+package com.witcher.chapter1.hack;
 
 /** Белый список команд терминала. */
 public enum HackCommands {

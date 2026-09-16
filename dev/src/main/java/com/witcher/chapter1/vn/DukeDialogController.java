@@ -1,7 +1,7 @@
-package main.java.com.witcher.chapter1.vn;
+package com.witcher.chapter1.vn;
 
-import main.java.com.witcher.chapter1.Chapter1Session;
-import main.java.com.witcher.chapter1.vn.VnChoiceEffects;
+import com.witcher.chapter1.Chapter1Session;
+import com.witcher.chapter1.vn.VnChoiceEffects;
 
 /**
  * Одноразовые VN-реплики герцога в лавке.

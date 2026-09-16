@@ -1,6 +1,6 @@
-package main.java.com.witcher.exception;
+package com.witcher.exception;
 
-import main.java.com.witcher.validation.InputValidator;
+import com.witcher.validation.InputValidator;
 
 public class InvalidPriceRangeException extends ArmourException {
     public InvalidPriceRangeException(int minPrice, int maxPrice) {

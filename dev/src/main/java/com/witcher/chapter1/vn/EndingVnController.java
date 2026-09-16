@@ -1,11 +1,11 @@
-package main.java.com.witcher.chapter1.vn;
+package com.witcher.chapter1.vn;
 
-import main.java.com.witcher.chapter1.Chapter1Session;
-import main.java.com.witcher.chapter1.ending.EscapeEnding;
-import main.java.com.witcher.chapter1.ending.EscapeResolver;
-import main.java.com.witcher.chapter1.vn.VnChoice;
-import main.java.com.witcher.chapter1.vn.VnChoiceEffects;
-import main.java.com.witcher.chapter1.vn.VnSceneState;
+import com.witcher.chapter1.Chapter1Session;
+import com.witcher.chapter1.ending.EscapeEnding;
+import com.witcher.chapter1.ending.EscapeResolver;
+import com.witcher.chapter1.vn.VnChoice;
+import com.witcher.chapter1.vn.VnChoiceEffects;
+import com.witcher.chapter1.vn.VnSceneState;
 
 /**
  * Финальная VN после успешного взлома: диалог → выбор → исход.

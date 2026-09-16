@@ -1,7 +1,7 @@
-package main.java.com.witcher.ui.settings;
+package com.witcher.ui.settings;
 
-import main.java.com.witcher.ui.audio.GameAudio;
-import main.java.com.witcher.ui.graphics.GameFonts;
+import com.witcher.ui.audio.GameAudio;
+import com.witcher.ui.graphics.GameFonts;
 
 import java.awt.Color;
 import java.awt.Font;

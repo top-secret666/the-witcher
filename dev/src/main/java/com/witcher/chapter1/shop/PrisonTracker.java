@@ -1,7 +1,7 @@
-package main.java.com.witcher.chapter1.shop;
+package com.witcher.chapter1.shop;
 
-import main.java.com.witcher.chapter1.Chapter1Session;
-import main.java.com.witcher.chapter1.loop.LoopRules;
+import com.witcher.chapter1.Chapter1Session;
+import com.witcher.chapter1.loop.LoopRules;
 
 /** Счётчик «Плен» — покупка и экипировка усиливают зеркального герцога. */
 public final class PrisonTracker {

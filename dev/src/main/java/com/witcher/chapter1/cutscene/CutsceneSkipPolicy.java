@@ -1,4 +1,4 @@
-package main.java.com.witcher.chapter1.cutscene;
+package com.witcher.chapter1.cutscene;
 
 /** Когда можно пропустить катсцену и какой текст подсказки показывать. */
 public final class CutsceneSkipPolicy {

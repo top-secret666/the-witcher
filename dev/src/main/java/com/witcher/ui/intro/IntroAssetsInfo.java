@@ -1,4 +1,4 @@
-package main.java.com.witcher.ui.intro;
+package com.witcher.ui.intro;
 
 /**
  * Размеры спрайтов и метаданные GIF появления лавки — задаёт слой отрисовки.

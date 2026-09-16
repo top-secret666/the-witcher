@@ -1,8 +1,8 @@
-package main.java.com.witcher.chapter1;
+package com.witcher.chapter1;
 
-import main.java.com.witcher.chapter1.cutscene.CutsceneCatalog;
-import main.java.com.witcher.chapter1.cutscene.CutsceneId;
-import main.java.com.witcher.chapter1.loop.LoopRules;
+import com.witcher.chapter1.cutscene.CutsceneCatalog;
+import com.witcher.chapter1.cutscene.CutsceneId;
+import com.witcher.chapter1.loop.LoopRules;
 
 /**
  * State machine главы 1: какая фаза активна и что делать после событий.

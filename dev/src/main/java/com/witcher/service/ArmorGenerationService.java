@@ -1,7 +1,7 @@
-package main.java.com.witcher.service;
+package com.witcher.service;
 
-import main.java.com.witcher.factory.ArmorFactory;
-import main.java.com.witcher.model.armour.Armour;
+import com.witcher.factory.ArmorFactory;
+import com.witcher.model.armour.Armour;
 
 import java.util.Random;
 import java.util.function.Supplier;

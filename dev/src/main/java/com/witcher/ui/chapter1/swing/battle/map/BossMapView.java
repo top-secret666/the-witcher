@@ -1,14 +1,14 @@
-package main.java.com.witcher.ui.chapter1.swing.battle.map;
+package com.witcher.ui.chapter1.swing.battle.map;
 
-import main.java.com.witcher.chapter1.battle.BossCatalog;
-import main.java.com.witcher.chapter1.battle.BossEntry;
-import main.java.com.witcher.ui.chapter1.swing.Chapter1UiAssets;
-import main.java.com.witcher.ui.chapter1.swing.ScaledImageCache;
-import main.java.com.witcher.ui.chapter1.view.BossMapLayout;
-import main.java.com.witcher.ui.chapter1.view.Chapter1ViewConstants;
-import main.java.com.witcher.ui.graphics.DialogBoxRenderer;
-import main.java.com.witcher.ui.graphics.GameFonts;
-import main.java.com.witcher.ui.graphics.UiChrome;
+import com.witcher.chapter1.battle.BossCatalog;
+import com.witcher.chapter1.battle.BossEntry;
+import com.witcher.ui.chapter1.swing.Chapter1UiAssets;
+import com.witcher.ui.chapter1.swing.ScaledImageCache;
+import com.witcher.ui.chapter1.view.BossMapLayout;
+import com.witcher.ui.chapter1.view.Chapter1ViewConstants;
+import com.witcher.ui.graphics.DialogBoxRenderer;
+import com.witcher.ui.graphics.GameFonts;
+import com.witcher.ui.graphics.UiChrome;
 
 import java.awt.Color;
 import java.awt.Font;

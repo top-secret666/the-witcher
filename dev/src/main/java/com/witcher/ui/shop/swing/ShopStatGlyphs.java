@@ -1,4 +1,4 @@
-package main.java.com.witcher.ui.shop.swing;
+package com.witcher.ui.shop.swing;
 
 import java.awt.Color;
 import java.awt.FontMetrics;
@@ -7,8 +7,8 @@ import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 
-import static main.java.com.witcher.ui.shop.view.ShopViewConstants.STAT_LEGEND_ICON_SIZE;
-import static main.java.com.witcher.ui.shop.view.ShopViewConstants.STAT_ROW_ICON_SIZE;
+import static com.witcher.ui.shop.view.ShopViewConstants.STAT_LEGEND_ICON_SIZE;
+import static com.witcher.ui.shop.view.ShopViewConstants.STAT_ROW_ICON_SIZE;
 
 /** Мини-иконки статов в строках каталога (LibGDX bake + fallback). */
 public final class ShopStatGlyphs {

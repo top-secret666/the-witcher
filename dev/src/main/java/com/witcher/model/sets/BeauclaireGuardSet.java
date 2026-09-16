@@ -1,4 +1,4 @@
-package main.java.com.witcher.model.sets;
+package com.witcher.model.sets;
 
 public class BeauclaireGuardSet extends NonSchoolSet {
     public BeauclaireGuardSet() {

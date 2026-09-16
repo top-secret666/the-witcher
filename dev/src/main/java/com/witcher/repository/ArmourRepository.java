@@ -1,6 +1,6 @@
-package main.java.com.witcher.repository;
+package com.witcher.repository;
 
-import main.java.com.witcher.model.armour.Armour;
+import com.witcher.model.armour.Armour;
 import java.util.List;
 import java.util.ArrayList;
 

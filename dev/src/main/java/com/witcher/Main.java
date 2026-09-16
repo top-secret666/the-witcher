@@ -1,12 +1,12 @@
-package main.java.com.witcher;
+package com.witcher;
 
-import main.java.com.witcher.model.armour.*;
-import main.java.com.witcher.repository.ArmourRepository;
-import main.java.com.witcher.repository.SetRepository;
-import main.java.com.witcher.service.*;
-import main.java.com.witcher.ui.ConsoleUI;
-import main.java.com.witcher.validation.InputValidator;
-import main.java.com.witcher.ui.util.AnimationUtils;
+import com.witcher.model.armour.*;
+import com.witcher.repository.ArmourRepository;
+import com.witcher.repository.SetRepository;
+import com.witcher.service.*;
+import com.witcher.ui.ConsoleUI;
+import com.witcher.validation.InputValidator;
+import com.witcher.ui.util.AnimationUtils;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Scanner;

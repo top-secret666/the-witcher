@@ -1,6 +1,6 @@
-package main.java.com.witcher.ui.shop.swing;
+package com.witcher.ui.shop.swing;
 
-import main.java.com.witcher.ui.shop.ShopCategory;
+import com.witcher.ui.shop.ShopCategory;
 
 import java.awt.Color;
 

@@ -1,4 +1,4 @@
-package main.java.com.witcher.ui.chapter1.swing.battle.briefing;
+package com.witcher.ui.chapter1.swing.battle.briefing;
 
 import java.awt.Font;
 import java.awt.GraphicsEnvironment;

@@ -1,4 +1,4 @@
-package main.java.com.witcher.model.enums;
+package com.witcher.model.enums;
 
 public enum ArmourCategory {
     COMMON("Обычная", 1.0, 0) ,     // обычная броня - базовые характеристики, без эффектов

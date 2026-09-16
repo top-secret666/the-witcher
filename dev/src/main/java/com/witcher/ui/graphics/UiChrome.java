@@ -1,4 +1,4 @@
-package main.java.com.witcher.ui.graphics;
+package com.witcher.ui.graphics;
 
 import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
@@ -9,8 +9,8 @@ import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 
-import main.java.com.witcher.ui.shop.swing.ShopImageBounds;
-import main.java.com.witcher.ui.shop.view.LavkaAssetPaths;
+import com.witcher.ui.shop.swing.ShopImageBounds;
+import com.witcher.ui.shop.view.LavkaAssetPaths;
 
 /** Маленькие UI-элементы: стрелка «назад», крестик закрытия. */
 public final class UiChrome {

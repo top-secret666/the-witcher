@@ -1,4 +1,4 @@
-package main.java.com.witcher.ui.shop.view;
+package com.witcher.ui.shop.view;
 
 /**
  * Пути к ассетам лавки — общий контракт для Swing ({@code ShopAssetCache})

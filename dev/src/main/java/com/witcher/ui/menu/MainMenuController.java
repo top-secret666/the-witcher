@@ -1,6 +1,6 @@
-package main.java.com.witcher.ui.menu;
+package com.witcher.ui.menu;
 
-import main.java.com.witcher.ui.menu.view.MenuLayout;
+import com.witcher.ui.menu.view.MenuLayout;
 
 import java.util.ArrayList;
 import java.util.Iterator;

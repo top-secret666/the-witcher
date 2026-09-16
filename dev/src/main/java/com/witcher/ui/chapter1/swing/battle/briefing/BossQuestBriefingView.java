@@ -1,10 +1,10 @@
-package main.java.com.witcher.ui.chapter1.swing.battle.briefing;
+package com.witcher.ui.chapter1.swing.battle.briefing;
 
-import main.java.com.witcher.chapter1.battle.briefing.BossQuestBriefingController;
-import main.java.com.witcher.chapter1.battle.briefing.BossQuestBriefingScript;
-import main.java.com.witcher.ui.chapter1.swing.battle.BossVnDialogBoxRenderer;
-import main.java.com.witcher.ui.chapter1.swing.battle.BossVnViewChrome;
-import main.java.com.witcher.ui.shop.view.ShopLayout;
+import com.witcher.chapter1.battle.briefing.BossQuestBriefingController;
+import com.witcher.chapter1.battle.briefing.BossQuestBriefingScript;
+import com.witcher.ui.chapter1.swing.battle.BossVnDialogBoxRenderer;
+import com.witcher.ui.chapter1.swing.battle.BossVnViewChrome;
+import com.witcher.ui.shop.view.ShopLayout;
 
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;

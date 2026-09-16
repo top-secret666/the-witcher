@@ -1,7 +1,7 @@
-package main.java.com.witcher.ui.shop;
+package com.witcher.ui.shop;
 
-import main.java.com.witcher.model.armour.Armour;
-import main.java.com.witcher.shop.EquipSlot;
+import com.witcher.model.armour.Armour;
+import com.witcher.shop.EquipSlot;
 
 /** Фильтры инвентаря экипировки (иконки как в инвентаре Ведьмака 3). */
 public enum EquipmentFilter {

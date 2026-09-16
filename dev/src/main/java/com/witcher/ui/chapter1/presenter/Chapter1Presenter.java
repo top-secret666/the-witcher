@@ -1,55 +1,55 @@
-package main.java.com.witcher.ui.chapter1.presenter;
+package com.witcher.ui.chapter1.presenter;
 
-import main.java.com.witcher.chapter1.Chapter1Director;
-import main.java.com.witcher.chapter1.Chapter1Phase;
-import main.java.com.witcher.chapter1.Chapter1Save;
-import main.java.com.witcher.chapter1.battle.BossCatalog;
-import main.java.com.witcher.chapter1.battle.glitch.BossGlitchRevealController;
-import main.java.com.witcher.chapter1.battle.briefing.BossQuestBriefingController;
-import main.java.com.witcher.chapter1.battle.encounter.BossEncounterController;
-import main.java.com.witcher.chapter1.battle.wolf.WolfBossFinaleController;
-import main.java.com.witcher.ui.chapter1.presenter.wolf.WolfBossPhaseHandler;
-import main.java.com.witcher.chapter1.ending.DemoEndingController;
-import main.java.com.witcher.chapter1.ending.WolfEndingType;
-import main.java.com.witcher.chapter1.battle.BattleCardController;
-import main.java.com.witcher.chapter1.battle.BattleOutcome;
-import main.java.com.witcher.chapter1.battle.BattleResolver;
-import main.java.com.witcher.chapter1.battle.BattleVnController;
-import main.java.com.witcher.chapter1.battle.BossEntry;
-import main.java.com.witcher.chapter1.battle.ScreenDissolveController;
-import main.java.com.witcher.chapter1.battle.briefing.BossQuestBriefingConstants;
-import main.java.com.witcher.chapter1.battle.glitch.BossGlitchRevealTimeline;
-import main.java.com.witcher.chapter1.loop.LoopSequenceController;
-import main.java.com.witcher.chapter1.cutscene.CutsceneId;
-import main.java.com.witcher.chapter1.cutscene.CutsceneCatalog;
-import main.java.com.witcher.chapter1.ending.EscapeEnding;
-import main.java.com.witcher.chapter1.hack.HackConsoleModel;
-import main.java.com.witcher.chapter1.shop.Chapter1ShopBridge;
-import main.java.com.witcher.chapter1.vn.DukeDialogController;
-import main.java.com.witcher.chapter1.vn.EndingVnController;
-import main.java.com.witcher.chapter1.view.Chapter1Layout;
-import main.java.com.witcher.ui.chapter1.view.BossMapLayout;
-import main.java.com.witcher.ui.chapter1.view.VnChoiceLayout;
-import main.java.com.witcher.chapter1.vn.VnSceneState;
-import main.java.com.witcher.ui.chapter1.swing.Chapter1AssetPrewarm;
-import main.java.com.witcher.ui.chapter1.swing.Chapter1SessionHud;
-import main.java.com.witcher.ui.chapter1.swing.CutscenePlayer;
-import main.java.com.witcher.ui.chapter1.swing.EyesBlinkEffect;
-import main.java.com.witcher.ui.chapter1.swing.SwordGlintOverlay;
-import main.java.com.witcher.ui.shop.ShopModel;
-import main.java.com.witcher.ui.shop.swing.ShopScreen;
-import main.java.com.witcher.ui.audio.GameAudio;
-import main.java.com.witcher.ui.pause.PauseCornerButton;
-import main.java.com.witcher.ui.shop.view.ShopViewConstants;
-import main.java.com.witcher.chapter1.battle.SwordCutsceneTiming;
-import main.java.com.witcher.chapter1.loop.WakeAwakeningTimeline;
+import com.witcher.chapter1.Chapter1Director;
+import com.witcher.chapter1.Chapter1Phase;
+import com.witcher.chapter1.Chapter1Save;
+import com.witcher.chapter1.battle.BossCatalog;
+import com.witcher.chapter1.battle.glitch.BossGlitchRevealController;
+import com.witcher.chapter1.battle.briefing.BossQuestBriefingController;
+import com.witcher.chapter1.battle.encounter.BossEncounterController;
+import com.witcher.chapter1.battle.wolf.WolfBossFinaleController;
+import com.witcher.ui.chapter1.presenter.wolf.WolfBossPhaseHandler;
+import com.witcher.chapter1.ending.DemoEndingController;
+import com.witcher.chapter1.ending.WolfEndingType;
+import com.witcher.chapter1.battle.BattleCardController;
+import com.witcher.chapter1.battle.BattleOutcome;
+import com.witcher.chapter1.battle.BattleResolver;
+import com.witcher.chapter1.battle.BattleVnController;
+import com.witcher.chapter1.battle.BossEntry;
+import com.witcher.chapter1.battle.ScreenDissolveController;
+import com.witcher.chapter1.battle.briefing.BossQuestBriefingConstants;
+import com.witcher.chapter1.battle.glitch.BossGlitchRevealTimeline;
+import com.witcher.chapter1.loop.LoopSequenceController;
+import com.witcher.chapter1.cutscene.CutsceneId;
+import com.witcher.chapter1.cutscene.CutsceneCatalog;
+import com.witcher.chapter1.ending.EscapeEnding;
+import com.witcher.chapter1.hack.HackConsoleModel;
+import com.witcher.chapter1.shop.Chapter1ShopBridge;
+import com.witcher.chapter1.vn.DukeDialogController;
+import com.witcher.chapter1.vn.EndingVnController;
+import com.witcher.chapter1.view.Chapter1Layout;
+import com.witcher.ui.chapter1.view.BossMapLayout;
+import com.witcher.ui.chapter1.view.VnChoiceLayout;
+import com.witcher.chapter1.vn.VnSceneState;
+import com.witcher.ui.chapter1.swing.Chapter1AssetPrewarm;
+import com.witcher.ui.chapter1.swing.Chapter1SessionHud;
+import com.witcher.ui.chapter1.swing.CutscenePlayer;
+import com.witcher.ui.chapter1.swing.EyesBlinkEffect;
+import com.witcher.ui.chapter1.swing.SwordGlintOverlay;
+import com.witcher.ui.shop.ShopModel;
+import com.witcher.ui.shop.swing.ShopScreen;
+import com.witcher.ui.audio.GameAudio;
+import com.witcher.ui.pause.PauseCornerButton;
+import com.witcher.ui.shop.view.ShopViewConstants;
+import com.witcher.chapter1.battle.SwordCutsceneTiming;
+import com.witcher.chapter1.loop.WakeAwakeningTimeline;
 
 import java.awt.event.KeyEvent;
 import java.util.List;
 
 /**
  * Логика и ввод главы 1 (фазы, VN, карта, терминал).
- * Отрисовка — {@link main.java.com.witcher.ui.chapter1.swing.Chapter1SwingView}.
+ * Отрисовка — {@link com.witcher.ui.chapter1.swing.Chapter1SwingView}.
  */
 public final class Chapter1Presenter implements WolfBossPhaseHandler.Host {
 

@@ -1,6 +1,6 @@
-package main.java.com.witcher.chapter1.battle;
+package com.witcher.chapter1.battle;
 
-import main.java.com.witcher.chapter1.vn.VnChoice;
+import com.witcher.chapter1.vn.VnChoice;
 
 import java.util.List;
 

@@ -1,4 +1,4 @@
-package main.java.com.witcher.ui.graphics;
+package com.witcher.ui.graphics;
 
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;

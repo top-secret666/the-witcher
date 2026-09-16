@@ -1,6 +1,6 @@
-package main.java.com.witcher.ui.audio;
+package com.witcher.ui.audio;
 
-import main.java.com.witcher.ui.settings.GameSettings;
+import com.witcher.ui.settings.GameSettings;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;

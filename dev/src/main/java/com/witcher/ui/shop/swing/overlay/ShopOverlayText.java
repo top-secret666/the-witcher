@@ -1,6 +1,6 @@
-package main.java.com.witcher.ui.shop.swing.overlay;
+package com.witcher.ui.shop.swing.overlay;
 
-import main.java.com.witcher.ui.graphics.GameFonts;
+import com.witcher.ui.graphics.GameFonts;
 
 import java.awt.Color;
 import java.awt.Font;

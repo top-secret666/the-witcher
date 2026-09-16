@@ -1,4 +1,4 @@
-package main.java.com.witcher.ui.intro.view;
+package com.witcher.ui.intro.view;
 
 /**
  * Раскладка интро — tools/swing_to_gdx_intro_layout.py

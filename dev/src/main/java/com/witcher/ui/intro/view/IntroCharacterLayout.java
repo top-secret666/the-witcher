@@ -1,6 +1,6 @@
-package main.java.com.witcher.ui.intro.view;
+package com.witcher.ui.intro.view;
 
-import main.java.com.witcher.ui.intro.IntroEasing;
+import com.witcher.ui.intro.IntroEasing;
 
 /**
  * Позиция и размер спрайта персонажа на экране интро.

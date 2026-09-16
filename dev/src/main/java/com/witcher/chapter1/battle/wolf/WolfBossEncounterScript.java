@@ -1,10 +1,10 @@
-package main.java.com.witcher.chapter1.battle.wolf;
+package com.witcher.chapter1.battle.wolf;
 
-import main.java.com.witcher.chapter1.battle.encounter.BossEncounterScript;
-import main.java.com.witcher.chapter1.Chapter1Session;
-import main.java.com.witcher.chapter1.vn.VnChoice;
-import main.java.com.witcher.chapter1.vn.VnSceneState;
-import main.java.com.witcher.ui.intro.IntroTheme;
+import com.witcher.chapter1.battle.encounter.BossEncounterScript;
+import com.witcher.chapter1.Chapter1Session;
+import com.witcher.chapter1.vn.VnChoice;
+import com.witcher.chapter1.vn.VnSceneState;
+import com.witcher.ui.intro.IntroTheme;
 
 import java.util.ArrayList;
 import java.util.List;

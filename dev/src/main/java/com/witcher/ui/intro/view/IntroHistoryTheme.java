@@ -1,4 +1,4 @@
-package main.java.com.witcher.ui.intro.view;
+package com.witcher.ui.intro.view;
 
 /**
  * Окно истории интро — tools/swing_to_gdx_history_panel.py

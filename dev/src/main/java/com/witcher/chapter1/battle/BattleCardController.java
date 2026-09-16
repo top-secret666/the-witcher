@@ -1,7 +1,7 @@
-package main.java.com.witcher.chapter1.battle;
+package com.witcher.chapter1.battle;
 
-import main.java.com.witcher.chapter1.Chapter1Session;
-import main.java.com.witcher.shop.EquippedGear;
+import com.witcher.chapter1.Chapter1Session;
+import com.witcher.shop.EquippedGear;
 
 /**
  * Выдача карты боя: после любой покупки, либо «подарок» Герцога, если ничего не купили.

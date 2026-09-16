@@ -1,6 +1,6 @@
-package main.java.com.witcher.ui.shop;
+package com.witcher.ui.shop;
 
-import main.java.com.witcher.ui.shop.view.ShopUiMetrics;
+import com.witcher.ui.shop.view.ShopUiMetrics;
 
 import java.awt.image.BufferedImage;
 

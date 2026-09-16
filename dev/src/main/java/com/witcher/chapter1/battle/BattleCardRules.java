@@ -1,6 +1,6 @@
-package main.java.com.witcher.chapter1.battle;
+package com.witcher.chapter1.battle;
 
-import main.java.com.witcher.shop.EquippedGear;
+import com.witcher.shop.EquippedGear;
 
 /** Когда герцог выдаёт карту боя. */
 public final class BattleCardRules {

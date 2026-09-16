@@ -1,12 +1,12 @@
-package main.java.com.witcher.ui.shop;
+package com.witcher.ui.shop;
 
-import main.java.com.witcher.model.armour.Armour;
-import main.java.com.witcher.model.armour.Boots;
-import main.java.com.witcher.model.armour.Chestpiece;
-import main.java.com.witcher.model.armour.Gloves;
-import main.java.com.witcher.model.armour.Trousers;
-import main.java.com.witcher.model.sets.ArmourSet;
-import main.java.com.witcher.model.sets.SchoolSet;
+import com.witcher.model.armour.Armour;
+import com.witcher.model.armour.Boots;
+import com.witcher.model.armour.Chestpiece;
+import com.witcher.model.armour.Gloves;
+import com.witcher.model.armour.Trousers;
+import com.witcher.model.sets.ArmourSet;
+import com.witcher.model.sets.SchoolSet;
 
 /**
  * Витринные цены лавки — отдельно от «сырых» цен в доменной модели.

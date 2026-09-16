@@ -1,6 +1,6 @@
-package main.java.com.witcher.chapter1.vn;
+package com.witcher.chapter1.vn;
 
-import main.java.com.witcher.chapter1.Chapter1Session;
+import com.witcher.chapter1.Chapter1Session;
 
 /** Применение дельт доверия/подозрения из VN-выбора к сессии. */
 public final class VnChoiceEffects {

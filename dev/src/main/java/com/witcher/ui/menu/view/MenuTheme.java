@@ -1,4 +1,4 @@
-package main.java.com.witcher.ui.menu.view;
+package com.witcher.ui.menu.view;
 
 /**
  * Цвета меню — общие для Swing и LibGDX.

@@ -1,7 +1,7 @@
-package main.java.com.witcher.chapter1.shop;
+package com.witcher.chapter1.shop;
 
-import main.java.com.witcher.chapter1.Chapter1Session;
-import main.java.com.witcher.shop.EquipSlot;
+import com.witcher.chapter1.Chapter1Session;
+import com.witcher.shop.EquipSlot;
 
 import java.util.concurrent.ThreadLocalRandom;
 

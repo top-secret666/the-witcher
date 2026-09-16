@@ -1,7 +1,7 @@
-package main.java.com.witcher.ui.shop;
+package com.witcher.ui.shop;
 
-import main.java.com.witcher.model.armour.Armour;
-import main.java.com.witcher.model.sets.ArmourSet;
+import com.witcher.model.armour.Armour;
+import com.witcher.model.sets.ArmourSet;
 
 /** Ячейка сетки экипировки: броня, комплект или оружие. */
 public record EquipmentGridEntry(Armour armour, ArmourSet armourSet, ShopInventorySlot weapon) {

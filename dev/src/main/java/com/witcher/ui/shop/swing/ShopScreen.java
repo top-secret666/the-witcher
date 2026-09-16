@@ -1,12 +1,12 @@
-package main.java.com.witcher.ui.shop.swing;
+package com.witcher.ui.shop.swing;
 
-import main.java.com.witcher.chapter1.shop.Chapter1ShopBridge;
-import main.java.com.witcher.ui.graphics.GameWindow;
-import main.java.com.witcher.ui.shop.ShopIconsFactory;
-import main.java.com.witcher.ui.shop.ShopModel;
-import main.java.com.witcher.ui.shop.presenter.ShopInput;
-import main.java.com.witcher.ui.shop.presenter.ShopPresenter;
-import main.java.com.witcher.ui.shop.view.ShopView;
+import com.witcher.chapter1.shop.Chapter1ShopBridge;
+import com.witcher.ui.graphics.GameWindow;
+import com.witcher.ui.shop.ShopIconsFactory;
+import com.witcher.ui.shop.ShopModel;
+import com.witcher.ui.shop.presenter.ShopInput;
+import com.witcher.ui.shop.presenter.ShopPresenter;
+import com.witcher.ui.shop.view.ShopView;
 
 import java.awt.Graphics2D;
 import java.awt.Rectangle;

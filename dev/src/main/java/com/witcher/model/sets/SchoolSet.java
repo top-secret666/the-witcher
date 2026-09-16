@@ -1,6 +1,6 @@
-package main.java.com.witcher.model.sets;
+package com.witcher.model.sets;
 
-import main.java.com.witcher.model.enums.ArmourType;
+import com.witcher.model.enums.ArmourType;
 
 public abstract class SchoolSet extends ArmourSet {
     private final SchoolType schoolType;

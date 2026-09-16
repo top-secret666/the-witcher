@@ -1,4 +1,4 @@
-package main.java.com.witcher.ui.menu;
+package com.witcher.ui.menu;
 
 import java.util.Random;
 

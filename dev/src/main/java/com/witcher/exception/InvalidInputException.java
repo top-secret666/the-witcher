@@ -1,4 +1,4 @@
-package main.java.com.witcher.exception;
+package com.witcher.exception;
 
 public class InvalidInputException extends ArmourException {
     public InvalidInputException(String message) {

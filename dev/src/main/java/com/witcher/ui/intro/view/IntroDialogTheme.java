@@ -1,4 +1,4 @@
-package main.java.com.witcher.ui.intro.view;
+package com.witcher.ui.intro.view;
 
 /**
  * Цвета и параметры диалогового окна — tools/swing_to_gdx_dialog_box.py

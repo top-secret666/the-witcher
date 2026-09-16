@@ -1,4 +1,4 @@
-package main.java.com.witcher.chapter1;
+package com.witcher.chapter1;
 
 /**
  * Канонический cinematic-путь главы 1 (для Swing и будущего порта на движок).
