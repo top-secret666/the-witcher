@@ -13,7 +13,7 @@
 </p>
 
 <p align="center">
-<img width="1024" height="1024" alt="witcher_logo" src="https://github.com/user-attachments/assets/d665d802-580b-4148-8314-cdb6eba84ad9" />
+<img width="1024" height="1024" alt="splash_bg" src="https://github.com/user-attachments/assets/a36bf68f-fbab-4ede-9c5e-9be489c80cea" />
 </p>
 
 ## Download & play
