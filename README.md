@@ -2,7 +2,7 @@
 <h3 align="center">Chapter 1 — Pixel Prototype</h3>
 
 <p align="center">
-  <strong>Визуальная новелла · хоррор </strong><br>
+  <strong>Visual novel · horror</strong><br>
   Java · Swing · pixel-art · MVP
 </p>
 
@@ -16,65 +16,63 @@
 <img width="1024" height="1024" alt="image (2)" src="https://github.com/user-attachments/assets/365cae5f-282a-4b30-8ad3-1ddf1f9756cc" />
 </p>
 
-## Скачать и играть
+## Download & play
 
-### [⬇ Скачать Windows-сборку (Releases → v1.1.0)](https://github.com/top-secret666/the-witcher/releases/tag/v1.1.0)
+### [⬇ Download Windows (.ZIP) — v1.1.0](https://github.com/top-secret666/the-witcher/releases/download/v1.1.0/The-Witcher-v1.1.0-Windows.zip)
 
-На странице релиза скачай файл **`The-Witcher-v1.1.0-Windows.zip`**.
-
-| Шаг | Что сделать |
+| Step | What to do |
 |:---:|:------------|
-| **1** | Открой ссылку выше |
-| **2** | Скачай **`The-Witcher-v1.1.0-Windows.zip`** |
-| **3** | Распакуй → папка `The-Witcher` → запусти **`The Witcher.exe`** |
+| **1** | Download the ZIP using the link above |
+| **2** | Extract the archive |
+| **3** | Open the `The-Witcher` folder and run **`The Witcher.exe`** |
 
-Java отдельно ставить **не нужно** — рантайм внутри сборки.  
-Держи рядом: `The Witcher.exe`, `app/`, `runtime/`.
+You do **not** need to install Java separately — the runtime is bundled.  
+Keep these together: `The Witcher.exe`, `app/`, `runtime/`.
 
-Все версии: [**Releases**](https://github.com/top-secret666/the-witcher/releases).
+If the direct link fails, the file is on [**Releases**](https://github.com/top-secret666/the-witcher/releases).
 
 ---
 
-## О проекте
+## About
 
-Первый серьёзный pet-project и попытка написать свой движок.
+This is my first serious pet project and an attempt to build my own engine.
 
-## Архитектура
+## Architecture
 
 ```
 View (Swing)  →  Presenter  →  Chapter1Director  →  Domain  →  Model
 ```
 
-| Слой | Роль |
+| Layer | Role |
 |:-----|:-----|
-| **UI** | `dev/src/.../ui/` — кадр, ввод, ассеты |
-| **Presenter** | Связка экрана с фазами главы |
-| **Director** | Фазы и переходы |
-| **Domain** | Бой, петля, лавка, VN |
+| **UI** | `dev/src/.../ui/` — frame, input, assets |
+| **Presenter** | Connects the screen to chapter phases |
+| **Director** | Phases and transitions |
+| **Domain** | Combat, loop, shop, VN |
 
-Канон прохождения: [`docs/chapter1_journey_checklist.md`](docs/chapter1_journey_checklist.md)
+Canonical playthrough: [`docs/chapter1_journey_checklist.md`](docs/chapter1_journey_checklist.md)
 
 ---
 
-## Структура репозитория
+## Repository layout
 
 ```
 the-witcher/
 ├── README.md
-├── docs/                 дизайн, диалоги, чеклист
-│   └── media/            картинки для README
-└── dev/                  исходники + tools (сборка exe)
-    ├── src/              игра
+├── docs/                 design, dialogues, checklist
+│   └── media/            images for the README
+└── dev/                  source + tools (exe packaging)
+    ├── src/              game
     └── tools/            package-exe, release zip/upload
 ```
 
-Бинарники **не** в git — только через [**GitHub Releases**](https://github.com/top-secret666/the-witcher/releases).
+Binaries are **not** in git — only via [**GitHub Releases**](https://github.com/top-secret666/the-witcher/releases).
 
 ---
 
-## Для разработчиков
+## For developers
 
-**Нужно:** JDK 17, Windows
+**Requires:** JDK 17, Windows
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File dev\tools\package-exe.ps1
@@ -83,14 +81,14 @@ python dev\tools\publish_release_api.py 1.1.0
 ```
 ---
 
-## Документы
+## Docs
 
-| Файл | Описание |
+| File | Description |
 |:-----|:---------|
-| [`chapter1_journey_checklist.md`](docs/chapter1_journey_checklist.md) | Канон главы 1 |
-| [`glava1_scenariy_volk.md`](docs/glava1_scenariy_volk.md) | Сценарий Волка |
-| [`dialogues.md`](docs/dialogues.md) | Черновик диалогов |
-| [`design/`](docs/design/) | Дизайн петли |
+| [`chapter1_journey_checklist.md`](docs/chapter1_journey_checklist.md) | Chapter 1 canon |
+| [`glava1_scenariy_volk.md`](docs/glava1_scenariy_volk.md) | Wolf scenario |
+| [`dialogues.md`](docs/dialogues.md) | Dialogue draft |
+| [`design/`](docs/design/) | Loop design |
 
 ---
 
