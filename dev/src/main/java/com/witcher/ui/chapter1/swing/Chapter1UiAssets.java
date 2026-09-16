@@ -6,6 +6,8 @@ import main.java.com.witcher.ui.graphics.Sprite;
 import main.java.com.witcher.ui.chapter1.swing.glitch.WitcherGlitchPalette;
 
 import java.awt.image.BufferedImage;
+import java.util.HashMap;
+import java.util.Map;
 
 /** Ленивая загрузка UI-ассетов главы 1. Крупные PNG сразу режутся, чтобы не взрывать heap. */
 public final class Chapter1UiAssets {
@@ -120,10 +122,6 @@ public final class Chapter1UiAssets {
   private static BufferedImage bossDukeMapIcon;
   private static BufferedImage bossDukeMapHoverIcon;
   private static BufferedImage bossDukePortrait;
-  private static BufferedImage volkDukeMap;
-  private static BufferedImage volkDukeMapAttack;
-  private static BufferedImage volkDukeMapInterested;
-  private static BufferedImage volkDukeMapLunge;
   private static BufferedImage bossBloodCorridor;
   private static BufferedImage bossGlitchAwakenSheet;
   private static BufferedImage wolfShardReveal;
@@ -134,6 +132,12 @@ public final class Chapter1UiAssets {
   private static BufferedImage bossQuestNotice;
   private static BufferedImage memoryArdCarraig;
   private static BufferedImage memoryKaerMorhen;
+  private static BufferedImage vesemirFlashbackBg;
+  private static BufferedImage vesemirIdle;
+  private static BufferedImage vesemirSpeak;
+  private static BufferedImage youngGeraltIdle;
+  private static BufferedImage youngGeraltSpeak;
+  private static final Map<String, BufferedImage> volkDukeCache = new HashMap<>();
 
   /** Кадры воспоминаний — только fullscreen-эпилог. */
   public static BufferedImage encounterMemoryImage(String path) {
@@ -157,7 +161,8 @@ public final class Chapter1UiAssets {
 
   public static BufferedImage bossQuestNotice() {
     if (bossQuestNotice == null) {
-      bossQuestNotice = loadCappedCrisp(Chapter1AssetPaths.BOSS_QUEST_NOTICE, MAX_MAP_EDGE);
+      // LibGDX-sharp путь: как volk/painted — без bilinear-ужима.
+      bossQuestNotice = loadCappedSharp(Chapter1AssetPaths.BOSS_QUEST_NOTICE, MAX_VOLK_EDGE);
     }
     return bossQuestNotice;
   }
@@ -257,39 +262,94 @@ public final class Chapter1UiAssets {
     return loadCappedCrisp(path, MAX_PORTRAIT_EDGE);
   }
 
-  /** Полноростовые спрайты герцога для VN пробуждения (эмоции). */
+  /** Полноростовые спрайты Волка для VN (каждый путь — свой кадр, кэш). */
   public static BufferedImage volkDukeSprite(String path) {
     if (path == null) {
       return null;
     }
-    if (path.contains("volk_duke_dialog_knife") || path.contains("volk_duke_map_attack")
-        || path.equals(Chapter1AssetPaths.VOLK_DUKE_MAP_ATTACK)) {
-      if (volkDukeMapAttack == null) {
-        volkDukeMapAttack = loadCappedSharp(path, MAX_VOLK_EDGE);
-      }
-      return volkDukeMapAttack;
+    BufferedImage cached = volkDukeCache.get(path);
+    if (cached != null) {
+      return cached;
     }
-    if (path.contains("volk_duke_dialog_lunge") || path.equals(Chapter1AssetPaths.VOLK_DUKE_MAP_LUNGE)) {
-      if (volkDukeMapLunge == null) {
-        volkDukeMapLunge = loadCappedSharp(path, MAX_VOLK_EDGE);
-      }
-      return volkDukeMapLunge;
+    // PNG с альфой as-is; без RGB/JPG-подложки и без повторной загрузки каждый кадр.
+    Sprite sprite = Sprite.loadOptional(path);
+    if (sprite == null) {
+      return null;
     }
-    if (path.contains("volk_duke_dialog_reach") || path.contains("volk_duke_map_interested")
-        || path.equals(Chapter1AssetPaths.VOLK_DUKE_MAP_INTERESTED)) {
-      if (volkDukeMapInterested == null) {
-        volkDukeMapInterested = loadCappedSharp(path, MAX_VOLK_EDGE);
-      }
-      return volkDukeMapInterested;
+    BufferedImage src = sprite.getImage();
+    if (src == null) {
+      return null;
     }
-    if (path.contains("volk_duke_dialog_stand") || path.contains("volk_duke_map")
-        || path.equals(Chapter1AssetPaths.VOLK_DUKE_MAP)) {
-      if (volkDukeMap == null) {
-        volkDukeMap = loadCappedSharp(path, MAX_VOLK_EDGE);
-      }
-      return volkDukeMap;
+    BufferedImage loaded = ensureArgb(src);
+    if (loaded.getWidth() > MAX_VOLK_EDGE || loaded.getHeight() > MAX_VOLK_EDGE) {
+      loaded = capEdgeCrisp(loaded, MAX_VOLK_EDGE);
     }
-    return loadCappedSharp(path, MAX_VOLK_EDGE);
+    volkDukeCache.put(path, loaded);
+    return loaded;
+  }
+
+  public static BufferedImage vesemirFlashbackBg() {
+    if (vesemirFlashbackBg == null) {
+      vesemirFlashbackBg = loadCappedSharp(Chapter1AssetPaths.VESEMIR_FLASHBACK_BG, MAX_MAP_EDGE);
+    }
+    return vesemirFlashbackBg;
+  }
+
+  public static BufferedImage vesemirIdle() {
+    if (vesemirIdle == null) {
+      vesemirIdle = loadFlashbackChar(Chapter1AssetPaths.VESEMIR_IDLE);
+    }
+    return vesemirIdle;
+  }
+
+  public static BufferedImage vesemirSpeak() {
+    if (vesemirSpeak == null) {
+      vesemirSpeak = loadFlashbackChar(Chapter1AssetPaths.VESEMIR_SPEAK);
+    }
+    return vesemirSpeak;
+  }
+
+  public static BufferedImage youngGeraltIdle() {
+    if (youngGeraltIdle == null) {
+      youngGeraltIdle = loadFlashbackChar(Chapter1AssetPaths.YOUNG_GERALT_IDLE);
+    }
+    return youngGeraltIdle;
+  }
+
+  public static BufferedImage youngGeraltSpeak() {
+    if (youngGeraltSpeak == null) {
+      youngGeraltSpeak = loadFlashbackChar(Chapter1AssetPaths.YOUNG_GERALT_SPEAK);
+    }
+    return youngGeraltSpeak;
+  }
+
+  /**
+   * Спрайты вспышки: оригинал as-is (ARGB), без даунскейла при загрузке.
+   * Масштаб на экране — bicubic, как painted-персонажи интро.
+   */
+  private static BufferedImage loadFlashbackChar(String path) {
+    Sprite sprite = Sprite.loadOptional(path);
+    if (sprite == null) {
+      return null;
+    }
+    return ensureArgb(sprite.getImage());
+  }
+
+  /** Гарантирует ARGB — без чёрной RGB-подложки от JPG/ImageIO. */
+  private static BufferedImage ensureArgb(BufferedImage src) {
+    if (src == null) {
+      return null;
+    }
+    if (src.getType() == BufferedImage.TYPE_INT_ARGB
+        || src.getType() == BufferedImage.TYPE_INT_ARGB_PRE) {
+      return src;
+    }
+    BufferedImage out = new BufferedImage(src.getWidth(), src.getHeight(), BufferedImage.TYPE_INT_ARGB);
+    java.awt.Graphics2D g = out.createGraphics();
+    g.setComposite(java.awt.AlphaComposite.Src);
+    g.drawImage(src, 0, 0, null);
+    g.dispose();
+    return out;
   }
 
   private static BufferedImage loadCapped(String path, int maxEdge) {

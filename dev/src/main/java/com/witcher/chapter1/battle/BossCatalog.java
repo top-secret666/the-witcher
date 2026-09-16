@@ -10,8 +10,9 @@ public final class BossCatalog {
   private static final List<BossEntry> BOSSES = List.of(
       new BossEntry(
           "duke",
-          "Герцог",
-          "Хозяин иллюзий",
+          "Волк",
+          "",
+          "В заброшенных руинах замечена беспризорная тень в ведьмачьем тряпье.",
           9, 8, 6,
           Chapter1AssetPaths.BOSS_DUKE_MAP,
           Chapter1AssetPaths.BOSS_DUKE_MAP_HOVER,

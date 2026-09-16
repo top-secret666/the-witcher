@@ -44,6 +44,9 @@ public final class ShopPresenter {
 
     private static final String IDLE_LINE = DukeLines.IDLE;
 
+    /** После стольких открытий категорий без покупок — предложение подобрать броню. */
+    private static final int ARMOR_HELP_AFTER_EMPTY_CATEGORY_OPENS = 3;
+
     private final ShopModel model;
     private final ShopSessionState ui = new ShopSessionState();
     private final ShopRuntimeAssets assets;
@@ -51,6 +54,8 @@ public final class ShopPresenter {
     private final ShopEntryIcons armourIcons;
     private final Chapter1ShopBridge chapterBridge;
     private Runnable battleCardRevealComplete;
+    /** Esc закрыл инвентарь/категорию/reveal — не открывать паузу в этом кадре. */
+    private boolean escConsumedByUi;
 
     public ShopPresenter(ShopModel model, ShopRuntimeAssets assets, ShopEntryIcons armourIcons) {
         this(model, assets, armourIcons, null);
@@ -69,15 +74,31 @@ public final class ShopPresenter {
 
     public void update(ShopInput input) {
         ui.tick++;
+        escConsumedByUi = false;
 
         if (input.escPressed()) {
+            if (ui.battleConfirmActive) {
+                declineBattleConfirm();
+                escConsumedByUi = true;
+                return;
+            }
+            if (ui.outfitConfirmActive) {
+                declineOutfitPurchase();
+                escConsumedByUi = true;
+                return;
+            }
             if (ui.equipmentOpen) {
                 ui.equipmentOpen = false;
                 ui.inventoryOpen = true;
+                ui.equipmentAttention = false;
+                refreshToBattleAttention();
+                promoteBattleCardIconAttention(inventorySlots());
+                escConsumedByUi = true;
                 return;
             }
             if (ui.inventoryOpen) {
                 closeInventory();
+                escConsumedByUi = true;
                 return;
             }
             // Кошелёк / карта / покупка: Esc не ускоряет анимацию reveal.
@@ -86,16 +107,19 @@ public final class ShopPresenter {
                 || ui.state == ShopScreenState.PURCHASE_REVEAL) {
                 // Не return до tickTimedScenes — иначе Esc «замораживает» fly-in.
                 tickTimedScenes();
+                escConsumedByUi = true;
                 return;
             }
             if (ui.state == ShopScreenState.CATEGORY || ui.state == ShopScreenState.CATEGORY_OPENING) {
                 beginCategoryClose();
+                escConsumedByUi = true;
                 return;
             }
             if (ui.state == ShopScreenState.CATEGORY_CLOSING) {
+                escConsumedByUi = true;
                 return;
             }
-            ui.exitRequested = true;
+            ui.pauseRequested = true;
             return;
         }
 
@@ -118,7 +142,7 @@ public final class ShopPresenter {
 
         ShopLayout layout = createLayout();
 
-        // Reveal кошелька/карты боя нельзя пропустить кликом — анимация всегда доигрывает.
+        // Reveal кошелька/карты нельзя пропустить кликом — анимация доигрывает.
         if (ui.state == ShopScreenState.WALLET_REVEAL) {
             return;
         }
@@ -127,8 +151,22 @@ public final class ShopPresenter {
         }
 
         if (ui.state == ShopScreenState.PURCHASE_REVEAL && input.clicked()) {
-            // Сразу завершаем: TOTAL-1 оставлял кадр и клик мог «протечь» в buy.
-            finishPurchaseReveal();
+            if (ui.purchaseRevealCount >= 2) {
+                finishPurchaseReveal();
+            }
+            return;
+        }
+
+        if (ui.armorHelpActive) {
+            updateArmorHelpInput(input.mouseX(), input.mouseY(), input.clicked());
+            return;
+        }
+        if (ui.outfitConfirmActive) {
+            updateOutfitConfirmInput(input.mouseX(), input.mouseY(), input.clicked());
+            return;
+        }
+        if (ui.battleConfirmActive) {
+            updateBattleConfirmInput(input.mouseX(), input.mouseY(), input.clicked());
             return;
         }
 
@@ -198,6 +236,9 @@ public final class ShopPresenter {
             Point slot = layout.cardSlot(ui.hoveredIndex);
             ui.categoryFromRect.setBounds(slot.x, slot.y, layout.cardW, layout.cardH);
             buildCatalogRows(item);
+            if (model.inventoryItemCount() == 0 && !ui.armorHelpActive) {
+                ui.armorHelpEmptyCategoryCount++;
+            }
             // Деньги/кошелёк появляются после клика по карточке категории, не на общей заставке.
             if (model.needsWalletReveal()) {
                 beginWalletReveal(true);
@@ -235,6 +276,52 @@ public final class ShopPresenter {
 
         if (bagUnlocked) {
             ui.inventoryBagHovered = ui.inventoryBagBounds.contains(input.mouseX(), input.mouseY());
+            if (ui.inventoryAttention && ui.inventoryBagHovered) {
+                ui.inventoryAttention = false;
+            }
+        }
+    }
+
+    private void clearInventoryAttentionOnHover(int mouseX, int mouseY, List<ShopInventorySlot> slots) {
+        if (!ui.inventoryOpen) {
+            return;
+        }
+        if (ui.equipmentAttention
+            && ui.inventoryGearButtonBounds.width > 0
+            && ui.inventoryGearButtonBounds.contains(mouseX, mouseY)) {
+            // Только гасим «Надеть» — карта замигает после выхода из экрана экипировки.
+            ui.equipmentAttention = false;
+            return;
+        }
+        if (ui.potionDrinkAttention
+            && ui.inventoryEquipButtonBounds.width > 0
+            && ui.inventoryEquipButtonBounds.contains(mouseX, mouseY)) {
+            ui.potionDrinkAttention = false;
+            return;
+        }
+        if (ui.battleCardOpenAttention
+            && ui.inventoryEquipButtonBounds.width > 0
+            && ui.inventoryEquipButtonBounds.contains(mouseX, mouseY)) {
+            ui.battleCardOpenAttention = false;
+            return;
+        }
+        if (ui.battleCardAttention
+            && ui.inventoryHoveredIndex >= 0
+            && ui.inventoryHoveredIndex < slots.size()
+            && slots.get(ui.inventoryHoveredIndex).kind() == ShopInventoryKind.BATTLE_CARD) {
+            // Кликнули/навели на иконку карты → дальше мигает только «Открыть».
+            ui.battleCardAttention = false;
+            ui.battleCardOpenAttention = true;
+            ui.inventoryFocusedIndex = ui.inventoryHoveredIndex;
+        }
+    }
+
+    private void focusBattleCardSlot(List<ShopInventorySlot> slots) {
+        for (int i = 0; i < slots.size(); i++) {
+            if (slots.get(i).kind() == ShopInventoryKind.BATTLE_CARD) {
+                ui.inventoryFocusedIndex = i;
+                return;
+            }
         }
     }
 
@@ -266,21 +353,25 @@ public final class ShopPresenter {
         List<ShopInventorySlot> weapons = new ArrayList<>();
         for (ShopInventorySlot pouch : model.pouchConsumables()) {
             if (pouch.kind() == ShopInventoryKind.WEAPON) {
-                weapons.add(pouch);
+                weapons.add(ShopInventorySlot.weapon(pouch.title(), pouch.detailLines(), false));
             } else {
                 potions.add(pouch);
             }
         }
         slots.addAll(potions);
         slots.addAll(weapons);
+        ShopInventorySlot wornWeapon = model.getEquippedWeapon();
+        if (wornWeapon != null) {
+            slots.add(ShopInventorySlot.weapon(wornWeapon.title(), wornWeapon.detailLines(), true));
+        }
         java.util.Set<Armour> kitPieces = new java.util.HashSet<>();
         for (ArmourSet set : model.ownedSets()) {
-            slots.add(ShopInventorySlot.set(set));
+            slots.add(ShopInventorySlot.set(set, model.isSetEquipped(set)));
             kitPieces.addAll(set.getArmorPieces());
         }
         for (Armour armour : model.ownedArmour()) {
             if (!kitPieces.contains(armour)) {
-                slots.add(ShopInventorySlot.armour(armour));
+                slots.add(ShopInventorySlot.armour(armour, model.isEquipped(armour)));
             }
         }
         return slots;
@@ -320,6 +411,9 @@ public final class ShopPresenter {
         if (ui.walletRevealTicks < countStart) {
             return "???";
         }
+        if (WALLET_COUNT_TICKS <= 0) {
+            return model.walletAmountText();
+        }
         float t = Math.min(1f, (ui.walletRevealTicks - countStart) / (float) WALLET_COUNT_TICKS);
         t = t * t * (3f - 2f * t);
         return String.valueOf(Math.round(model.getWallet() * t));
@@ -329,6 +423,14 @@ public final class ShopPresenter {
         return ui.state == ShopScreenState.CATEGORY_OPENING
             || ui.state == ShopScreenState.CATEGORY
             || ui.state == ShopScreenState.CATEGORY_CLOSING;
+    }
+
+    public boolean isInventoryOpen() {
+        return ui.inventoryOpen;
+    }
+
+    public boolean isEquipmentOpen() {
+        return ui.equipmentOpen;
     }
 
     public boolean isChapterEventIdle() {
@@ -344,7 +446,8 @@ public final class ShopPresenter {
             ui.revealTicks++;
             if (ui.revealTicks >= REVEAL_DURATION_TICKS) {
                 ui.state = ShopScreenState.IDLE;
-                ui.currentDialog = IDLE_LINE;
+                // Приветствие остаётся — игрок успевает дочитать.
+                ui.currentDialog = WELCOME_LINE;
             }
         }
 
@@ -364,6 +467,7 @@ public final class ShopPresenter {
 
         if (ui.state == ShopScreenState.PURCHASE_REVEAL) {
             ui.purchaseRevealTicks++;
+            // Завершаем сразу по концу fly+fade, без мёртвой паузы и без клика.
             if (ui.purchaseRevealTicks >= PURCHASE_REVEAL_TOTAL) {
                 finishPurchaseReveal();
             }
@@ -472,6 +576,80 @@ public final class ShopPresenter {
         ui.exitRequested = false;
     }
 
+    public boolean pauseRequested() {
+        return ui.pauseRequested;
+    }
+
+    public void clearPauseRequest() {
+        ui.pauseRequested = false;
+    }
+
+    public boolean escConsumedByUi() {
+        return escConsumedByUi;
+    }
+
+    /** Кнопка «В БОЙ»: только после надетой брони/оружия или выпитого зелья; карта ещё не выдана. */
+    public boolean canShowToBattleButton() {
+        boolean ready = model.hasAnyEquippedItem() || model.hasDrunkAnyPotion();
+        return ready
+            && (chapterBridge == null || !chapterBridge.battleCardInInventory());
+    }
+
+    private void refreshToBattleAttention() {
+        // Мигает только после надетой брони/оружия; одно зелье — кнопка есть, но без пульса.
+        ui.toBattleAttention = canShowToBattleButton() && model.hasAnyEquippedItem();
+    }
+
+    private void beginBattleConfirm() {
+        if (!canShowToBattleButton() || chapterBridge == null) {
+            return;
+        }
+        if (!model.hasAnyEquippedItem() && !model.hasDrunkAnyPotion()) {
+            ui.currentDialog = DukeLines.equipBeforeBattle();
+            ui.dialogSpeaker = "Герцог";
+            return;
+        }
+        ui.battleConfirmActive = true;
+        ui.toBattleAttention = false;
+        ui.armorHelpHovered = -1;
+        ui.currentDialog = DukeLines.battleConfirm();
+        ui.dialogSpeaker = "Герцог";
+    }
+
+    private void updateBattleConfirmInput(int mx, int my, boolean clicked) {
+        layoutYesNoChoices();
+        ui.armorHelpHovered = main.java.com.witcher.ui.chapter1.view.VnChoiceLayout.hitIndex(
+            ui.armorHelpChoiceBounds, mx, my);
+        if (!clicked || ui.armorHelpHovered < 0) {
+            return;
+        }
+        if (ui.armorHelpHovered == 0) {
+            confirmBattleDepart();
+        } else {
+            declineBattleConfirm();
+        }
+    }
+
+    private void confirmBattleDepart() {
+        ui.battleConfirmActive = false;
+        ui.armorHelpChoiceBounds.clear();
+        ui.armorHelpHovered = -1;
+        ui.equipmentOpen = false;
+        ui.inventoryOpen = false;
+        if (chapterBridge != null) {
+            chapterBridge.requestQuestBriefing();
+        }
+    }
+
+    private void declineBattleConfirm() {
+        ui.battleConfirmActive = false;
+        ui.armorHelpChoiceBounds.clear();
+        ui.armorHelpHovered = -1;
+        ui.currentDialog = IDLE_LINE;
+        ui.dialogSpeaker = "Герцог";
+        refreshToBattleAttention();
+    }
+
     public Point inventoryBagSlot() {
         int bagX = INVENTORY_BAG_MARGIN;
         int bagY = INVENTORY_BAG_MARGIN;
@@ -549,24 +727,130 @@ public final class ShopPresenter {
             }
             ui.inventoryPouchIconHovered = ui.inventoryHoveredIndex >= 0;
             ui.inventoryCloseHovered = ui.inventoryCloseBounds.contains(mouseX, mouseY);
+            ui.toBattleHovered = canShowToBattleButton()
+                && ui.toBattleButtonBounds.width > 0
+                && ui.toBattleButtonBounds.contains(mouseX, mouseY);
+            clearInventoryAttentionOnHover(mouseX, mouseY, slots);
             if (clicked) {
                 if (ui.inventoryCloseBounds.contains(mouseX, mouseY)) {
                     closeInventory();
+                } else if (ui.toBattleHovered) {
+                    beginBattleConfirm();
                 } else if (ui.inventoryEquipButtonBounds.width > 0
                     && ui.inventoryEquipButtonBounds.contains(mouseX, mouseY)) {
                     handleInventoryAction(slots);
+                } else if (ui.inventoryGearButtonBounds.width > 0
+                    && ui.inventoryGearButtonBounds.contains(mouseX, mouseY)) {
+                    // Только переход в экипировку — надевает игрок сам, не автоматом.
+                    openEquipmentFromInventory();
                 } else if (ui.inventoryHoveredIndex >= 0) {
                     ui.inventoryFocusedIndex = ui.inventoryHoveredIndex;
+                    if (ui.battleCardAttention
+                        && slots.get(ui.inventoryHoveredIndex).kind() == ShopInventoryKind.BATTLE_CARD) {
+                        ui.battleCardAttention = false;
+                        ui.battleCardOpenAttention = true;
+                    }
                 } else if (!ui.inventoryPanelBounds.contains(mouseX, mouseY)) {
                     closeInventory();
                 }
             }
         } else if (clicked && ui.inventoryBagBounds.contains(mouseX, mouseY)) {
-            ui.inventoryOpen = true;
-            ui.inventorySpecialScroll = 0;
-            ui.inventoryArmourScroll = 0;
-            ui.inventoryFocusedIndex = Math.min(ui.inventoryFocusedIndex, Math.max(0, slots.size() - 1));
+            openInventoryAttentionCleared(slots);
         }
+    }
+
+    private void openInventoryAttentionCleared(List<ShopInventorySlot> slots) {
+        ui.inventoryOpen = true;
+        ui.inventoryAttention = false;
+        ui.inventorySpecialScroll = 0;
+        ui.inventoryArmourScroll = 0;
+        boolean hasCard = ui.battleCardAttentionPending
+            || (chapterBridge != null && chapterBridge.battleCardInInventory());
+
+        // После покупки брони/оружия — мигает «Надеть».
+        if (ui.guideToEquipment) {
+            ui.guideToEquipment = false;
+            ui.equipmentAttention = true;
+            ui.potionDrinkAttention = false;
+            ui.battleCardAttention = false;
+            ui.battleCardOpenAttention = false;
+            focusLastPurchasedSlot(slots);
+            return;
+        }
+
+        // После покупки зелья — мигает «Выпить».
+        if (ui.potionDrinkAttention) {
+            ui.equipmentAttention = false;
+            ui.battleCardAttention = false;
+            ui.battleCardOpenAttention = false;
+            focusLastPurchasedSlot(slots);
+            return;
+        }
+
+        // После брифинга — сразу карта / «Открыть».
+        if (hasCard && ui.skipEquipmentGuide) {
+            ui.skipEquipmentGuide = false;
+            ui.battleCardAttentionPending = false;
+            ui.equipmentAttention = false;
+            ui.battleCardAttention = true;
+            ui.battleCardOpenAttention = true;
+            focusBattleCardSlot(slots);
+            return;
+        }
+
+        // Сначала только «Экипировка»; карта — после визита в экран экипировки.
+        if (hasCard && model.hasWearableGear()) {
+            ui.equipmentAttention = true;
+            ui.battleCardAttention = false;
+            ui.battleCardOpenAttention = false;
+            ui.battleCardAttentionPending = true;
+            ui.inventoryFocusedIndex = Math.min(ui.inventoryFocusedIndex, Math.max(0, slots.size() - 1));
+            return;
+        }
+        if (hasCard) {
+            ui.battleCardAttentionPending = false;
+            ui.equipmentAttention = false;
+            ui.battleCardAttention = true;
+            ui.battleCardOpenAttention = false;
+            for (int i = 0; i < slots.size(); i++) {
+                if (slots.get(i).kind() == ShopInventoryKind.BATTLE_CARD) {
+                    ui.inventoryFocusedIndex = i;
+                    return;
+                }
+            }
+        }
+        focusLastPurchasedSlot(slots);
+    }
+
+    private void focusLastPurchasedSlot(List<ShopInventorySlot> slots) {
+        List<String> names = model.inventoryItemNames();
+        if (slots.isEmpty()) {
+            ui.inventoryFocusedIndex = 0;
+            return;
+        }
+        if (!names.isEmpty()) {
+            String last = names.get(names.size() - 1);
+            for (int i = 0; i < slots.size(); i++) {
+                if (last.equals(slots.get(i).title())) {
+                    ui.inventoryFocusedIndex = i;
+                    return;
+                }
+            }
+        }
+        ui.inventoryFocusedIndex = Math.min(ui.inventoryFocusedIndex, Math.max(0, slots.size() - 1));
+    }
+
+    /** После выхода из экипировки — мигает иконка карты (ещё не «Открыть»). */
+    private void promoteBattleCardIconAttention(List<ShopInventorySlot> slots) {
+        boolean hasCard = ui.battleCardAttentionPending
+            || (chapterBridge != null && chapterBridge.battleCardInInventory());
+        if (!hasCard) {
+            return;
+        }
+        ui.battleCardAttentionPending = false;
+        ui.battleCardAttention = true;
+        ui.battleCardOpenAttention = false;
+        focusBattleCardSlot(slots);
     }
 
     private void scrollInventoryGrids(int mouseX, int mouseY, int wheelNotches,
@@ -616,18 +900,25 @@ public final class ShopPresenter {
             case POTION -> {
                 if (model.drinkPotion(focused.title())) {
                     ui.currentDialog = DukeLines.potionDrunk(focused.title());
+                    ui.potionDrinkAttention = false;
                     if (chapterBridge != null) {
                         chapterBridge.onPotionDrunk();
                     }
                     List<ShopInventorySlot> after = inventorySlots();
                     ui.inventoryFocusedIndex = Math.min(ui.inventoryFocusedIndex,
                         Math.max(0, after.size() - 1));
+                    refreshToBattleAttention();
                 }
             }
             case BATTLE_CARD -> {
                 if (chapterBridge != null) {
                     chapterBridge.useBattleCard();
                     ui.inventoryOpen = false;
+                    ui.battleCardAttention = false;
+                    ui.battleCardOpenAttention = false;
+                    ui.battleCardAttentionPending = false;
+                    ui.equipmentAttention = false;
+                    ui.inventoryAttention = false;
                 }
             }
             case ARMOUR -> {
@@ -672,9 +963,44 @@ public final class ShopPresenter {
         }
     }
 
+    private void equipFocusedWearable(List<ShopInventorySlot> slots) {
+        if (ui.inventoryFocusedIndex < 0 || ui.inventoryFocusedIndex >= slots.size()) {
+            return;
+        }
+        ShopInventorySlot focused = slots.get(ui.inventoryFocusedIndex);
+        switch (focused.kind()) {
+            case ARMOUR -> {
+                if (focused.armour() != null) {
+                    model.equipArmour(focused.armour());
+                }
+            }
+            case SET -> {
+                if (focused.armourSet() != null) {
+                    model.equipSet(focused.armourSet());
+                }
+            }
+            case WEAPON -> model.equipWeapon(focused);
+            default -> {
+                return;
+            }
+        }
+        if (chapterBridge != null) {
+            chapterBridge.onEquip();
+        }
+    }
+
     private void openEquipmentFromInventory() {
         ui.equipmentOpen = true;
         ui.inventoryOpen = false;
+        ui.equipmentAttention = false;
+        refreshToBattleAttention();
+        // Карта ещё не мигает — только после возврата из экипировки (если уже выдана).
+        if (ui.battleCardAttentionPending
+            || (chapterBridge != null && chapterBridge.battleCardInInventory())) {
+            ui.battleCardAttentionPending = true;
+            ui.battleCardAttention = false;
+            ui.battleCardOpenAttention = false;
+        }
         ui.equipmentFilter = EquipmentFilter.ALL;
         ui.equipmentHoveredRow = -1;
         ui.equipmentHoveredSlot = -1;
@@ -686,6 +1012,7 @@ public final class ShopPresenter {
         ui.equipmentHoveredSlot = -1;
         ui.equipmentHoveredFilter = -1;
         ui.equipmentWeaponHovered = false;
+        ui.toBattleHovered = false;
         ui.equipmentWeaponSlotBounds.setBounds(0, 0, 0, 0);
         ui.equipmentBackHovered = ui.equipmentBackButtonBounds.contains(mouseX, mouseY);
         EquipmentFilter[] filters = EquipmentFilter.armourFilters();
@@ -717,7 +1044,10 @@ public final class ShopPresenter {
         }
         if (ui.equipmentBackButtonBounds.contains(mouseX, mouseY)) {
             ui.equipmentOpen = false;
-            ui.inventoryOpen = false;
+            ui.inventoryOpen = true;
+            ui.equipmentAttention = false;
+            refreshToBattleAttention();
+            promoteBattleCardIconAttention(inventorySlots());
             if (chapterBridge != null) {
                 chapterBridge.onEquipmentBack();
             }
@@ -771,6 +1101,7 @@ public final class ShopPresenter {
                 if (chapterBridge != null) {
                     chapterBridge.onEquip();
                 }
+                refreshToBattleAttention();
             }
             return;
         }
@@ -779,6 +1110,7 @@ public final class ShopPresenter {
             if (model.getEquipped(slot) != null) {
                 model.unequip(slot);
             }
+            refreshToBattleAttention();
             return;
         }
         if (ui.equipmentWeaponSlotBounds.width > 0
@@ -788,6 +1120,7 @@ public final class ShopPresenter {
             } else {
                 ui.equipmentFilter = EquipmentFilter.WEAPON;
             }
+            refreshToBattleAttention();
             return;
         }
     }
@@ -808,32 +1141,69 @@ public final class ShopPresenter {
     private void finishWalletReveal() {
         model.revealWallet();
         ui.walletRevealTicks = 0;
-        // После заставки кошелька снова витрина с карточками категорий.
+        boolean reopenCategory = ui.walletRevealFromCategory
+            && ui.selectedIndex >= 0
+            && ui.selectedIndex < ui.showcaseItems.size();
+        ui.walletRevealFromCategory = false;
+        ui.inventoryOpen = false;
+        ui.equipmentOpen = false;
+        if (reopenCategory) {
+            // Сразу та же категория, что открыли до катсцены кошелька.
+            ShopShowcaseItem item = ui.showcaseItems.get(ui.selectedIndex);
+            buildCatalogRows(item);
+            ui.categoryClosing = false;
+            ui.categoryTicks = CATEGORY_OPEN_DURATION_TICKS;
+            ui.selectedRowIndex = ui.catalogEntries.isEmpty() ? -1 : 0;
+            ui.catalogScrollOffset = 0;
+            ui.state = ShopScreenState.CATEGORY;
+            String after = DukeLines.walletRevealAfter();
+            ui.currentDialog = (after == null || after.isBlank()) ? IDLE_LINE : after;
+            ui.buyAttention = true;
+            ui.inventoryAttention = false;
+            return;
+        }
         ui.categoryClosing = false;
         ui.categoryTicks = 0;
         ui.selectedIndex = -1;
         ui.selectedRowIndex = -1;
         ui.catalogEntries.clear();
         ui.catalogScrollOffset = 0;
-        ui.walletRevealFromCategory = false;
         ui.state = ShopScreenState.IDLE;
-        ui.currentDialog = DukeLines.walletRevealAfter();
+        String after = DukeLines.walletRevealAfter();
+        ui.currentDialog = (after == null || after.isBlank()) ? IDLE_LINE : after;
+        ui.buyAttention = true;
+        ui.inventoryAttention = false;
     }
 
     /** Анимация выдачи карты боя (как кошелёк) — вызывается из главы 1. */
     public void beginBattleCardReveal(Runnable onComplete) {
+        beginBattleCardReveal(onComplete, false);
+    }
+
+    public void beginBattleCardReveal(Runnable onComplete, boolean noPurchaseGift) {
         battleCardRevealComplete = onComplete;
         ui.state = ShopScreenState.BATTLE_CARD_REVEAL;
         ui.battleCardRevealTicks = 0;
         ui.inventoryOpen = false;
         ui.equipmentOpen = false;
-        ui.currentDialog = DukeLines.battleCardReveal();
+        ui.currentDialog = noPurchaseGift
+            ? DukeLines.battleCardRevealNoPurchase()
+            : DukeLines.battleCardReveal();
     }
 
     private void finishBattleCardReveal() {
         ui.battleCardRevealTicks = 0;
         ui.state = ShopScreenState.IDLE;
-        ui.currentDialog = DukeLines.battleCardRevealAfter();
+        String after = DukeLines.battleCardRevealAfter();
+        ui.currentDialog = (after == null || after.isBlank()) ? IDLE_LINE : after;
+        // После брифинга: сумка → карта → «Открыть» (без экипировки).
+        ui.inventoryAttention = true;
+        ui.skipEquipmentGuide = true;
+        ui.battleCardAttentionPending = true;
+        ui.battleCardAttention = false;
+        ui.battleCardOpenAttention = false;
+        ui.guideToEquipment = false;
+        ui.toBattleAttention = false;
         Runnable done = battleCardRevealComplete;
         battleCardRevealComplete = null;
         if (done != null) {
@@ -859,7 +1229,9 @@ public final class ShopPresenter {
             : null;
         ShopModel.PurchaseResult result = model.purchase(entry, shelf);
         ui.currentDialog = result.dukeLine();
-        if (result.success()) {
+            if (result.success()) {
+            ui.buyAttention = false;
+            ui.armorHelpEmptyCategoryCount = 0;
             if (chapterBridge != null) {
                 chapterBridge.onPurchase();
             }
@@ -882,16 +1254,21 @@ public final class ShopPresenter {
         }
         ui.purchaseRevealCrop = null;
         ui.purchaseRevealTicks = 0;
+        ui.purchaseRevealCount++;
+        ui.purchaseRevealShowSkipHint = ui.purchaseRevealCount >= 2;
+        ui.purchaseSkipHintUsed = ui.purchaseRevealShowSkipHint;
         ui.inventoryOpen = false;
         ui.equipmentOpen = false;
         ui.state = ShopScreenState.PURCHASE_REVEAL;
     }
 
     private void finishPurchaseReveal() {
+        ShopCategory bought = ui.purchaseRevealCategory;
         ui.purchaseRevealTicks = 0;
         ui.purchaseRevealIcon = null;
         ui.purchaseRevealCrop = null;
         ui.purchaseRevealCategory = null;
+        ui.purchaseRevealShowSkipHint = false;
         if (ui.selectedIndex >= 0) {
             int keepIndex = Math.min(ui.purchaseRevealKeepRow, Math.max(0, ui.catalogEntries.size() - 2));
             buildCatalogRows(ui.showcaseItems.get(ui.selectedIndex));
@@ -902,6 +1279,18 @@ public final class ShopPresenter {
         ui.purchaseRevealKeepRow = -1;
         refreshShowcasePrices();
         ui.state = ShopScreenState.CATEGORY;
+        ui.buyAttention = false;
+        ui.inventoryAttention = true;
+        boolean boughtWearable = bought == ShopCategory.WEAPON
+            || bought == ShopCategory.SETS
+            || bought == ShopCategory.CHEST
+            || bought == ShopCategory.LEGS
+            || bought == ShopCategory.GLOVES
+            || bought == ShopCategory.BOOTS;
+        ui.guideToEquipment = boughtWearable;
+        ui.potionDrinkAttention = bought == ShopCategory.POTION;
+        ui.skipEquipmentGuide = false;
+        ui.currentDialog = DukeLines.goToInventory();
     }
 
     private void beginCategoryClose() {
@@ -932,7 +1321,182 @@ public final class ShopPresenter {
         ui.catalogEntries.clear();
         ui.catalogScrollOffset = 0;
         ui.state = ShopScreenState.IDLE;
-        ui.currentDialog = IDLE_LINE;
+        if (chapterBridge != null
+            && model.inventoryItemCount() == 0
+            && !model.needsWalletReveal()
+            && ui.armorHelpEmptyCategoryCount >= ARMOR_HELP_AFTER_EMPTY_CATEGORY_OPENS) {
+            beginArmorHelpOffer();
+        } else {
+            ui.currentDialog = IDLE_LINE;
+            ui.dialogSpeaker = "Герцог";
+        }
+    }
+
+    private void beginArmorHelpOffer() {
+        if (ui.armorHelpActive || model.inventoryItemCount() > 0) {
+            ui.currentDialog = IDLE_LINE;
+            ui.dialogSpeaker = "Герцог";
+            ui.buyAttention = model.inventoryItemCount() == 0;
+            return;
+        }
+        ui.armorHelpEmptyCategoryCount = 0;
+        ui.armorHelpActive = true;
+        ui.armorHelpHovered = -1;
+        ui.armorHelpChoiceBounds.clear();
+        ui.currentDialog = DukeLines.armorHelpOffer();
+        ui.dialogSpeaker = "Герцог";
+        ui.buyAttention = true;
+    }
+
+    private void updateArmorHelpInput(int mx, int my, boolean clicked) {
+        layoutYesNoChoices();
+        ui.armorHelpHovered = main.java.com.witcher.ui.chapter1.view.VnChoiceLayout.hitIndex(
+            ui.armorHelpChoiceBounds, mx, my);
+        if (!clicked || ui.armorHelpHovered < 0) {
+            return;
+        }
+        if (ui.armorHelpHovered == 0) {
+            acceptArmorHelp();
+        } else {
+            declineArmorHelp();
+        }
+    }
+
+    private void layoutYesNoChoices() {
+        // Та же геометрия, что в ShopSwingView.layoutYesNoChoiceBounds.
+        ui.armorHelpChoiceBounds.clear();
+        int rowH = 24;
+        int gap = 8;
+        int btnW = 100;
+        if (ui.battleConfirmActive) {
+            int totalW = btnW * 2 + gap;
+            int x0 = (VIRTUAL_W - totalW) / 2;
+            int y0 = VIRTUAL_H / 2 + 16;
+            ui.armorHelpChoiceBounds.add(
+                new main.java.com.witcher.ui.chapter1.view.VnChoiceLayout.ChoiceRect(0, x0, y0, btnW, rowH));
+            ui.armorHelpChoiceBounds.add(
+                new main.java.com.witcher.ui.chapter1.view.VnChoiceLayout.ChoiceRect(1, x0 + btnW + gap, y0, btnW, rowH));
+            return;
+        }
+        boolean equipmentScreen = ui.equipmentOpen || ui.outfitConfirmActive;
+        if (equipmentScreen) {
+            var equip = main.java.com.witcher.ui.shop.view.EquipmentOverlayLayout.compute(VIRTUAL_W, VIRTUAL_H);
+            btnW = 88;
+            gap = 8;
+            rowH = 24;
+            int totalW = btnW * 2 + gap;
+            int x0 = equip.portraitX + Math.max(0, (equip.portraitW - totalW) / 2 + 28);
+            if (x0 + totalW > VIRTUAL_W - 8) {
+                x0 = VIRTUAL_W - totalW - 8;
+            }
+            int y0 = VIRTUAL_H - DIALOG_TEXT_ZONE - rowH + 6;
+            ui.armorHelpChoiceBounds.add(
+                new main.java.com.witcher.ui.chapter1.view.VnChoiceLayout.ChoiceRect(0, x0, y0, btnW, rowH));
+            ui.armorHelpChoiceBounds.add(
+                new main.java.com.witcher.ui.chapter1.view.VnChoiceLayout.ChoiceRect(
+                    1, x0 + btnW + gap, y0, btnW, rowH));
+            return;
+        }
+        int totalW = btnW * 2 + gap;
+        int x0 = (VIRTUAL_W - totalW) / 2;
+        int y0 = VIRTUAL_H - DIALOG_TEXT_ZONE - rowH + 6;
+        ui.armorHelpChoiceBounds.add(
+            new main.java.com.witcher.ui.chapter1.view.VnChoiceLayout.ChoiceRect(0, x0, y0, btnW, rowH));
+        ui.armorHelpChoiceBounds.add(
+            new main.java.com.witcher.ui.chapter1.view.VnChoiceLayout.ChoiceRect(1, x0 + btnW + gap, y0, btnW, rowH));
+    }
+
+    private static java.util.List<main.java.com.witcher.chapter1.vn.VnChoice> armorHelpChoices() {
+        return java.util.List.of(
+            new main.java.com.witcher.chapter1.vn.VnChoice("yes", "Да", 0, 0),
+            new main.java.com.witcher.chapter1.vn.VnChoice("no", "Нет", 0, 0)
+        );
+    }
+
+    private void acceptArmorHelp() {
+        ui.armorHelpActive = false;
+        ui.armorHelpChoiceBounds.clear();
+        ui.armorHelpHovered = -1;
+        ShopModel.PurchaseResult result = model.beginOutfitPreview(model.getWallet());
+        if (!result.success()) {
+            ui.currentDialog = result.dukeLine();
+            ui.dialogSpeaker = "Герцог";
+            ui.buyAttention = true;
+            return;
+        }
+        ui.currentDialog = result.dukeLine();
+        ui.dialogSpeaker = "Герцог";
+        ui.buyAttention = false;
+        ui.inventoryAttention = false;
+        ui.guideToEquipment = false;
+        ui.skipEquipmentGuide = false;
+        ui.inventoryOpen = false;
+        ui.equipmentOpen = true;
+        ui.outfitConfirmActive = true;
+        ui.armorHelpHovered = -1;
+        ui.toBattleAttention = false;
+        refreshShowcasePrices();
+    }
+
+    private void updateOutfitConfirmInput(int mx, int my, boolean clicked) {
+        layoutYesNoChoices();
+        ui.armorHelpHovered = main.java.com.witcher.ui.chapter1.view.VnChoiceLayout.hitIndex(
+            ui.armorHelpChoiceBounds, mx, my);
+        if (!clicked || ui.armorHelpHovered < 0) {
+            return;
+        }
+        if (ui.armorHelpHovered == 0) {
+            confirmOutfitPurchase();
+        } else {
+            declineOutfitPurchase();
+        }
+    }
+
+    private void confirmOutfitPurchase() {
+        ui.outfitConfirmActive = false;
+        ui.armorHelpChoiceBounds.clear();
+        ui.armorHelpHovered = -1;
+        ShopModel.PurchaseResult result = model.confirmOutfitPreview();
+        if (!result.success()) {
+            model.cancelOutfitPreview();
+            ui.equipmentOpen = false;
+            ui.currentDialog = result.dukeLine();
+            ui.dialogSpeaker = "Герцог";
+            ui.buyAttention = true;
+            return;
+        }
+        if (chapterBridge != null) {
+            chapterBridge.onPurchase();
+            chapterBridge.onEquip();
+        }
+        ui.currentDialog = result.dukeLine();
+        ui.dialogSpeaker = "Герцог";
+        ui.buyAttention = false;
+        refreshToBattleAttention();
+        refreshShowcasePrices();
+    }
+
+    private void declineOutfitPurchase() {
+        ui.outfitConfirmActive = false;
+        ui.armorHelpChoiceBounds.clear();
+        ui.armorHelpHovered = -1;
+        model.cancelOutfitPreview();
+        ui.equipmentOpen = false;
+        ui.inventoryOpen = false;
+        ui.currentDialog = DukeLines.dukeOutfitShopYourself();
+        ui.dialogSpeaker = "Герцог";
+        ui.buyAttention = true;
+        ui.toBattleAttention = false;
+        refreshShowcasePrices();
+    }
+
+    private void declineArmorHelp() {
+        ui.armorHelpActive = false;
+        ui.armorHelpChoiceBounds.clear();
+        ui.armorHelpHovered = -1;
+        ui.currentDialog = DukeLines.geraltBuyMyself();
+        ui.dialogSpeaker = "Геральт";
+        ui.buyAttention = true;
     }
 
     public float categoryAnimProgress() {

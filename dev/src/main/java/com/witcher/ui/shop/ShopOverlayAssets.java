@@ -13,6 +13,8 @@ public interface ShopOverlayAssets {
 
     BufferedImage weaponIcon();
 
+    BufferedImage inventoryPanelBg();
+
     BufferedImage statVialEmpty();
 
     BufferedImage statVialOverlay();

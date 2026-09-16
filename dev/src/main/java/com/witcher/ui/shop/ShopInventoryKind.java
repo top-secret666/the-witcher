@@ -15,13 +15,14 @@ public enum ShopInventoryKind {
             case POTION -> "Выпить";
             case BATTLE_CARD -> "Открыть";
             case WALLET -> "";
-            default -> "Экипировка";
+            case WEAPON, ARMOUR, SET -> "Надеть";
         };
     }
 
     /** Показывать ли кнопку действия в панели инвентаря. */
     public boolean hasActionButton() {
-        return this != WALLET;
+        // «Надеть» — отдельная кнопка после покупки брони/оружия, не для зелий.
+        return this == POTION || this == BATTLE_CARD;
     }
 
     public boolean isArmourGrid() {

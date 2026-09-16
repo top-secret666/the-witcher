@@ -9,7 +9,7 @@ import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 
-/** EXE overlay: plain Enter hint and aligned typewriter caret. */
+/** Общая отрисовка typewriter-окна для босс-VN (брифинг и лес). */
 public final class BossVnDialogBoxRenderer {
 
   private BossVnDialogBoxRenderer() {
@@ -25,6 +25,20 @@ public final class BossVnDialogBoxRenderer {
       int tickCount,
       boolean waitingForAdvance,
       boolean autoMode) {
+    draw(g, sw, sh, speaker, speakerColorRgb, visibleText, tickCount, waitingForAdvance, autoMode, true);
+  }
+
+  public static void draw(
+      Graphics2D g,
+      int sw,
+      int sh,
+      String speaker,
+      int speakerColorRgb,
+      String visibleText,
+      int tickCount,
+      boolean waitingForAdvance,
+      boolean autoMode,
+      boolean drawBackgroundBox) {
     DialogBoxRenderer.Layout layout = DialogBoxRenderer.computeLayout(sw, sh);
     Color speakerColor = speaker == null
         ? DialogBoxRenderer.NARRATOR_COLOR
@@ -33,7 +47,7 @@ public final class BossVnDialogBoxRenderer {
             speakerColorRgb & 0xff);
 
     int baselineY = DialogBoxRenderer.drawTypewriterText(
-        g, speaker, visibleText, speakerColor, layout, 1f);
+        g, speaker, visibleText, speakerColor, layout, 1f, drawBackgroundBox);
 
     if (!waitingForAdvance && (tickCount / 8) % 2 == 0) {
       g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);

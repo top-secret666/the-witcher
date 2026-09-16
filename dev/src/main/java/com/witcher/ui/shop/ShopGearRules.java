@@ -57,11 +57,14 @@ public final class ShopGearRules {
         if (lower.contains("кинжал") || lower.contains("арбалет")) {
             return new ShopGearStats(0, -1, 0);
         }
-        if (lower.contains("зелье") || lower.contains("эликсир")) {
-            return new ShopGearStats(0, 0, 4);
+        if (lower.contains("кошк")) {
+            return new ShopGearStats(0, 3, 1);
         }
-        if (lower.contains("отвар")) {
+        if (lower.contains("отвар") || lower.contains("грифон")) {
             return new ShopGearStats(0, 1, 5);
+        }
+        if (lower.contains("зелье") || lower.contains("эликсир") || lower.contains("гриф")) {
+            return new ShopGearStats(0, 0, 4);
         }
         return new ShopGearStats(0, 0, 0);
     }

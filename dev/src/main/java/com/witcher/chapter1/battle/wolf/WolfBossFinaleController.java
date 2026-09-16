@@ -2,24 +2,30 @@ package main.java.com.witcher.chapter1.battle.wolf;
 
 import main.java.com.witcher.chapter1.Chapter1Session;
 import main.java.com.witcher.chapter1.shop.BossMemoryFragments;
-import main.java.com.witcher.chapter1.vn.VnChoice;
-import main.java.com.witcher.chapter1.vn.VnChoiceEffects;
 import main.java.com.witcher.chapter1.vn.VnSceneState;
 
-/** Финальная VN: выбор №3 → «Тогда покажи» → исход. */
+/**
+ * Финальная VN: сразу эпилог истинной ветки (без пустого экрана «доставай меч»).
+ */
 public final class WolfBossFinaleController {
 
   public enum Step {
     CHOICE, CLASH, RESOLVE, DONE
   }
 
+  /** ~1 с при пустом эпилоге — сразу к глитчу/титрам. */
+  private static final int TRUE_RESOLVE_AUTO_TICKS = 30;
+
   private final Chapter1Session session;
-  private Step step = Step.CHOICE;
-  private VnSceneState scene = WolfBossFinaleScript.finalChoice();
-  private boolean trueEnding;
+  private Step step = Step.RESOLVE;
+  private VnSceneState scene;
+  private final boolean trueEnding = true;
+  private int stepTicks;
 
   public WolfBossFinaleController(Chapter1Session session) {
     this.session = session != null ? session : Chapter1Session.newGame();
+    BossMemoryFragments.grantWolfShard(this.session);
+    this.scene = WolfBossFinaleScript.trueEndingLine(BossMemoryFragments.wolfFragmentCode());
   }
 
   public VnSceneState scene() {
@@ -38,15 +44,35 @@ public final class WolfBossFinaleController {
     return trueEnding;
   }
 
+  public void tick() {
+    if (step == Step.DONE || step == Step.CHOICE) {
+      return;
+    }
+    stepTicks++;
+  }
+
+  /** Автопереход: RESOLVE → DONE. */
+  public boolean shouldAutoAdvance() {
+    if (step == Step.RESOLVE) {
+      return stepTicks >= TRUE_RESOLVE_AUTO_TICKS;
+    }
+    return false;
+  }
+
+  /** @deprecated use {@link #shouldAutoAdvance()} */
+  @Deprecated
+  public boolean shouldAutoFinishResolve() {
+    return step == Step.RESOLVE && shouldAutoAdvance();
+  }
+
   public void advance() {
     if (step == Step.DONE || scene.waitingForChoice()) {
       return;
     }
     if (step == Step.CLASH) {
       step = Step.RESOLVE;
-      scene = trueEnding
-          ? WolfBossFinaleScript.trueEndingLine(BossMemoryFragments.wolfFragmentCode())
-          : WolfBossFinaleScript.badEndingLine();
+      stepTicks = 0;
+      scene = WolfBossFinaleScript.trueEndingLine(BossMemoryFragments.wolfFragmentCode());
       return;
     }
     if (step == Step.RESOLVE) {
@@ -54,20 +80,8 @@ public final class WolfBossFinaleController {
     }
   }
 
+  /** Выбор реплик отключён — одна концовка. */
   public void choose(int index) {
-    if (step != Step.CHOICE || !scene.waitingForChoice()) {
-      return;
-    }
-    scene.select(index);
-    VnChoice choice = scene.selectedChoice();
-    if (choice != null) {
-      VnChoiceEffects.apply(session, choice);
-    }
-    trueEnding = session.suspicionDominates();
-    step = Step.CLASH;
-    scene = WolfBossFinaleScript.wolfClashLine();
-    if (trueEnding) {
-      BossMemoryFragments.grantWolfShard(session);
-    }
+    // no-op
   }
 }

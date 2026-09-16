@@ -527,8 +527,8 @@ public class IntroScreen {
                 DialogBoxRenderer.getLastVisibleLine(visibleText, fm, layout.textMaxW));
             g.setColor(speakerColor);
             int caretTop = DialogBoxRenderer.typewriterCaretTop(baselineY, fm);
-            g.fillRect(cursorX + 2, caretTop,
-                DialogBoxRenderer.typewriterCaretHeight(fm, layout.fontSize), fm.getAscent());
+            int caretH = DialogBoxRenderer.typewriterCaretHeight(fm, layout.fontSize);
+            g.fillRect(cursorX + 2, caretTop, Math.max(2, layout.fontSize / 5), caretH);
             g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
         }
 
@@ -816,7 +816,16 @@ public class IntroScreen {
     }
 
     private void drawCursor(Graphics2D g, int mouseX, int mouseY) {
-        main.java.com.witcher.ui.graphics.MenuCursorDraw.drawSmall(g, mouseX, mouseY);
+        if (MENU_CURSOR != null) {
+            int cw = 16;
+            int ch = Math.max(1, cw * MENU_CURSOR.getHeight() / MENU_CURSOR.getWidth());
+            g.drawImage(MENU_CURSOR, mouseX - 4, mouseY - 4, cw, ch, null);
+        } else {
+            g.setColor(new Color(255, 220, 100));
+            g.drawLine(mouseX, mouseY, mouseX + 8, mouseY + 8);
+            g.drawLine(mouseX, mouseY, mouseX + 6, mouseY);
+            g.drawLine(mouseX, mouseY, mouseX, mouseY + 6);
+        }
     }
 
     private static BufferedImage loadMenuCursor() {

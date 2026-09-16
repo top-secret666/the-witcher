@@ -44,12 +44,13 @@ public final class EquipmentOverlayLayout {
     public final int slotY0;
     public final int contentTop;
     public final Rectangle weaponSlot;
+    public final Rectangle toBattleButton;
 
     private EquipmentOverlayLayout(Rectangle panel, Rectangle backButton, int listX, int listW, int listY,
                                    int leftPanelH, int filterY, int statsX, int statsY, int statsW, int statsH,
                                    int gridX0, int gridY0, int gridBottom, int portraitX, int portraitY,
                                    int portraitW, int portraitH, int slotX, int slotY0, int contentTop,
-                                   Rectangle weaponSlot) {
+                                   Rectangle weaponSlot, Rectangle toBattleButton) {
         this.panel = panel;
         this.backButton = backButton;
         this.listX = listX;
@@ -72,6 +73,7 @@ public final class EquipmentOverlayLayout {
         this.slotY0 = slotY0;
         this.contentTop = contentTop;
         this.weaponSlot = weaponSlot;
+        this.toBattleButton = toBattleButton;
     }
 
     public static EquipmentOverlayLayout compute(int sw, int sh) {
@@ -114,6 +116,15 @@ public final class EquipmentOverlayLayout {
         int armourSlotsH = EquipSlot.values().length * (SLOT_SIZE + SLOT_GAP) - SLOT_GAP;
         int weaponY = contentTop + armourSlotsH + EQUIP_WEAPON_SLOT_GAP;
         Rectangle weaponSlot = new Rectangle(slotX, weaponY, SLOT_SIZE, SLOT_SIZE);
+        // Кнопка целиком в правой колонке — не заезжает под портрет.
+        int battleW = Math.min(EQUIP_RIGHT_COL_W, Math.max(SLOT_SIZE + 8, 64));
+        int battleH = 28;
+        int battleX = rightX + (EQUIP_RIGHT_COL_W - battleW) / 2;
+        int battleY = weaponY + SLOT_SIZE + 6;
+        if (battleY + battleH > contentBottom) {
+            battleY = Math.max(weaponY + SLOT_SIZE + 2, contentBottom - battleH);
+        }
+        Rectangle toBattleButton = new Rectangle(battleX, battleY, battleW, battleH);
 
         return new EquipmentOverlayLayout(
             new Rectangle(px, py, panelW, panelH),
@@ -122,7 +133,7 @@ public final class EquipmentOverlayLayout {
             statsX, statsY, statsW, statsH,
             gridX0, gridY0, gridBottom,
             portraitX, portraitY, portraitW, portraitH,
-            slotX, contentTop, contentTop, weaponSlot);
+            slotX, contentTop, contentTop, weaponSlot, toBattleButton);
     }
 
     public Rectangle gridCell(int index) {

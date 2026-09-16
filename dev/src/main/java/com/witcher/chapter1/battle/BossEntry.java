@@ -5,6 +5,7 @@ public record BossEntry(
     String id,
     String name,
     String title,
+    String description,
     int protection,
     int stamina,
     int signs,

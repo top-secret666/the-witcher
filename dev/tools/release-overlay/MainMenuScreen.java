@@ -74,12 +74,28 @@ public class MainMenuScreen {
         drawTitle(g, sw, sh);
 
         layoutButtons(sw, sh);
-        drawButtons(g);
+        drawButtonFrames(g);
 
         drawTransition(g, sw, sh);
-
-        drawCursor(g, mouseX, mouseY);
         g.dispose();
+    }
+
+    /**
+     * Подписи кнопок и курсор — поверх CRT, как диалоги в главе
+     * (иначе текст меню мылится сканлайнами).
+     */
+    public void drawTextOverlay(Graphics2D g, int mouseX, int mouseY) {
+        int sw = 480;
+        int sh = 360;
+        layoutButtons(sw, sh);
+        GameFonts.applyUiOverlayHints(g);
+        drawButtonLabels(g);
+        drawCursor(g, mouseX, mouseY);
+    }
+
+    /** Курсор поверх оверлеев (настройки / пауза). */
+    public void drawCursorOverlay(Graphics2D g, int mouseX, int mouseY) {
+        drawCursor(g, mouseX, mouseY);
     }
 
     private void drawBackground(Graphics2D g, int sw, int sh) {
@@ -173,42 +189,46 @@ public class MainMenuScreen {
         g.drawString(title, (sw - tw) / 2, (int) (sh * 0.12f));
     }
 
-    private void drawButtons(Graphics2D g) {
+    private void drawButtonFrames(Graphics2D g) {
         for (int i = 0; i < controller.buttonCount(); i++) {
             MainMenuController.Rect r = controller.buttonRect(i);
             int state = controller.buttonState(i);
-
             BufferedImage frame = getButtonFrame(i, state);
             if (frame != null) {
                 g.drawImage(frame, Math.round(r.x), Math.round(r.y),
                     Math.round(r.width), Math.round(r.height), null);
             }
+        }
+    }
 
+    private void drawButtonLabels(Graphics2D g) {
+        for (int i = 0; i < controller.buttonCount(); i++) {
+            MainMenuController.Rect r = controller.buttonRect(i);
+            int state = controller.buttonState(i);
             String label = controller.buttonLabel(i);
-            if (!label.isEmpty()) {
-                int fontSize = Math.round(MenuTextLayout.fontSize(r.height));
-                Font font = GameFonts.get().bold(fontSize);
-                g.setFont(font);
-                GameFonts.applyDialogHints(g);
-                FontMetrics fm = g.getFontMetrics(font);
-                Rectangle2D bounds = fm.getStringBounds(label, g);
-
-                float anchorX = MenuTextLayout.anchorX(r, i);
-                float anchorY = MenuTextLayout.anchorY(r, i);
-                int tx = (int) Math.round(anchorX - bounds.getWidth() / 2.0 - bounds.getX());
-                int ty = (int) Math.round(anchorY - bounds.getHeight() / 2.0 - bounds.getY());
-
-                g.setColor(new Color(MenuTheme.SWING_SHADOW_R, MenuTheme.SWING_SHADOW_G,
-                    MenuTheme.SWING_SHADOW_B, MenuTheme.SWING_SHADOW_ALPHA));
-                g.drawString(label, tx + (int) MenuTheme.SHADOW_OFFSET_X, ty + (int) MenuTheme.SHADOW_OFFSET_Y);
-
-                g.setColor(new Color(
-                    Math.round(MenuTheme.labelR(state) * 255),
-                    Math.round(MenuTheme.labelG(state) * 255),
-                    Math.round(MenuTheme.labelB(state) * 255)));
-                g.drawString(label, tx, ty);
-                g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
+            if (label.isEmpty()) {
+                continue;
             }
+            int fontSize = Math.round(MenuTextLayout.fontSize(r.height));
+            Font font = GameFonts.get().uiBold(fontSize);
+            g.setFont(font);
+            FontMetrics fm = g.getFontMetrics(font);
+            Rectangle2D bounds = fm.getStringBounds(label, g);
+
+            float anchorX = MenuTextLayout.anchorX(r, i);
+            float anchorY = MenuTextLayout.anchorY(r, i);
+            int tx = (int) Math.round(anchorX - bounds.getWidth() / 2.0 - bounds.getX());
+            int ty = (int) Math.round(anchorY - bounds.getHeight() / 2.0 - bounds.getY());
+
+            Color fill = new Color(
+                Math.round(MenuTheme.labelR(state) * 255),
+                Math.round(MenuTheme.labelG(state) * 255),
+                Math.round(MenuTheme.labelB(state) * 255));
+            // Мягкая тень вместо жёсткого чёрного контура на пергаменте.
+            g.setColor(new Color(20, 12, 6, 90));
+            g.drawString(label, tx + 1, ty + 1);
+            g.setColor(fill);
+            g.drawString(label, tx, ty);
         }
     }
 
@@ -241,7 +261,15 @@ public class MainMenuScreen {
     }
 
     private void drawCursor(Graphics2D g, int mouseX, int mouseY) {
-        main.java.com.witcher.ui.graphics.MenuCursorDraw.drawLarge(g, mouseX, mouseY);
+        // drawCursor — рисует кастомный курсор в стиле ведьмака
+        if (cursor != null) {
+            int cw = 28;
+            int ch = Math.max(1, cw * cursor.getHeight() / cursor.getWidth());
+            g.drawImage(cursor, mouseX - 4, mouseY - 4, cw, ch, null);
+        } else {
+            g.setColor(Color.WHITE);
+            g.drawLine(mouseX, mouseY, mouseX + 8, mouseY + 8);
+        }
     }
 
     private BufferedImage getButtonFrame(int row, int state) {

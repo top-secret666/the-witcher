@@ -10,8 +10,13 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 
+import main.java.com.witcher.ui.audio.GameAudio;
 import main.java.com.witcher.ui.chapter1.swing.Chapter1Screen;
 import main.java.com.witcher.ui.menu.MainMenuController;
+import main.java.com.witcher.ui.pause.PauseMenuController;
+import main.java.com.witcher.ui.pause.PauseMenuView;
+import main.java.com.witcher.ui.pause.PauseCornerButton;
+import main.java.com.witcher.ui.settings.SettingsOverlay;
 
 public class GameWindow {
 
@@ -28,24 +33,39 @@ public class GameWindow {
     private SplashScreen splashScreen;
     private GameAssetLoader.Bundle loadBundle;
     private MainMenuScreen mainMenu;
+    private DisclaimerScreen disclaimerScreen;
     private IntroScreen introScreen;
     private Chapter1Screen chapter1Screen;
     private boolean splashActive = true;
     private boolean menuActive = false;
+    private boolean disclaimerActive = false;
     private boolean introActive = false;
     private boolean chapter1Active = false;
+    private boolean disclaimerAdvancePending = false;
     private boolean introAdvancePending = false;
     private int introWheelPending = 0;
     private boolean shopExitRequested = false;
+    private boolean pauseActive = false;
+    private boolean settingsActive = false;
+    /** Настройки открыты поверх паузы (иначе поверх главного меню). */
+    private boolean settingsFromPause = false;
+    private final PauseMenuController pauseMenu = new PauseMenuController();
+    private final SettingsOverlay settingsOverlay = new SettingsOverlay();
 
     // Ввод для меню в координатах виртуального экрана
     private int mouseVX = 0;
     private int mouseVY = 0;
     private boolean mouseClickPending = false;
+    private boolean mouseButtonDown = false;
     private int shopWheelPending = 0;
     private int menuNavDir = 0;
     private boolean menuActivate = false;
     private boolean menuExitRequested = false;
+    private boolean pauseEscPending = false;
+    private int pauseNavDir = 0;
+    private boolean pauseActivate = false;
+    /** Замороженный кадр под паузой (сцена не тикает). */
+    private BufferedImage pauseFreezeFrame;
 
     // Цвета шапки окна (в том же духе, что и сплэш)
     private static final Color TITLE_BG = new Color(30, 22, 12);
@@ -125,6 +145,12 @@ public class GameWindow {
             public void mousePressed(MouseEvent e) {
                 updateVirtualMouse(e);
                 mouseClickPending = true;
+                mouseButtonDown = true;
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                mouseButtonDown = false;
             }
         });
 
@@ -139,10 +165,58 @@ public class GameWindow {
         renderer.addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
+                if (disclaimerActive) {
+                    int code = e.getKeyCode();
+                    if (code == KeyEvent.VK_SPACE || code == KeyEvent.VK_ENTER) {
+                        disclaimerAdvancePending = true;
+                    } else if (code == KeyEvent.VK_ESCAPE) {
+                        disclaimerActive = false;
+                        disclaimerScreen = null;
+                        enterMainMenuMode();
+                    }
+                    return;
+                }
+
                 if (introActive) {
                     int code = e.getKeyCode();
-                    if (code == KeyEvent.VK_ENTER || code == KeyEvent.VK_SPACE) {
+                    if (pauseActive) {
+                        if (code == KeyEvent.VK_UP || code == KeyEvent.VK_W) {
+                            pauseNavDir = -1;
+                        } else if (code == KeyEvent.VK_DOWN || code == KeyEvent.VK_S) {
+                            pauseNavDir = 1;
+                        } else if (code == KeyEvent.VK_ENTER || code == KeyEvent.VK_SPACE) {
+                            pauseActivate = true;
+                        } else if (code == KeyEvent.VK_ESCAPE) {
+                            pauseEscPending = true;
+                        }
+                    } else if (code == KeyEvent.VK_ESCAPE) {
+                        openPauseMenu();
+                    } else if (code == KeyEvent.VK_ENTER || code == KeyEvent.VK_SPACE) {
                         introAdvancePending = true;
+                    }
+                    return;
+                }
+
+                if (settingsActive) {
+                    int code = e.getKeyCode();
+                    if (code == KeyEvent.VK_ESCAPE
+                        || code == KeyEvent.VK_ENTER
+                        || code == KeyEvent.VK_SPACE) {
+                        pauseActivate = true;
+                    }
+                    return;
+                }
+
+                if (pauseActive) {
+                    int code = e.getKeyCode();
+                    if (code == KeyEvent.VK_UP || code == KeyEvent.VK_W) {
+                        pauseNavDir = -1;
+                    } else if (code == KeyEvent.VK_DOWN || code == KeyEvent.VK_S) {
+                        pauseNavDir = 1;
+                    } else if (code == KeyEvent.VK_ENTER || code == KeyEvent.VK_SPACE) {
+                        pauseActivate = true;
+                    } else if (code == KeyEvent.VK_ESCAPE) {
+                        pauseEscPending = true;
                     }
                     return;
                 }
@@ -172,7 +246,7 @@ public class GameWindow {
 
             @Override
             public void keyTyped(KeyEvent e) {
-                if (chapter1Active) {
+                if (chapter1Active && !pauseActive && !settingsActive) {
                     chapter1Screen.keyTyped(e);
                 }
             }
@@ -189,6 +263,16 @@ public class GameWindow {
     private void enterMainMenuMode() {
         splashActive = false;
         menuActive = true;
+        disclaimerActive = false;
+        disclaimerScreen = null;
+        disclaimerAdvancePending = false;
+        introActive = false;
+        chapter1Active = false;
+        pauseActive = false;
+        settingsActive = false;
+        settingsFromPause = false;
+        pauseFreezeFrame = null;
+        chapter1Screen = null;
         mainMenu = loadBundle != null ? loadBundle.mainMenu : new MainMenuScreen();
 
         // Меню должно быть как игровая сцена: без шапки и рамки окна.
@@ -210,6 +294,37 @@ public class GameWindow {
 
         useHiddenCursor();
         renderer.requestFocusInWindow();
+        GameAudio.setPaused(false);
+        GameAudio.playMainMenu();
+    }
+
+    private void openPauseMenu() {
+        pauseActive = true;
+        pauseMenu.reset();
+        GameAudio.setPaused(true);
+        capturePauseFrame();
+    }
+
+    private void capturePauseFrame() {
+        int w = renderer.getVirtualW();
+        int h = renderer.getVirtualH();
+        if (pauseFreezeFrame == null
+            || pauseFreezeFrame.getWidth() != w
+            || pauseFreezeFrame.getHeight() != h) {
+            pauseFreezeFrame = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+        }
+        Graphics2D g = pauseFreezeFrame.createGraphics();
+        g.drawImage(renderer.screen, 0, 0, null);
+        g.dispose();
+    }
+
+    private void blitPauseFreezeFrame() {
+        if (pauseFreezeFrame == null) {
+            return;
+        }
+        Graphics2D g = renderer.screen.createGraphics();
+        g.drawImage(pauseFreezeFrame, 0, 0, null);
+        g.dispose();
     }
 
     /** Меню/интро: системный курсор скрыт, рисуется спрайтом в сцене. */
@@ -565,6 +680,7 @@ public class GameWindow {
         frame.setVisible(true);
         renderer.requestFocusInWindow();
         Timer timer = new Timer(33, e -> {
+            GameAudio.tick();
             if (splashActive) {
                 splashScreen.update();
                 splashScreen.render(renderer.screen);
@@ -573,56 +689,226 @@ public class GameWindow {
                     enterMainMenuMode();
                 }
             } else if (menuActive) {
-                mainMenu.update(renderer.getVirtualW(), renderer.getVirtualH(),
-                        mouseVX, mouseVY, mouseClickPending, menuNavDir, menuActivate);
-                mainMenu.render(renderer.screen, mouseVX, mouseVY);
-                renderer.present();
+                if (settingsActive) {
+                    mainMenu.render(renderer.screen, mouseVX, mouseVY);
+                    settingsOverlay.update(
+                        renderer.getVirtualW(), renderer.getVirtualH(),
+                        mouseVX, mouseVY, mouseClickPending, mouseButtonDown,
+                        pauseActivate, pauseEscPending);
+                    renderer.present(g -> {
+                        settingsOverlay.draw(g, renderer.getVirtualW(), renderer.getVirtualH());
+                        mainMenu.drawCursorOverlay(g, mouseVX, mouseVY);
+                    });
+                    if (settingsOverlay.consumeAction() == SettingsOverlay.Action.BACK) {
+                        settingsActive = false;
+                        settingsOverlay.reset();
+                    }
+                    mouseClickPending = false;
+                    pauseActivate = false;
+                    pauseEscPending = false;
+                } else {
+                    mainMenu.update(renderer.getVirtualW(), renderer.getVirtualH(),
+                            mouseVX, mouseVY, mouseClickPending, menuNavDir, menuActivate);
+                    mainMenu.render(renderer.screen, mouseVX, mouseVY);
+                    renderer.present(g -> mainMenu.drawTextOverlay(g, mouseVX, mouseVY));
 
-                MainMenuController.Action action = mainMenu.consumeAction();
-                if (menuExitRequested || action == MainMenuController.Action.EXIT) {
-                    frame.dispatchEvent(new WindowEvent(frame, WindowEvent.WINDOW_CLOSING));
-                } else if (action == MainMenuController.Action.START) {
-                    menuActive = false;
+                    MainMenuController.Action action = mainMenu.consumeAction();
+                    if (menuExitRequested || action == MainMenuController.Action.EXIT) {
+                        frame.dispatchEvent(new WindowEvent(frame, WindowEvent.WINDOW_CLOSING));
+                    } else if (action == MainMenuController.Action.START) {
+                        menuActive = false;
+                        disclaimerActive = true;
+                        disclaimerScreen = new DisclaimerScreen();
+                        disclaimerAdvancePending = false;
+                        GameAudio.stopAll();
+                    } else if (action == MainMenuController.Action.SETTINGS) {
+                        settingsActive = true;
+                        settingsFromPause = false;
+                        settingsOverlay.reset();
+                    }
+
+                    mouseClickPending = false;
+                    menuNavDir = 0;
+                    menuActivate = false;
+                    menuExitRequested = false;
+                }
+            } else if (disclaimerActive) {
+                boolean advance = disclaimerAdvancePending || mouseClickPending;
+                disclaimerScreen.update(advance);
+                disclaimerScreen.render(renderer.screen);
+                renderer.present();
+                disclaimerAdvancePending = false;
+                mouseClickPending = false;
+                if (disclaimerScreen.isFinished()) {
+                    disclaimerActive = false;
+                    disclaimerScreen = null;
                     introActive = true;
+                    // Всегда новый интро: повторный loadBundle.intro уже isFinished → сразу лавка.
                     introScreen = new IntroScreen();
-                } else if (action == MainMenuController.Action.SETTINGS) {
-                    System.out.println("[MENU] Settings pressed (scene not implemented yet)");
+                    GameAudio.playIntro();
                 }
-
-                mouseClickPending = false;
-                menuNavDir = 0;
-                menuActivate = false;
-                menuExitRequested = false;
             } else if (introActive) {
-                introScreen.update(introAdvancePending, mouseVX, mouseVY, mouseClickPending, introWheelPending);
-                introScreen.render(renderer.screen, mouseVX, mouseVY);
-                renderer.present();
+                if (settingsActive) {
+                    settingsOverlay.update(
+                        renderer.getVirtualW(), renderer.getVirtualH(),
+                        mouseVX, mouseVY, mouseClickPending, mouseButtonDown,
+                        pauseActivate, pauseEscPending);
+                    blitPauseFreezeFrame();
+                    renderer.present(g -> {
+                        if (pauseActive) {
+                            PauseMenuView.draw(g, renderer.getVirtualW(), renderer.getVirtualH(), pauseMenu);
+                        }
+                        settingsOverlay.draw(g, renderer.getVirtualW(), renderer.getVirtualH());
+                        MenuCursorDraw.drawLarge(g, mouseVX, mouseVY);
+                    });
+                    if (settingsOverlay.consumeAction() == SettingsOverlay.Action.BACK) {
+                        settingsActive = false;
+                        settingsOverlay.reset();
+                    }
+                    mouseClickPending = false;
+                    pauseActivate = false;
+                    pauseEscPending = false;
+                } else if (pauseActive) {
+                    pauseMenu.layout(renderer.getVirtualW(), renderer.getVirtualH());
+                    pauseMenu.update(mouseVX, mouseVY, mouseClickPending,
+                        pauseNavDir, pauseActivate, pauseEscPending);
+                    blitPauseFreezeFrame();
+                    renderer.present(g -> {
+                        PauseMenuView.draw(g, renderer.getVirtualW(), renderer.getVirtualH(), pauseMenu);
+                        MenuCursorDraw.drawLarge(g, mouseVX, mouseVY);
+                    });
 
-                introAdvancePending = false;
-                mouseClickPending = false;
-                introWheelPending = 0;
+                    PauseMenuController.Action pauseAction = pauseMenu.consumeAction();
+                    if (pauseAction == PauseMenuController.Action.CONTINUE) {
+                        pauseActive = false;
+                        pauseFreezeFrame = null;
+                        GameAudio.setPaused(false);
+                    } else if (pauseAction == PauseMenuController.Action.SETTINGS) {
+                        settingsActive = true;
+                        settingsFromPause = true;
+                        settingsOverlay.reset();
+                    } else if (pauseAction == PauseMenuController.Action.MAIN_MENU) {
+                        pauseActive = false;
+                        pauseFreezeFrame = null;
+                        GameAudio.setPaused(false);
+                        introActive = false;
+                        enterMainMenuMode();
+                    }
 
-                if (introScreen.isFinished()) {
-                    introActive = false;
-                    chapter1Active = true;
-                    chapter1Screen = new Chapter1Screen();
-                    chapter1Screen.beginAfterIntro();
-                    useHiddenCursor();
+                    mouseClickPending = false;
+                    pauseNavDir = 0;
+                    pauseActivate = false;
+                    pauseEscPending = false;
+                } else {
+                    boolean introPauseClick = mouseClickPending
+                        && PauseCornerButton.hit(renderer.getVirtualW(), renderer.getVirtualH(),
+                            mouseVX, mouseVY);
+                    if (introPauseClick) {
+                        introScreen.render(renderer.screen, mouseVX, mouseVY);
+                        openPauseMenu();
+                        mouseClickPending = false;
+                    } else {
+                        introScreen.update(introAdvancePending, mouseVX, mouseVY, mouseClickPending, introWheelPending);
+                        introScreen.render(renderer.screen, mouseVX, mouseVY);
+                        renderer.present(g -> {
+                            PauseCornerButton.draw(
+                                g, renderer.getVirtualW(), renderer.getVirtualH(), mouseVX, mouseVY);
+                            // Крупный курсор интро — строго поверх паузы.
+                            MenuCursorDraw.drawIntro(g, mouseVX, mouseVY);
+                        });
+
+                        introAdvancePending = false;
+                        mouseClickPending = false;
+                        introWheelPending = 0;
+
+                        if (introScreen.isFinished()) {
+                            introActive = false;
+                            chapter1Active = true;
+                            chapter1Screen = new Chapter1Screen();
+                            chapter1Screen.beginAfterIntro();
+                            GameAudio.playShop();
+                            useHiddenCursor();
+                        }
+                    }
                 }
-            } else if (chapter1Active) {
-                chapter1Screen.update(mouseVX, mouseVY, mouseClickPending, shopExitRequested, shopWheelPending);
-                chapter1Screen.render(renderer.screen, mouseVX, mouseVY);
-                renderer.present(g -> chapter1Screen.renderTextOverlay(g, mouseVX, mouseVY));
+                } else if (chapter1Active) {
+                if (settingsActive) {
+                    settingsOverlay.update(
+                        renderer.getVirtualW(), renderer.getVirtualH(),
+                        mouseVX, mouseVY, mouseClickPending, mouseButtonDown,
+                        pauseActivate, pauseEscPending);
+                    blitPauseFreezeFrame();
+                    renderer.present(g -> {
+                        if (pauseActive) {
+                            PauseMenuView.draw(g, renderer.getVirtualW(), renderer.getVirtualH(), pauseMenu);
+                        }
+                        settingsOverlay.draw(g, renderer.getVirtualW(), renderer.getVirtualH());
+                        MenuCursorDraw.drawLarge(g, mouseVX, mouseVY);
+                    });
+                    if (settingsOverlay.consumeAction() == SettingsOverlay.Action.BACK) {
+                        settingsActive = false;
+                        settingsOverlay.reset();
+                    }
+                    mouseClickPending = false;
+                    pauseActivate = false;
+                    pauseEscPending = false;
+                } else if (pauseActive) {
+                    pauseMenu.layout(renderer.getVirtualW(), renderer.getVirtualH());
+                    pauseMenu.update(mouseVX, mouseVY, mouseClickPending,
+                        pauseNavDir, pauseActivate, pauseEscPending);
+                    blitPauseFreezeFrame();
+                    renderer.present(g -> {
+                        PauseMenuView.draw(g, renderer.getVirtualW(), renderer.getVirtualH(), pauseMenu);
+                        MenuCursorDraw.drawLarge(g, mouseVX, mouseVY);
+                    });
 
-                mouseClickPending = false;
-                shopWheelPending = 0;
-                shopExitRequested = false;
+                    PauseMenuController.Action pauseAction = pauseMenu.consumeAction();
+                    if (pauseAction == PauseMenuController.Action.CONTINUE) {
+                        pauseActive = false;
+                        pauseFreezeFrame = null;
+                        GameAudio.setPaused(false);
+                    } else if (pauseAction == PauseMenuController.Action.SETTINGS) {
+                        settingsActive = true;
+                        settingsFromPause = true;
+                        settingsOverlay.reset();
+                    } else if (pauseAction == PauseMenuController.Action.MAIN_MENU) {
+                        pauseActive = false;
+                        pauseFreezeFrame = null;
+                        GameAudio.setPaused(false);
+                        chapter1Active = false;
+                        chapter1Screen = null;
+                        enterMainMenuMode();
+                    }
 
-                if (chapter1Screen.isExitRequested()) {
-                    chapter1Active = false;
-                    chapter1Screen.clearExitRequest();
-                    chapter1Screen = null;
-                    enterMainMenuMode();
+                    mouseClickPending = false;
+                    pauseNavDir = 0;
+                    pauseActivate = false;
+                    pauseEscPending = false;
+                } else {
+                    boolean escThisFrame = shopExitRequested;
+                    chapter1Screen.update(mouseVX, mouseVY, mouseClickPending, shopExitRequested, shopWheelPending);
+                    chapter1Screen.render(renderer.screen, mouseVX, mouseVY);
+                    renderer.present(g -> chapter1Screen.renderTextOverlay(g, mouseVX, mouseVY));
+
+                    mouseClickPending = false;
+                    shopWheelPending = 0;
+                    shopExitRequested = false;
+
+                    if (chapter1Screen.isExitRequested()) {
+                        chapter1Active = false;
+                        chapter1Screen = null;
+                        enterMainMenuMode();
+                    } else if (chapter1Screen.isPauseRequested()
+                        || (escThisFrame && !chapter1Screen.blocksPauseOnEsc())) {
+                        chapter1Screen.clearPauseRequest();
+                        Graphics2D tg = renderer.screen.createGraphics();
+                        try {
+                            chapter1Screen.renderTextOverlay(tg, mouseVX, mouseVY);
+                        } finally {
+                            tg.dispose();
+                        }
+                        openPauseMenu();
+                    }
                 }
             } else {
                 renderer.update();

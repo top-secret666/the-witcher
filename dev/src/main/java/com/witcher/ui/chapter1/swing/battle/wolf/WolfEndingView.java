@@ -36,29 +36,29 @@ public final class WolfEndingView {
   }
 
   private static void drawTrueShard(Graphics2D g, int sw, int sh) {
-    g.setFont(GameFonts.get().uiBold(16));
+    g.setFont(GameFonts.get().uiBold(14));
     g.setColor(new Color(180, 210, 240));
-    drawCentered(g, "ОСКОЛОК ПРОБУЖДЁН", sw, sh / 2 - 48);
+    drawCentered(g, "ОСКОЛОК ВОЛКА ПРОБУЖДЁН", sw, sh / 2 - 48);
 
-    g.setFont(GameFonts.get().uiPlain(10));
+    g.setFont(GameFonts.get().uiPlain(9));
     g.setColor(new Color(200, 185, 150));
-    drawCentered(g, "Воспоминание: фрагмент " + BossMemoryFragments.wolfFragmentCode(), sw, sh / 2 - 20);
-    drawCentered(g, "Петля треснула. Иллюзия больше не бесспорна.", sw, sh / 2 + 4);
+    drawCentered(g, "Фрагмент памяти: " + BossMemoryFragments.wolfFragmentCode(), sw, sh / 2 - 20);
+    drawCentered(g, "Петля дала трещину. Герцог теряет контроль.", sw, sh / 2 + 4);
 
-    g.setFont(GameFonts.get().uiBold(12));
+    g.setFont(GameFonts.get().uiBold(11));
     g.setColor(new Color(220, 190, 90));
     drawCentered(g, "…ПРОДОЛЖЕНИЕ СЛЕДУЕТ…", sw, sh / 2 + 36);
   }
 
   private static void drawBadLoop(Graphics2D g, int sw, int sh) {
-    g.setFont(GameFonts.get().uiBold(16));
+    g.setFont(GameFonts.get().uiBold(14));
     g.setColor(new Color(150, 70, 65));
-    drawCentered(g, "ПУСТАЯ ФОРМАЛЬНОСТЬ", sw, sh / 2 - 28);
+    drawCentered(g, "ПЕТЛЯ ЗАМКНУЛАСЬ", sw, sh / 2 - 36);
 
-    g.setFont(GameFonts.get().uiPlain(10));
+    g.setFont(GameFonts.get().uiPlain(9));
     g.setColor(new Color(170, 150, 130));
-    drawCentered(g, "Лес отпустил. Прилавок — нет.", sw, sh / 2 + 2);
-    drawCentered(g, "Герцог снова предлагает «свежий товар».", sw, sh / 2 + 20);
+    drawCentered(g, "Память подавлена. Волк снова тускнеет.", sw, sh / 2 - 6);
+    drawCentered(g, "Герцог уже потирает руки у прилавка.", sw, sh / 2 + 12);
   }
 
   private static void drawCentered(Graphics2D g, String line, int sw, int y) {

@@ -1,18 +1,20 @@
 package main.java.com.witcher.ui.chapter1.swing;
 
 import main.java.com.witcher.chapter1.Chapter1Phase;
+import main.java.com.witcher.chapter1.battle.BossEntry;
 import main.java.com.witcher.ui.chapter1.presenter.Chapter1Presenter;
 import main.java.com.witcher.ui.chapter1.swing.battle.BattleResultView;
-import main.java.com.witcher.chapter1.battle.wolf.WolfBossFinaleController;
-import main.java.com.witcher.ui.chapter1.swing.battle.encounter.EncounterSceneRenderer;
 import main.java.com.witcher.ui.chapter1.swing.battle.map.BossMapView;
+import main.java.com.witcher.ui.chapter1.swing.battle.briefing.BossBriefingDissolveRenderer;
 import main.java.com.witcher.ui.chapter1.swing.battle.briefing.BossQuestBriefingView;
 import main.java.com.witcher.ui.shop.view.ShopViewConstants;
 import main.java.com.witcher.ui.chapter1.swing.battle.encounter.BossEncounterView;
 import main.java.com.witcher.ui.chapter1.swing.battle.glitch.BossGlitchRevealView;
+import main.java.com.witcher.ui.chapter1.swing.ending.DemoEndingView;
 import main.java.com.witcher.ui.chapter1.swing.battle.wolf.WolfEndingView;
 import main.java.com.witcher.ui.chapter1.swing.glitch.GlitchOverlayRenderer;
 import main.java.com.witcher.ui.chapter1.view.Chapter1View;
+import main.java.com.witcher.ui.pause.PauseCornerButton;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
@@ -58,8 +60,22 @@ public final class Chapter1SwingView implements Chapter1View {
       case BOSS_MAP -> {
         Graphics2D g = screen.createGraphics();
         try {
-          BossMapView.draw(g, sw, sh, presenter.hoveredBoss(), presenter.selectedBoss(),
-              presenter.bossMapBackHovered());
+          var dissolve = presenter.mapDepartDissolve();
+          if (dissolve != null && dissolve.active()) {
+            BufferedImage snap = new BufferedImage(sw, sh, BufferedImage.TYPE_INT_RGB);
+            Graphics2D sg = snap.createGraphics();
+            try {
+              BossMapView.draw(sg, sw, sh, presenter.hoveredBoss(), presenter.selectedBoss(),
+                  false, false, presenter.bossMapAttentionTick());
+            } finally {
+              sg.dispose();
+            }
+            BossBriefingDissolveRenderer.draw(g, sw, sh, snap, dissolve.dissolveT());
+          } else {
+            BossMapView.draw(g, sw, sh, presenter.hoveredBoss(), presenter.selectedBoss(),
+                presenter.bossMapBackHovered(), presenter.bossMapAttention(),
+                presenter.bossMapAttentionTick());
+          }
         } finally {
           g.dispose();
         }
@@ -92,30 +108,10 @@ public final class Chapter1SwingView implements Chapter1View {
       case BOSS_FINALE -> {
         Graphics2D g = screen.createGraphics();
         try {
-          WolfBossFinaleController finale = presenter.wolfFinale();
-          boolean swordClash = finale != null
-              && finale.step() == WolfBossFinaleController.Step.CLASH
-              && presenter.isFinaleSwordClashPlaying();
-          if (swordClash) {
-            SwordCutsceneView.draw(
-                screen, sw, sh,
-                presenter.swordGlint(),
-                presenter.swordGlint().getShakeOffsetX(),
-                presenter.swordGlint().getShakeOffsetY(),
-                presenter.director().session(),
-                false);
-          } else {
-            g.setColor(Color.BLACK);
-            g.fillRect(0, 0, sw, sh);
-            boolean shardEpilogue = finale != null && finale.trueEnding()
-                && finale.step() == WolfBossFinaleController.Step.RESOLVE;
-            if (shardEpilogue) {
-              EncounterSceneRenderer.drawFullBleedMontage(g, sw, sh);
-              VnSceneRenderer.drawShardEpilogueScene(g, sw, sh, presenter.activeScene());
-            } else {
-              VnSceneRenderer.drawScene(g, sw, sh, presenter.activeScene());
-            }
-          }
+          g.setColor(Color.BLACK);
+          g.fillRect(0, 0, sw, sh);
+          // Эпилог memory_ard / memory_kaer убран — сразу чёрный кадр к глитчу/титрам.
+          VnSceneRenderer.drawScene(g, sw, sh, presenter.activeScene());
         } finally {
           g.dispose();
         }
@@ -124,6 +120,15 @@ public final class Chapter1SwingView implements Chapter1View {
         Graphics2D g = screen.createGraphics();
         try {
           WolfEndingView.draw(g, sw, sh, presenter.wolfEndingType());
+        } finally {
+          g.dispose();
+        }
+      }
+      case DEMO_ENDING -> {
+        Graphics2D g = screen.createGraphics();
+        try {
+          g.setColor(Color.BLACK);
+          g.fillRect(0, 0, sw, sh);
         } finally {
           g.dispose();
         }
@@ -181,6 +186,7 @@ public final class Chapter1SwingView implements Chapter1View {
         || phase == Chapter1Phase.BOSS_GLITCH_REVEAL
         || phase == Chapter1Phase.BOSS_FINALE
         || phase == Chapter1Phase.WOLF_ENDING
+        || phase == Chapter1Phase.DEMO_ENDING
         || phase == Chapter1Phase.BATTLE_RESULT;
   }
 
@@ -193,7 +199,21 @@ public final class Chapter1SwingView implements Chapter1View {
         && !presenter.isDukeDialogActive()) {
       presenter.shopScreen().renderTextOverlay(g, mouseX, mouseY);
     }
-    if (phase == Chapter1Phase.BOSS_QUEST_BRIEFING && !presenter.questBriefing().inTransition()) {
+    if (phase == Chapter1Phase.BOSS_MAP) {
+      BossEntry panelBoss = presenter.selectedBoss() != null
+          ? presenter.selectedBoss()
+          : presenter.hoveredBoss();
+      BossMapView.drawTextOverlay(g, sw, sh, panelBoss);
+    }
+    if (phase == Chapter1Phase.BOSS_ENCOUNTER) {
+      BossEncounterView.drawTextOverlay(g, sw, sh, presenter.encounter(), mouseX, mouseY);
+    }
+    if (phase == Chapter1Phase.DEMO_ENDING && presenter.demoEnding() != null) {
+      DemoEndingView.draw(g, sw, sh, presenter.demoEnding());
+    }
+    if (phase == Chapter1Phase.BOSS_QUEST_BRIEFING
+        && presenter.questBriefing() != null
+        && !presenter.questBriefing().inTransition()) {
       BossQuestBriefingView.drawTextOverlay(g, sw, sh, presenter.questBriefing(), mouseX, mouseY);
     }
     if (presenter.hasActiveChoices()) {
@@ -202,17 +222,38 @@ public final class Chapter1SwingView implements Chapter1View {
       }
       VnSceneRenderer.drawChoices(g, presenter.activeScene(), presenter.choiceRects());
     }
-    if (phase == Chapter1Phase.BOSS_MAP
-        || phase == Chapter1Phase.BOSS_QUEST_BRIEFING
-        || phase == Chapter1Phase.BOSS_ENCOUNTER
-        || phase == Chapter1Phase.BOSS_FINALE
-        || phase == Chapter1Phase.WOLF_ENDING
-        || phase == Chapter1Phase.BATTLE_RESULT
-        || phase == Chapter1Phase.VN_BATTLE
-        || phase == Chapter1Phase.VN_DIALOG
-        || phase == Chapter1Phase.ENDING
-        || (phase == Chapter1Phase.SHOP && presenter.isDukeDialogActive())) {
+    PauseCornerButton.Corner pauseCorner = pauseCornerFor(phase);
+    int pauseTopY = pauseTopYFor(phase, presenter);
+    PauseCornerButton.draw(g, sw, sh, mouseX, mouseY, pauseCorner, pauseTopY);
+    // Курсор всегда поверх кнопки паузы.
+    if (phase == Chapter1Phase.BOSS_QUEST_BRIEFING
+        || phase == Chapter1Phase.BOSS_ENCOUNTER) {
+      Chapter1UiCursor.drawDialog(g, mouseX, mouseY);
+    } else {
       Chapter1UiCursor.draw(g, mouseX, mouseY);
     }
+  }
+
+  /** Лавка (и экипировка) + карта — пауза справа; остальное — слева. */
+  private static PauseCornerButton.Corner pauseCornerFor(Chapter1Phase phase) {
+    return switch (phase) {
+      case SHOP, BOSS_MAP, BOSS_QUEST_BRIEFING -> PauseCornerButton.Corner.TOP_RIGHT;
+      default -> PauseCornerButton.Corner.TOP_LEFT;
+    };
+  }
+
+  /** Экран товаров: под плашкой крон; инвентарь/экипировка — правый верх. */
+  private static int pauseTopYFor(Chapter1Phase phase, Chapter1Presenter presenter) {
+    if (phase != Chapter1Phase.SHOP || presenter.shopScreen() == null) {
+      return PauseCornerButton.MARGIN;
+    }
+    var shop = presenter.shopScreen().presenter();
+    if (shop.isInventoryOpen() || shop.isEquipmentOpen()) {
+      return PauseCornerButton.MARGIN;
+    }
+    if (shop.isCategoryMode()) {
+      return ShopViewConstants.PAUSE_BELOW_WALLET_TOP;
+    }
+    return PauseCornerButton.MARGIN;
   }
 }

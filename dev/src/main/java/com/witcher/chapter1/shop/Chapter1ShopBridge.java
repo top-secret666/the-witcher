@@ -66,6 +66,44 @@ public final class Chapter1ShopBridge {
     this.onEquipmentBack = onEquipmentBack;
   }
 
+  private Runnable onPurchaseRevealDone;
+  private Runnable onBrowseWithoutPurchase;
+
+  public void setOnPurchaseRevealDone(Runnable onPurchaseRevealDone) {
+    this.onPurchaseRevealDone = onPurchaseRevealDone;
+  }
+
+  public void setOnBrowseWithoutPurchase(Runnable onBrowseWithoutPurchase) {
+    this.onBrowseWithoutPurchase = onBrowseWithoutPurchase;
+  }
+
+  private Runnable onQuestBriefingRequested;
+
+  public void setOnQuestBriefingRequested(Runnable onQuestBriefingRequested) {
+    this.onQuestBriefingRequested = onQuestBriefingRequested;
+  }
+
+  /** Кнопка «В БОЙ» в экипировке → брифинг контракта (ещё без карты). */
+  public void requestQuestBriefing() {
+    if (onQuestBriefingRequested != null) {
+      onQuestBriefingRequested.run();
+    }
+  }
+
+  /** После анимации покупки — выдача карты. */
+  public void onPurchaseRevealDone() {
+    if (onPurchaseRevealDone != null) {
+      onPurchaseRevealDone.run();
+    }
+  }
+
+  /** Ушёл с витрины без покупок — утешительная карта. */
+  public void onBrowseWithoutPurchase() {
+    if (onBrowseWithoutPurchase != null) {
+      onBrowseWithoutPurchase.run();
+    }
+  }
+
   public boolean battleCardInInventory() {
     return session != null && session.battleCardIconVisible();
   }

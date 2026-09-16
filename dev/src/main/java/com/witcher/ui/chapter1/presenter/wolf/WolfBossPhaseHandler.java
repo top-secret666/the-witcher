@@ -9,6 +9,7 @@ import main.java.com.witcher.chapter1.battle.glitch.BossGlitchRevealController;
 import main.java.com.witcher.chapter1.battle.wolf.WolfBossFinaleController;
 import main.java.com.witcher.chapter1.ending.WolfEndingType;
 import main.java.com.witcher.chapter1.loop.LoopRules;
+import main.java.com.witcher.chapter1.shop.BossMemoryFragments;
 import main.java.com.witcher.chapter1.view.Chapter1Layout;
 import main.java.com.witcher.chapter1.vn.VnSceneState;
 import main.java.com.witcher.ui.chapter1.view.VnChoiceLayout;
@@ -45,6 +46,9 @@ public final class WolfBossPhaseHandler {
     void skipFinaleSwordClash();
 
     boolean isFinaleSwordClashPlaying();
+
+    /** Брифинг окончен без dissolve — выдать карту и вернуть в лавку. */
+    void onQuestBriefingFinishedToShop();
   }
 
   private final Host host;
@@ -115,12 +119,19 @@ public final class WolfBossPhaseHandler {
     questBriefing.setLayoutSize(Chapter1Layout.VIRTUAL_W, Chapter1Layout.VIRTUAL_H);
     questBriefing.tick();
 
-    if (questBriefing.inTransition()) {
-      if (questBriefing.isComplete()) {
-        questBriefing = null;
+    if (questBriefing.isComplete()) {
+      boolean toShop = questBriefing.returnsToShop();
+      questBriefing = null;
+      if (toShop) {
+        host.onQuestBriefingFinishedToShop();
+      } else {
         host.director().beginLoopSequence(false);
         host.notifyPhaseEntered();
       }
+      return;
+    }
+
+    if (questBriefing.inTransition()) {
       return;
     }
 
@@ -175,9 +186,18 @@ public final class WolfBossPhaseHandler {
     }
 
     if (encounter.isDialogComplete()) {
-      host.director().enterBossFinale();
-      host.notifyPhaseEntered();
+      // Без пустого BOSS_FINALE — сразу глитч/чёрный после воспоминания.
+      finishEncounterToEnding();
     }
+  }
+
+  private void finishEncounterToEnding() {
+    BossMemoryFragments.grantWolfShard(host.director().session());
+    wolfEndingType = WolfEndingType.TRUE_SHARD;
+    LoopRules.onWolfOutcome(host.director().session(), true);
+    host.setChoiceRects(List.of());
+    host.director().enterBossGlitchReveal();
+    host.notifyPhaseEntered();
   }
 
   public void applyEncounterChoice(int index) {
@@ -204,8 +224,17 @@ public final class WolfBossPhaseHandler {
     if (host.director().phase() != Chapter1Phase.BOSS_GLITCH_REVEAL) {
       return;
     }
-    host.director().enterWolfEnding();
+    host.director().enterDemoEnding();
     host.notifyPhaseEntered();
+  }
+
+  public void applyFinaleChoice(int index) {
+    if (wolfFinale == null) {
+      return;
+    }
+    wolfFinale.choose(index);
+    // Без анимации мечей — сразу реплика «Тогда доставай меч» / дальше по клику.
+    host.refreshChoiceRects();
   }
 
   public void updateFinale(int mouseX, int mouseY, boolean clicked) {
@@ -214,13 +243,9 @@ public final class WolfBossPhaseHandler {
       host.refreshChoiceRects();
       return;
     }
-    if (wolfFinale.step() == WolfBossFinaleController.Step.CLASH) {
-      if (clicked) {
-        host.skipFinaleSwordClash();
-      }
-      if (host.tickFinaleSwordClash()) {
-        advanceFinale();
-      }
+    wolfFinale.tick();
+    if (wolfFinale.shouldAutoAdvance()) {
+      advanceFinale();
       return;
     }
     if (!clicked) {
@@ -233,24 +258,15 @@ public final class WolfBossPhaseHandler {
       }
       return;
     }
-    advanceFinale();
-  }
-
-  public void applyFinaleChoice(int index) {
-    if (wolfFinale == null) {
+    // Финал true ending — только автопереходы (клик не ускоряет).
+    if (wolfFinale.trueEnding()) {
       return;
     }
-    wolfFinale.choose(index);
-    host.beginFinaleSwordClash();
-    host.refreshChoiceRects();
+    advanceFinale();
   }
 
   public void advanceFinale() {
     if (wolfFinale == null) {
-      return;
-    }
-    if (wolfFinale.step() == WolfBossFinaleController.Step.CLASH
-        && host.isFinaleSwordClashPlaying()) {
       return;
     }
     if (wolfFinale.isDone()) {

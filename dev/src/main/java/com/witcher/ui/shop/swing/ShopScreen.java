@@ -72,6 +72,18 @@ public final class ShopScreen {
         presenter.clearExitRequest();
     }
 
+    public boolean isPauseRequested() {
+        return presenter.pauseRequested();
+    }
+
+    public void clearPauseRequest() {
+        presenter.clearPauseRequest();
+    }
+
+    public boolean escConsumedByUi() {
+        return presenter.escConsumedByUi();
+    }
+
     /** @deprecated используйте {@link ShopImageBounds#compute} */
     @Deprecated
     public static Rectangle computeContentBoundsPublic(BufferedImage img) {

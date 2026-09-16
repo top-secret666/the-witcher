@@ -47,31 +47,59 @@ public record ShopInventorySlot(
     return new ShopInventorySlot(kind, name, detailLines, category, null, null);
   }
 
-  public static ShopInventorySlot armour(Armour piece) {
+  public static ShopInventorySlot armour(Armour piece, boolean equipped) {
     ShopCategory cat = EquipmentArmourList.categoryFor(piece);
     return new ShopInventorySlot(
         ShopInventoryKind.ARMOUR,
         piece.getName(),
         new String[]{
             cat.label,
-            "Купленный предмет. Откройте экипировку, чтобы надеть."
+            equipped ? "Надето." : "Не надето. Нажмите «Надеть»."
         },
         cat,
         piece,
         null);
   }
 
-  public static ShopInventorySlot set(ArmourSet set) {
+  public static ShopInventorySlot set(ArmourSet set, boolean equipped) {
     return new ShopInventorySlot(
         ShopInventoryKind.SET,
         set.getName(),
         new String[]{
             "Комплект",
-            "Эмблема набора. Экипировка надевает все четыре части."
+            equipped
+                ? "Надето целиком."
+                : "Не надето. «Надеть» — все четыре части."
         },
         ShopCategory.SETS,
         null,
         set);
+  }
+
+  public static ShopInventorySlot weapon(String name, String[] detailLines, boolean equipped) {
+    java.util.ArrayList<String> lines = new java.util.ArrayList<>();
+    if (detailLines != null) {
+      for (String line : detailLines) {
+        if (line == null || line.isBlank()) {
+          continue;
+        }
+        if (line.startsWith("Надето") || line.startsWith("Не надето")) {
+          continue;
+        }
+        lines.add(line);
+      }
+    }
+    if (lines.isEmpty()) {
+      lines.add("Оружие");
+    }
+    lines.add(equipped ? "Надето." : "Не надето. Нажмите «Надеть».");
+    return new ShopInventorySlot(
+        ShopInventoryKind.WEAPON,
+        name,
+        lines.toArray(new String[0]),
+        ShopCategory.WEAPON,
+        null,
+        null);
   }
 
   public String actionLabel() {

@@ -4,14 +4,15 @@ import main.java.com.witcher.chapter1.assets.Chapter1AssetPaths;
 
 import java.util.List;
 
-/** EXE overlay: wolf boss on map panel (not "Герцог"). */
+/** EXE overlay: wolf boss on map panel. */
 public final class BossCatalog {
 
   private static final List<BossEntry> BOSSES = List.of(
       new BossEntry(
           "duke",
           "Волк",
-          "Белый Волк",
+          "",
+          "В заброшенных руинах замечена беспризорная тень в ведьмачьем тряпье.",
           9, 8, 6,
           Chapter1AssetPaths.BOSS_DUKE_MAP,
           Chapter1AssetPaths.BOSS_DUKE_MAP_HOVER,

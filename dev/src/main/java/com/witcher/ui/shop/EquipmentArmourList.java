@@ -64,6 +64,19 @@ public final class EquipmentArmourList {
             }
             return out;
         }
+        if (f == EquipmentFilter.ALL) {
+            java.util.Set<String> seen = new java.util.HashSet<>();
+            ShopInventorySlot equipped = model.getEquippedWeapon();
+            if (equipped != null) {
+                out.add(EquipmentGridEntry.weapon(equipped));
+                seen.add(equipped.title());
+            }
+            for (ShopInventorySlot pouch : model.pouchConsumables()) {
+                if (pouch.kind() == ShopInventoryKind.WEAPON && !seen.contains(pouch.title())) {
+                    out.add(EquipmentGridEntry.weapon(pouch));
+                }
+            }
+        }
         for (Armour armour : model.ownedArmour()) {
             if (model.isSetPiece(armour)) {
                 continue;

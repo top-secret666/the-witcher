@@ -1,24 +1,26 @@
 package main.java.com.witcher.ui.chapter1.swing;
 
 import main.java.com.witcher.chapter1.Chapter1Phase;
+import main.java.com.witcher.chapter1.battle.BossEntry;
 import main.java.com.witcher.ui.chapter1.presenter.Chapter1Presenter;
 import main.java.com.witcher.ui.chapter1.swing.battle.BattleResultView;
-import main.java.com.witcher.chapter1.battle.wolf.WolfBossFinaleController;
-import main.java.com.witcher.ui.chapter1.swing.battle.encounter.EncounterSceneRenderer;
 import main.java.com.witcher.ui.chapter1.swing.battle.map.BossMapView;
+import main.java.com.witcher.ui.chapter1.swing.battle.briefing.BossBriefingDissolveRenderer;
 import main.java.com.witcher.ui.chapter1.swing.battle.briefing.BossQuestBriefingView;
 import main.java.com.witcher.ui.shop.view.ShopViewConstants;
 import main.java.com.witcher.ui.chapter1.swing.battle.encounter.BossEncounterView;
 import main.java.com.witcher.ui.chapter1.swing.battle.glitch.BossGlitchRevealView;
+import main.java.com.witcher.ui.chapter1.swing.ending.DemoEndingView;
 import main.java.com.witcher.ui.chapter1.swing.battle.wolf.WolfEndingView;
 import main.java.com.witcher.ui.chapter1.swing.glitch.GlitchOverlayRenderer;
 import main.java.com.witcher.ui.chapter1.view.Chapter1View;
+import main.java.com.witcher.ui.pause.PauseCornerButton;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 
-/** EXE overlay: small VN cursor, no sword clash cutscene, no shop admin button. */
+/** Отрисовка кадра главы 1 (аналог {@link main.java.com.witcher.ui.shop.swing.ShopSwingView}). */
 public final class Chapter1SwingView implements Chapter1View {
 
   @Override
@@ -58,8 +60,22 @@ public final class Chapter1SwingView implements Chapter1View {
       case BOSS_MAP -> {
         Graphics2D g = screen.createGraphics();
         try {
-          BossMapView.draw(g, sw, sh, presenter.hoveredBoss(), presenter.selectedBoss(),
-              presenter.bossMapBackHovered());
+          var dissolve = presenter.mapDepartDissolve();
+          if (dissolve != null && dissolve.active()) {
+            BufferedImage snap = new BufferedImage(sw, sh, BufferedImage.TYPE_INT_RGB);
+            Graphics2D sg = snap.createGraphics();
+            try {
+              BossMapView.draw(sg, sw, sh, presenter.hoveredBoss(), presenter.selectedBoss(),
+                  false, false, presenter.bossMapAttentionTick());
+            } finally {
+              sg.dispose();
+            }
+            BossBriefingDissolveRenderer.draw(g, sw, sh, snap, dissolve.dissolveT());
+          } else {
+            BossMapView.draw(g, sw, sh, presenter.hoveredBoss(), presenter.selectedBoss(),
+                presenter.bossMapBackHovered(), presenter.bossMapAttention(),
+                presenter.bossMapAttentionTick());
+          }
         } finally {
           g.dispose();
         }
@@ -92,17 +108,10 @@ public final class Chapter1SwingView implements Chapter1View {
       case BOSS_FINALE -> {
         Graphics2D g = screen.createGraphics();
         try {
-          WolfBossFinaleController finale = presenter.wolfFinale();
           g.setColor(Color.BLACK);
           g.fillRect(0, 0, sw, sh);
-          boolean shardEpilogue = finale != null && finale.trueEnding()
-              && finale.step() == WolfBossFinaleController.Step.RESOLVE;
-          if (shardEpilogue) {
-            EncounterSceneRenderer.drawFullBleedMontage(g, sw, sh);
-            VnSceneRenderer.drawShardEpilogueScene(g, sw, sh, presenter.activeScene());
-          } else {
-            VnSceneRenderer.drawScene(g, sw, sh, presenter.activeScene());
-          }
+          // Эпилог memory_ard / memory_kaer убран — сразу чёрный кадр к глитчу/титрам.
+          VnSceneRenderer.drawScene(g, sw, sh, presenter.activeScene());
         } finally {
           g.dispose();
         }
@@ -111,6 +120,15 @@ public final class Chapter1SwingView implements Chapter1View {
         Graphics2D g = screen.createGraphics();
         try {
           WolfEndingView.draw(g, sw, sh, presenter.wolfEndingType());
+        } finally {
+          g.dispose();
+        }
+      }
+      case DEMO_ENDING -> {
+        Graphics2D g = screen.createGraphics();
+        try {
+          g.setColor(Color.BLACK);
+          g.fillRect(0, 0, sw, sh);
         } finally {
           g.dispose();
         }
@@ -139,13 +157,19 @@ public final class Chapter1SwingView implements Chapter1View {
     Graphics2D overlay = screen.createGraphics();
     try {
       Chapter1Phase phase = presenter.director().phase();
+      // На лавке не рисуем glitch и отладочные счётчики — только чистый UI магазина.
       if (phase != Chapter1Phase.SHOP) {
         GlitchOverlayRenderer.draw(overlay, sw, sh, presenter.director().session());
       }
       if (phase == Chapter1Phase.HACK) {
         presenter.doorLoopPlayer().render(overlay, sw, sh);
         HackTerminalView.draw(overlay, sw, sh, presenter.hack(), presenter.hackShakeTick());
-        Chapter1SessionHud.draw(overlay, sw, presenter.director().session(), false);
+        boolean adminHovered = Chapter1SessionHud.hitAdminMapButton(mouseX, mouseY, sw);
+        Chapter1SessionHud.draw(overlay, sw, presenter.director().session(), adminHovered);
+      } else if (phase == Chapter1Phase.SHOP) {
+        // Админ-кнопка карты боссов без боковых счётчиков.
+        boolean adminHovered = Chapter1SessionHud.hitAdminMapButton(mouseX, mouseY, sw);
+        Chapter1SessionHud.drawAdminButtonOnly(overlay, sw, adminHovered);
       }
     } finally {
       overlay.dispose();
@@ -162,6 +186,7 @@ public final class Chapter1SwingView implements Chapter1View {
         || phase == Chapter1Phase.BOSS_GLITCH_REVEAL
         || phase == Chapter1Phase.BOSS_FINALE
         || phase == Chapter1Phase.WOLF_ENDING
+        || phase == Chapter1Phase.DEMO_ENDING
         || phase == Chapter1Phase.BATTLE_RESULT;
   }
 
@@ -174,11 +199,22 @@ public final class Chapter1SwingView implements Chapter1View {
         && !presenter.isDukeDialogActive()) {
       presenter.shopScreen().renderTextOverlay(g, mouseX, mouseY);
     }
-    if (phase == Chapter1Phase.BOSS_QUEST_BRIEFING && !presenter.questBriefing().inTransition()) {
-      BossQuestBriefingView.drawTextOverlay(g, sw, sh, presenter.questBriefing(), mouseX, mouseY);
+    if (phase == Chapter1Phase.BOSS_MAP) {
+      BossEntry panelBoss = presenter.selectedBoss() != null
+          ? presenter.selectedBoss()
+          : presenter.hoveredBoss();
+      BossMapView.drawTextOverlay(g, sw, sh, panelBoss);
     }
     if (phase == Chapter1Phase.BOSS_ENCOUNTER) {
       BossEncounterView.drawTextOverlay(g, sw, sh, presenter.encounter(), mouseX, mouseY);
+    }
+    if (phase == Chapter1Phase.DEMO_ENDING && presenter.demoEnding() != null) {
+      DemoEndingView.draw(g, sw, sh, presenter.demoEnding());
+    }
+    if (phase == Chapter1Phase.BOSS_QUEST_BRIEFING
+        && presenter.questBriefing() != null
+        && !presenter.questBriefing().inTransition()) {
+      BossQuestBriefingView.drawTextOverlay(g, sw, sh, presenter.questBriefing(), mouseX, mouseY);
     }
     if (presenter.hasActiveChoices()) {
       if (phase == Chapter1Phase.BOSS_QUEST_BRIEFING || phase == Chapter1Phase.BOSS_ENCOUNTER) {
@@ -186,18 +222,38 @@ public final class Chapter1SwingView implements Chapter1View {
       }
       VnSceneRenderer.drawChoices(g, presenter.activeScene(), presenter.choiceRects());
     }
-    if (phase == Chapter1Phase.BOSS_MAP) {
+    PauseCornerButton.Corner pauseCorner = pauseCornerFor(phase);
+    int pauseTopY = pauseTopYFor(phase, presenter);
+    PauseCornerButton.draw(g, sw, sh, mouseX, mouseY, pauseCorner, pauseTopY);
+    // Курсор всегда поверх кнопки паузы.
+    if (phase == Chapter1Phase.BOSS_QUEST_BRIEFING
+        || phase == Chapter1Phase.BOSS_ENCOUNTER) {
+      Chapter1UiCursor.drawDialog(g, mouseX, mouseY);
+    } else {
       Chapter1UiCursor.draw(g, mouseX, mouseY);
-    } else if (phase == Chapter1Phase.BOSS_QUEST_BRIEFING
-        || phase == Chapter1Phase.BOSS_ENCOUNTER
-        || phase == Chapter1Phase.BOSS_FINALE
-        || phase == Chapter1Phase.WOLF_ENDING
-        || phase == Chapter1Phase.BATTLE_RESULT
-        || phase == Chapter1Phase.VN_BATTLE
-        || phase == Chapter1Phase.VN_DIALOG
-        || phase == Chapter1Phase.ENDING
-        || (phase == Chapter1Phase.SHOP && presenter.isDukeDialogActive())) {
-      Chapter1UiCursor.drawSmall(g, mouseX, mouseY);
     }
+  }
+
+  /** Лавка (и экипировка) + карта — пауза справа; остальное — слева. */
+  private static PauseCornerButton.Corner pauseCornerFor(Chapter1Phase phase) {
+    return switch (phase) {
+      case SHOP, BOSS_MAP, BOSS_QUEST_BRIEFING -> PauseCornerButton.Corner.TOP_RIGHT;
+      default -> PauseCornerButton.Corner.TOP_LEFT;
+    };
+  }
+
+  /** Экран товаров: под плашкой крон; инвентарь/экипировка — правый верх. */
+  private static int pauseTopYFor(Chapter1Phase phase, Chapter1Presenter presenter) {
+    if (phase != Chapter1Phase.SHOP || presenter.shopScreen() == null) {
+      return PauseCornerButton.MARGIN;
+    }
+    var shop = presenter.shopScreen().presenter();
+    if (shop.isInventoryOpen() || shop.isEquipmentOpen()) {
+      return PauseCornerButton.MARGIN;
+    }
+    if (shop.isCategoryMode()) {
+      return ShopViewConstants.PAUSE_BELOW_WALLET_TOP;
+    }
+    return PauseCornerButton.MARGIN;
   }
 }

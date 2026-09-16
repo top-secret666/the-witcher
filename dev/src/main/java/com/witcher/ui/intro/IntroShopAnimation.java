@@ -54,9 +54,9 @@ public final class IntroShopAnimation {
 
         float revealTarget = shopSceneReached ? 1f : 0f;
         if (shopReveal < revealTarget) {
-            shopReveal = Math.min(revealTarget, shopReveal + 0.05f);
+            shopReveal = Math.min(revealTarget, shopReveal + 0.08f);
         } else {
-            shopReveal = Math.max(revealTarget, shopReveal - 0.05f);
+            shopReveal = Math.max(revealTarget, shopReveal - 0.08f);
         }
 
         if (finalShopScene && assets.hasShopMaterializeFrames && assets.shopMaterializeFrameCount > 0) {
@@ -96,9 +96,13 @@ public final class IntroShopAnimation {
     private int frameDelayMs(int frameIndex) {
         if (assets.shopMaterializeDelaysMs == null || frameIndex < 0
             || frameIndex >= assets.shopMaterializeDelaysMs.length) {
-            return 70;
+            return 45;
         }
         int delayMs = assets.shopMaterializeDelaysMs[frameIndex];
-        return delayMs < 20 ? 70 : delayMs;
+        if (delayMs < 20) {
+            delayMs = 70;
+        }
+        // Чуть быстрее появления лавки.
+        return Math.max(18, Math.round(delayMs * 0.62f));
     }
 }

@@ -4,7 +4,7 @@ import main.java.com.witcher.chapter1.Chapter1Session;
 import main.java.com.witcher.shop.EquippedGear;
 
 /**
- * Выдача карты боя после первой экипировки; анимация — при выходе из экрана экипировки.
+ * Выдача карты боя: после любой покупки, либо «подарок» Герцога, если ничего не купили.
  */
 public final class BattleCardController {
 
@@ -25,24 +25,31 @@ public final class BattleCardController {
     return Math.min(1f, revealTicks / (float) REVEAL_TOTAL_TICKS);
   }
 
-  /** @return true если карта впервые выдана (иконка ещё не в сумке) */
+  /** После любой успешной покупки. */
+  public boolean tryGrantAfterPurchase(Chapter1Session session) {
+    return grantIfNeeded(session);
+  }
+
+  /**
+   * Если клиент ничего не купил, но уже видел кошелёк и ушёл с витрины —
+   * Герцог всё равно суёт карту («бесплатное направление»).
+   */
+  public boolean tryGrantAsBrowseConsolation(Chapter1Session session) {
+    return grantIfNeeded(session);
+  }
+
+  /** Хук экипировки / зелья — тоже выдаёт карту, если ещё не выдана. */
   public boolean tryGrantAfterEquip(Chapter1Session session, EquippedGear gear) {
+    return grantIfNeeded(session);
+  }
+
+  private boolean grantIfNeeded(Chapter1Session session) {
     if (session == null || session.battleCardGranted() || session.battleCardIconVisible()) {
-      return false;
-    }
-    if (!qualifiesForBattleCard(gear)) {
       return false;
     }
     session.grantBattleCard();
     session.markBattleCardRevealPending();
     return true;
-  }
-
-  private static boolean qualifiesForBattleCard(EquippedGear gear) {
-    if (gear instanceof main.java.com.witcher.ui.shop.ShopModel shop) {
-      return shop.hasAnyEquippedItem() || shop.hasDrunkAnyPotion();
-    }
-    return BattleCardRules.canGrantAfterEquip(gear);
   }
 
   public void tickReveal() {

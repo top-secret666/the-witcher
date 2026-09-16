@@ -2,105 +2,118 @@
 <h3 align="center">Chapter 1 — Pixel Prototype</h3>
 
 <p align="center">
-  <strong>Duke's shop · time loop · first boss — the Wolf</strong><br>
-  Java · Swing · pixel-art · MVP architecture
+  <strong>Лавка герцога · петля времени · первый босс — Волк</strong><br>
+  Java · Swing · pixel-art · MVP
 </p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/Java-17-orange?style=flat-square" alt="Java 17" />
   <img src="https://img.shields.io/badge/Platform-Windows-0078D6?style=flat-square" alt="Windows" />
-  <img src="https://img.shields.io/badge/Status-Alpha_v1.0.0-8B0000?style=flat-square" alt="Alpha" />
+  <img src="https://img.shields.io/badge/Status-Alpha_v1.1.0-8B0000?style=flat-square" alt="Alpha" />
+</p>
+
+<p align="center">
+  <img src="docs/media/readme-preview.gif" alt="Shop materialize preview" width="480" />
+</p>
+
+<p align="center">
+  <img src="docs/media/readme-shop.png" alt="Duke's shop" width="420" />
+  &nbsp;
+  <img src="docs/media/readme-wolf.png" alt="Wolf forest" width="420" />
 </p>
 
 ---
 
-## Download & play
+## Скачать и играть
 
-### [Download Windows build (.ZIP)](https://github.com/top-secret666/the-witcher/releases/download/v1.0.0/The-Witcher-v1.0.0-Windows.zip)
+### [⬇ Download Windows (.ZIP) — v1.1.0](https://github.com/top-secret666/the-witcher/releases/download/v1.1.0/The-Witcher-v1.1.0-Windows.zip)
 
-| Step | What to do |
-|:----:|:-----------|
-| **1** | Download the ZIP from the link above |
-| **2** | Extract the archive |
-| **3** | Open the `The-Witcher` folder and run **`The Witcher.exe`** |
+| Шаг | Что сделать |
+|:---:|:------------|
+| **1** | Скачай ZIP по ссылке выше |
+| **2** | Распакуй архив |
+| **3** | Открой папку `The-Witcher` и запусти **`The Witcher.exe`** |
 
-No Java install required — the build bundles its own runtime.  
-Keep `The Witcher.exe`, `app/`, and `runtime/` in the same folder.
+Java отдельно ставить **не нужно** — рантайм внутри сборки.  
+Держи рядом: `The Witcher.exe`, `app/`, `runtime/`.
 
-If the direct link fails, grab the file from [**Releases**](https://github.com/top-secret666/the-witcher/releases).
-
----
-
-## About
-
-> *"The shop again. The duke again. You again — with no memory and no way out… until you face the Wolf."*
-
-A **The Witcher**–inspired pet project: interactive **chapter 1** with an armour shop, visual-novel scenes, a hack terminal, and the first boss fight.
-
-**What's in this prototype:**
-
-- **Shop** — gear purchases, animations, catalogue, wallet
-- **Loop** — cycle reset, awakening, meta progress
-- **Wolf boss** — briefing → forest → finale → glitch ending
-- **VN dialogues** — duke lines, choices, cutscenes
-- **Terminal** — hidden path to the boss map
+Если прямая ссылка не открывается — файл лежит в [**Releases**](https://github.com/top-secret666/the-witcher/releases).
 
 ---
 
-## Architecture
+## О проекте
+
+> *«Снова лавка. Снова герцог. Снова ты — без памяти и без выхода… пока не встретишь Волка.»*
+
+Первый серьёзный pet-project: **визуальная новелла** (не полноценный хоррор) — глава 1 с лавкой брони, VN-диалогами и боссом-Волком.
+
+**В прототипе:**
+
+- **Лавка** — покупки, экипировка, инвентарь, кошелёк, музыка
+- **Петля** — пробуждение, карта, брифинг
+- **Волк** — лес → вспышка с Весемиром → глитч-финал → титры
+- **Пауза / настройки** — громкость, скорость текста
+- **Терминал** — скрытый путь к карте боссов
+
+---
+
+## Архитектура
 
 ```
 View (Swing)  →  Presenter  →  Chapter1Director  →  Domain  →  Model
 ```
 
-| Layer | Role |
-|:------|:-----|
-| **UI** | `dev/src/.../ui/` — rendering, input, assets |
-| **Presenter** | Binds screen logic to chapter flow |
-| **Director** | Phases, transitions, save/load |
-| **Domain** | Combat, loop, shop, VN rules |
+| Слой | Роль |
+|:-----|:-----|
+| **UI** | `dev/src/.../ui/` — кадр, ввод, ассеты |
+| **Presenter** | Связка экрана с фазами главы |
+| **Director** | Фазы и переходы |
+| **Domain** | Бой, петля, лавка, VN |
 
-Canonical playthrough: [`docs/chapter1_journey_checklist.md`](docs/chapter1_journey_checklist.md)
+Канон прохождения: [`docs/chapter1_journey_checklist.md`](docs/chapter1_journey_checklist.md)
 
 ---
 
-## Repository layout
+## Структура репозитория
 
 ```
 the-witcher/
 ├── README.md
-├── docs/              design notes, dialogues, playthrough checklist
-│   └── media/         README artwork
-└── dev/               source code & Gradle (LibGDX legacy)
+├── docs/                 дизайн, диалоги, чеклист
+│   └── media/            картинки для README
+└── dev/                  исходники + tools (сборка exe)
+    ├── src/              игра
+    └── tools/            package-exe, release zip/upload
 ```
 
-Binaries are **not** stored in git — ship builds via [**GitHub Releases**](https://github.com/top-secret666/the-witcher/releases) only.
+Бинарники **не** в git — только через [**GitHub Releases**](https://github.com/top-secret666/the-witcher/releases).
+
+Локальный мусор (`out/`, `app/`, `runtime/`, корневые `.png`/`.mp4`, crash-логи) в `.gitignore`.
 
 ---
 
-## For developers
+## Для разработчиков
 
-**Requirements:** JDK 17, Windows (to build the client)
+**Нужно:** JDK 17, Windows
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File dev\tools\package-windows.ps1
-python dev\tools\make_release_zip.py --version 1.0.0
-python dev\tools\publish_release.py --version 1.0.0
+powershell -ExecutionPolicy Bypass -File dev\tools\package-exe.ps1
+python dev\tools\make_release_zip.py --version 1.1.0
+python dev\tools\publish_release_api.py 1.1.0
 ```
 
-Upload `dist/The-Witcher-v1.0.0-Windows.zip` to [Releases](https://github.com/top-secret666/the-witcher/releases/new).  
-Do **not** commit `The Witcher.exe`, `app/`, or `runtime/`.
+Не коммить `The Witcher.exe`, `app/`, `runtime/`.
 
 ---
 
-## Docs
+## Документы
 
-| File | Description |
-|:-----|:------------|
-| [`chapter1_journey_checklist.md`](docs/chapter1_journey_checklist.md) | Chapter 1 canonical path |
-| [`glava1_scenariy_volk.md`](docs/glava1_scenariy_volk.md) | Wolf boss script |
-| [`dialogues.md`](docs/dialogues.md) | Dialogue draft |
-| [`design/`](docs/design/) | Loop design notes |
+| Файл | Описание |
+|:-----|:---------|
+| [`chapter1_journey_checklist.md`](docs/chapter1_journey_checklist.md) | Канон главы 1 |
+| [`glava1_scenariy_volk.md`](docs/glava1_scenariy_volk.md) | Сценарий Волка |
+| [`dialogues.md`](docs/dialogues.md) | Черновик диалогов |
+| [`design/`](docs/design/) | Дизайн петли |
 
 ---
 
@@ -109,6 +122,6 @@ Do **not** commit `The Witcher.exe`, `app/`, or `runtime/`.
     Pet project · Dana Stukalova · VGTU · 2025–2026<br>
     <a href="https://github.com/top-secret666/the-witcher/releases">Releases</a>
     ·
-    <a href="docs/chapter1_journey_checklist.md">Playthrough guide</a>
+    <a href="docs/chapter1_journey_checklist.md">Playthrough</a>
   </sub>
 </p>

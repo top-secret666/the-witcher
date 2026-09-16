@@ -515,7 +515,7 @@ public class IntroScreen {
             : IntroSwingBridge.colorFromRgb(entry.speakerColorRgb());
 
         String visibleText = entry.text().substring(0, Math.min(controller.getCharIndex(), entry.text().length()));
-        int lineY = DialogBoxRenderer.drawTypewriterText(
+        int baselineY = DialogBoxRenderer.drawTypewriterText(
             g, entry.speaker(), visibleText, speakerColor, layout, controller.getFadeAlpha());
 
         if (!controller.isWaitingForAdvance() && (controller.getTick() / 8) % 2 == 0) {
@@ -526,17 +526,18 @@ public class IntroScreen {
             int cursorX = layout.textX + fm.stringWidth(
                 DialogBoxRenderer.getLastVisibleLine(visibleText, fm, layout.textMaxW));
             g.setColor(speakerColor);
-            g.fillRect(cursorX + 2, lineY - fm.getAscent() + 2,
-                Math.max(2, layout.fontSize / 5), fm.getAscent());
+            int caretTop = DialogBoxRenderer.typewriterCaretTop(baselineY, fm);
+            int caretH = DialogBoxRenderer.typewriterCaretHeight(fm, layout.fontSize);
+            g.fillRect(cursorX + 2, caretTop, Math.max(2, layout.fontSize / 5), caretH);
             g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
         }
 
         if (controller.isWaitingForAdvance() && !controller.isAutoMode()
             && (controller.getTick() / 15) % 2 == 0) {
-            DialogBoxRenderer.drawHint(g, "\u25B6 Enter", layout, layout.fontSize, controller.getFadeAlpha());
+            DialogBoxRenderer.drawHint(g, "Enter", layout, layout.fontSize, controller.getFadeAlpha());
         } else if (controller.isWaitingForAdvance() && controller.isAutoMode()
             && (controller.getTick() / 12) % 2 == 0) {
-            DialogBoxRenderer.drawHint(g, "Авто \u25B6", layout, layout.fontSize, controller.getFadeAlpha() * 0.85f);
+            DialogBoxRenderer.drawHint(g, "Авто", layout, layout.fontSize, controller.getFadeAlpha() * 0.85f);
         }
     }
 

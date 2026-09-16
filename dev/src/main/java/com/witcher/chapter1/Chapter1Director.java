@@ -187,6 +187,13 @@ public final class Chapter1Director {
     cutsceneFinished = false;
   }
 
+  /** Конец демо после истинного осколка. */
+  public void enterDemoEnding() {
+    phase = Chapter1Phase.DEMO_ENDING;
+    pendingCutscene = null;
+    cutsceneFinished = false;
+  }
+
   /**
    * Legacy-экран после старого sword-пайплайна / debug.
    * Канон возвращает в лавку через {@link #enterWolfEnding()} → клик.

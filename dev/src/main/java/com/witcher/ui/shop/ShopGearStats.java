@@ -14,6 +14,13 @@ public record ShopGearStats(int protection, int stamina, int signs) {
             signs + other.signs);
     }
 
+    public ShopGearStats minus(ShopGearStats other) {
+        return new ShopGearStats(
+            protection - other.protection,
+            stamina - other.stamina,
+            signs - other.signs);
+    }
+
     public ShopGearStats clamped() {
         return new ShopGearStats(
             clamp(protection, 0, 99),

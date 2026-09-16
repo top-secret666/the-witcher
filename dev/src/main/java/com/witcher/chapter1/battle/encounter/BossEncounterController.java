@@ -22,7 +22,6 @@ import java.util.List;
  */
 public final class BossEncounterController {
 
-  private static final int MS_PER_TICK = BossEncounterConstants.MS_PER_TICK;
   private static final int CLOSED_HOLD_MS = BossEncounterConstants.CLOSED_HOLD_MS;
   private static final int OPEN_MS = BossEncounterConstants.OPEN_MS;
   private static final int TICKS_PER_CHAR = BossEncounterConstants.TICKS_PER_CHAR;
@@ -50,6 +49,15 @@ public final class BossEncounterController {
   private int historyScroll;
   private boolean historyCloseHovered;
 
+  /** Тики старта вспышки Весемира; -1 = ещё не началась. */
+  private int flashbackStartTicks = -1;
+  private boolean flashbackDialogArmed;
+  private int slidesCompleteTicks = -1;
+  private float geraltSlide;
+  private float vesemirSlide;
+  private float leftActiveAnim;
+  private float rightActiveAnim;
+
   private final IntroVnUi.ButtonLayout buttons = new IntroVnUi.ButtonLayout();
   private int layoutSw = 480;
   private int layoutSh = 360;
@@ -68,11 +76,13 @@ public final class BossEncounterController {
   }
 
   public int elapsedMs() {
-    return ticks * MS_PER_TICK;
+    // Лес после первого пробуждения — без изменений (логика век как была).
+    return ticks * BossEncounterConstants.MS_PER_TICK;
   }
 
   public void tick() {
     ticks++;
+    tickFlashbackPresentation();
   }
 
   public void updateDialog(int mouseX, int mouseY, boolean clicked, int wheelNotches, boolean advanceKey) {
@@ -82,6 +92,13 @@ public final class BossEncounterController {
     if (!vnStarted) {
       vnStarted = true;
       resetEntry(0);
+    }
+    if (isVesemirScene() && !flashbackReady()) {
+      return;
+    }
+    if (isVesemirScene() && flashbackReady() && !flashbackDialogArmed) {
+      flashbackDialogArmed = true;
+      resetEntry(currentEntry);
     }
     refreshButtonLayout();
 
@@ -130,9 +147,8 @@ public final class BossEncounterController {
     BossEncounterScript.DialogEntry entry = entries.get(currentEntry);
     int totalChars = entry.text().length();
 
-    if (BossVnTypingEngine.tick(
-            typing, totalChars, advance, autoMode,
-            TICKS_PER_CHAR, AUTO_TICKS_PER_CHAR, AUTO_DELAY_TICKS)
+    if (BossVnTypingEngine.tickWithSettings(
+            typing, entry.text(), totalChars, advance, autoMode)
         == BossVnTypingEngine.TickResult.ADVANCE_LINE) {
       advanceDialogueEntry();
     }
@@ -153,6 +169,13 @@ public final class BossEncounterController {
     entries.addAll(WolfBossEncounterScript.continuation(memoryBranch));
     awaitingChoice = false;
     choiceScene = null;
+    flashbackStartTicks = ticks;
+    flashbackDialogArmed = false;
+    slidesCompleteTicks = -1;
+    geraltSlide = 0f;
+    vesemirSlide = 0f;
+    leftActiveAnim = 0f;
+    rightActiveAnim = 0f;
     resetEntry(WolfBossEncounterScript.CHOICE_GATE_INDEX + 1);
   }
 
@@ -185,11 +208,135 @@ public final class BossEncounterController {
   }
 
   public boolean showDialog() {
-    return eyesFullyOpen() && vnStarted && !dialogFinished && !awaitingChoice;
+    if (!eyesFullyOpen() || !vnStarted || dialogFinished || awaitingChoice) {
+      return false;
+    }
+    if (isVesemirScene() && !flashbackReady()) {
+      return false;
+    }
+    return true;
+  }
+
+  public boolean isVesemirScene() {
+    if (currentEntry < 0 || currentEntry >= entries.size()) {
+      return false;
+    }
+    return entries.get(currentEntry).scene() == BossEncounterScript.SceneKind.VESEMIR;
+  }
+
+  /** Тема леса играет до реплики Волка «...». */
+  public boolean wolfMusicActive() {
+    if (flashbackActive() || isVesemirScene()) {
+      return false;
+    }
+    return currentEntry < WolfBossEncounterScript.WOLF_MUSIC_CUT_INDEX;
+  }
+
+  public boolean flashbackActive() {
+    return flashbackStartTicks >= 0;
+  }
+
+  public boolean flashbackReady() {
+    if (flashbackStartTicks < 0) {
+      return true;
+    }
+    if (slidesCompleteTicks < 0) {
+      return false;
+    }
+    int after = (ticks - slidesCompleteTicks) * BossEncounterConstants.MS_PER_TICK;
+    return after >= BossEncounterConstants.FLASHBACK_DIALOG_PAD_MS;
+  }
+
+  public float geraltSlide() {
+    return geraltSlide;
+  }
+
+  public float vesemirSlide() {
+    return vesemirSlide;
+  }
+
+  public float leftActiveAnim() {
+    return leftActiveAnim;
+  }
+
+  public float rightActiveAnim() {
+    return rightActiveAnim;
+  }
+
+  /** Фон двора под веками — с начала вспышки (чёрный держат веки). */
+  public boolean vesemirBgVisible() {
+    return flashbackActive() || isVesemirScene();
+  }
+
+  /** Глаза полностью открыты на дворе — можно слайдить персонажей. */
+  public boolean flashbackEyesOpen() {
+    if (!flashbackActive()) {
+      return true;
+    }
+    return flashbackElapsedMs()
+        >= BossEncounterConstants.FLASHBACK_BLACK_MS + BossEncounterConstants.FLASHBACK_OPEN_MS;
+  }
+
+  private int flashbackElapsedMs() {
+    if (flashbackStartTicks < 0) {
+      return 0;
+    }
+    return Math.max(0, ticks - flashbackStartTicks) * BossEncounterConstants.MS_PER_TICK;
+  }
+
+  private float flashbackEyelidOpenT() {
+    int ms = flashbackElapsedMs();
+    int black = BossEncounterConstants.FLASHBACK_BLACK_MS;
+    int open = BossEncounterConstants.FLASHBACK_OPEN_MS;
+    if (ms < black) {
+      return 0f;
+    }
+    if (ms >= black + open) {
+      return 1f;
+    }
+    float t = (ms - black) / (float) open;
+    return IntroEasing.easeOutCubic(t);
+  }
+
+  private void tickFlashbackPresentation() {
+    if (!flashbackActive()) {
+      return;
+    }
+    boolean holdDone = flashbackEyesOpen()
+        && flashbackElapsedMs()
+            >= BossEncounterConstants.FLASHBACK_BLACK_MS
+                + BossEncounterConstants.FLASHBACK_OPEN_MS
+                + BossEncounterConstants.FLASHBACK_BG_HOLD_MS;
+    if (holdDone) {
+      geraltSlide = Math.min(1f, geraltSlide + BossEncounterConstants.FLASHBACK_SLIDE_SPEED);
+      vesemirSlide = Math.min(1f, vesemirSlide + BossEncounterConstants.FLASHBACK_SLIDE_SPEED);
+    }
+    if (slidesCompleteTicks < 0 && geraltSlide >= 0.999f && vesemirSlide >= 0.999f) {
+      slidesCompleteTicks = ticks;
+    }
+
+    BossEncounterScript.DialogEntry entry = activeEntry();
+    boolean geraltActive = flashbackDialogArmed && entry != null && "Геральт".equals(entry.speaker());
+    boolean vesemirActive = flashbackDialogArmed && entry != null && "Весемир".equals(entry.speaker());
+    float active = BossEncounterConstants.FLASHBACK_ACTIVE_SPEED;
+    leftActiveAnim = geraltActive
+        ? Math.min(1f, leftActiveAnim + active)
+        : Math.max(0f, leftActiveAnim - active * 0.7f);
+    rightActiveAnim = vesemirActive
+        ? Math.min(1f, rightActiveAnim + active)
+        : Math.max(0f, rightActiveAnim - active * 0.7f);
   }
 
   public BossEncounterScript.DialogEntry currentEntry() {
     if (!showDialog() || currentEntry < 0 || currentEntry >= entries.size()) {
+      return null;
+    }
+    return entries.get(currentEntry);
+  }
+
+  /** Текущая реплика для спрайтов (даже пока диалог ещё не показан). */
+  public BossEncounterScript.DialogEntry activeEntry() {
+    if (currentEntry < 0 || currentEntry >= entries.size()) {
       return null;
     }
     return entries.get(currentEntry);
@@ -232,7 +379,15 @@ public final class BossEncounterController {
   }
 
   public boolean backEnabled() {
-    return currentEntry > 0 && !awaitingChoice;
+    if (awaitingChoice || currentEntry <= 0) {
+      return false;
+    }
+    // Не выходим из вспышки памяти назад в лес.
+    if (memoryBranch != WolfBossEncounterScript.MemoryBranch.NONE
+        && currentEntry <= WolfBossEncounterScript.CHOICE_GATE_INDEX + 1) {
+      return false;
+    }
+    return true;
   }
 
   public IntroVnUi.ButtonLayout buttons() {
@@ -242,7 +397,7 @@ public final class BossEncounterController {
 
   public String spritePath() {
     BossEncounterScript.Expression expr = BossEncounterScript.Expression.MAP;
-    BossEncounterScript.DialogEntry entry = currentEntry();
+    BossEncounterScript.DialogEntry entry = activeEntry();
     if (entry != null) {
       expr = entry.expression();
     }
@@ -250,10 +405,18 @@ public final class BossEncounterController {
   }
 
   public String spritePathForScene() {
-    if (!eyesFullyOpen() || currentEntry() == null) {
-      return BossEncounterScript.spritePathFor(BossEncounterScript.Expression.MAP);
+    if (!eyesFullyOpen() || activeEntry() == null) {
+      return BossEncounterScript.spritePathFor(BossEncounterScript.Expression.MAP_INTERESTED);
     }
     return spritePath();
+  }
+
+  public float eyelidOverlayOpenT() {
+    // После Волка: чёрный → открытие на дворе (как лесное пробуждение) → слайд.
+    if (flashbackActive()) {
+      return flashbackEyelidOpenT();
+    }
+    return eyelidOpenT();
   }
 
   public List<String> buildHistoryLogLines() {
@@ -278,11 +441,19 @@ public final class BossEncounterController {
   }
 
   private void advanceDialogueEntry() {
+    // Выбор реплик отключён — сразу ветка памяти (единственная концовка).
     if (currentEntry == WolfBossEncounterScript.CHOICE_GATE_INDEX
         && memoryBranch == WolfBossEncounterScript.MemoryBranch.NONE) {
-      awaitingChoice = true;
-      choiceScene = WolfBossEncounterScript.memoryChoiceScene();
-      typing.clearWaitingForAdvance();
+      memoryBranch = WolfBossEncounterScript.MemoryBranch.ACKNOWLEDGE;
+      entries.addAll(WolfBossEncounterScript.continuation(memoryBranch));
+      flashbackStartTicks = ticks;
+      flashbackDialogArmed = false;
+      slidesCompleteTicks = -1;
+      geraltSlide = 0f;
+      vesemirSlide = 0f;
+      leftActiveAnim = 0f;
+      rightActiveAnim = 0f;
+      resetEntry(WolfBossEncounterScript.CHOICE_GATE_INDEX + 1);
       return;
     }
     if (currentEntry >= entries.size() - 1) {

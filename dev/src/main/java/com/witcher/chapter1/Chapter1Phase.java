@@ -32,6 +32,8 @@ public enum Chapter1Phase {
   BOSS_FINALE,
   /** Итог первого босса: плохая петля или осколок (канонический result-экран). */
   WOLF_ENDING,
+  /** Финал демо: Directed by → титры → спасибо. */
+  DEMO_ENDING,
   /**
    * Legacy-экран «ПОБЕДА/ПОРАЖЕНИЕ» после старого sword→result пайплайна.
    * Канон использует {@link #WOLF_ENDING}; вход только через {@link Chapter1Director#enterBattleResult}.

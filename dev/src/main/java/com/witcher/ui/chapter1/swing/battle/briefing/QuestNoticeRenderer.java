@@ -2,10 +2,9 @@ package main.java.com.witcher.ui.chapter1.swing.battle.briefing;
 
 import main.java.com.witcher.chapter1.battle.briefing.BossQuestBriefingScript;
 import main.java.com.witcher.ui.chapter1.swing.Chapter1UiAssets;
-import main.java.com.witcher.ui.chapter1.swing.ScaledImageCache;
 import main.java.com.witcher.ui.graphics.DialogBoxRenderer;
 import main.java.com.witcher.ui.graphics.GameFonts;
-import main.java.com.witcher.ui.graphics.GraphicsDrawHelpers;
+import main.java.com.witcher.ui.graphics.PixelScaler;
 
 import java.awt.AlphaComposite;
 import java.awt.Color;
@@ -74,9 +73,15 @@ public final class QuestNoticeRenderer {
     g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, Math.min(1f, anim.paperAlpha)));
     BufferedImage asset = Chapter1UiAssets.bossQuestNotice();
     if (asset != null && anim.w > 0 && anim.h > 0) {
-      BufferedImage scaled = ScaledImageCache.get(asset, anim.w, anim.h);
+      // Чёткий даунскейл (nearest/sharp), без bicubic-размытия.
+      BufferedImage scaled = PixelScaler.sharpScale(asset, anim.w, anim.h);
       if (scaled != null) {
-        GraphicsDrawHelpers.drawBicubic(g, scaled, anim.x, anim.y, anim.w, anim.h);
+        Object prevInterp = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
+        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+        g.drawImage(scaled, anim.x, anim.y, null);
+        if (prevInterp != null) {
+          g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, prevInterp);
+        }
       }
     }
     g.setTransform(saved);
@@ -90,16 +95,7 @@ public final class QuestNoticeRenderer {
       int sh,
       BossQuestBriefingScript.NoticeContent notice,
       QuestNoticeAnimator anim) {
-    if (notice == null || anim == null || anim.textAlpha <= 0.02f) {
-      return;
-    }
-
-    Layout textLayout = layoutForAnim(anim, layout(sw, sh));
-    Composite prev = g.getComposite();
-    g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, Math.min(1f, anim.textAlpha)));
-    GameFonts.applyUiOverlayHints(g);
-    paintNoticeText(g, textLayout, notice);
-    g.setComposite(prev);
+    // Текст уже нарисован на ассете boss_quest_notice — оверлей не нужен.
   }
 
   private static Layout layoutForAnim(QuestNoticeAnimator anim, Layout target) {

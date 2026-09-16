@@ -8,44 +8,58 @@ public final class ShopViewConstants {
     public static final int DIALOG_TEXT_ZONE = 54;
     public static final int PANEL_BOTTOM_MARGIN = 4;
 
-    public static final int REVEAL_DURATION_TICKS = 84;
+    public static final int REVEAL_DURATION_TICKS = 150;
     public static final int CATEGORY_OPEN_DURATION_TICKS = 28;
 
-    public static final int WALLET_APPEAR_TICKS = 32;
+    public static final int WALLET_APPEAR_TICKS = 36;
     /** Сначала появляется сама иконка. */
-    public static final int WALLET_ICON_IN_TICKS = 12;
+    public static final int WALLET_ICON_IN_TICKS = 16;
     /** Затем маленькое свечение вокруг иконки (задержка до ореола). */
-    public static final int WALLET_SEED_GLOW_TICKS = 4;
+    public static final int WALLET_SEED_GLOW_TICKS = 5;
     /** У особых предметов после свечения — крутящийся ореол. */
     public static final int WALLET_HALO_IN_TICKS =
         WALLET_APPEAR_TICKS - WALLET_ICON_IN_TICKS - WALLET_SEED_GLOW_TICKS;
-    public static final int WALLET_FLY_TICKS = 40;
-    public static final int WALLET_FADE_TICKS = 10;
-    public static final int WALLET_CLOSE_TICKS = 8;
+    public static final int WALLET_FLY_TICKS = 42;
+    public static final int WALLET_FADE_TICKS = 8;
+    public static final int WALLET_CLOSE_TICKS = 4;
     public static final int WALLET_BAG_CLOSE_TICKS = WALLET_FADE_TICKS + WALLET_CLOSE_TICKS;
-    public static final int WALLET_COUNT_TICKS = 28;
+    /** Пауза после кошелька/карты в сумке — 0, сразу дальше. */
+    public static final int WALLET_COUNT_TICKS = 0;
     public static final int WALLET_REVEAL_TOTAL =
         WALLET_APPEAR_TICKS + WALLET_FLY_TICKS + WALLET_BAG_CLOSE_TICKS + WALLET_COUNT_TICKS;
 
-    public static final int PURCHASE_APPEAR_TICKS = 48;
+    public static final int PURCHASE_APPEAR_TICKS = 36;
     /** Обычный товар: сколько тиков только иконка, без свечения. */
-    public static final int PURCHASE_ICON_ONLY_TICKS = 22;
+    public static final int PURCHASE_ICON_ONLY_TICKS = 16;
     /** Обычный товар: пауза после полной иконки перед стартом свечения. */
-    public static final int PURCHASE_ICON_HOLD_TICKS = 12;
+    public static final int PURCHASE_ICON_HOLD_TICKS = 0;
     /** Обычный товар: набор яркости цветного свечения. */
-    public static final int PURCHASE_GLOW_IN_TICKS = 16;
-    public static final int PURCHASE_FLY_TICKS = 34;
-    public static final int PURCHASE_FADE_TICKS = 8;
-    /** Сразу после fade — без мёртвой паузы закрытия сумки. */
+    public static final int PURCHASE_GLOW_IN_TICKS = 10;
+    public static final int PURCHASE_FLY_TICKS = 28;
+    public static final int PURCHASE_FADE_TICKS = 6;
+    /** Пауза после того, как предмет уже в сумке. */
+    public static final int PURCHASE_HOLD_AFTER_TICKS = 0;
     public static final int PURCHASE_CLOSE_TICKS = 0;
     public static final int PURCHASE_TUCK_TICKS = PURCHASE_FADE_TICKS + PURCHASE_CLOSE_TICKS;
     public static final int PURCHASE_REVEAL_TOTAL =
-        PURCHASE_APPEAR_TICKS + PURCHASE_FLY_TICKS + PURCHASE_TUCK_TICKS;
+        PURCHASE_APPEAR_TICKS + PURCHASE_FLY_TICKS + PURCHASE_TUCK_TICKS + PURCHASE_HOLD_AFTER_TICKS;
 
+    /** Выдача карты — та же анимация, что у кошелька (без доп. паузы после). */
+    public static final int BATTLE_CARD_APPEAR_TICKS = WALLET_APPEAR_TICKS;
+    public static final int BATTLE_CARD_FLY_TICKS = WALLET_FLY_TICKS;
+    public static final int BATTLE_CARD_FADE_TICKS = WALLET_FADE_TICKS;
+    public static final int BATTLE_CARD_CLOSE_TICKS = WALLET_CLOSE_TICKS;
     public static final int BATTLE_CARD_REVEAL_TOTAL = WALLET_REVEAL_TOTAL;
 
     public static final int INVENTORY_BAG_SIZE = 40;
     public static final int INVENTORY_BAG_MARGIN = 8;
+    /**
+     * Угловая плашка крон (список товаров): Y + высота (иконка 16 + padY×2).
+     * Пауза на этом экране — сразу под плашкой.
+     */
+    public static final int CORNER_WALLET_CHIP_H = 16 + 4 * 2;
+    public static final int PAUSE_BELOW_WALLET_TOP =
+        INVENTORY_BAG_MARGIN + CORNER_WALLET_CHIP_H + 4;
 
     public static final int CATALOG_PANEL_GAP_ABOVE_BUY = 10;
     /** Правая панель списка товаров в режиме категории. */
@@ -80,13 +94,17 @@ public final class ShopViewConstants {
     public static final int PRODUCT_CARD_ICON_TEXT_GAP = 5;
     public static final int PRODUCT_CARD_NAME_PRICE_GAP = 5;
 
-    public static final int INVENTORY_PANEL_W = 440;
-    public static final int INVENTORY_PANEL_H = 300;
+    public static final int INVENTORY_PANEL_W = 456;
+    public static final int INVENTORY_PANEL_H = 340;
+    /** Внутренний отступ от декоративной рамки фона. */
+    public static final int INVENTORY_PANEL_PAD = 22;
     public static final int INVENTORY_POUCH_ICON = 34;
-    public static final int INVENTORY_POUCH_LARGE = 112;
+    public static final int INVENTORY_POUCH_LARGE = 92;
     public static final int INVENTORY_GRID_COLS = 4;
-    public static final int INVENTORY_DETAIL_W = 196;
+    public static final int INVENTORY_DETAIL_W = 204;
     public static final int INVENTORY_ACTION_BTN_H = 24;
+    /** Мини-колбы статов в карточке предмета инвентаря. */
+    public static final int INVENTORY_STAT_VIALS_H = 60;
     /** Верхняя сетка: кошелёк / карта / зелья / оружие. */
     public static final int INVENTORY_SPECIAL_VISIBLE_ROWS = 2;
     /** Нижняя сетка: купленная броня. */
@@ -105,8 +123,8 @@ public final class ShopViewConstants {
     public static final int EQUIP_LIST_W = 214;
     /** Колбочки в левой колонке (компакт). */
     public static final int EQUIP_STATS_W = EQUIP_LIST_W - 4;
-    public static final int EQUIP_STATS_H = 112;
-    public static final int EQUIP_RIGHT_COL_W = 58;
+    public static final int EQUIP_STATS_H = 128;
+    public static final int EQUIP_RIGHT_COL_W = 76;
     /** Отдельный слот оружия под слотами брони. */
     public static final int EQUIP_WEAPON_SLOT_GAP = 10;
 

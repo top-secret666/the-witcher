@@ -9,11 +9,11 @@ import main.java.com.witcher.model.armour.Armour;
 import main.java.com.witcher.ui.shop.ShopEntryIcons;
 import main.java.com.witcher.ui.shop.ShopCatalogEntry;
 import main.java.com.witcher.ui.shop.ShopCategory;
+import main.java.com.witcher.ui.shop.DukeLines;
 import main.java.com.witcher.ui.shop.ShopModel;
 import main.java.com.witcher.ui.shop.presenter.ShopPresenter;
 import main.java.com.witcher.ui.shop.presenter.ShopScreenState;
 import main.java.com.witcher.ui.shop.presenter.ShopSessionState;
-import main.java.com.witcher.ui.shop.ShopGearRules;
 import main.java.com.witcher.ui.shop.swing.overlay.ShopEquipmentOverlay;
 import main.java.com.witcher.ui.shop.swing.overlay.ShopInventoryOverlay;
 import main.java.com.witcher.ui.shop.swing.overlay.ShopOverlayContext;
@@ -80,7 +80,9 @@ public final class ShopSwingView implements ShopView {
         ShopRevealAnimator reveal = presenter.revealAnimator();
         float brighten = reveal.sceneBrighten;
 
-        drawScaledBackground(g, assets.merchantBgScaled, sw, sh, 0.75f * brighten);
+        if (!ui.equipmentOpen) {
+            drawScaledBackground(g, assets.merchantBgScaled, sw, sh, 0.75f * brighten);
+        }
 
         boolean categoryMode = ui.state == ShopScreenState.CATEGORY_OPENING
             || ui.state == ShopScreenState.CATEGORY || ui.state == ShopScreenState.CATEGORY_CLOSING;
@@ -91,8 +93,7 @@ public final class ShopSwingView implements ShopView {
         if (walletScene) {
             drawWalletRevealScene(g, sw, sh, layout, mouseX, mouseY);
             if (shouldDrawUiTextInScene()) {
-                DialogBoxRenderer.drawCompactFramedSpeakerText(g, sw, sh, "Герцог", ui.currentDialog,
-                    DialogBoxRenderer.DUKE_COLOR, 1f);
+                drawDukeOrGeraltDialog(g, sw, sh);
                 drawCursor(g, mouseX, mouseY);
             }
             g.dispose();
@@ -102,8 +103,7 @@ public final class ShopSwingView implements ShopView {
         if (battleCardScene) {
             drawBattleCardRevealScene(g, sw, sh, layout);
             if (shouldDrawUiTextInScene()) {
-                DialogBoxRenderer.drawCompactFramedSpeakerText(g, sw, sh, "Герцог", ui.currentDialog,
-                    DialogBoxRenderer.DUKE_COLOR, 1f);
+                drawDukeOrGeraltDialog(g, sw, sh);
                 drawCursor(g, mouseX, mouseY);
             }
             g.dispose();
@@ -113,21 +113,20 @@ public final class ShopSwingView implements ShopView {
         if (purchaseScene) {
             drawPurchaseRevealScene(g, sw, sh, layout);
             if (shouldDrawUiTextInScene()) {
-                DialogBoxRenderer.drawCompactFramedSpeakerText(g, sw, sh, "Герцог", ui.currentDialog,
-                    DialogBoxRenderer.DUKE_COLOR, 1f);
+                drawDukeOrGeraltDialog(g, sw, sh);
                 drawCursor(g, mouseX, mouseY);
             }
             g.dispose();
             return;
         }
 
-        if (!categoryMode) {
+        if (!categoryMode && !ui.equipmentOpen) {
             drawDarkOverlay(g, sw, sh, layout, brighten * Math.max(0.25f, reveal.panelAlpha * 0.85f));
-        } else {
+        } else if (categoryMode) {
             drawCategoryOverlay(g, sw, sh, layout, brighten);
         }
 
-        if (!categoryMode) {
+        if (!categoryMode && !ui.equipmentOpen) {
             float portraitAlpha = brighten;
             BufferedImage dukeDraw = assets.dukeScaled;
             drawCharacter(g, sw, sh, assets.geraltScaled, true, layout.dialogTop, portraitAlpha);
@@ -150,19 +149,24 @@ public final class ShopSwingView implements ShopView {
             drawAshParticles(g);
         }
 
-        if (shouldDrawUiTextInScene() && !ui.equipmentOpen && !ui.inventoryOpen) {
-            DialogBoxRenderer.drawCompactFramedSpeakerText(g, sw, sh, "Герцог", ui.currentDialog,
-                DialogBoxRenderer.DUKE_COLOR, 1f);
-        }
-
         if (!presenter.model().needsWalletReveal() && !ui.equipmentOpen && !ui.inventoryOpen) {
             drawInventoryBag(g, 1f);
         }
 
         if (ui.equipmentOpen) {
             drawEquipmentOverlay(g, sw, sh);
+            if (shouldDrawUiTextInScene() && (ui.outfitConfirmActive || ui.armorHelpActive)) {
+                drawDukeOrGeraltDialog(g, sw, sh);
+            }
         } else if (ui.inventoryOpen) {
             drawInventoryOverlay(g, sw, sh);
+            if (shouldDrawUiTextInScene() && ui.battleConfirmActive) {
+                drawBattleConfirmModal(g, sw, sh);
+            }
+        }
+
+        if (shouldDrawUiTextInScene() && !ui.equipmentOpen && !ui.inventoryOpen) {
+            drawDukeOrGeraltDialog(g, sw, sh);
         }
 
         if (shouldDrawUiTextInScene()) {
@@ -192,8 +196,10 @@ public final class ShopSwingView implements ShopView {
             boolean battleCardScene = ui.state == ShopScreenState.BATTLE_CARD_REVEAL;
 
             if (walletScene || purchaseScene || battleCardScene) {
-                DialogBoxRenderer.drawCompactFramedSpeakerText(g, sw, sh, "Герцог", ui.currentDialog,
-                    DialogBoxRenderer.DUKE_COLOR, 1f);
+                drawDukeOrGeraltDialog(g, sw, sh);
+                if (purchaseScene) {
+                    drawPurchaseSkipHint(g, layout);
+                }
                 drawCursor(g, mouseX, mouseY);
                 return;
             }
@@ -211,11 +217,16 @@ public final class ShopSwingView implements ShopView {
                 drawEquipmentOverlay(g, sw, sh);
             } else if (ui.inventoryOpen) {
                 drawInventoryOverlay(g, sw, sh);
+                if (ui.battleConfirmActive) {
+                    drawBattleConfirmModal(g, sw, sh);
+                }
             }
 
             if (!ui.equipmentOpen && !ui.inventoryOpen) {
-                DialogBoxRenderer.drawCompactFramedSpeakerText(g, sw, sh, "Герцог", ui.currentDialog,
-                    DialogBoxRenderer.DUKE_COLOR, 1f);
+                drawDukeOrGeraltDialog(g, sw, sh);
+            } else if (ui.outfitConfirmActive || ui.armorHelpActive) {
+                // Примерка: вопрос Да/Нет поверх экрана экипировки.
+                drawDukeOrGeraltDialog(g, sw, sh);
             }
             drawCursor(g, mouseX, mouseY);
         } finally {
@@ -224,7 +235,16 @@ public final class ShopSwingView implements ShopView {
     }
 
     private static void drawCursor(Graphics2D g, int mouseX, int mouseY) {
-        main.java.com.witcher.ui.graphics.MenuCursorDraw.drawLarge(g, mouseX, mouseY);
+        if (MENU_CURSOR != null) {
+            int cw = 28;
+            int ch = Math.max(1, cw * MENU_CURSOR.getHeight() / MENU_CURSOR.getWidth());
+            Object prevInterp = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
+            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+            g.drawImage(MENU_CURSOR, mouseX - 4, mouseY - 4, cw, ch, null);
+            if (prevInterp != null) {
+                g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, prevInterp);
+            }
+        }
     }
 
     public boolean isExitRequested() {
@@ -266,6 +286,141 @@ public final class ShopSwingView implements ShopView {
 
         drawPurchaseRevealBag(g, layout);
         drawPurchaseRevealItem(g, layout);
+        drawPurchaseSkipHint(g, layout);
+    }
+
+    private void drawDukeOrGeraltDialog(Graphics2D g, int sw, int sh) {
+        String speaker = ui.dialogSpeaker != null ? ui.dialogSpeaker : "Герцог";
+        Color color = "Геральт".equals(speaker)
+            ? DialogBoxRenderer.GERALT_COLOR
+            : DialogBoxRenderer.DUKE_COLOR;
+        DialogBoxRenderer.drawCompactFramedSpeakerText(g, sw, sh, speaker, ui.currentDialog, color, 1f);
+        if (ui.armorHelpActive || ui.outfitConfirmActive) {
+            drawArmorHelpChoices(g, sw, sh);
+        }
+    }
+
+    private void drawArmorHelpChoices(Graphics2D g, int sw, int sh) {
+        var choices = java.util.List.of(
+            new main.java.com.witcher.chapter1.vn.VnChoice("yes", "Да", 0, 0),
+            new main.java.com.witcher.chapter1.vn.VnChoice("no", "Нет", 0, 0)
+        );
+        layoutYesNoChoiceBounds(sw, sh, ui.equipmentOpen || ui.outfitConfirmActive);
+
+        GameFonts.applyGothicHints(g);
+        g.setFont(GameFonts.get().uiBold(11));
+        FontMetrics fm = g.getFontMetrics();
+        for (var rect : ui.armorHelpChoiceBounds) {
+            boolean hot = rect.index() == ui.armorHelpHovered;
+            g.setColor(hot ? new Color(72, 48, 18) : new Color(36, 24, 12));
+            g.fillRoundRect(Math.round(rect.x()), Math.round(rect.y()),
+                Math.round(rect.width()), Math.round(rect.height()), 5, 5);
+            g.setColor(hot ? new Color(255, 220, 120) : new Color(200, 160, 70));
+            g.drawRoundRect(Math.round(rect.x()), Math.round(rect.y()),
+                Math.round(rect.width()), Math.round(rect.height()), 5, 5);
+            String label = choices.get(rect.index()).label();
+            int tx = Math.round(rect.x() + (rect.width() - fm.stringWidth(label)) / 2f);
+            int ty = Math.round(rect.y() + (rect.height() + fm.getAscent() - fm.getDescent()) / 2f);
+            ShopUiDraw.drawOutlinedText(g, label, tx, ty,
+                hot ? new Color(255, 240, 180) : new Color(235, 215, 155));
+        }
+    }
+
+    private void drawBattleConfirmModal(Graphics2D g, int sw, int sh) {
+        g.setColor(new Color(0, 0, 0, 170));
+        g.fillRect(0, 0, sw, sh);
+        String text = ui.currentDialog != null ? ui.currentDialog : DukeLines.battleConfirm();
+        GameFonts.applyGothicHints(g);
+        g.setFont(GameFonts.get().uiBold(12));
+        FontMetrics fm = g.getFontMetrics();
+        int boxW = Math.min(sw - 40, 360);
+        List<String> lines = wrapInventoryText(text, fm, boxW - 24);
+        int lineH = fm.getHeight();
+        int boxH = 28 + lineH * Math.max(1, lines.size()) + 8;
+        int boxX = (sw - boxW) / 2;
+        int boxY = sh / 2 - boxH - 8;
+        g.setColor(new Color(18, 12, 8));
+        g.fillRoundRect(boxX, boxY, boxW, boxH, 8, 8);
+        g.setColor(new Color(200, 160, 70));
+        g.drawRoundRect(boxX, boxY, boxW, boxH, 8, 8);
+        g.setColor(new Color(245, 230, 190));
+        int ty = boxY + 18 + fm.getAscent();
+        for (String line : lines) {
+            g.drawString(line, boxX + (boxW - fm.stringWidth(line)) / 2, ty);
+            ty += lineH;
+        }
+        drawArmorHelpChoices(g, sw, sh);
+    }
+
+    /**
+     * Лавка: между витриной и диалогом, по центру.
+     * Экипировка: сбоку под Геральтом (правый край портрета), не на статах.
+     */
+    private void layoutYesNoChoiceBounds(int sw, int sh, boolean equipmentScreen) {
+        ui.armorHelpChoiceBounds.clear();
+        int rowH = 24;
+        int gap = 8;
+        int btnW = 100;
+        if (ui.battleConfirmActive) {
+            int totalW = btnW * 2 + gap;
+            int x0 = (sw - totalW) / 2;
+            int y0 = sh / 2 + 16;
+            ui.armorHelpChoiceBounds.add(
+                new main.java.com.witcher.ui.chapter1.view.VnChoiceLayout.ChoiceRect(0, x0, y0, btnW, rowH));
+            ui.armorHelpChoiceBounds.add(
+                new main.java.com.witcher.ui.chapter1.view.VnChoiceLayout.ChoiceRect(1, x0 + btnW + gap, y0, btnW, rowH));
+            return;
+        }
+        if (equipmentScreen) {
+            var equip = main.java.com.witcher.ui.shop.view.EquipmentOverlayLayout.compute(sw, sh);
+            btnW = 88;
+            gap = 8;
+            rowH = 24;
+            int totalW = btnW * 2 + gap;
+            // Горизонтально, чуть правее центра портрета — сбоку под ведьмаком.
+            int x0 = equip.portraitX + Math.max(0, (equip.portraitW - totalW) / 2 + 28);
+            if (x0 + totalW > sw - 8) {
+                x0 = sw - totalW - 8;
+            }
+            int y0 = sh - DIALOG_TEXT_ZONE - rowH + 6;
+            ui.armorHelpChoiceBounds.add(
+                new main.java.com.witcher.ui.chapter1.view.VnChoiceLayout.ChoiceRect(0, x0, y0, btnW, rowH));
+            ui.armorHelpChoiceBounds.add(
+                new main.java.com.witcher.ui.chapter1.view.VnChoiceLayout.ChoiceRect(
+                    1, x0 + btnW + gap, y0, btnW, rowH));
+            return;
+        }
+        int totalW = btnW * 2 + gap;
+        int x0 = (sw - totalW) / 2;
+        int y0 = sh - DIALOG_TEXT_ZONE - rowH + 6;
+        ui.armorHelpChoiceBounds.add(
+            new main.java.com.witcher.ui.chapter1.view.VnChoiceLayout.ChoiceRect(0, x0, y0, btnW, rowH));
+        ui.armorHelpChoiceBounds.add(
+            new main.java.com.witcher.ui.chapter1.view.VnChoiceLayout.ChoiceRect(1, x0 + btnW + gap, y0, btnW, rowH));
+    }
+
+    private void drawPurchaseSkipHint(Graphics2D g, ShopLayout layout) {
+        if (!ui.purchaseRevealShowSkipHint) {
+            return;
+        }
+        // После того как иконка закончила увеличиваться — пока ещё в центре.
+        if (ui.purchaseRevealTicks < PURCHASE_ICON_ONLY_TICKS
+            || ui.purchaseRevealTicks > PURCHASE_APPEAR_TICKS) {
+            return;
+        }
+        GameFonts.applyGothicHints(g);
+        g.setFont(GameFonts.get().uiPlain(9));
+        String hint = "Щелчок — пропустить";
+        FontMetrics fm = g.getFontMetrics();
+        int tw = fm.stringWidth(hint);
+        int centerX = VIRTUAL_W / 2;
+        float appearT = smoothstep(ui.purchaseRevealTicks / (float) Math.max(1, PURCHASE_APPEAR_TICKS));
+        float iconSize = 76f * (0.55f + appearT * 0.45f);
+        int centerY = layout.dialogTop / 2 + 4;
+        int x = centerX - tw / 2;
+        // Под иконкой, чуть ниже; без чёрной плашки.
+        int y = Math.round(centerY + iconSize / 2f + fm.getAscent() + 18);
+        ShopUiDraw.drawOutlinedText(g, hint, x, y, new Color(255, 230, 160));
     }
 
     private void drawBattleCardRevealScene(Graphics2D g, int sw, int sh, ShopLayout layout) {
@@ -632,7 +787,10 @@ public final class ShopSwingView implements ShopView {
             && assets.inventoryBagOpenFrames.length > 0) {
             openT = 1f;
         }
-        drawInventoryBagSprite(g, slot.x, slot.y, INVENTORY_BAG_SIZE, openT, ui.inventoryBagHovered, alpha);
+        boolean attention = ui.inventoryAttention && !ui.inventoryOpen;
+        boolean blinkHover = attention && ShopAttentionPulse.hoverPhase(ui.tick);
+        drawInventoryBagSprite(g, slot.x, slot.y, INVENTORY_BAG_SIZE, openT,
+            ui.inventoryBagHovered || blinkHover, alpha);
     }
 
     private void drawInventoryBagSprite(Graphics2D g, int x, int y, int size, float openT,
@@ -844,16 +1002,20 @@ public final class ShopSwingView implements ShopView {
 
     private void drawInventorySlotIcon(Graphics2D g, ShopInventorySlot slot, int x, int y, int size,
                                        boolean selected, boolean hovered) {
+        boolean attentionHover = slot.kind() == ShopInventoryKind.BATTLE_CARD
+            && ui.battleCardAttention
+            && ShopAttentionPulse.hoverPhase(ui.tick);
+        boolean lit = selected || hovered || attentionHover;
         Composite prev = g.getComposite();
         Object prevAa = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
-        if (selected || hovered) {
+        if (lit) {
             g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.92f));
-            g.setColor(selected ? new Color(120, 90, 40, 230) : new Color(80, 60, 30, 200));
+            g.setColor(selected || attentionHover ? new Color(120, 90, 40, 230) : new Color(80, 60, 30, 200));
             g.fillRoundRect(x, y, size, size, 6, 6);
         }
         g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
-        int inset = (selected || hovered) ? 3 : 1;
+        int inset = lit ? 3 : 1;
         int ix = x + inset;
         int iy = y + inset;
         int isz = size - inset * 2;
@@ -863,7 +1025,7 @@ public final class ShopSwingView implements ShopView {
                     g.drawImage(assets.walletPouch, ix, iy, isz, isz, null);
                 }
             }
-            case BATTLE_CARD -> BattleCardRevealView.drawCardIcon(g, ix, iy, isz, hovered);
+            case BATTLE_CARD -> BattleCardRevealView.drawCardIcon(g, ix, iy, isz, lit);
             case POTION, WEAPON -> {
                 BufferedImage icon = productIcon(slot, isz);
                 if (icon != null) {
@@ -917,7 +1079,15 @@ public final class ShopSwingView implements ShopView {
     }
 
     private int drawInventorySlotDetail(Graphics2D g, ShopInventorySlot slot, int x, int y, int maxW, int maxH) {
-        int large = Math.min(INVENTORY_POUCH_LARGE, Math.max(64, maxW - 8));
+        boolean showVials = slot.kind() != ShopInventoryKind.WEAPON
+            && slot.kind() != ShopInventoryKind.ARMOUR
+            && slot.kind() != ShopInventoryKind.SET;
+        // Оставляем место под название + 2–3 строки описания + кнопку.
+        int textReserve = 58 + (showVials ? INVENTORY_STAT_VIALS_H : 0);
+        int textPad = 2;
+        int textW = Math.max(24, maxW - textPad * 2);
+        int large = Math.min(INVENTORY_POUCH_LARGE, Math.max(48, textW));
+        large = Math.min(large, Math.max(40, maxH - textReserve));
         int iconY = y;
         int iconX = x + (maxW - large) / 2;
         Shape prevClip = g.getClip();
@@ -976,16 +1146,18 @@ public final class ShopSwingView implements ShopView {
             descColor = ShopCategoryGlow.descriptionColor(null);
         }
 
+        int textX = x + textPad;
         g.setFont(GameFonts.get().uiBold(11));
         FontMetrics titleFm = g.getFontMetrics();
-        int textY = iconY + large + 14;
+        int textY = iconY + large + 12;
         int lineH = titleFm.getHeight();
+        int limitY = y + maxH - 2;
         g.setColor(descColor);
-        for (String line : wrapInventoryText(slot.title(), titleFm, maxW)) {
-            if (textY > y + maxH - 4) {
+        for (String line : wrapInventoryText(slot.title(), titleFm, textW)) {
+            if (textY + titleFm.getDescent() > limitY) {
                 break;
             }
-            g.drawString(line, x, textY);
+            g.drawString(line, textX, textY);
             textY += lineH;
         }
 
@@ -998,34 +1170,29 @@ public final class ShopSwingView implements ShopView {
             Math.min(255, descColor.getBlue() + 10));
         g.setColor(bodyColor);
         textY += 2;
-        for (String detail : slot.detailLines()) {
-            for (String line : wrapInventoryText(detail, bodyFm, maxW)) {
-                if (textY > y + maxH - 4) {
-                    g.setClip(prevClip);
-                    return textY;
+        int vialsH = showVials ? INVENTORY_STAT_VIALS_H : 0;
+        int vialsY = showVials ? y + Math.max(0, maxH - vialsH) : y + maxH;
+        if (showVials) {
+            limitY = Math.min(limitY, vialsY - 2);
+        }
+        String[] details = slot.kind() == ShopInventoryKind.POTION
+            ? ShopModel.potionEffectLines(slot.title())
+            : slot.detailLines();
+        detailLoop:
+        for (String detail : details) {
+            for (String line : wrapInventoryText(detail, bodyFm, textW)) {
+                if (textY + bodyFm.getDescent() > limitY) {
+                    break detailLoop;
                 }
-                g.drawString(line, x, textY);
+                g.drawString(line, textX, textY);
                 textY += bodyH;
             }
         }
 
-        if (slot.kind() == ShopInventoryKind.POTION || slot.kind() == ShopInventoryKind.WEAPON) {
-            var bonus = ShopGearRules.placeholderBonus(slot.title());
-            if (ShopStatGlyphs.hasAnyDelta(bonus.protection(), bonus.stamina(), bonus.signs())) {
-                textY += 4;
-                int baseline = textY + bodyFm.getAscent();
-                if (baseline > y + maxH - 4) {
-                    g.setClip(prevClip);
-                    return textY;
-                }
-                g.setFont(GameFonts.get().uiBold(10));
-                FontMetrics statFm = g.getFontMetrics();
-                int rowW = ShopStatGlyphs.rowWidth(statFm,
-                    bonus.protection(), bonus.stamina(), bonus.signs());
-                ShopStatGlyphs.drawRow(g, x + rowW, baseline, statFm,
-                    bonus.protection(), bonus.stamina(), bonus.signs(), assets.statIcons);
-                textY = baseline + statFm.getDescent() + 4;
-            }
+        if (showVials) {
+            ShopModel.StatPreview preview = presenter.model().inventoryStatPreview(slot);
+            ShopStatBarRenderer.drawInventoryMini(g, textX, vialsY, textW, preview);
+            textY = vialsY + vialsH;
         }
 
         g.setClip(prevClip);
@@ -1495,7 +1662,16 @@ public final class ShopSwingView implements ShopView {
         } else {
             ui.categoryBuyBounds.setBounds(0, 0, 0, 0);
         }
-        BufferedImage btnImg = enabled ? assets.btnBuyNormal : assets.btnBuyDisabled;
+        boolean pulseBuy = enabled && ui.buyAttention && ShopAttentionPulse.hoverPhase(ui.tick);
+        boolean hoverLook = enabled && (ui.categoryBuyHovered || pulseBuy);
+        BufferedImage btnImg;
+        if (!enabled) {
+            btnImg = assets.btnBuyDisabled;
+        } else if (hoverLook && assets.btnBuyHover != null) {
+            btnImg = assets.btnBuyHover;
+        } else {
+            btnImg = assets.btnBuyNormal;
+        }
         if (btnImg == null) {
             btnImg = assets.btnBuyDisabled;
         }
@@ -1512,7 +1688,7 @@ public final class ShopSwingView implements ShopView {
         FontMetrics fm = g.getFontMetrics();
         int tx = btnX + (btnW - fm.stringWidth(label)) / 2;
         Color labelColor = enabled
-            ? (ui.categoryBuyHovered ? new Color(255, 240, 180) : new Color(220, 200, 140))
+            ? (hoverLook ? new Color(255, 240, 180) : new Color(220, 200, 140))
             : new Color(120, 105, 75);
         ShopUiDraw.drawOutlinedText(g, label, tx, btnY + 19, labelColor);
         g.setComposite(prev);

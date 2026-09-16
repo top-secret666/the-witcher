@@ -37,7 +37,7 @@ public final class MainMenuController {
 
     private static final String[] LABELS = {"Играть", "Настройки", "Выход"};
 
-    private final Rect[] buttons = new Rect[3];
+    private final Rect[] buttons = new Rect[LABELS.length];
     private final List<float[]> embers = new ArrayList<>();
     private final Random rng = new Random();
     private Action pending = Action.NONE;

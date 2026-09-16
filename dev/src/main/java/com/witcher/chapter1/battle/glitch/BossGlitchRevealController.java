@@ -7,8 +7,8 @@ import java.util.List;
 /** Логика глитч-пробуждения после диалога энкоунтера. */
 public final class BossGlitchRevealController {
 
-  private static final int TICKS_PER_CHAR = 2;
-  private static final int LINE_PAUSE_TICKS = 40;
+  /** Пауза после полной строки — чтобы успеть прочитать. */
+  private static final int LINE_PAUSE_TICKS = 55;
 
   private int ticks;
   private int dialogLine;
@@ -16,6 +16,7 @@ public final class BossGlitchRevealController {
   private int typeTickCounter;
   private int linePauseTicks;
   private boolean skipped;
+  private boolean dialogFinished;
 
   public void reset() {
     ticks = 0;
@@ -24,16 +25,30 @@ public final class BossGlitchRevealController {
     typeTickCounter = 0;
     linePauseTicks = 0;
     skipped = false;
+    dialogFinished = false;
   }
 
   public void tick() {
     if (isComplete()) {
       return;
     }
-    ticks++;
-    if (stage() == BossGlitchRevealTimeline.Stage.CORRIDOR_DIALOG) {
+
+    BossGlitchRevealTimeline.Stage planned = BossGlitchRevealTimeline.stageAt(elapsedMs());
+    boolean corridorActive = planned == BossGlitchRevealTimeline.Stage.CORRIDOR_DIALOG
+        || (planned.ordinal() > BossGlitchRevealTimeline.Stage.CORRIDOR_DIALOG.ordinal()
+            && !dialogFinished);
+
+    if (corridorActive) {
       tickDialog();
     }
+
+    // Улыбка / sheet — только после полной печати и паузы на чтение.
+    if (planned.ordinal() > BossGlitchRevealTimeline.Stage.CORRIDOR_DIALOG.ordinal()
+        && !dialogFinished) {
+      return;
+    }
+
+    ticks++;
   }
 
   public boolean canSkip() {
@@ -56,7 +71,12 @@ public final class BossGlitchRevealController {
   }
 
   public BossGlitchRevealTimeline.Stage stage() {
-    return BossGlitchRevealTimeline.stageAt(elapsedMs());
+    BossGlitchRevealTimeline.Stage s = BossGlitchRevealTimeline.stageAt(elapsedMs());
+    if (s.ordinal() > BossGlitchRevealTimeline.Stage.CORRIDOR_DIALOG.ordinal()
+        && !dialogFinished) {
+      return BossGlitchRevealTimeline.Stage.CORRIDOR_DIALOG;
+    }
+    return s;
   }
 
   public int stageElapsedMs() {
@@ -73,29 +93,38 @@ public final class BossGlitchRevealController {
     return full.substring(0, end);
   }
 
+  public boolean dialogFinished() {
+    return dialogFinished;
+  }
+
+  /**
+   * Финальная катсцена: текст появляется сразу целиком (без печати).
+   * Настройки скорости не применяются.
+   */
   private void tickDialog() {
+    if (dialogFinished) {
+      return;
+    }
     List<BossGlitchRevealScript.Line> lines = BossGlitchRevealScript.corridorLines();
-    if (dialogLine >= lines.size()) {
+    if (lines.isEmpty()) {
+      dialogFinished = true;
       return;
     }
     if (linePauseTicks > 0) {
       linePauseTicks--;
-      if (linePauseTicks == 0 && dialogLine + 1 < lines.size()) {
-        dialogLine++;
-        charIndex = 0;
-        typeTickCounter = 0;
+      if (linePauseTicks == 0) {
+        if (dialogLine + 1 < lines.size()) {
+          dialogLine++;
+          charIndex = 0;
+          typeTickCounter = 0;
+        } else {
+          dialogFinished = true;
+        }
       }
       return;
     }
     String full = lines.get(dialogLine).text();
-    if (charIndex >= full.length()) {
-      linePauseTicks = LINE_PAUSE_TICKS;
-      return;
-    }
-    typeTickCounter++;
-    if (typeTickCounter >= TICKS_PER_CHAR) {
-      typeTickCounter = 0;
-      charIndex++;
-    }
+    charIndex = full.length();
+    linePauseTicks = LINE_PAUSE_TICKS;
   }
 }

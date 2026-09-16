@@ -9,10 +9,10 @@ public final class BossGlitchRevealScript {
   }
 
   private static final List<Line> CORRIDOR_LINES = List.of(
-      new Line("Думаешь, ты можешь сбежать, Геральт из Ривии?"),
-      new Line("Петля держит тех, кто забыл, зачем медальон когда-то зазвенел."),
-      new Line("Смотри. Вспомни, кого ты оставил в снегу у стен Каэр Морхена."),
-      new Line("Это не лавка. Это клетка с зеркалами.")
+      new Line("...."),
+      new Line("Думаешь можешь сбежать Геральт?"),
+      new Line("Ты никогда не вспомнишь кто ты на самом деле."),
+      new Line("Ты застрянешь в этой петле навсегда...")
   );
 
   private BossGlitchRevealScript() {

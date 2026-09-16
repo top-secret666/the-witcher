@@ -58,6 +58,10 @@ public class ArmorService {
 
 
 
+    public List<Armour> pickClosestFullSet(int targetPrice) {
+        return findArmorSet(targetPrice);
+    }
+
     private List<Armour> findArmorSetQuietly(int targetPrice, List<Armour> excludeArmor) {
         try {
             return findArmorSetInternal(targetPrice, false, excludeArmor);

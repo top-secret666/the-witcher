@@ -1,5 +1,6 @@
 ### Packaged Windows build (ship via GitHub Releases only) ###
 /The Witcher.exe
+/The Witcher.ico
 /app/
 /runtime/
 *.zip
@@ -19,13 +20,18 @@ dev/dist/
 dev/.gradle/
 saves/
 *.class
+dev/tools/__pycache__/
+**/__pycache__/
 
 ### Scripts (local dev, keep on disk) ###
 *.bat
 *.sh
-*.ps1
+# Keep packaging helpers tracked:
+!dev/tools/*.ps1
+!dev/tools/*.py
+!setup-gdx-libs.ps1
 
-### macOS / Linux dev leftovers ###
+### macOS / Linux leftovers ###
 .DS_Store
 **/.DS_Store
 ._*
@@ -46,9 +52,14 @@ saves/
 ### OS ###
 Thumbs.db
 
-### Local scratch ###
+### Local scratch / junk at repo root ###
 .tmp/
 dev/.tmp/
+.tmp_*.png
+/tenor.gif
+/_CursProject2024.docx
+/image-Photoroom*.png
+/178912*.png
 DebugButtons.java
 DebugButtons.class
 
@@ -66,6 +77,7 @@ gdx-build.log
 /*.mp4
 /*.MP4
 12474791_*.mp4
+kling_*.mp4
 
 ### Word / Office temp locks ###
 ~$*

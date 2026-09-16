@@ -9,12 +9,16 @@ import main.java.com.witcher.chapter1.battle.briefing.BossQuestBriefingControlle
 import main.java.com.witcher.chapter1.battle.encounter.BossEncounterController;
 import main.java.com.witcher.chapter1.battle.wolf.WolfBossFinaleController;
 import main.java.com.witcher.ui.chapter1.presenter.wolf.WolfBossPhaseHandler;
+import main.java.com.witcher.chapter1.ending.DemoEndingController;
 import main.java.com.witcher.chapter1.ending.WolfEndingType;
 import main.java.com.witcher.chapter1.battle.BattleCardController;
 import main.java.com.witcher.chapter1.battle.BattleOutcome;
 import main.java.com.witcher.chapter1.battle.BattleResolver;
 import main.java.com.witcher.chapter1.battle.BattleVnController;
 import main.java.com.witcher.chapter1.battle.BossEntry;
+import main.java.com.witcher.chapter1.battle.ScreenDissolveController;
+import main.java.com.witcher.chapter1.battle.briefing.BossQuestBriefingConstants;
+import main.java.com.witcher.chapter1.battle.glitch.BossGlitchRevealTimeline;
 import main.java.com.witcher.chapter1.loop.LoopSequenceController;
 import main.java.com.witcher.chapter1.cutscene.CutsceneId;
 import main.java.com.witcher.chapter1.cutscene.CutsceneCatalog;
@@ -34,6 +38,9 @@ import main.java.com.witcher.ui.chapter1.swing.EyesBlinkEffect;
 import main.java.com.witcher.ui.chapter1.swing.SwordGlintOverlay;
 import main.java.com.witcher.ui.shop.ShopModel;
 import main.java.com.witcher.ui.shop.swing.ShopScreen;
+import main.java.com.witcher.ui.audio.GameAudio;
+import main.java.com.witcher.ui.pause.PauseCornerButton;
+import main.java.com.witcher.ui.shop.view.ShopViewConstants;
 import main.java.com.witcher.chapter1.battle.SwordCutsceneTiming;
 import main.java.com.witcher.chapter1.loop.WakeAwakeningTimeline;
 
@@ -56,6 +63,7 @@ public final class Chapter1Presenter implements WolfBossPhaseHandler.Host {
   private final CutscenePlayer loopCutscenePlayer = new CutscenePlayer();
 
   private final BattleCardController battleCard = new BattleCardController();
+  private final ScreenDissolveController mapDepartDissolve = new ScreenDissolveController();
   private final LoopSequenceController loopSequence = new LoopSequenceController();
   private final EyesBlinkEffect eyesEffect = new EyesBlinkEffect();
   private final BossGlitchRevealController bossGlitchReveal = new BossGlitchRevealController();
@@ -72,12 +80,19 @@ public final class Chapter1Presenter implements WolfBossPhaseHandler.Host {
   private BossEntry hoveredBoss;
   private BossEntry selectedBoss;
   private boolean bossMapBackHovered;
+  /** Мигает медальон на карте (idle↔hover), пока не наведут курсор. */
+  private boolean bossMapAttention;
+  private int bossMapAttentionTick;
   private boolean battleVictory;
   private boolean finaleSwordPlaying;
   private int hackShakeTick;
   private boolean exitRequested;
   /** Не стартовать VN «тюрьмы» посреди fly-in покупки. */
   private boolean prisonDialogPending;
+  private DemoEndingController demoEnding;
+  private boolean pauseRequested;
+  /** Esc ушёл на закрытие UI (инвентарь/хак/титры) — GameWindow не должен форсить паузу. */
+  private boolean blocksPauseOnEsc;
 
   public Chapter1Presenter() {
     this(Chapter1Director.loadOrNew(), ShopModel.createNewSession());
@@ -187,6 +202,10 @@ public final class Chapter1Presenter implements WolfBossPhaseHandler.Host {
     return wolfBoss.wolfEndingType();
   }
 
+  public DemoEndingController demoEnding() {
+    return demoEnding;
+  }
+
   public BattleCardController battleCard() {
     return battleCard;
   }
@@ -209,6 +228,18 @@ public final class Chapter1Presenter implements WolfBossPhaseHandler.Host {
 
   public boolean bossMapBackHovered() {
     return bossMapBackHovered;
+  }
+
+  public boolean bossMapAttention() {
+    return bossMapAttention;
+  }
+
+  public int bossMapAttentionTick() {
+    return bossMapAttentionTick;
+  }
+
+  public ScreenDissolveController mapDepartDissolve() {
+    return mapDepartDissolve;
   }
 
   public List<VnChoiceLayout.ChoiceRect> choiceRects() {
@@ -241,8 +272,13 @@ public final class Chapter1Presenter implements WolfBossPhaseHandler.Host {
     return scene != null && scene.waitingForChoice();
   }
 
+  /** Лавка — A затем B (B крутится); Волк / Весемир / финал — свои темы. */
+  private String lastAudioKey = "";
+
   public void beginAfterIntro() {
     director.beginAfterIntro();
+    lastAudioKey = "";
+    syncSceneAudio();
   }
 
   public void update(Chapter1Input input) {
@@ -250,6 +286,19 @@ public final class Chapter1Presenter implements WolfBossPhaseHandler.Host {
   }
 
   public void update(int mouseX, int mouseY, boolean clicked, boolean escPressed, int wheelNotches) {
+    blocksPauseOnEsc = false;
+    PauseCornerButton.Corner pauseCorner = pauseCornerForPhase(director.phase());
+    int pauseTopY = pauseTopYForPhase(director.phase());
+    if (PauseCornerButton.hit(ShopViewConstants.VIRTUAL_W, ShopViewConstants.VIRTUAL_H,
+        mouseX, mouseY, pauseCorner, pauseTopY)) {
+      if (clicked) {
+        pauseRequested = true;
+      }
+      // Клик по кнопке паузы не уходит в сцену; наведение — ок.
+      if (clicked) {
+        return;
+      }
+    }
     switch (director.phase()) {
       case CUTSCENE -> updateCutscene(clicked);
       case SHOP -> {
@@ -257,11 +306,18 @@ public final class Chapter1Presenter implements WolfBossPhaseHandler.Host {
           return;
         }
         if (dukeDialog.isActive()) {
+          if (escPressed) {
+            pauseRequested = true;
+            return;
+          }
           // Иначе PURCHASE_REVEAL зависает навечно под VN «тюрьмы».
           shopScreen.tickTimedScenes();
           updateDukeDialog(mouseX, mouseY, clicked);
         } else {
           shopScreen.update(mouseX, mouseY, clicked, escPressed, wheelNotches);
+          if (escPressed && shopScreen.escConsumedByUi()) {
+            blocksPauseOnEsc = true;
+          }
           flushPendingDukeDialog();
           maybeStartDukeDialog();
         }
@@ -274,6 +330,7 @@ public final class Chapter1Presenter implements WolfBossPhaseHandler.Host {
       case BOSS_GLITCH_REVEAL -> wolfBoss.updateGlitchReveal();
       case BOSS_FINALE -> wolfBoss.updateFinale(mouseX, mouseY, clicked);
       case WOLF_ENDING -> wolfBoss.updateEnding(clicked);
+      case DEMO_ENDING -> updateDemoEnding(clicked, escPressed);
       case BATTLE_RESULT -> updateBattleResult(clicked);
       case VN_BATTLE -> updateBattle(mouseX, mouseY, clicked);
       case VN_DIALOG -> updateDukeDialog(mouseX, mouseY, clicked);
@@ -281,12 +338,158 @@ public final class Chapter1Presenter implements WolfBossPhaseHandler.Host {
         if (tryAdminOpenBossMap(mouseX, mouseY, clicked)) {
           return;
         }
+        if (escPressed) {
+          blocksPauseOnEsc = true;
+        }
         updateHack(escPressed);
       }
       case ENDING -> updateEnding(mouseX, mouseY, clicked);
     }
     if (escPressed && director.phase() == Chapter1Phase.SHOP) {
+      if (shopScreen.isPauseRequested()) {
+        pauseRequested = true;
+        shopScreen.clearPauseRequest();
+      }
       exitRequested = shopScreen.isExitRequested();
+    } else if (escPressed && !blocksPauseOnEsc && canOpenPause(director.phase())) {
+      pauseRequested = true;
+    }
+    if (escPressed && director.phase() == Chapter1Phase.DEMO_ENDING) {
+      blocksPauseOnEsc = true;
+      handleDemoEndingExitKey();
+    }
+    syncSceneAudio();
+  }
+
+  /** Лавка — тема + рынок; карта держит лавку до dissolve; Волк с пробуждения. */
+  private void syncSceneAudio() {
+    String key = audioKeyForPhase();
+    if (key.equals(lastAudioKey)) {
+      return;
+    }
+    lastAudioKey = key;
+    switch (key) {
+      case "shop" -> GameAudio.playShop();
+      case "shop_fade" -> {
+        if (!GameAudio.isFadingOut() && GameAudio.currentScene() == GameAudio.Scene.SHOP) {
+          GameAudio.beginFadeOut(BossQuestBriefingConstants.DISSOLVE_RAMP_MS);
+        }
+      }
+      case "wolf" -> GameAudio.playWolf();
+      case "vesemir" -> GameAudio.playVesemir();
+      case "finale" -> GameAudio.playFinale();
+      case "silence" -> GameAudio.stopAll();
+      case "credits" -> {
+        // updateDemoEnding стартует титры.
+      }
+      default -> {
+        GameAudio.Scene cur = GameAudio.currentScene();
+        if (cur == GameAudio.Scene.SHOP
+            || cur == GameAudio.Scene.INTRO
+            || cur == GameAudio.Scene.MENU
+            || cur == GameAudio.Scene.WOLF
+            || cur == GameAudio.Scene.VESEMIR
+            || cur == GameAudio.Scene.FINALE) {
+          if (!GameAudio.isFadingOut()) {
+            GameAudio.stopAll();
+          }
+        }
+      }
+    }
+  }
+
+  private String audioKeyForPhase() {
+    Chapter1Phase phase = director.phase();
+    return switch (phase) {
+      case SHOP, BOSS_QUEST_BRIEFING -> "shop";
+      case BOSS_MAP -> mapDepartDissolve.active() ? "shop_fade" : "shop";
+      case LOOP_SEQUENCE, LOOP_HOLD -> "wolf";
+      case BOSS_ENCOUNTER -> {
+        var enc = encounter();
+        if (enc != null && (enc.isVesemirScene() || enc.flashbackActive())) {
+          yield "vesemir";
+        }
+        if (enc != null && !enc.wolfMusicActive()) {
+          yield "silence";
+        }
+        yield "wolf";
+      }
+      case BOSS_GLITCH_REVEAL -> {
+        if (bossGlitchReveal.stage().ordinal()
+            >= BossGlitchRevealTimeline.Stage.SHARD_EMERGE.ordinal()) {
+          yield "silence";
+        }
+        yield "finale";
+      }
+      case DEMO_ENDING -> "credits";
+      default -> "none";
+    };
+  }
+
+  private static boolean canOpenPause(Chapter1Phase phase) {
+    return switch (phase) {
+      case SHOP, CUTSCENE, LOOP_SEQUENCE, LOOP_HOLD,
+           BOSS_MAP, BOSS_QUEST_BRIEFING, BOSS_ENCOUNTER,
+           BOSS_FINALE, BOSS_GLITCH_REVEAL, WOLF_ENDING,
+           VN_BATTLE, VN_DIALOG, BATTLE_RESULT, ENDING -> true;
+      default -> false;
+    };
+  }
+
+  /** Лавка / карта — пауза справа; остальное — слева. */
+  private static PauseCornerButton.Corner pauseCornerForPhase(Chapter1Phase phase) {
+    return switch (phase) {
+      case SHOP, BOSS_MAP, BOSS_QUEST_BRIEFING -> PauseCornerButton.Corner.TOP_RIGHT;
+      default -> PauseCornerButton.Corner.TOP_LEFT;
+    };
+  }
+
+  private int pauseTopYForPhase(Chapter1Phase phase) {
+    if (phase != Chapter1Phase.SHOP || shopScreen == null) {
+      return PauseCornerButton.MARGIN;
+    }
+    var shop = shopScreen.presenter();
+    if (shop.isInventoryOpen() || shop.isEquipmentOpen()) {
+      return PauseCornerButton.MARGIN;
+    }
+    if (shop.isCategoryMode()) {
+      return ShopViewConstants.PAUSE_BELOW_WALLET_TOP;
+    }
+    return PauseCornerButton.MARGIN;
+  }
+
+  private void updateDemoEnding(boolean clicked, boolean escPressed) {
+    if (demoEnding == null) {
+      demoEnding = new DemoEndingController();
+      GameAudio.playCreditsTheme();
+    }
+    if (demoEnding.isDone()) {
+      return;
+    }
+    if (escPressed) {
+      handleDemoEndingExitKey();
+      return;
+    }
+    if (clicked && demoEnding.step() == DemoEndingController.Step.CREDITS) {
+      // Титры только автоскролл — щелчок не пропускает.
+      return;
+    }
+    DemoEndingController.Step before = demoEnding.step();
+    demoEnding.tick();
+    if (before != DemoEndingController.Step.THANKS
+        && demoEnding.step() == DemoEndingController.Step.THANKS) {
+      GameAudio.stopCreditsTheme();
+    }
+  }
+
+  private void handleDemoEndingExitKey() {
+    if (demoEnding == null) {
+      return;
+    }
+    if (demoEnding.acceptsExitKey()) {
+      GameAudio.stopCreditsTheme();
+      demoEnding.finishToMenu();
+      exitRequested = true;
     }
   }
 
@@ -348,20 +551,28 @@ public final class Chapter1Presenter implements WolfBossPhaseHandler.Host {
     }
     if (director.phase() == Chapter1Phase.BOSS_FINALE && wolfBoss.wolfFinale() != null) {
       var finale = wolfBoss.wolfFinale();
-      if (finale.step() == WolfBossFinaleController.Step.CLASH) {
-        if (code == KeyEvent.VK_ENTER || code == KeyEvent.VK_SPACE) {
-          skipFinaleSwordClash();
-          wolfBoss.advanceFinale();
-        }
-        return;
-      }
       if (finale.scene().waitingForChoice()) {
         int choice = keyToChoiceIndex(code);
         if (choice >= 0) {
           wolfBoss.applyFinaleChoice(choice);
         }
       } else if (code == KeyEvent.VK_ENTER || code == KeyEvent.VK_SPACE) {
-        wolfBoss.advanceFinale();
+        // True ending: CLASH/RESOLVE только по таймеру.
+        if (!finale.trueEnding()) {
+          wolfBoss.advanceFinale();
+        }
+      }
+      return;
+    }
+    if (director.phase() == Chapter1Phase.WOLF_ENDING) {
+      if (code == KeyEvent.VK_ENTER || code == KeyEvent.VK_SPACE) {
+        wolfBoss.updateEnding(true);
+      }
+      return;
+    }
+    if (director.phase() == Chapter1Phase.DEMO_ENDING) {
+      if (code == KeyEvent.VK_ESCAPE) {
+        handleDemoEndingExitKey();
       }
       return;
     }
@@ -443,9 +654,22 @@ public final class Chapter1Presenter implements WolfBossPhaseHandler.Host {
     return exitRequested;
   }
 
+  public boolean isPauseRequested() {
+    return pauseRequested;
+  }
+
+  public void clearPauseRequest() {
+    pauseRequested = false;
+  }
+
+  public boolean blocksPauseOnEsc() {
+    return blocksPauseOnEsc;
+  }
+
   public void clearExitRequest() {
     exitRequested = false;
     shopScreen.clearExitRequest();
+    GameAudio.stopCreditsTheme();
   }
 
   public boolean isChapterComplete() {
@@ -457,11 +681,23 @@ public final class Chapter1Presenter implements WolfBossPhaseHandler.Host {
       director.requestHackTerminal();
       onPhaseEntered();
     });
-    shopBridge.setOnPurchaseHook(() -> prisonDialogPending = true);
-    shopBridge.setOnEquipHook(this::tryGrantBattleCard);
+    shopBridge.setOnPurchaseHook(() -> {
+      prisonDialogPending = true;
+      // Карту выдаём только после брифинга («В БОЙ»), не сразу после покупки.
+    });
+    shopBridge.setOnEquipHook(() -> {
+      // Экипировка больше не выдаёт карту — только «В БОЙ» → брифинг → карта.
+    });
     shopBridge.setOnBossMapOpen(this::openBossMap);
-    shopBridge.setOnEquipmentBack(this::tryShowBattleCardReveal);
-    shopBridge.setOnInventoryBack(this::tryShowBattleCardReveal);
+    shopBridge.setOnQuestBriefingRequested(this::startQuestBriefingFromShop);
+  }
+
+  private void startQuestBriefingFromShop() {
+    if (selectedBoss == null) {
+      selectedBoss = BossCatalog.byId("duke");
+    }
+    director.enterBossQuestBriefing();
+    onPhaseEntered();
   }
 
   private void openBossMap() {
@@ -470,6 +706,8 @@ public final class Chapter1Presenter implements WolfBossPhaseHandler.Host {
     hoveredBoss = null;
     selectedBoss = null;
     bossMapBackHovered = false;
+    bossMapAttention = true;
+    bossMapAttentionTick = 0;
     Chapter1AssetPrewarm.warmBossMapDrawables();
     Chapter1AssetPrewarm.warmCutscenesAsync();
   }
@@ -490,12 +728,21 @@ public final class Chapter1Presenter implements WolfBossPhaseHandler.Host {
     battleCard.tryGrantAfterEquip(director.session(), shopModel);
   }
 
+  private void tryGrantCardWithoutPurchase() {
+    if (!battleCard.tryGrantAsBrowseConsolation(director.session())) {
+      return;
+    }
+    var session = director.session();
+    session.clearBattleCardRevealPending();
+    shopScreen.presenter().beginBattleCardReveal(this::onBattleCardRevealAfterBack, true);
+  }
+
   private void tryShowBattleCardReveal() {
     var session = director.session();
     if (session.battleCardRevealPending()
         || (session.battleCardGranted() && !session.battleCardIconVisible())) {
       session.clearBattleCardRevealPending();
-      shopScreen.presenter().beginBattleCardReveal(this::onBattleCardRevealAfterBack);
+      shopScreen.presenter().beginBattleCardReveal(this::onBattleCardRevealAfterBack, false);
     }
   }
 
@@ -506,21 +753,49 @@ public final class Chapter1Presenter implements WolfBossPhaseHandler.Host {
   }
 
   private void updateBossMap(int mouseX, int mouseY, boolean clicked) {
+    if (mapDepartDissolve.active()) {
+      mapDepartDissolve.tick();
+      if (mapDepartDissolve.isComplete()) {
+        mapDepartDissolve.clear();
+        director.beginLoopSequence(false);
+        onPhaseEntered();
+      }
+      return;
+    }
+    bossMapAttentionTick++;
     var back = BossMapLayout.backButton(Chapter1Layout.VIRTUAL_W, Chapter1Layout.VIRTUAL_H);
     bossMapBackHovered = back.contains(mouseX, mouseY);
     if (clicked && bossMapBackHovered) {
       hoveredBoss = null;
       selectedBoss = null;
+      bossMapAttention = false;
       director.enterShop();
       onPhaseEntered();
       return;
     }
     hoveredBoss = bossMapBackHovered ? null : BossMapLayout.hitBoss(bossHits, mouseX, mouseY);
+    if (bossMapAttention && hoveredBoss != null) {
+      bossMapAttention = false;
+    }
     if (!clicked || hoveredBoss == null) {
       return;
     }
     selectedBoss = hoveredBoss;
-    director.enterBossQuestBriefing();
+    bossMapAttention = false;
+    // Dissolve / затемнение — при клике по боссу на карте (не в конце брифинга).
+    mapDepartDissolve.begin();
+  }
+
+  /** Конец брифинга: назад в лавку + выдача карты. */
+  @Override
+  public void onQuestBriefingFinishedToShop() {
+    director.enterShop();
+    var session = director.session();
+    if (!session.battleCardGranted() && !session.battleCardIconVisible()) {
+      session.grantBattleCard();
+    }
+    session.clearBattleCardRevealPending();
+    shopScreen.presenter().beginBattleCardReveal(this::onBattleCardRevealAfterBack, false);
     onPhaseEntered();
   }
 
@@ -629,6 +904,9 @@ public final class Chapter1Presenter implements WolfBossPhaseHandler.Host {
     } else if (director.phase() == Chapter1Phase.SHOP) {
       doorLoopPlayer.stop();
       maybeStartDukeDialog();
+    } else if (director.phase() == Chapter1Phase.DEMO_ENDING) {
+      demoEnding = new DemoEndingController();
+      GameAudio.playCreditsTheme();
     } else {
       doorLoopPlayer.stop();
     }

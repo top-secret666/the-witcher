@@ -23,6 +23,8 @@ public final class BossQuestBriefingController {
 
   public enum Phase {
     DIALOG,
+    /** Брифинг закончен — возврат в лавку (dissolve перенесён на клик по карте). */
+    DONE,
     TRANSITION
   }
 
@@ -57,6 +59,7 @@ public final class BossQuestBriefingController {
   private boolean dialogFinished;
 
   private boolean awaitingChoice;
+  private boolean choiceResolved;
   private VnSceneState choiceScene;
 
   private boolean historyOpen;
@@ -71,7 +74,7 @@ public final class BossQuestBriefingController {
   public BossQuestBriefingController(BossEntry boss) {
     this.boss = boss != null ? boss : BossCatalog.byId("duke");
     this.notice = BossQuestBriefingScript.noticeFor(this.boss);
-    this.lines = BossQuestBriefingScript.dialogFor(this.boss);
+    this.lines = new ArrayList<>(BossQuestBriefingScript.dialogFor(this.boss));
   }
 
   public BossEntry boss() {
@@ -152,9 +155,8 @@ public final class BossQuestBriefingController {
     BossQuestBriefingScript.DialogLine line = lines.get(currentLine);
     int totalChars = line.text().length();
 
-    if (BossVnTypingEngine.tick(
-            typing, totalChars, advance, autoMode,
-            TICKS_PER_CHAR, AUTO_TICKS_PER_CHAR, AUTO_DELAY_TICKS)
+    if (BossVnTypingEngine.tickWithSettings(
+            typing, line.text(), totalChars, advance, autoMode)
         == BossVnTypingEngine.TickResult.ADVANCE_LINE) {
       advanceLine();
     }
@@ -202,8 +204,18 @@ public final class BossQuestBriefingController {
           : Chapter1Session.WolfEntryMood.CURIOUS);
     }
     awaitingChoice = false;
+    choiceResolved = true;
     choiceScene = null;
-    resetLine(BossQuestBriefingScript.CHOICE_GATE_INDEX + 1);
+    boolean trust = index == 0;
+    List<BossQuestBriefingScript.DialogLine> branch = trust
+        ? BossQuestBriefingScript.afterChoiceTrust()
+        : BossQuestBriefingScript.afterChoiceSuspicion();
+    // Убираем заглушку после гейта и вставляем ветку выбора.
+    while (lines.size() > BossQuestBriefingScript.CHOICE_GATE_INDEX) {
+      lines.remove(lines.size() - 1);
+    }
+    lines.addAll(branch);
+    resetLine(BossQuestBriefingScript.CHOICE_GATE_INDEX);
   }
 
   public boolean showNotice() {
@@ -248,7 +260,13 @@ public final class BossQuestBriefingController {
   }
 
   public boolean isComplete() {
-    return phase == Phase.TRANSITION && transitionTicks * MS_PER_TICK >= TRANSITION_TOTAL_MS;
+    return phase == Phase.DONE
+        || (phase == Phase.TRANSITION && transitionTicks * MS_PER_TICK >= TRANSITION_TOTAL_MS);
+  }
+
+  /** true, если брифинг завершён без dissolve (возврат в лавку за картой). */
+  public boolean returnsToShop() {
+    return phase == Phase.DONE;
   }
 
   public int tickCount() {
@@ -313,14 +331,21 @@ public final class BossQuestBriefingController {
   }
 
   private void advanceLine() {
-    if (currentLine == BossQuestBriefingScript.CHOICE_GATE_INDEX && !awaitingChoice) {
-      awaitingChoice = true;
-      choiceScene = BossQuestBriefingScript.entryChoiceScene();
-      typing.clearWaitingForAdvance();
+    // Выбор реплик отключён — сразу ветка к единственной концовке.
+    if (currentLine == BossQuestBriefingScript.CHOICE_GATE_INDEX
+        && !choiceResolved) {
+      choiceResolved = true;
+      List<BossQuestBriefingScript.DialogLine> branch =
+          BossQuestBriefingScript.afterChoiceSuspicion();
+      while (lines.size() > BossQuestBriefingScript.CHOICE_GATE_INDEX) {
+        lines.remove(lines.size() - 1);
+      }
+      lines.addAll(branch);
+      resetLine(BossQuestBriefingScript.CHOICE_GATE_INDEX);
       return;
     }
     if (currentLine >= lines.size() - 1) {
-      beginTransition();
+      finishDialogWithoutDissolve();
       return;
     }
     resetLine(currentLine + 1);
@@ -331,6 +356,13 @@ public final class BossQuestBriefingController {
       return;
     }
     resetLine(currentLine - 1);
+  }
+
+  private void finishDialogWithoutDissolve() {
+    phase = Phase.DONE;
+    dialogFinished = true;
+    historyOpen = false;
+    typing.clearWaitingForAdvance();
   }
 
   private void beginTransition() {
@@ -348,7 +380,7 @@ public final class BossQuestBriefingController {
   }
 
   private void refreshButtonLayout() {
-    IntroVnUi.copyButtonLayout(IntroVnUi.layoutChapterVnButtons(layoutSw, layoutSh, 0), buttons);
+    IntroVnUi.copyButtonLayout(IntroVnUi.layoutVnButtons(layoutSw, layoutSh, 0), buttons);
   }
 
   private void updateCharacterAnimation() {

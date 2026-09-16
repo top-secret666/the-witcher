@@ -9,6 +9,7 @@ import main.java.com.witcher.ui.intro.IntroVnUi;
 import main.java.com.witcher.ui.graphics.DialogBoxRenderer;
 import main.java.com.witcher.ui.intro.view.IntroHistoryLayout;
 import main.java.com.witcher.ui.intro.view.IntroCharacterLayout;
+import main.java.com.witcher.ui.settings.GameSettings;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,9 +22,6 @@ public final class IntroController {
 
     public static final int REF_W = 480;
     public static final int REF_H = 360;
-    private static final int TICKS_PER_CHAR = 2;
-    private static final int AUTO_DELAY_TICKS = 50;
-    private static final int AUTO_TICKS_PER_CHAR = 1;
     private static final float SLIDE_SPEED = 0.04f;
     private static final float ACTIVE_SPEED = 0.06f;
 
@@ -125,11 +123,14 @@ public final class IntroController {
             }
         }
 
-        boolean advance = advanceKey;
+        boolean materializePlaying = shop.isShopMaterializePlaying(currentEntry);
+
+        boolean advance = advanceKey && !materializePlaying;
         if (mouseClicked && shop.isShopMaterializePlaying(currentEntry)) {
             if (IntroVnUi.isVnButtonRowClick(currentButtonLayout(), mouseX, mouseY)) {
                 return;
             }
+            advance = false;
         }
         if (mouseClicked) {
             if (historyButtonBounds.contains(mouseX, mouseY)) {
@@ -151,7 +152,9 @@ public final class IntroController {
             if (IntroVnUi.isVnButtonRowClick(currentButtonLayout(), mouseX, mouseY)) {
                 return;
             }
-            advance = true;
+            if (!materializePlaying) {
+                advance = true;
+            }
         }
 
         IntroScript.DialogEntry entry = entries.get(currentEntry);
@@ -208,8 +211,27 @@ public final class IntroController {
         boolean shopSceneReached = currentEntry >= IntroScript.SHOP_ANIMATION_ENTRY_INDEX;
         boolean shopAnimationComplete = shop.isShopAnimationComplete(currentEntry);
 
+        // Сразу после materialize — следующий диалог, без клика.
+        if (currentEntry == IntroScript.SHOP_ANIMATION_ENTRY_INDEX && shopAnimationComplete) {
+            advanceDialogueEntry();
+            if (currentEntry >= entries.size()) {
+                finished = true;
+                return;
+            }
+            entry = entries.get(currentEntry);
+            geraltVisible = "geralt".equals(entry.leftChar());
+            rightCharacter = entry.rightChar();
+            prevRightCharacter = entry.rightChar();
+            leftEmotionSpeaker = "Геральт".equals(entry.speaker());
+            rightEmotionSpeaker = "Герцог".equals(entry.speaker());
+            dukeWanted = "duke".equals(rightCharacter);
+            strangerWanted = "stranger".equals(rightCharacter);
+            leftActive = "left".equals(entry.activeSide());
+            rightActive = "right".equals(entry.activeSide());
+        }
+
         if (shopSceneReached && shop.getShopReveal() > 0.03f) {
-            if (shopAnimationComplete) {
+            if (shopAnimationComplete || currentEntry > IntroScript.SHOP_ANIMATION_ENTRY_INDEX) {
                 geraltSlide = geraltVisible
                     ? Math.min(1f, geraltSlide + SLIDE_SPEED * 1.2f)
                     : Math.max(0f, geraltSlide - SLIDE_SPEED);
@@ -228,20 +250,38 @@ public final class IntroController {
 
         int totalChars = entry.text().length();
 
+        // Последняя реплика интро: короткая пауза на прочтение, без клика — сразу в лавку.
+        if (waitingForAdvance && currentEntry >= entries.size() - 1 && !morph.isActive()) {
+            autoWaitTicks++;
+            if (autoWaitTicks >= 18) {
+                finished = true;
+                return;
+            }
+        }
+
         if (waitingForAdvance) {
             boolean morphBlocking = morph.isActive();
             if (advance && !morphBlocking) {
                 advanceDialogueEntry();
             } else if (autoMode && !morphBlocking) {
                 autoWaitTicks++;
-                if (autoWaitTicks >= AUTO_DELAY_TICKS) {
+                if (autoWaitTicks >= GameSettings.get().autoDelayTicks()) {
                     advanceDialogueEntry();
                 }
             }
         } else {
-            if (autoMode && !morph.isActive()) {
+            // На кадре materialize текст не печатаем — ждём GIF.
+            boolean blockingMaterialize = shop.isShopMaterializePlaying(currentEntry);
+            if (blockingMaterialize) {
+                charIndex = totalChars;
+                waitingForAdvance = true;
+            } else if (!GameSettings.get().typewriterEnabled()) {
+                charIndex = totalChars;
+                waitingForAdvance = true;
+                autoWaitTicks = 0;
+            } else if (autoMode && !morph.isActive()) {
                 typeTickCounter++;
-                if (typeTickCounter >= AUTO_TICKS_PER_CHAR) {
+                if (typeTickCounter >= GameSettings.get().autoTicksPerChar()) {
                     typeTickCounter = 0;
                     charIndex++;
                     if (charIndex >= totalChars) {
@@ -255,7 +295,7 @@ public final class IntroController {
                 waitingForAdvance = true;
             } else {
                 typeTickCounter++;
-                if (typeTickCounter >= TICKS_PER_CHAR) {
+                if (typeTickCounter >= GameSettings.get().ticksPerChar()) {
                     typeTickCounter = 0;
                     charIndex++;
                     if (charIndex >= totalChars) {

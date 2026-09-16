@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * EXE overlay: typewriter baseline fix for caret alignment.
+ * Переиспользуемый рендерер диалоговых окон в стиле Ведьмака.
  */
 public final class DialogBoxRenderer {
 
@@ -41,6 +41,7 @@ public final class DialogBoxRenderer {
         public final int textY;
         public final int textMaxW;
         public final int fontSize;
+        /** Нижняя полоса под кнопки Назад / История / Авто. */
         public final int toolbarReserve;
 
         Layout(int sw, int sh) {
@@ -61,6 +62,7 @@ public final class DialogBoxRenderer {
             toolbarReserve = m.toolbarReserve();
         }
 
+        /** Y-координата строки VN-кнопок внутри нижней полосы окна. */
         public int toolbarRowY(int buttonHeight) {
             return boxY + boxH - toolbarReserve + Math.max(0, (toolbarReserve - buttonHeight) / 2);
         }
@@ -155,8 +157,17 @@ public final class DialogBoxRenderer {
 
     public static int drawTypewriterText(Graphics2D g, String speaker, String visibleText,
                                          Color speakerColor, Layout layout, float alpha) {
+        return drawTypewriterText(g, speaker, visibleText, speakerColor, layout, alpha, true);
+    }
+
+    /** @param drawBackgroundBox false — только имя и текст поверх (без затемняющей плашки). */
+    public static int drawTypewriterText(Graphics2D g, String speaker, String visibleText,
+                                         Color speakerColor, Layout layout, float alpha,
+                                         boolean drawBackgroundBox) {
         enableTextSmoothing(g);
-        drawBox(g, layout.boxX, layout.boxY, layout.boxW, layout.boxH, alpha);
+        if (drawBackgroundBox) {
+            drawBox(g, layout.boxX, layout.boxY, layout.boxW, layout.boxH, alpha);
+        }
         drawSpeakerName(g, speaker, speakerColor, layout.boxX, layout.boxY, layout.pad, layout.fontSize, alpha);
         int lineY = drawCompactBodyLines(
             g, visibleText, layout, speaker == null ? speakerColor : SPEECH_COLOR);
@@ -164,6 +175,10 @@ public final class DialogBoxRenderer {
         return lineY;
     }
 
+    /**
+     * Плотный межстрочный интервал, выравнивание влево, зона над кнопками VN.
+     * @return baseline последней нарисованной строки (для typewriter-каретки)
+     */
     private static int drawCompactBodyLines(Graphics2D g, String text, Layout layout, Color textColor) {
         Font textFont = GameFonts.get().plain(layout.fontSize);
         g.setFont(textFont);
@@ -195,14 +210,6 @@ public final class DialogBoxRenderer {
         return lastBaseline;
     }
 
-    public static int typewriterCaretTop(int baselineY, FontMetrics fm) {
-        return baselineY - fm.getAscent() + 1;
-    }
-
-    public static int typewriterCaretHeight(FontMetrics fm, int fontSize) {
-        return Math.max(2, fontSize / 5);
-    }
-
     /**
      * Склеивает одиночные переносы в пробел — реплика течёт по ширине окна, а не столбиком.
      * Двойной перенос оставляет абзац.
@@ -224,6 +231,9 @@ public final class DialogBoxRenderer {
         return fm.getAscent() + Math.max(2, fontSize / 6);
     }
 
+    /**
+     * Компактная рамка внизу экрана — чёткий текст (лавка).
+     */
     public static void drawCompactFramedSpeakerText(Graphics2D g, int sw, int sh, String speaker, String text,
                                                     Color speakerColor, float alpha) {
         disableTextSmoothing(g);
@@ -237,7 +247,7 @@ public final class DialogBoxRenderer {
         int boxW = sw - boxMarginX * 2;
         int textMaxW = boxW - pad * 2;
         int lineH = fontSize + 3;
-        int maxLines = 2;
+        int maxLines = 4;
 
         Font textFont = GameFonts.get().plain(fontSize);
         g.setFont(textFont);
@@ -280,19 +290,50 @@ public final class DialogBoxRenderer {
             if (!lines.isEmpty()) {
                 String first = lines.get(0);
                 g.setFont(textFont);
-                GameFonts.drawShadowed(g, first, textX + speakerW, startY, SPEECH_COLOR);
+                drawSpeechWithGuillemetHighlight(g, first, textX + speakerW, startY, SPEECH_COLOR);
                 for (int i = 1; i < lines.size(); i++) {
                     int y = startY + lineH * i;
-                    GameFonts.drawShadowed(g, lines.get(i), textX, y, SPEECH_COLOR);
+                    drawSpeechWithGuillemetHighlight(g, lines.get(i), textX, y, SPEECH_COLOR);
                 }
             }
         } else {
             for (int i = 0; i < lines.size(); i++) {
-                GameFonts.drawShadowed(g, lines.get(i), textX, startY + lineH * i, SPEECH_COLOR);
+                drawSpeechWithGuillemetHighlight(g, lines.get(i), textX, startY + lineH * i, SPEECH_COLOR);
             }
         }
 
         g.setComposite(prev);
+    }
+
+    /** Фразы в «ёлочках» — акцент (например «купить что-нибудь»). */
+    public static void drawSpeechWithGuillemetHighlight(Graphics2D g, String line, int x, int y, Color base) {
+        if (line == null || line.isEmpty()) {
+            return;
+        }
+        Color accent = new Color(255, 210, 90);
+        int cursor = x;
+        int i = 0;
+        while (i < line.length()) {
+            int open = line.indexOf('«', i);
+            if (open < 0) {
+                GameFonts.drawShadowed(g, line.substring(i), cursor, y, base);
+                return;
+            }
+            if (open > i) {
+                String before = line.substring(i, open);
+                GameFonts.drawShadowed(g, before, cursor, y, base);
+                cursor += g.getFontMetrics().stringWidth(before);
+            }
+            int close = line.indexOf('»', open + 1);
+            if (close < 0) {
+                GameFonts.drawShadowed(g, line.substring(open), cursor, y, base);
+                return;
+            }
+            String marked = line.substring(open, close + 1);
+            GameFonts.drawOutlined(g, marked, cursor, y, accent);
+            cursor += g.getFontMetrics().stringWidth(marked);
+            i = close + 1;
+        }
     }
 
     public static void drawHint(Graphics2D g, String hint, Layout layout, int fontSize, float alpha) {
@@ -307,6 +348,10 @@ public final class DialogBoxRenderer {
         disableTextSmoothing(g);
     }
 
+    /**
+     * Полоска внизу без золотой рамки — полупрозрачный чёрный фон, серый текст
+     * (эпилог с осколком перед заставкой). Весь текст должен влезать.
+     */
     public static void drawShardEpilogueBar(Graphics2D g, int sw, int sh,
                                             String speaker, String text, float alpha) {
         GameFonts.applyGothicHints(g);
@@ -314,44 +359,78 @@ public final class DialogBoxRenderer {
         Composite prev = g.getComposite();
         g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
 
-        int fontSize = Math.max(12, Math.round(sh * 0.036f));
-        int padX = Math.round(sw * 0.06f);
-        int barH = Math.round(sh * 0.30f);
+        int padX = Math.round(sw * 0.05f);
+        int barH = Math.round(sh * 0.40f);
         int barY = sh - barH;
+        int textMaxW = sw - padX * 2;
+        int bottomLimit = sh - Math.round(sh * 0.028f);
+        int topPad = Math.round(barH * 0.10f);
 
         g.setColor(new Color(0, 0, 0, 185));
         g.fillRect(0, barY, sw, barH);
 
-        Font textFont = GameFonts.get().plain(fontSize);
-        g.setFont(textFont);
-        FontMetrics fm = g.getFontMetrics();
-        int lineH = fm.getHeight() + 4;
-        int textMaxW = sw - padX * 2;
         Color bodyColor = new Color(178, 172, 164);
         Color nameColor = new Color(198, 192, 184);
+        String body = text != null ? text : "";
 
-        int y = barY + Math.round(barH * 0.26f);
+        int fontSize = Math.max(11, Math.round(sh * 0.034f));
+        Font textFont = null;
+        FontMetrics fm = null;
+        int lineH = 0;
+        List<String> lines = List.of();
+        for (int guard = 0; guard < 8; guard++) {
+            textFont = GameFonts.get().plain(fontSize);
+            g.setFont(textFont);
+            fm = g.getFontMetrics();
+            lineH = Math.max(fm.getHeight() + 1, Math.round(fontSize * 1.15f));
+            lines = wrapEpilogueLines(body, fm, textMaxW);
+            int needed = lines.size() * lineH;
+            if (speaker != null && !speaker.isBlank()) {
+                needed += lineH;
+            }
+            int available = bottomLimit - (barY + topPad);
+            if (needed <= available || fontSize <= 10) {
+                break;
+            }
+            fontSize--;
+        }
+
+        int y = barY + topPad + (fm != null ? fm.getAscent() : fontSize);
         if (speaker != null && !speaker.isBlank()) {
             g.setFont(GameFonts.get().bold(fontSize));
             g.setColor(nameColor);
             g.drawString(speaker, padX, y);
             y += lineH;
             g.setFont(textFont);
-            fm = g.getFontMetrics();
         }
 
         g.setColor(bodyColor);
-        for (String rawLine : text.split("\n", -1)) {
-            for (String wl : wrapLine(rawLine, fm, textMaxW)) {
-                if (y > barY + barH - padX) {
-                    break;
-                }
-                g.drawString(wl, padX, y);
-                y += lineH;
+        g.setFont(textFont);
+        for (String wl : lines) {
+            if (y > bottomLimit) {
+                break;
             }
+            if (!wl.isEmpty()) {
+                g.drawString(wl, padX, y);
+            }
+            y += lineH;
         }
 
         g.setComposite(prev);
+    }
+
+    private static List<String> wrapEpilogueLines(String text, FontMetrics fm, int maxW) {
+        List<String> out = new ArrayList<>();
+        for (String rawLine : text.split("\n", -1)) {
+            if (rawLine.isBlank()) {
+                if (!out.isEmpty() && !out.get(out.size() - 1).isEmpty()) {
+                    out.add("");
+                }
+                continue;
+            }
+            out.addAll(wrapLine(rawLine.trim(), fm, maxW));
+        }
+        return out;
     }
 
     public static String getLastVisibleLine(String text, FontMetrics fm, int maxW) {
@@ -389,5 +468,16 @@ public final class DialogBoxRenderer {
 
     private static void disableTextSmoothing(Graphics2D g) {
         GameFonts.applyPixelHints(g);
+    }
+
+    /** Верх палочки каретки: совпадает с верхом глифов (с учётом snap drawShadowed). */
+    public static int typewriterCaretTop(int baselineY, FontMetrics fm) {
+        int ty = (baselineY + 1) & ~1;
+        return ty - fm.getAscent() + 1;
+    }
+
+    /** Высота палочки до baseline текста — без «съезда» ниже строки. */
+    public static int typewriterCaretHeight(FontMetrics fm, int fontSize) {
+        return Math.max(2, fm.getAscent() - 1);
     }
 }

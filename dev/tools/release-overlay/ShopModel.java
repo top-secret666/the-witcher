@@ -56,6 +56,13 @@ public final class ShopModel implements EquippedGear {
     private final Map<EquipSlot, Armour> equipped = new EnumMap<>(EquipSlot.class);
     private ShopInventorySlot equippedWeapon;
 
+    /** Примерка после «помочь подобрать»: ещё не списаны кроны. */
+    private boolean outfitPreviewPending;
+    private int outfitPreviewPrice;
+    private ArmourSet outfitPreviewSet;
+    private final List<Armour> outfitPreviewPieces = new ArrayList<>();
+    private ShopInventorySlot outfitPreviewWeapon;
+
     private int wallet;
     private boolean hideWalletAmount;
 
@@ -125,7 +132,7 @@ public final class ShopModel implements EquippedGear {
         }
         return switch (category) {
             case SETS -> new String[]{"Регионы", "4 части", "Эмблема"};
-            case POTION -> new String[]{"Токсин", "0.5 кг", "Осторожно"};
+            case POTION -> new String[]{"Усиливает тело и Знаки.", "Эффект зависит от отвара.", "Пейте с умом."};
             case WEAPON -> new String[]{"Урон 42", "Вес 8", "Сталь"};
             default -> new String[]{"—", "—", category.label};
         };
@@ -144,23 +151,83 @@ public final class ShopModel implements EquippedGear {
         return ShopGearStats.geraltBase();
     }
 
-    /** Статы после «примерки» позиции из каталога. */
+    /** Статы после «примерки» позиции из каталога — поверх уже купленного. */
     public ShopGearStats gearStatsWith(ShopCatalogEntry entry) {
+        ShopGearStats current = equippedGearStats();
         if (entry == null) {
-            return baseGearStats();
+            return current;
         }
-        ShopGearStats bonus = bonusFromEntry(entry);
-        return baseGearStats().plus(bonus).clamped();
+        if (entry.armour != null) {
+            EquipSlot slot = EquipSlot.forArmour(entry.armour);
+            Armour worn = slot != null ? equipped.get(slot) : null;
+            if (worn != null) {
+                current = current.minus(ShopGearRules.bonusFromArmour(worn));
+            }
+        } else if (entry.armourSet != null) {
+            for (Armour worn : equipped.values()) {
+                current = current.minus(ShopGearRules.bonusFromArmour(worn));
+            }
+        } else if (equippedWeapon != null && isWeaponCatalogName(entry.name)) {
+            current = current.minus(ShopGearRules.placeholderBonus(equippedWeapon.title()));
+        }
+        return current.plus(bonusFromEntry(entry)).clamped();
     }
 
     public StatPreview statPreview(ShopCatalogEntry entry) {
-        ShopGearStats base = baseGearStats();
+        ShopGearStats base = equippedGearStats();
         ShopGearStats with = gearStatsWith(entry);
+        return toPreview(base, with);
+    }
+
+    /**
+     * Колбы в инвентаре: текущие статы. Жёлтый хвост — только у выбранного зелья до «Выпить».
+     */
+    public StatPreview inventoryStatPreview(ShopInventorySlot slot) {
+        ShopGearStats current = equippedGearStats();
+        ShopGearStats extra = bonusFromInventorySlot(slot);
+        return toPreview(current, current.plus(extra).clamped());
+    }
+
+    private StatPreview toPreview(ShopGearStats base, ShopGearStats with) {
         return new StatPreview(new StatRow[]{
             new StatRow(with.protection(), with.protection() - base.protection(), STAT_BAR_MAX),
             new StatRow(with.stamina(), with.stamina() - base.stamina(), STAT_BAR_MAX),
             new StatRow(with.signs(), with.signs() - base.signs(), STAT_BAR_MAX)
         });
+    }
+
+    private ShopGearStats bonusFromInventorySlot(ShopInventorySlot slot) {
+        if (slot != null && slot.kind() == ShopInventoryKind.POTION) {
+            return ShopGearRules.placeholderBonus(slot.title());
+        }
+        return new ShopGearStats(0, 0, 0);
+    }
+
+    /** Короткое описание эффекта зелья — без «токсина» и веса. */
+    public static String[] potionEffectLines(String name) {
+        String lower = name == null ? "" : name.toLowerCase();
+        if (lower.contains("кошк")) {
+            return new String[]{
+                "Острее зрение в темноте.",
+                "Легче заметить то, что прячется в тени."
+            };
+        }
+        if (lower.contains("отвар") || lower.contains("грифон")) {
+            return new String[]{
+                "Поднимает выносливость.",
+                "Знаки держатся дольше и бьют крепче."
+            };
+        }
+        if (lower.contains("гриф") || lower.contains("зелье") || lower.contains("эликсир")) {
+            return new String[]{
+                "Усиливает Знаки.",
+                "Ведьмачьи чары на короткий срок жгут сильнее."
+            };
+        }
+        return new String[]{
+            "Усиливает ведьмачьи способности.",
+            "Эффект зависит от состава отвара."
+        };
     }
 
     private ShopGearStats bonusFromEntry(ShopCatalogEntry entry) {
@@ -171,6 +238,15 @@ public final class ShopModel implements EquippedGear {
             return ShopGearRules.bonusFromSet(entry.armourSet);
         }
         return ShopGearRules.placeholderBonus(entry.name);
+    }
+
+    private static boolean isWeaponCatalogName(String name) {
+        if (name == null) {
+            return false;
+        }
+        String lower = name.toLowerCase();
+        return lower.contains("меч") || lower.contains("клеймор")
+            || lower.contains("кинжал") || lower.contains("арбалет");
     }
 
     public String priceLabelForCategory(ShopCategory category) {
@@ -220,6 +296,10 @@ public final class ShopModel implements EquippedGear {
         return true;
     }
 
+  public boolean hasDrunkAnyPotion() {
+        return !drunkPotions.isEmpty();
+    }
+
     public List<String> inventoryItemNames() {
         return List.copyOf(purchasedLabels);
     }
@@ -236,6 +316,8 @@ public final class ShopModel implements EquippedGear {
             ShopInventorySlot slot = pouchConsumables.get(i);
             if (slot.kind() == ShopInventoryKind.POTION && name.equals(slot.title())) {
                 pouchConsumables.remove(i);
+                // Одно активное зелье: новое вытесняет прошлое.
+                drunkPotions.clear();
                 drunkPotions.add(name);
                 return true;
             }
@@ -249,6 +331,9 @@ public final class ShopModel implements EquippedGear {
 
     public void equipWeapon(ShopInventorySlot weapon) {
         if (weapon == null || weapon.kind() != ShopInventoryKind.WEAPON) {
+            return;
+        }
+        if (equippedWeapon != null && weapon.title().equals(equippedWeapon.title())) {
             return;
         }
         if (equippedWeapon != null) {
@@ -291,13 +376,27 @@ public final class ShopModel implements EquippedGear {
         return List.copyOf(playerInventory);
     }
 
-    public boolean hasDrunkAnyPotion() {
-        return !drunkPotions.isEmpty();
-    }
-
     @Override
     public Armour getEquipped(EquipSlot slot) {
         return equipped.get(slot);
+    }
+
+    public boolean hasEquipmentScreenAccess() {
+        return !purchasedLabels.isEmpty() || !playerInventory.isEmpty() || !soldSets.isEmpty()
+            || equippedWeapon != null || !drunkPotions.isEmpty();
+    }
+
+    /** Есть купленная броня, комплект или оружие — можно открыть «Надеть». */
+    public boolean hasWearableGear() {
+        if (!playerInventory.isEmpty() || !soldSets.isEmpty() || equippedWeapon != null) {
+            return true;
+        }
+        for (ShopInventorySlot slot : pouchConsumables) {
+            if (slot.kind() == ShopInventoryKind.WEAPON) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
@@ -325,6 +424,179 @@ public final class ShopModel implements EquippedGear {
         if (slot != null) {
             equipped.put(slot, armour);
         }
+    }
+
+    /**
+     * Примерка под бюджет витрины: надеть комплект + бесплатное оружие, без списания крон.
+     * Подтверждение — {@link #confirmOutfitPreview()}, отказ — {@link #cancelOutfitPreview()}.
+     */
+    public PurchaseResult beginOutfitPreview(int budget) {
+        cancelOutfitPreview();
+        int spendBudget = Math.max(0, Math.min(budget, wallet));
+        if (spendBudget <= 0) {
+            return PurchaseResult.fail(DukeLines.purchaseFailMoney());
+        }
+        ArmourSet bestSet = null;
+        int bestSetPrice = -1;
+        for (NonSchoolSet set : setService.getNonSchoolSets()) {
+            if (!isShopRegionalKit(set) || soldSets.contains(set)) {
+                continue;
+            }
+            int price = ShopPricing.setPrice(set);
+            if (price <= spendBudget && price > bestSetPrice) {
+                bestSetPrice = price;
+                bestSet = set;
+            }
+        }
+        if (bestSet != null) {
+            soldSets.add(bestSet);
+            for (Armour piece : bestSet.getArmorPieces()) {
+                if (!playerInventory.contains(piece)) {
+                    playerInventory.add(piece);
+                }
+                outfitPreviewPieces.add(piece);
+                equipArmour(piece);
+            }
+            outfitPreviewSet = bestSet;
+            outfitPreviewPrice = bestSetPrice;
+            grantFreePreviewWeapon();
+            outfitPreviewPending = true;
+            return PurchaseResult.ok(DukeLines.dukeOutfitPurchaseOrSelf());
+        }
+        return beginLoosePiecesPreview(spendBudget);
+    }
+
+    private PurchaseResult beginLoosePiecesPreview(int spendBudget) {
+        List<ShopCatalogEntry> chests = armorByType(Chestpiece.class);
+        List<ShopCatalogEntry> trousers = armorByType(Trousers.class);
+        List<ShopCatalogEntry> gloves = armorByType(Gloves.class);
+        List<ShopCatalogEntry> boots = armorByType(Boots.class);
+        if (chests.isEmpty() || trousers.isEmpty() || gloves.isEmpty() || boots.isEmpty()) {
+            return PurchaseResult.fail(DukeLines.purchaseFailGeneric());
+        }
+        ShopCatalogEntry[] pick = {
+            chests.get(0), trousers.get(0), gloves.get(0), boots.get(0)
+        };
+        int total = pick[0].price + pick[1].price + pick[2].price + pick[3].price;
+        if (total > spendBudget) {
+            return PurchaseResult.fail(DukeLines.purchaseFailMoney());
+        }
+        List<List<ShopCatalogEntry>> pools = List.of(chests, trousers, gloves, boots);
+        boolean upgraded;
+        do {
+            upgraded = false;
+            for (int slot = 0; slot < 4; slot++) {
+                ShopCatalogEntry cur = pick[slot];
+                for (ShopCatalogEntry cand : pools.get(slot)) {
+                    if (cand.price <= cur.price) {
+                        continue;
+                    }
+                    int nextTotal = total - cur.price + cand.price;
+                    if (nextTotal <= spendBudget) {
+                        pick[slot] = cand;
+                        total = nextTotal;
+                        upgraded = true;
+                        break;
+                    }
+                }
+            }
+        } while (upgraded);
+
+        for (ShopCatalogEntry entry : pick) {
+            Armour armour = entry.armour;
+            if (armour == null) {
+                continue;
+            }
+            soldArmor.add(armour);
+            if (!playerInventory.contains(armour)) {
+                playerInventory.add(armour);
+            }
+            outfitPreviewPieces.add(armour);
+            equipArmour(armour);
+        }
+        outfitPreviewSet = null;
+        outfitPreviewPrice = total;
+        grantFreePreviewWeapon();
+        outfitPreviewPending = true;
+        return PurchaseResult.ok(DukeLines.dukeOutfitPurchaseOrSelf());
+    }
+
+    private void grantFreePreviewWeapon() {
+        List<ShopCatalogEntry> weapons = staticWeaponOffers();
+        if (weapons.isEmpty()) {
+            return;
+        }
+        ShopCatalogEntry pick = weapons.get(
+            java.util.concurrent.ThreadLocalRandom.current().nextInt(weapons.size()));
+        String[] lines = statLinesForCategory(ShopCategory.WEAPON);
+        ShopInventorySlot weapon = ShopInventorySlot.consumable(pick.name, ShopCategory.WEAPON, lines);
+        outfitPreviewWeapon = weapon;
+        equippedWeapon = weapon;
+    }
+
+    public boolean isOutfitPreviewPending() {
+        return outfitPreviewPending;
+    }
+
+    /** Подтвердить покупку примерки (оружие остаётся бесплатным). */
+    public PurchaseResult confirmOutfitPreview() {
+        if (!outfitPreviewPending) {
+            return PurchaseResult.fail(DukeLines.purchaseFailGeneric());
+        }
+        if (outfitPreviewPrice > 0 && !trySpend(outfitPreviewPrice)) {
+            return PurchaseResult.fail(DukeLines.purchaseFailMoney());
+        }
+        if (outfitPreviewSet != null) {
+            recordPurchase(outfitPreviewSet.getName());
+        } else {
+            for (Armour piece : outfitPreviewPieces) {
+                recordPurchase(piece.getName());
+            }
+        }
+        if (outfitPreviewWeapon != null) {
+            recordPurchase(outfitPreviewWeapon.title());
+        }
+        clearOutfitPreviewFlags();
+        return PurchaseResult.ok(DukeLines.dukeOutfitKept());
+    }
+
+    /** Снять примерку и вернуть витрину (кроны не трогали). */
+    public void cancelOutfitPreview() {
+        if (!outfitPreviewPending && outfitPreviewPieces.isEmpty() && outfitPreviewWeapon == null) {
+            return;
+        }
+        for (Armour piece : outfitPreviewPieces) {
+            EquipSlot slot = EquipSlot.forArmour(piece);
+            if (slot != null && equipped.get(slot) == piece) {
+                equipped.remove(slot);
+            }
+            playerInventory.remove(piece);
+            soldArmor.remove(piece);
+        }
+        if (outfitPreviewSet != null) {
+            soldSets.remove(outfitPreviewSet);
+        }
+        if (equippedWeapon != null && equippedWeapon == outfitPreviewWeapon) {
+            equippedWeapon = null;
+        }
+        clearOutfitPreviewFlags();
+    }
+
+    private void clearOutfitPreviewFlags() {
+        outfitPreviewPending = false;
+        outfitPreviewPrice = 0;
+        outfitPreviewSet = null;
+        outfitPreviewPieces.clear();
+        outfitPreviewWeapon = null;
+    }
+
+    /** @deprecated используйте {@link #beginOutfitPreview(int)} + confirm/cancel. */
+    public PurchaseResult autoOutfitForBudget(int budget) {
+        PurchaseResult preview = beginOutfitPreview(budget);
+        if (!preview.success()) {
+            return preview;
+        }
+        return confirmOutfitPreview();
     }
 
     /** Экипирует все части купленного комплекта (кнопка по эмблеме). */
@@ -364,13 +636,19 @@ public final class ShopModel implements EquippedGear {
     }
 
     public ShopGearStats equippedGearStats() {
-        ShopGearStats stats = baseGearStats();
+        ShopGearStats stats = potionAdjustedBase();
         for (Armour armour : equipped.values()) {
             stats = stats.plus(ShopGearRules.bonusFromArmour(armour));
         }
         if (equippedWeapon != null) {
             stats = stats.plus(ShopGearRules.placeholderBonus(equippedWeapon.title()));
         }
+        return stats.clamped();
+    }
+
+    /** Исходные статы + уже выпитые зелья — новая база для экипировки. */
+    private ShopGearStats potionAdjustedBase() {
+        ShopGearStats stats = baseGearStats();
         for (String potion : drunkPotions) {
             stats = stats.plus(ShopGearRules.placeholderBonus(potion));
         }
@@ -378,13 +656,7 @@ public final class ShopModel implements EquippedGear {
     }
 
     public StatPreview equippedStatPreview() {
-        ShopGearStats base = baseGearStats();
-        ShopGearStats with = equippedGearStats();
-        return new StatPreview(new StatRow[]{
-            new StatRow(with.protection(), with.protection() - base.protection(), STAT_BAR_MAX),
-            new StatRow(with.stamina(), with.stamina() - base.stamina(), STAT_BAR_MAX),
-            new StatRow(with.signs(), with.signs() - base.signs(), STAT_BAR_MAX)
-        });
+        return toPreview(potionAdjustedBase(), equippedGearStats());
     }
 
     /** Краткая строка бонусов для тултипа экипировки. */
@@ -456,10 +728,11 @@ public final class ShopModel implements EquippedGear {
             return PurchaseResult.fail(DukeLines.purchaseFailMoney());
         }
         if (shelfCategory == ShopCategory.POTION || shelfCategory == ShopCategory.WEAPON) {
-            String[] lines = statLinesForCategory(shelfCategory);
-            pouchConsumables.add(ShopInventorySlot.consumable(entry.name, shelfCategory, new String[]{
-                lines[0], lines[1], lines[2]
-            }));
+            String[] lines = shelfCategory == ShopCategory.POTION
+                ? potionEffectLines(entry.name)
+                : statLinesForCategory(shelfCategory);
+            ShopInventorySlot bought = ShopInventorySlot.consumable(entry.name, shelfCategory, lines);
+            pouchConsumables.add(bought);
             recordPurchase(entry.name);
         } else {
             recordPurchase(entry.name);

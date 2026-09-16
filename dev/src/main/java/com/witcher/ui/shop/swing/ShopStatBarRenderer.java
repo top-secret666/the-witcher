@@ -2,6 +2,7 @@ package main.java.com.witcher.ui.shop.swing;
 
 import main.java.com.witcher.ui.graphics.GameFonts;
 import main.java.com.witcher.ui.shop.ShopModel;
+import main.java.com.witcher.ui.shop.view.ShopViewConstants;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -75,7 +76,62 @@ public final class ShopStatBarRenderer {
         }
     }
 
-    /** Горизонтальные колбочки без PNG-рамки — полоса внизу экрана экипировки. */
+    /** Три узкие колбы под иконками статов в инвентаре. @return высота блока */
+    public static int drawInventoryMini(Graphics2D g, int x, int y, int w, ShopModel.StatPreview preview) {
+        int h = ShopViewConstants.INVENTORY_STAT_VIALS_H;
+        drawCardText(g);
+        int fontSize = 7;
+        g.setFont(GameFonts.get().uiBold(fontSize));
+        FontMetrics fm = g.getFontMetrics();
+
+        String[] labels = {"Защита", "Выносливость", "Знаки"};
+        Color[] colors = {
+            new Color(210, 52, 58),
+            new Color(48, 195, 108),
+            new Color(62, 138, 235)
+        };
+        int labelShift = 8;
+        int labelW = 0;
+        for (String label : labels) {
+            labelW = Math.max(labelW, fm.stringWidth(label));
+        }
+        int rightW = fm.stringWidth("00 (+00)");
+        int barH = 9;
+        int rowH = Math.max(18, h / 3);
+        int startY = y + 4;
+
+        for (int i = 0; i < preview.rows().length; i++) {
+            ShopModel.StatRow row = preview.rows()[i];
+            int ry = startY + i * rowH;
+            int extra = row.delta();
+            int previewValue = row.value();
+            int committed = previewValue - extra;
+            int textY = ry + fm.getAscent();
+            drawOutlinedText(g, labels[i], x + labelShift, textY, new Color(185, 175, 155));
+
+            int barX = x + labelShift + labelW + 5;
+            int barW = Math.max(8, w - (barX - x) - rightW - 2);
+            int barY = ry + fm.getHeight() - barH + 1;
+            Shape savedClip = g.getClip();
+            g.clipRect(barX, barY, barW, barH);
+            drawLiquidComparison(g, barX, barY, barW, barH, colors[i], committed, previewValue, row.max(),
+                0, i);
+            g.setClip(savedClip);
+            g.setColor(new Color(55, 42, 28, 180));
+            g.drawRoundRect(barX, barY, barW, barH, barH, barH);
+
+            int numY = barY + barH - 2;
+            int numX = barX + barW + 3;
+            drawOutlinedText(g, String.valueOf(Math.max(0, committed)), numX, numY, new Color(235, 225, 200));
+            String extraText = formatDelta(extra);
+            if (!extraText.isEmpty()) {
+                int extraX = numX + fm.stringWidth(String.valueOf(Math.max(0, committed))) + 3;
+                drawOutlinedText(g, extraText, extraX, numY, DELTA_YELLOW);
+            }
+        }
+        return h;
+    }
+
     public static void drawEquipmentStrip(Graphics2D g, int x, int y, int w, int h,
                                           ShopModel.StatPreview preview, int animTick) {
         drawCardText(g);
@@ -118,7 +174,7 @@ public final class ShopStatBarRenderer {
         }
     }
 
-    /** Узкая колонка колбочек справа на экране экипировки — три горизонтальные с наложением цветов. */
+    /** Колбы на экране экипировки: полные подписи, числа и дельта от исходных статов. */
     public static void drawEquipmentCompact(Graphics2D g, int x, int y, int w, int h,
                                             ShopModel.StatPreview preview,
                                             BufferedImage vialEmpty, BufferedImage vialOverlay,
@@ -128,46 +184,58 @@ public final class ShopStatBarRenderer {
         g.setFont(GameFonts.get().uiBold(fontSize));
         FontMetrics fm = g.getFontMetrics();
 
-        String header = "СТАТЫ";
+        String header = "ХАРАКТЕРИСТИКИ";
         int headerY = y + 5 + fm.getAscent();
         int headerX = x + (w - fm.stringWidth(header)) / 2;
-        g.setColor(new Color(200, 185, 150));
+        g.setColor(new Color(220, 200, 140));
         g.drawString(header, headerX, headerY);
 
-        int labelW = Math.max(16, fm.stringWidth("Зщ") + 3);
-        int barW = Math.max(34, Math.round((w - labelW - 8) * 0.88f));
-        int rowH = Math.max(22, (h - 14) / 3);
-        int startY = headerY + 3;
-        String[] labels = {"Зщ", "Вн", "Зн"};
+        String[] labels = {"Защита", "Выносливость", "Знаки"};
         Color[] colors = {
             new Color(210, 52, 58),
             new Color(48, 195, 108),
             new Color(62, 138, 235)
         };
+        int labelW = 0;
+        for (String label : labels) {
+            labelW = Math.max(labelW, fm.stringWidth(label));
+        }
+        int rightW = fm.stringWidth("00 (+00)");
+        int labelShift = 4;
+        int rowH = Math.max(22, (h - 16) / 3);
+        int startY = headerY + 4;
 
         boolean useVials = vialEmpty != null;
-        int vialH = Math.max(11, Math.min(15, rowH - fm.getHeight() - 3));
+        int vialH = Math.max(11, Math.min(15, rowH - 4));
         if (useVials) {
-            vialH = Math.max(vialH, Math.min(15, vialHeight(barW, vialEmpty, h)));
+            vialH = Math.max(vialH, Math.min(15, vialHeight(Math.max(40, w - labelW - rightW - 16), vialEmpty, h)));
         }
 
         for (int i = 0; i < preview.rows().length; i++) {
             ShopModel.StatRow row = preview.rows()[i];
             int ry = startY + i * rowH;
-            g.setColor(new Color(175, 168, 150));
-            g.drawString(labels[i], x + 2, ry + fm.getAscent() + 2);
-            int barX = x + labelW;
-            int barY = ry + Math.max(0, (rowH - vialH) / 2 - 1);
             int baseValue = row.value() - row.delta();
+            int textY = ry + fm.getAscent() + 2;
+            drawOutlinedText(g, labels[i], x + labelShift, textY, new Color(200, 185, 150));
+
+            int barX = x + labelShift + labelW + 5;
+            int barW = Math.max(34, w - (barX - x) - rightW - 4);
+            int barY = ry + Math.max(0, (rowH - vialH) / 2 - 1);
             if (useVials) {
                 drawVialComparison(g, barX, barY, barW, vialH, vialEmpty, vialOverlay, vialEndCap,
                     colors[i], baseValue, row.value(), row.max(), animTick, i);
+            } else {
+                drawComparisonBar(g, barX, barY, barW, Math.max(5, vialH - 2),
+                    colors[i], baseValue, row.value(), row.max());
             }
+
+            int numY = barY + vialH - 1;
+            int numX = barX + barW + 3;
+            drawOutlinedText(g, String.valueOf(Math.max(0, baseValue)), numX, numY, new Color(235, 225, 200));
             String delta = formatDelta(row.delta());
             if (!delta.isEmpty()) {
-                g.setColor(DELTA_YELLOW);
-                int dx = barX + barW - fm.stringWidth(delta);
-                g.drawString(delta, dx, barY - 1);
+                int deltaX = numX + fm.stringWidth(String.valueOf(Math.max(0, baseValue))) + 3;
+                drawOutlinedText(g, delta, deltaX, numY, DELTA_YELLOW);
             }
         }
     }

@@ -74,6 +74,18 @@ public final class Chapter1Screen {
     presenter.clearExitRequest();
   }
 
+  public boolean isPauseRequested() {
+    return presenter.isPauseRequested();
+  }
+
+  public void clearPauseRequest() {
+    presenter.clearPauseRequest();
+  }
+
+  public boolean blocksPauseOnEsc() {
+    return presenter.blocksPauseOnEsc();
+  }
+
   public boolean isChapterComplete() {
     return presenter.isChapterComplete();
   }

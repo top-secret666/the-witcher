@@ -1,5 +1,7 @@
 package main.java.com.witcher.chapter1.battle;
 
+import main.java.com.witcher.ui.settings.GameSettings;
+
 /** Общий тик typewriter-логики для босс-VN (брифинг и лес). */
 public final class BossVnTypingEngine {
 
@@ -11,8 +13,41 @@ public final class BossVnTypingEngine {
   private BossVnTypingEngine() {
   }
 
+  /** Тик с таймингами из {@link GameSettings}. */
+  public static TickResult tickWithSettings(
+      BossVnTypingState state,
+      String fullText,
+      int totalChars,
+      boolean advance,
+      boolean autoMode) {
+    GameSettings s = GameSettings.get();
+    if (!s.typewriterEnabled()
+        && !state.waitingForAdvance()
+        && state.charIndex() < totalChars) {
+      state.setCharIndex(totalChars);
+      state.setWaitingForAdvance(true);
+      state.clearAutoWait();
+      return TickResult.CONTINUE;
+    }
+    return tick(
+        state, fullText, totalChars, advance, autoMode,
+        s.ticksPerChar(), s.autoTicksPerChar(), s.autoDelayTicks());
+  }
+
   public static TickResult tick(
       BossVnTypingState state,
+      int totalChars,
+      boolean advance,
+      boolean autoMode,
+      int ticksPerChar,
+      int autoTicksPerChar,
+      int autoDelayTicks) {
+    return tick(state, null, totalChars, advance, autoMode, ticksPerChar, autoTicksPerChar, autoDelayTicks);
+  }
+
+  public static TickResult tick(
+      BossVnTypingState state,
+      String fullText,
       int totalChars,
       boolean advance,
       boolean autoMode,
@@ -36,13 +71,7 @@ public final class BossVnTypingEngine {
       state.incrementTypeTickCounter();
       if (state.typeTickCounter() >= autoTicksPerChar) {
         state.setTypeTickCounter(0);
-        int next = state.charIndex() + 1;
-        state.setCharIndex(next);
-        if (next >= totalChars) {
-          state.setCharIndex(totalChars);
-          state.setWaitingForAdvance(true);
-          state.clearAutoWait();
-        }
+        advanceChars(state, fullText, totalChars);
       }
       return TickResult.CONTINUE;
     }
@@ -56,13 +85,27 @@ public final class BossVnTypingEngine {
     state.incrementTypeTickCounter();
     if (state.typeTickCounter() >= ticksPerChar) {
       state.setTypeTickCounter(0);
-      int next = state.charIndex() + 1;
-      state.setCharIndex(next);
-      if (next >= totalChars) {
-        state.setCharIndex(totalChars);
-        state.setWaitingForAdvance(true);
-      }
+      advanceChars(state, fullText, totalChars);
     }
     return TickResult.CONTINUE;
+  }
+
+  /** Один шаг + сразу все подряд идущие {@code \n}, чтобы пустые строки не тормозили печать. */
+  private static void advanceChars(BossVnTypingState state, String fullText, int totalChars) {
+    int next = state.charIndex() + 1;
+    if (fullText != null && next > 0 && next <= fullText.length()) {
+      int just = next - 1;
+      if (just < fullText.length() && fullText.charAt(just) == '\n') {
+        while (next < totalChars && next < fullText.length() && fullText.charAt(next) == '\n') {
+          next++;
+        }
+      }
+    }
+    state.setCharIndex(next);
+    if (next >= totalChars) {
+      state.setCharIndex(totalChars);
+      state.setWaitingForAdvance(true);
+      state.clearAutoWait();
+    }
   }
 }

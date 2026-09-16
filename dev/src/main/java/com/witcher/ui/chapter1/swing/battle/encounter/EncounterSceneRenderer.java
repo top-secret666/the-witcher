@@ -19,7 +19,7 @@ public final class EncounterSceneRenderer {
 
   /** Две картинки рядом на весь экран над полоской описания. */
   public static void drawFullBleedMontage(Graphics2D g, int sw, int sh) {
-    int barH = Math.round(sh * 0.30f);
+    int barH = Math.round(sh * 0.40f);
     int imageH = sh - barH;
     int gap = Math.max(2, Math.round(sw * 0.006f));
     int halfW = (sw - gap) / 2;
