@@ -13,7 +13,7 @@
 </p>
 
 <p align="center">
-<img width="1024" height="1024" alt="splash_bg" src="https://github.com/user-attachments/assets/a36bf68f-fbab-4ede-9c5e-9be489c80cea" />
+<img width="640" height="480" alt="geralt-drink" src="https://github.com/user-attachments/assets/be2aaf6a-840e-4a8c-ba27-4b0acbca3519" />
 </p>
 
 ## Download & play
