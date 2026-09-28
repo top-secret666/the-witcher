@@ -101,3 +101,7 @@ python dev\tools\make_release_zip.py --version 1.1.0
     <a href="docs/chapter1_journey_checklist.md">Playthrough</a>
   </sub>
 </p>
+
+<p align="center">
+<img width="640" height="640" alt="chilling-geralt-of-rivia" src="https://github.com/user-attachments/assets/8b9fc2b2-220b-4366-8ed9-731684feaeec" />
+</p>
