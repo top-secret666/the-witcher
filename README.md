@@ -95,7 +95,7 @@ python dev\tools\make_release_zip.py --version 1.1.0
 
 <p align="center">
   <sub>
-    Pet project · Dana Stukalova · VGTU · 2025–2026<br>
+    Pet project · Dana Stukalova · VGTU · 2024–2026<br>
     <a href="https://github.com/top-secret666/the-witcher/releases">Releases</a>
     ·
     <a href="docs/chapter1_journey_checklist.md">Playthrough</a>
