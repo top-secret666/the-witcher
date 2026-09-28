@@ -37,6 +37,9 @@ If the direct link fails, the file is on [**Releases**](https://github.com/top-s
 
 This is my first serious pet project and an attempt to build my own engine.
 
+##  Testing
+ xDefox -> [**Bug Report**](https://github.com/xDefox/Witcher_game_qa_report)
+
 ## Architecture
 
 ```
